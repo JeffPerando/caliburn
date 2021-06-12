@@ -4,7 +4,7 @@ import re
 CALIBURN_IDENTIFIER   = re.compile("([a-z]|[A-Z]|[0-9]|_)+")
 CALIBURN_MISC_SYMBOLS = re.compile("[\.,:;\(\)\{\}\[\]<>=!]")
 
-CALIBURN_COMMENT      = re.compile("#.*")
+CALIBURN_COMMENT      = re.compile("[\r\n\t\f\v ]+((###(.|\n)*?###)|(#.+))")
 
 CALIBURN_KEYWORDS     = [
     "import", "using", "type", "namespace", "data", "class", "descriptor", "inputs", "def",

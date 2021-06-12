@@ -1,4 +1,100 @@
-Hello Text!
-More text lol
 
-oi quit reading bruv
+# IMPORTANT. Denotes that this is a shader
+import caliburn;
+
+import graphics;
+import math;
+
+type f32 = float;
+# Dynamic means the actual type is added during compilation.
+#  Allows for things like optional rapid packed math support without rewriting the shader or using preprocessor hacks
+type FP = dynamic;
+
+###
+Default types include:
+(u)int(8|16|32|64|128)
+(u)float(16|32|64)
+vec(2|3|4)<T = float32>
+mat(2|3|4|#x#)<T = float32>
+bool (consider making contiguous bools into one bitset [may interfere with inputs])
+array<T>
+buffer<T> (a big difference between array and buffer, is a buffer's length is unknown until runtime)
+texture(1D|2D|3D|Cube)
+string(8|16|32) (yes, a shader lang getting string support (all chars are just uints; literals are treated as the same))
+unicode (equivalent to string8 with explicit support for UTF-8)
+
+Also, all C++/Java primitives are allowed:
+char = uint8
+byte = int8
+short = int16
+int = int32
+long = int64
+float = float32
+double = float64
+
+Finally, bits() can be used to get the bits from most any data type, in an int of appropriate size.
+So this:
+int v = bits(delta);
+will give you access to the bits found in delta. Very handy if you want to write some nasty inverse sqrt code
+###
+
+# Global variables are a thing, but must be resolved at compilation
+let hasRT = ext(["AVA_EXT_ray_tracing"
+	"VK_EXT_ray_tracing",
+	"GL_EXT_ray_tracing",
+	"VK_NV_EXT_ray_tracing"], optional);
+
+# "optional" keyboard is merely for explicitness, all ext() calls are optional by default
+# "mandatory" keyword makes the shader compilation fail if extension isn't found during compilation
+ext("VK_EXT_some_extension", mandatory);
+
+let compilerTroll = "    ###kekw###"
+
+# struct
+# can also use struct keyword
+data Bone
+{
+	vec4 weight;
+
+	# Can also add methods
+	float getWeight(uint32 i)
+	{
+		return weight[i];
+	}
+}
+
+# can define multiple
+# can also be called a uniform
+# name optional
+descriptor
+{
+	# Could also be a buffer<Bone> if the length is unknown at compile time
+	# Only difference would be length as a method rather than a field.
+	array<Bone> bones = [128];
+	FP delta;
+}
+
+inputs
+{
+	vec4 vertex;
+	vec4<uint8> boneIDs;
+}
+
+# No main function; Instead, shader stages act as a main 
+def vec4 vertex()
+{
+	# No this code doesn't work... It's a syntax showoff
+	# Torn between "var" and "let".
+	# On the one hand, "let" is a holdover from math.
+	# On the others, graphics are 95% math.
+	# Explicit types are fine, but will slow down compilation slightly to look to see if it's valid.
+	let animVtx = vertex;
+	for (int i = 0; i < 4; ++i) ###DIRTY HACK
+	DIRTY HACK INDEED###
+	{
+		# All math expressions respect PEMDAS
+		animVtx *= bones[boneIDs[i]].weight * delta + 1; # TODO fix
+		# sync(THREADS | MEMORY);
+	}
+	return animVtx;
+}
