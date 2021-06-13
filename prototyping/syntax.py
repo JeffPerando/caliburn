@@ -1,12 +1,13 @@
 
 import re
 
-CALIBURN_IDENTIFIER   = re.compile("([a-z]|[A-Z]|[0-9]|_)+")
-CALIBURN_MISC_SYMBOLS = re.compile("[\.,:;\(\)\{\}\[\]<>=!]")
+CALIBURN_IDENTIFIER_RE      = re.compile("([a-zA-Z0-9_])+")
+CALIBURN_MISC_SYM_RE        = re.compile("[\.,:;\(\)\{\}\[\]<>=!]")
 
-CALIBURN_COMMENT      = re.compile("[\r\n\t\f\v ]+((###(.|\n)*?###)|(#.+))")
+CALIBURN_COMMENTS_PAT       = "(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)*[\r\n\t\f\v ]+((###(.|\n)*?###)|(#.+))"
+CALIBURN_COMMENTS_RE        = re.compile(CALIBURN_COMMENTS_PAT)
 
-CALIBURN_KEYWORDS     = [
+CALIBURN_KEYWORDS           = [
     "import", "using", "type", "namespace", "data", "class", "descriptor", "inputs", "def",
     "override", "op", "let",
     "construct", "destroy", "new",
@@ -15,26 +16,26 @@ CALIBURN_KEYWORDS     = [
     "true", "false"
     ]
 
-CALIBURN_BUILTIN_FNS  = []
+CALIBURN_BUILTIN_FNS        = []
 
-CALIBURN_INT_LITERAL  = re.compile("[0-9]+(.[0-9]+f?)?")
-CALIBURN_HEX_LITERAL  = re.compile("0x([0-9]|[a-f]|[A-F]|_)+")
-CALIBURN_BIN_LITERAL  = re.compile("0b[0|1|_]+")
-CALIBURN_OCT_LITERAL  = re.compile("0c([0-7]|_)+")
+CALIBURN_INT_LITERAL_RE     = re.compile("[0-9]+(.[0-9]+f?)?")
+CALIBURN_HEX_LITERAL_RE     = re.compile("0x([0-9]|[a-f]|[A-F]|_)+")
+CALIBURN_BIN_LITERAL_RE     = re.compile("0b[0|1|_]+")
+CALIBURN_OCT_LITERAL_RE     = re.compile("0c([0-7]|_)+")
 
-CALIBURN_MATH_OPS     = re.compile("(\+\+)|(\/\/)|[\+\-*\/%^&|$]")
-CALIBURN_OTHER_OPS    = re.compile("[<=>!]=?|(&&)|(\|\|)")
+CALIBURN_MATH_OPS_RE        = re.compile("(\+\+)|(\/\/)|[\+\-*\/%^&|$]")
+CALIBURN_OTHER_OPS_RE       = re.compile("[<=>!]=?|(&&)|(\|\|)")
 
-CALIBURN_FLOAT_TYPE   = re.compile("float(16|32|64|128)?")
-CALIBURN_INT_TYPE     = re.compile("u?int(8|16|32|64|128|256|512)?")
-CALIBURN_VECTOR_TYPE  = re.compile("vec(2|3|4)")
-CALIBURN_MATRIX_TYPE  = re.compile("mat[2-4](x[2-4])?")
-CALIBURN_TEXTURE_TYPE = re.compile("tex(ture)?([1-3]D|Cube)")
+CALIBURN_FLOAT_TYPE_RE      = re.compile("float(16|32|64|128)?")
+CALIBURN_INT_TYPE_RE        = re.compile("u?int(8|16|32|64|128|256|512)?")
+CALIBURN_VECTOR_TYPE_RE     = re.compile("vec(2|3|4)")
+CALIBURN_MATRIX_TYPE_RE     = re.compile("mat[2-4](x[2-4])?")
+CALIBURN_TEXTURE_TYPE_RE    = re.compile("tex(ture)?([1-3]D|Cube)")
 
-CALIBURN_GENERIC_TYPES= ["array", "buffer", "pointer", "ptr", "atomic"]
+CALIBURN_GENERIC_TYPES      = ["array", "buffer", "pointer", "ptr", "atomic"]
 
 # These types are completely optional and may be delayed for future versions of the language
-CALIBURN_CHAR_TYPE    = re.compile("char(8|32)?")
-CALIBURN_STRING_TYPE  = re.compile("str(ing)?(8|32)?|unicode")
-CALIBURN_BITSET_TYPE  = re.compile("bitset(8|16|32|64|128|256)?")
-CALIBURN_MISC_TYPES   = ["void", "bool", "byte"]
+CALIBURN_CHAR_TYPE_RE       = re.compile("char(8|32)?")
+CALIBURN_STRING_TYPE_RE     = re.compile("str(ing)?(8|32)?|unicode")
+CALIBURN_BITSET_TYPE_RE     = re.compile("bitset(8|16|32|64|128|256)?")
+CALIBURN_MISC_TYPES         = ["void", "bool", "byte", "bfloat16"]

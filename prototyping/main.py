@@ -1,6 +1,7 @@
 
 import argparse
 import re
+import syntax
 
 CALIBURN_DEBUG_MODE = True
 
@@ -17,6 +18,43 @@ def regexFix(pattern, txt):
             break
     return fixedSet
 
+def findAndSubstr(txt, tkn, start):
+    next = txt.find(tkn, start + len(tkn))
+    if next == -1:
+        next = len(txt)
+    else:
+        next += len(tkn)
+    substr = txt[start:next]
+    #print(f"substr found: {substr}")
+    return (substr, next)
+
+def removeComments(txt):
+    cur = 0
+    fin = ""
+    while cur < len(txt):
+        comment = False
+        found = None
+        if txt[cur] == '#':
+            if txt[cur+1] == "#" and txt[cur+2] == "#":
+                found = findAndSubstr(txt, "###", cur)
+            else:
+                found = findAndSubstr(txt, "\n", cur)
+            comment = True
+        elif txt[cur] == "\"":
+            found = findAndSubstr(txt, "\"", cur)
+        else:
+            fin += txt[cur]
+
+        if found is None:
+            cur += 1
+        else:
+            if comment:
+                fin += "\n"
+            else:
+                fin += found[0]
+            cur = found[1]
+    return fin
+
 def readFile(path):
     text = ""
     with open(path) as f:
@@ -25,8 +63,7 @@ def readFile(path):
 
 def main(path="test.txt"):
     txt = readFile(path)
-    pat = re.compile(r"\"[^\"]+\"")
-    newtxt = re.sub(pat, "", txt)
+    newtxt = removeComments(txt)
     print(newtxt)
     
 if __name__ == "__main__":
