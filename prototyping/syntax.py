@@ -1,11 +1,7 @@
 
 import re
 
-CALIBURN_IDENTIFIER_RE      = re.compile("([a-zA-Z0-9_])+")
-CALIBURN_MISC_SYM_RE        = re.compile("[\.,:;\(\)\{\}\[\]<>=!]")
-
-CALIBURN_COMMENTS_PAT       = "(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)*[\r\n\t\f\v ]+((###(.|\n)*?###)|(#.+))"
-CALIBURN_COMMENTS_RE        = re.compile(CALIBURN_COMMENTS_PAT)
+CALIBURN_WORDS_AND_SYMBOLS  = re.compile("[a-zA-Z0-9_]+|[\.,:;\(\)\{\}\[\]<>=!]")
 
 CALIBURN_KEYWORDS           = [
     "import", "using", "type", "namespace", "data", "class", "descriptor", "inputs", "def",
@@ -18,8 +14,8 @@ CALIBURN_KEYWORDS           = [
 
 CALIBURN_BUILTIN_FNS        = []
 
-CALIBURN_INT_LITERAL_RE     = re.compile("[0-9]+(.[0-9]+f?)?")
-CALIBURN_HEX_LITERAL_RE     = re.compile("0x([0-9]|[a-f]|[A-F]|_)+")
+CALIBURN_INT_LITERAL_RE     = re.compile("[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?f?")
+CALIBURN_HEX_LITERAL_RE     = re.compile("0x([0-9a-fA-F]|_)+")
 CALIBURN_BIN_LITERAL_RE     = re.compile("0b[0|1|_]+")
 CALIBURN_OCT_LITERAL_RE     = re.compile("0c([0-7]|_)+")
 
