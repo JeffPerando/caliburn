@@ -18,8 +18,15 @@ def regexFix(pattern, txt):
             break
     return fixedSet
 
-def findAndSubstr(txt, tkn, start):
+# Find and substring: Finds a token and then returns a tuple containing:
+# 1. A substring from the start of the search to the token found (includes the token if possible)
+# 2. The index where the token was found plus the length
+def findAndSubstr(txt, tkn, start, checkEsc = False):
     next = txt.find(tkn, start + len(tkn))
+    if checkEsc:
+        while txt[next - 1] == "\\":
+            next = txt.find(tkn, next + len(tkn))
+
     if next == -1:
         next = len(txt)
     else:
@@ -41,7 +48,9 @@ def removeComments(txt):
                 found = findAndSubstr(txt, "\n", cur)
             comment = True
         elif txt[cur] == "\"":
-            found = findAndSubstr(txt, "\"", cur)
+            found = findAndSubstr(txt, "\"", cur, checkEsc=True)
+        elif txt[cur] == "\'":
+            found = findAndSubstr(txt, "\'", cur, checkEsc=True)
         else:
             fin += txt[cur]
 
@@ -62,10 +71,11 @@ def readFile(path):
     return text
 
 def main(path="test.txt"):
-    txt = readFile(path)
-    newtxt = removeComments(txt)
-    print(newtxt)
-    
+    src = readFile(path)
+    src = removeComments(src)
+    split = syntax.CALIBURN_WORDS_AND_SYMBOLS.findall(src)
+    print(split)
+
 if __name__ == "__main__":
     if CALIBURN_DEBUG_MODE:
         main()
