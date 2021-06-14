@@ -57,7 +57,7 @@ data Bone
 	vec4 weight;
 
 	# Can also add methods
-	float getWeight(uint32 i)
+	def float getWeight(uint32 i)
 	{
 		return weight[i];
 	}
