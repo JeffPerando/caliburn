@@ -1,7 +1,7 @@
 
 import re
 
-CALIBURN_WORDS_AND_SYMBOLS  = re.compile("[a-zA-Z0-9_]+|[\.,:;\(\)\{\}\[\]<>=!]")
+CALIBURN_WORDS_AND_SYMBOLS  = re.compile("\".*\"|\'.*\'|[a-zA-Z0-9_]+|[\.,:;\(\)\{\}\[\]<>=!]")
 
 CALIBURN_KEYWORDS           = [
     "import", "using", "type", "namespace", "data", "class", "descriptor", "inputs", "def",
