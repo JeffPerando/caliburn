@@ -7,8 +7,7 @@ CALIBURN_KEYWORDS           = [
     "import", "using", "type", "namespace", "data", "class", "descriptor", "inputs", "def",
     "override", "op", "construct", "destroy", "extends",
     "let", "new", "public", "protected", "private", "shared", "const", "dynamic",
-    "if", "for", "in", "while", "do", "switch", "case", "default", "pass", "continue", "break", "return",
-    "true", "false"
+    "if", "for", "in", "while", "do", "switch", "case", "default", "pass", "continue", "break", "return"
     ]
 
 CALIBURN_BUILTIN_FNS        = []
