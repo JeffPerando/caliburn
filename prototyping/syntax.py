@@ -32,7 +32,6 @@ CALIBURN_GENERIC_TYPES      = ["array", "buffer", "pointer", "ptr", "atomic"]
 # These types are completely optional and may be delayed for future versions of the language
 CALIBURN_CHAR_TYPE_RE       = re.compile("char(8|32)?")
 CALIBURN_STRING_TYPE_RE     = re.compile("str(ing)?(8|32)?|unicode")
-CALIBURN_BITSET_TYPE_RE     = re.compile("bitset(8|16|32|64|128|256)?")
 CALIBURN_MISC_TYPES         = ["void", "bool", "byte", "bfloat16"]
 
 CALIBURN_V_IDENTIFIER       = 1     # An identifier is a string of characters not escaped by " or '.
