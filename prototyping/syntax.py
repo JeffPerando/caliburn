@@ -35,3 +35,17 @@ CALIBURN_CHAR_TYPE_RE       = re.compile("char(8|32)?")
 CALIBURN_STRING_TYPE_RE     = re.compile("str(ing)?(8|32)?|unicode")
 CALIBURN_BITSET_TYPE_RE     = re.compile("bitset(8|16|32|64|128|256)?")
 CALIBURN_MISC_TYPES         = ["void", "bool", "byte", "bfloat16"]
+
+CALIBURN_V_IDENTIFIER       = 1     # An identifier is a string of characters not escaped by " or '.
+CALIBURN_V_LITERAL          = 2     # A literal is either a number, string, or a boolean.
+CALIBURN_V_KEYWORD          = 3     # Denotes an existing keyword
+CALIBURN_V_END              = 4     # Denotes a ;
+CALIBURN_V_START_SCOPE      = 5     # Denotes a {
+CALIBURN_V_END_SCOPE        = 6     # Denotes a }
+CALIBURN_V_START_BRACKET    = 7     # Denotes a [
+CALIBURN_V_END_BRACKET      = 8     # Denotes a ]
+CALIBURN_V_START_PAREN      = 9     # Denotes a (
+CALIBURN_V_END_PAREN        = 10    # Denotes a )
+CALIBURN_V_LT_SIGN          = 11    # Denotes a <
+CALIBURN_V_GT_SIGN          = 12    # Denotes a >
+CALIBURN_V_OPERATOR         = 13    # Denotes an operator (=+-*/%^&|$!~)
