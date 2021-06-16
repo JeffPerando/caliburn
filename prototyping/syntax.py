@@ -5,9 +5,8 @@ CALIBURN_WORDS_AND_SYMBOLS  = re.compile("\".*\"|\'.*\'|[a-zA-Z0-9_]+|[+\-*\/.,:
 
 CALIBURN_KEYWORDS           = [
     "import", "using", "type", "namespace", "data", "class", "descriptor", "inputs", "def",
-    "override", "op", "let",
-    "construct", "destroy", "new",
-    "public", "protected", "private", "shared", "const", "dynamic",
+    "override", "op", "construct", "destroy", "extends",
+    "let", "new", "public", "protected", "private", "shared", "const", "dynamic",
     "if", "for", "in", "while", "do", "switch", "case", "default", "pass", "continue", "break", "return",
     "true", "false"
     ]
