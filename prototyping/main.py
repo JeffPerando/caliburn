@@ -5,6 +5,11 @@ import syntax
 
 CALIBURN_DEBUG_MODE = True
 
+class Token:
+    def __init__(self, str, tid):
+       self.chars = str
+       self.id = tid
+
 def regexFix(pattern, txt):
     found = pattern.findall(txt)
     fixedSet = []
@@ -63,6 +68,109 @@ def removeComments(txt):
                 fin += found[0]
             cur = found[1]
     return fin
+
+def isIntStart(chr):
+    return (chr >= '0' and chr <= '9')
+
+def isInt(chr):
+    return isIntStart(chr) or (".f_xE+-".find(chr) != -1) or (chr >= 'A' and chr <= 'F') or (chr >= 'a' and chr <= 'f')
+
+def isIdentifier(chr):
+    return (chr >= 'a' and chr <= 'z') or (chr >= 'A' and chr <= 'Z') or isIntStart(chr) or (chr == '_')
+
+def tokenize(txt):
+    cur = 0
+    tokens = []
+    miscTokenValues = {
+        ';': syntax.CALIBURN_V_END,
+        '{': syntax.CALIBURN_V_START_SCOPE,
+        '}': syntax.CALIBURN_V_END_SCOPE,
+        '[': syntax.CALIBURN_V_START_BRACKET,
+        ']': syntax.CALIBURN_V_END_BRACKET,
+        '(': syntax.CALIBURN_V_START_PAREN,
+        ')': syntax.CALIBURN_V_END_PAREN,
+        '<': syntax.CALIBURN_V_LT_SIGN,
+        '>': syntax.CALIBURN_V_GT_SIGN,
+        '.': syntax.CALIBURN_V_PERIOD,
+        ',': syntax.CALIBURN_V_COMMA }
+    
+    for chr in "=+-*/%^&|$!~":
+        miscTokenValues[chr] = syntax.CALIBURN_V_OPERATOR
+
+    while cur < len(txt):
+        tokenLen = 0
+        token = None
+
+        # Avoid whitespace (note to future self: use the string " \t\n\r\f\v" when implementing this in C++)
+        while txt[cur].isspace(): cur += 1
+        
+        # Avoid comments
+        if txt[cur] == "#":
+            # Avoid multi-line comments
+            if txt[cur+1:cur+3] == "##":
+                cur += 3
+                while txt[cur-3:cur] != "###":
+                    cur += 1
+            else:
+                while txt[cur] != '\n':
+                    cur += 1
+                # Current will end up being on a newline; need to increment once more
+                cur += 1
+        
+        tokenID = miscTokenValues.get(txt[cur], -1)
+
+        if tokenID != -1:
+            tokenLen = 1
+            token = Token(txt[cur], tokenID)
+        # Identifiers can include integers, so check for an int first
+        # ALSO this part's kinda weird so let me run down what's going on:
+        # If we find a [0-9], then there's three possibilities for what's next:
+        # 1. It's a number or a character associated thereof, like a period (i.e. 0.1f)
+        # 2. It's a part of the punctuation, like a comma, parentheses, etc.
+        # 3. It's some other character
+        # It's possible a class could start with a number, so we look ahead one.
+        # If the character is a #1, then that's fine.
+        # If it's punctuation, then oh well, the lexer will deal with it later.
+        # If it's something else, then we need to know.
+        # SO, if the next char is an identifier, then this branch fails and it finds the identifier.
+        # If not, then we don't care anyway and go through with getting an int.
+        # Note: This doesn't work for identifiers that start with multiple digits (like "404ErrorNotFound")
+        # I need to fix that...
+        # One more thing: if we hit an EOF, then that's a colossal oof and the file is probably corrupt.
+        elif isIntStart(txt[cur]) and (isInt(txt[cur+1]) or not isIdentifier(txt[cur+1])):
+            tokenLen = 1
+            while isInt(txt[cur + tokenLen]):
+                tokenLen += 1
+            if isIdentifier(txt[cur + tokenLen + 1]):
+                # TODO clean up all this mess, make it easier to divert this thing to getting an identifier
+                pass
+            token = Token(txt[cur:cur+tokenLen + 1], syntax.CALIBURN_V_LITERAL)
+        elif isIdentifier(txt[cur]):
+            tokenLen = 1
+            while isIdentifier(txt[cur + tokenLen]):
+                tokenLen += 1
+            tokenStr = txt[cur:cur+tokenLen + 1]
+            tokenID = syntax.CALIBURN_V_IDENTIFIER
+            if syntax.CALIBURN_KEYWORDS.count(tokenStr) > 0:
+                tokenID = syntax.CALIBURN_V_KEYWORD
+            token = Token(tokenStr, tokenID)
+        elif txt[cur] == "\"":
+            tokenLen = 1
+            while txt[cur + tokenLen] != "\"" and txt[cur + tokenLen - 1] != "\\":
+                tokenLen += 1
+            tokenLen += 1
+            token = Token(txt[cur:cur+tokenLen + 1], syntax.CALIBURN_V_LITERAL)
+        elif txt[cur] == "\'":
+            tokenLen = 1
+            while txt[cur + tokenLen] != "\'" and txt[cur + tokenLen - 1] != "\\":
+                tokenLen += 1
+            token = Token(txt[cur:cur+tokenLen + 1], syntax.CALIBURN_V_LITERAL)
+            
+        if token:
+            tokens.append(token)
+            cur += tokenLen
+
+        cur += 1
 
 def readFile(path):
     text = ""
