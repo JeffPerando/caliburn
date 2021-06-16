@@ -8,7 +8,7 @@ CALIBURN_KEYWORDS           = [
     "override", "op", "let",
     "construct", "destroy", "new",
     "public", "protected", "private", "shared", "const", "dynamic",
-    "if", "for", "while", "do", "switch", "case", "default", "continue", "break", "pass", "return",
+    "if", "for", "in", "while", "do", "switch", "case", "default", "pass", "continue", "break", "return",
     "true", "false"
     ]
 
