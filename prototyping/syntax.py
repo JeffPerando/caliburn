@@ -47,4 +47,6 @@ CALIBURN_V_LT_SIGN          = 11    # Denotes a <
 CALIBURN_V_GT_SIGN          = 12    # Denotes a >
 CALIBURN_V_PERIOD           = 13    # Denotes a .
 CALIBURN_V_COMMA            = 14    # Denotes a ,
-CALIBURN_V_OPERATOR         = 15    # Denotes an operator (=+-*/%^&|$!~)
+CALIBURN_V_COLON            = 15    # Denotes a :
+CALIBURN_V_LINE             = 16    # Denotes a |
+CALIBURN_V_OPERATOR         = 17    # Denotes an operator (=+-*/%^&|$!~)

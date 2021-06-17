@@ -36,7 +36,9 @@ def tokenize(txt):
         '<': syntax.CALIBURN_V_LT_SIGN,
         '>': syntax.CALIBURN_V_GT_SIGN,
         '.': syntax.CALIBURN_V_PERIOD,
-        ',': syntax.CALIBURN_V_COMMA }
+        ',': syntax.CALIBURN_V_COMMA,
+        ':': syntax.CALIBURN_V_COLON,
+        '|': syntax.CALIBURN_V_LINE}
     
     #for chr in "=+-*/%^&|$!~":
     #    miscTokenValues[chr] = syntax.CALIBURN_V_OPERATOR
