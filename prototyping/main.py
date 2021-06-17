@@ -78,6 +78,9 @@ def isInt(chr):
 def isIdentifier(chr):
     return (chr >= 'a' and chr <= 'z') or (chr >= 'A' and chr <= 'Z') or isIntStart(chr) or (chr == '_')
 
+def isOperator(chr):
+    return "=+-*/<>%^&|$!~".count(chr) > 0
+
 def tokenize(txt):
     cur = 0
     tokens = []
@@ -94,8 +97,8 @@ def tokenize(txt):
         '.': syntax.CALIBURN_V_PERIOD,
         ',': syntax.CALIBURN_V_COMMA }
     
-    for chr in "=+-*/%^&|$!~":
-        miscTokenValues[chr] = syntax.CALIBURN_V_OPERATOR
+    #for chr in "=+-*/%^&|$!~":
+    #    miscTokenValues[chr] = syntax.CALIBURN_V_OPERATOR
 
     for kw in syntax.CALIBURN_KEYWORDS:
         miscTokenValues[kw] = syntax.CALIBURN_V_KEYWORD
@@ -156,6 +159,10 @@ def tokenize(txt):
             if miscTokenValues.get(tokenStr, 0):
                 tokenID = syntax.CALIBURN_V_KEYWORD
             token = Token(tokenStr, tokenID)
+        elif isOperator(txt[cur]):
+            while isOperator(txt[cur + tokenLen]):
+                tokenLen += 1
+            token = Token(txt[cur:cur+tokenLen], syntax.CALIBURN_V_OPERATOR)
         elif txt[cur] == "\"":
             while txt[cur + tokenLen] != "\"" and txt[cur + tokenLen - 1] != "\\":
                 tokenLen += 1
