@@ -10,65 +10,6 @@ class Token:
        self.chars = str
        self.id = tid
 
-def regexFix(pattern, txt):
-    found = pattern.findall(txt)
-    fixedSet = []
-    for tp in found:
-        for x in tp:
-            if x is None:
-                continue
-            if len(x) == 0:
-                continue
-            fixedSet.append(x)
-            break
-    return fixedSet
-
-# Find and substring: Finds a token and then returns a tuple containing:
-# 1. A substring from the start of the search to the token found (includes the token if possible)
-# 2. The index where the token was found plus the length
-def findAndSubstr(txt, tkn, start, checkEsc = False):
-    next = txt.find(tkn, start + len(tkn))
-    if checkEsc:
-        while txt[next - 1] == "\\":
-            next = txt.find(tkn, next + len(tkn))
-
-    if next == -1:
-        next = len(txt)
-    else:
-        next += len(tkn)
-    substr = txt[start:next]
-    #print(f"substr found: {substr}")
-    return (substr, next)
-
-def removeComments(txt):
-    cur = 0
-    fin = ""
-    while cur < len(txt):
-        comment = False
-        found = None
-        if txt[cur] == '#':
-            if txt[cur+1] == "#" and txt[cur+2] == "#":
-                found = findAndSubstr(txt, "###", cur)
-            else:
-                found = findAndSubstr(txt, "\n", cur)
-            comment = True
-        elif txt[cur] == "\"":
-            found = findAndSubstr(txt, "\"", cur, checkEsc=True)
-        elif txt[cur] == "\'":
-            found = findAndSubstr(txt, "\'", cur, checkEsc=True)
-        else:
-            fin += txt[cur]
-
-        if found is None:
-            cur += 1
-        else:
-            if comment:
-                fin += "\n"
-            else:
-                fin += found[0]
-            cur = found[1]
-    return fin
-
 def isIntStart(chr):
     return (chr >= '0' and chr <= '9')
 
