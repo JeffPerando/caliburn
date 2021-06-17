@@ -97,6 +97,9 @@ def tokenize(txt):
     for chr in "=+-*/%^&|$!~":
         miscTokenValues[chr] = syntax.CALIBURN_V_OPERATOR
 
+    for kw in syntax.CALIBURN_KEYWORDS:
+        miscTokenValues[kw] = syntax.CALIBURN_V_KEYWORD
+
     while cur < len(txt):
         tokenLen = 0
         token = None
@@ -117,9 +120,9 @@ def tokenize(txt):
                 # Current will end up being on a newline; need to increment once more
                 cur += 1
         
-        tokenID = miscTokenValues.get(txt[cur], -1)
+        tokenID = miscTokenValues.get(txt[cur], 0)
 
-        if tokenID != -1:
+        if tokenID:
             tokenLen = 1
             token = Token(txt[cur], tokenID)
         # Identifiers can include integers, so check for an int first
@@ -151,7 +154,7 @@ def tokenize(txt):
                 tokenLen += 1
             tokenStr = txt[cur:cur+tokenLen + 1]
             tokenID = syntax.CALIBURN_V_IDENTIFIER
-            if syntax.CALIBURN_KEYWORDS.count(tokenStr) > 0:
+            if miscTokenValues.get(tokenStr, 0):
                 tokenID = syntax.CALIBURN_V_KEYWORD
             token = Token(tokenStr, tokenID)
         elif txt[cur] == "\"":
