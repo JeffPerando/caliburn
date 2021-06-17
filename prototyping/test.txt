@@ -89,7 +89,7 @@ def vec4 vertex()
 	# On the others, graphics are 95% math.
 	# Explicit types are fine, but will slow down compilation slightly to look to see if it's valid.
 	let animVtx = vertex;
-	for (int i = 0; i < 4; ++i) ###DIRTY HACK
+	for (int i = 0; i <= 4; ++i) ###DIRTY HACK
 	DIRTY HACK INDEED###
 	{
 		# All math expressions respect PEMDAS

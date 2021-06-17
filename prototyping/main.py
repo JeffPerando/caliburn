@@ -127,7 +127,7 @@ def tokenize(txt):
         
         tokenID = miscTokenValues.get(txt[cur], 0)
 
-        if tokenID:
+        if tokenID and (not isOperator(txt[cur]) or not isOperator(txt[cur + 1])):
             token = Token(txt[cur], tokenID)
         # Identifiers can include integers, so check for an int first
         # ALSO this part's kinda weird so let me run down what's going on:
