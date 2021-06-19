@@ -34,19 +34,21 @@ CALIBURN_STRING_TYPE_RE     = re.compile("str(ing)?(8|32)?|unicode")
 CALIBURN_MISC_TYPES         = ["void", "bool", "byte", "bfloat16"]
 
 CALIBURN_V_IDENTIFIER       = 1     # An identifier is a string of characters not escaped by " or '.
-CALIBURN_V_LITERAL          = 2     # A literal is either a number, string, or a boolean.
-CALIBURN_V_KEYWORD          = 3     # Denotes an existing keyword
-CALIBURN_V_END              = 4     # Denotes a ;
-CALIBURN_V_START_SCOPE      = 5     # Denotes a {
-CALIBURN_V_END_SCOPE        = 6     # Denotes a }
-CALIBURN_V_START_BRACKET    = 7     # Denotes a [
-CALIBURN_V_END_BRACKET      = 8     # Denotes a ]
-CALIBURN_V_START_PAREN      = 9     # Denotes a (
-CALIBURN_V_END_PAREN        = 10    # Denotes a )
-CALIBURN_V_LT_SIGN          = 11    # Denotes a <
-CALIBURN_V_GT_SIGN          = 12    # Denotes a >
-CALIBURN_V_PERIOD           = 13    # Denotes a .
-CALIBURN_V_COMMA            = 14    # Denotes a ,
-CALIBURN_V_COLON            = 15    # Denotes a :
-CALIBURN_V_LINE             = 16    # Denotes a |
-CALIBURN_V_OPERATOR         = 17    # Denotes an operator (=+-*/%^&|$!~)
+CALIBURN_V_LITERAL_STR      = 2     # A literal is either a number, string, or a boolean.
+CALIBURN_V_LITERAL_INT      = 3     # A literal is either a number, string, or a boolean.
+CALIBURN_V_LITERAL_BOOL     = 4     # A literal is either a number, string, or a boolean.
+CALIBURN_V_KEYWORD          = 5     # Denotes an existing keyword
+CALIBURN_V_END              = 6     # Denotes a ;
+CALIBURN_V_START_SCOPE      = 7     # Denotes a {
+CALIBURN_V_END_SCOPE        = 8     # Denotes a }
+CALIBURN_V_START_BRACKET    = 9     # Denotes a [
+CALIBURN_V_END_BRACKET      = 10    # Denotes a ]
+CALIBURN_V_START_PAREN      = 11    # Denotes a (
+CALIBURN_V_END_PAREN        = 12    # Denotes a )
+CALIBURN_V_LT_SIGN          = 13    # Denotes a <
+CALIBURN_V_GT_SIGN          = 14    # Denotes a >
+CALIBURN_V_PERIOD           = 15    # Denotes a .
+CALIBURN_V_COMMA            = 16    # Denotes a ,
+CALIBURN_V_COLON            = 17    # Denotes a :
+CALIBURN_V_LINE             = 18    # Denotes a |
+CALIBURN_V_OPERATOR         = 19    # Denotes an operator (=+-*/%^&|$!~)
