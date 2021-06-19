@@ -22,6 +22,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="main.py" />
+    <Compile Include="parser.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="syntax.py">
       <SubType>Code</SubType>
     </Compile>
