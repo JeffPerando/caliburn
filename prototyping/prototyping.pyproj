@@ -25,6 +25,9 @@
     <Compile Include="parser.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="spirv.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="syntax.py">
       <SubType>Code</SubType>
     </Compile>
