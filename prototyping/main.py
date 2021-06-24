@@ -44,6 +44,10 @@ def parseIdentifier(txt, cur) -> int:
     return tokenLen
 
 def tokenize(txt):
+    # Only used to tell humans where the token was in the source file
+    line = 1
+    col = 1
+
     cur = 0
     tokens = []
     miscTokenValues = {
@@ -68,7 +72,12 @@ def tokenize(txt):
 
     while cur < len(txt):
         # Avoid whitespace (note to future self: use the string " \t\n\r\f\v" when implementing this in C++)
-        while txt[cur].isspace(): cur += 1
+        while txt[cur].isspace():
+            if txt[cur] == '\n':
+                line += 1
+                col = 1
+            cur += 1
+            col += 1
         
         # Avoid comments
         if txt[cur] == "#":
@@ -76,19 +85,26 @@ def tokenize(txt):
             if txt[cur+1:cur+3] == "##":
                 cur += 3
                 while txt[cur:cur+3] != "###":
+                    if txt[cur] == '\n':
+                        line += 1
+                        col = 1
                     cur += 1
+                    col += 1
+                col += 3
                 cur += 3
             else:
                 while txt[cur] != '\n':
                     cur += 1
                 # Current will end up being on a newline; need to increment once more
                 cur += 1
+                line += 1
+                col = 1
             continue
         
         tokenID = miscTokenValues.get(txt[cur], 0)
 
         if tokenID and (not isOperator(txt[cur]) or not isOperator(txt[cur + 1])):
-            tokens.append((txt[cur], 1))
+            tokens.append((txt[cur], 1, line, col))
             cur += 1
             continue
         
@@ -130,8 +146,9 @@ def tokenize(txt):
         if tokenID == syntax.CALIBURN_V_IDENTIFIER and miscTokenValues.get(tokenStr, None):
             tokenID = syntax.CALIBURN_V_KEYWORD
 
-        tokens.append((tokenStr, tokenID))
+        tokens.append((tokenStr, tokenID, line, col))
         cur += tokenLen
+        col += tokenLen
 
     return tokens
 
@@ -145,7 +162,7 @@ def main(path="test.txt"):
     src = readFile(path)
     tokens = tokenize(src)
     for tk in tokens:
-        print(f"\'{tk[0]}\', {tk[1]}")
+        print(f"{tk}")
 
 if __name__ == "__main__":
     if CALIBURN_DEBUG_MODE:
