@@ -72,12 +72,14 @@ def tokenize(txt):
 
     while cur < len(txt):
         # Avoid whitespace (note to future self: use the string " \t\n\r\f\v" when implementing this in C++)
-        while txt[cur].isspace():
+        if txt[cur].isspace():
             if txt[cur] == '\n':
                 line += 1
                 col = 1
+            else:
+                col += 1
             cur += 1
-            col += 1
+            continue
         
         # Avoid comments
         if txt[cur] == "#":
