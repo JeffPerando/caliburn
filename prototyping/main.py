@@ -37,7 +37,7 @@ def parseInt(txt, cur):
         tokenLen += 1
     return tokenLen
 
-def parseIdentifier(txt, cur) -> int:
+def parseIdentifier(txt, cur):
     tokenLen = 1
     while isIdentifier(txt[cur + tokenLen]):
         tokenLen += 1
@@ -106,8 +106,9 @@ def tokenize(txt):
         tokenID = miscTokenValues.get(txt[cur], 0)
 
         if tokenID and (not isOperator(txt[cur]) or not isOperator(txt[cur + 1])):
-            tokens.append((txt[cur], 1, line, col))
+            tokens.append((txt[cur], tokenID, line, col))
             cur += 1
+            col += 1
             continue
         
         tokenLen = 1
