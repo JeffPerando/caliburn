@@ -108,7 +108,7 @@ Statement* Parser::parseScope()
 
 	tokens->consume();
 
-	ScopeStmnt* scope = new ScopeStmnt();
+	ScopeStatement* scope = new ScopeStatement();
 
 	while (tokens->current().identifier != CALIBURN_T_END_SCOPE)
 	{
@@ -158,7 +158,7 @@ Statement* Parser::parseIf()
 
 	tokens->consume();
 
-	ValueStmnt* condition = (ValueStmnt*)parseValue();
+	ValueStatement* condition = (ValueStatement*)parseValue();
 
 	if (tokens->current().identifier != CALIBURN_T_END_PAREN)
 	{
@@ -169,7 +169,7 @@ Statement* Parser::parseIf()
 
 	tokens->consume();
 
-	IfStmnt* parsed = new IfStmnt();
+	IfStatement* parsed = new IfStatement();
 
 	parsed->condition = condition;
 	parsed->ifBranch = parseLogic();
