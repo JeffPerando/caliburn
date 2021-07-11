@@ -121,4 +121,29 @@ namespace caliburn
 
 	};
 
+	struct ReturnStatement : public Statement
+	{
+		ValueStatement* val = nullptr;
+		
+		ReturnStatement() : Statement(0) {}
+
+		//TODO consider using phi instructions to optimize (may require code analysis)
+		uint32_t toSPIRV(SpirVAssembler* codeAsm)
+		{
+			if (val)
+			{
+				uint32_t retval = val->toSPIRV(codeAsm);
+
+				codeAsm->pushAll({ spirv::OpReturnValue(), retval });
+
+			}
+			else
+			{
+				codeAsm->push(spirv::OpReturn());
+			}
+			
+			return 0;
+		}
+	};
+
 }
