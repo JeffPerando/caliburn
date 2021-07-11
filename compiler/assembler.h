@@ -13,17 +13,11 @@
 
 namespace caliburn
 {
-	//I can't believe this stupid code works
-	template<typename T, T V>
-	struct typeWDefault
+	struct SSA
 	{
-		T value = V;
-		typeWDefault() {}
-		typeWDefault(T V)
-		{
-			value = V;
-		}
-		operator T() const { return value; }
+		uint32_t value = 0;
+		SSA() : value(0) {}
+		SSA(uint32_t v) : value(v) {}
 	};
 	/*
 	enum SSAType
@@ -59,17 +53,11 @@ namespace caliburn
 		STATIC
 	};
 
-	//Used for fields and the like; combines the name with its SSA
-	struct NamedSSA
-	{
-		std::string id = "";
-		uint32_t ssa = 0;
-	};
-
 	struct SpirVStack
 	{
 		SpirVStack* parent = nullptr;
-		std::vector<NamedSSA> fields;
+		uint32_t label = 0;
+		std::map<std::string, SSA> fields;
 		SpirVStack* child = nullptr;
 	};
 
@@ -77,7 +65,8 @@ namespace caliburn
 	{
 	private:
 		std::vector<SpvOp> ops = std::vector<SpvOp>(8192);
-		std::map<std::string, typeWDefault<uint32_t, 0>> typeAssigns;
+		std::map<std::string, SSA> typeAssigns;
+		SpirVStack* currentStack = nullptr;
 		uint32_t nextSSA = 0;
 		int optimizeLvl = 0;
 
@@ -92,12 +81,12 @@ namespace caliburn
 
 		uint32_t pushType(std::string name)
 		{
-			uint32_t ssa = typeAssigns[name];
+			uint32_t ssa = typeAssigns[name].value;
 
 			if (!ssa)
 			{
 				ssa = newAssign();
-				typeAssigns[name] = ssa;
+				typeAssigns[name] = SSA(ssa);
 				
 			}
 
@@ -132,6 +121,61 @@ namespace caliburn
 			ops.resize(ops.size() + copied, 0);
 			std::memcpy(ops.end()._Ptr - copied, str.c_str(), str.length());
 
+		}
+
+		void pushVarSetter(std::string name, uint32_t value)
+		{
+			if (!currentStack)
+			{
+				//TODO complain
+			}
+
+			SpirVStack* stack = currentStack;
+
+			while (stack)
+			{
+				uint32_t fieldSSA = stack->fields[name].value;
+
+				if (fieldSSA)
+				{
+					stack->fields[name] = SSA(value);
+					//TODO add phi instruction helper
+				}
+				else
+				{
+					stack = stack->parent;
+
+				}
+
+			}
+
+			//TODO complain
+
+		}
+
+		uint32_t getVar(std::string name)
+		{
+			if (!currentStack)
+			{
+				//TODO complain
+			}
+
+			SpirVStack* stack = currentStack;
+
+			while (stack)
+			{
+				uint32_t fieldSSA = stack->fields[name].value;
+
+				if (fieldSSA)
+				{
+					return fieldSSA;
+				}
+
+				stack = stack->parent;
+
+			}
+
+			return 0;
 		}
 
 		uint32_t* writeFile()
