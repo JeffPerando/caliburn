@@ -77,5 +77,8 @@
     <ClInclude Include="compilererr.h">
       <Filter>Header Files\caliburn</Filter>
     </ClInclude>
+    <ClInclude Include="assignstmnt.h">
+      <Filter>Header Files\caliburn</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
