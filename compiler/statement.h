@@ -13,7 +13,7 @@ namespace caliburn
 	/*
 	* A statement is the base class for the abstract syntax tree.
 	*/
-	class Statement
+	struct Statement
 	{
 	protected:
 		bool registered = false;
@@ -32,9 +32,8 @@ namespace caliburn
 
 	};
 
-	class ContextStmnt : public Statement
+	struct ContextStmnt : public Statement
 	{
-	public:
 		ContextStmnt* parent = nullptr;
 		ContextStmnt(int32_t id) : Statement(id) {}
 		~ContextStmnt() { Statement::~Statement(); }

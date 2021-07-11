@@ -7,7 +7,6 @@ namespace caliburn
 {
 	struct ValueStatement : public Statement
 	{
-	public:
 		ValueStatement(uint32_t t) : Statement(t) {}
 		~ValueStatement() { Statement::~Statement(); }
 
@@ -15,7 +14,6 @@ namespace caliburn
 
 	struct LiteralIntStmnt : public ValueStatement
 	{
-	public:
 		int32_t value = 0;
 
 		LiteralIntStmnt() : ValueStatement(0) {}

@@ -7,7 +7,6 @@ namespace caliburn
 {
 	struct FieldStatement : public Statement
 	{
-	public:
 		Visibility vis = Visibility::PUBLIC;
 		std::string name = "";
 		std::string type = "NONE";

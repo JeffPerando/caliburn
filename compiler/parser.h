@@ -2,7 +2,7 @@
 #pragma once
 
 #include "buffer.h"
-#include "Statement.h"
+#include "statement.h"
 #include "tokenizer.h"
 
 namespace caliburn
