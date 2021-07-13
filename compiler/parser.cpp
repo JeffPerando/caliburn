@@ -1,5 +1,8 @@
 
 #include "parser.h"
+
+#include "ctrlstmnt.h"
+#include "funcstmnt.h"
 #include "scopestmnt.h"
 
 //I'm so sorry
@@ -30,6 +33,30 @@ std::vector<Statement*>* Parser::parse(std::vector<Token>* tokenList)
 	}
 
 	return ast;
+}
+
+void Parser::parseIdentifierList(std::vector<std::string>& ids)
+{
+	while (true)
+	{
+		Token tkn = tokens->current();
+
+		if (tkn.identifier != CALIBURN_T_IDENTIFIER)
+		{
+			break;
+		}
+
+		ids.push_back(tkn.token);
+		tkn = tokens->next();
+
+		if (tkn.identifier == CALIBURN_T_COMMA)
+		{
+			tkn = tokens->next();
+			continue;
+		}
+
+	}
+
 }
 
 Statement* Parser::parseAny(std::initializer_list<caliburn::Statement* (caliburn::Parser::*)()> fns)
@@ -84,7 +111,6 @@ Statement* Parser::parseImport()
 
 	if (tkn.token != "import")
 	{
-		//TODO complain
 		return nullptr;
 	}
 
@@ -102,7 +128,6 @@ Statement* Parser::parseScope()
 
 	if (tkn.identifier != CALIBURN_T_START_SCOPE)
 	{
-		//TODO complain
 		return nullptr;
 	}
 
@@ -133,7 +158,6 @@ Statement* Parser::parseControl()
 
 	if (tkn.identifier != CALIBURN_T_KEYWORD)
 	{
-		//TODO complain
 		return nullptr;
 	}
 
@@ -147,7 +171,6 @@ Statement* Parser::parseIf()
 
 	if (tkn.token != "if")
 	{
-		//TODO complain
 		return nullptr;
 	}
 
@@ -182,4 +205,154 @@ Statement* Parser::parseIf()
 	}
 
 	return parsed;
+}
+
+Statement* Parser::parseFunction()
+{
+	Token tkn = tokens->current();
+
+	if (tkn.token != "def")
+	{
+		return nullptr;
+	}
+
+	tkn = tokens->next();
+
+	//parse optional visibility
+	Visibility vis = strToVis(tkn.token);
+
+	if (vis != Visibility::NONE)
+	{
+		tkn = tokens->next();
+
+	}
+
+	std::string type = tkn.token;//TODO resolve type?
+	std::string name = tokens->next().token;
+	std::vector<std::string> generics, gpuThreadData;
+
+	tkn = tokens->next();
+
+	//parse generic(s)
+	if (tkn.token == "<")
+	{
+		parseIdentifierList(generics);
+
+		if (generics.size() == 0)
+		{
+			//TODO complain
+		}
+
+		if (tokens->current().token != ">")
+		{
+			//TODO also complain
+		}
+
+		tkn = tokens->next();
+
+	}
+
+	//parse GPU threading data
+	if (tkn.token == "[")
+	{
+		parseIdentifierList(gpuThreadData);
+
+		if (gpuThreadData.size() == 0)
+		{
+			//TODO complain
+		}
+
+		if (tokens->current().token != "]")
+		{
+			//TODO also complain
+		}
+
+		tkn = tokens->next();
+
+	}
+
+	if (tkn.token != "(")
+	{
+		return nullptr;
+	}
+
+	//TODO parse arg list
+
+	tkn = tokens->next();
+
+	if (tkn.token != ")")
+	{
+		return nullptr;
+	}
+
+	Statement* body = parseLogic();
+
+	if (!body)
+	{
+		return nullptr;
+	}
+
+	FunctionStatement* func = new FunctionStatement();
+
+	//func->type = type;
+	func->name = name;
+	func->funcBody = body;
+	//TODO finish
+
+	return func;
+}
+
+Statement* Parser::parseVariable()
+{
+	std::string type;
+	//the CLOSEST I'll ever get to template hell
+	std::vector<std::pair<std::string, ValueStatement*>> vars;
+
+	Token tkn = tokens->current();
+
+	if (tkn.token != "let")
+	{
+		//TODO resolve type
+
+		return nullptr;
+	}
+
+	while (true)
+	{
+		std::string name;
+		ValueStatement* initValue = nullptr;
+		tkn = tokens->next();
+
+		if (tkn.identifier != CALIBURN_T_IDENTIFIER)
+		{
+			return nullptr;
+		}
+
+		name = tkn.token;
+
+		tkn = tokens->next();
+
+		if (tkn.token == "=")
+		{
+			tokens->consume();
+			initValue = (ValueStatement*)parseValue();
+
+		}
+
+		vars.push_back(std::pair<std::string, ValueStatement*>(name, initValue));
+
+		//the parse function will stop on the first non-valid token
+		if (tokens->current().identifier == CALIBURN_T_COMMA)
+		{
+			continue;
+		}
+
+		break;
+	}
+
+	if (vars.size() == 0)
+	{
+		return nullptr;
+	}
+
 }

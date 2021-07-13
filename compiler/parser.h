@@ -14,6 +14,8 @@ namespace caliburn
 
 		Statement* parseAny(std::initializer_list<caliburn::Statement* (caliburn::Parser::*)()> fns);
 
+		void parseIdentifierList(std::vector<std::string>& ids);
+
 		Statement* parseDecl();
 		
 		Statement* parseImport();
@@ -43,7 +45,7 @@ namespace caliburn
 		Statement* parseScope();
 
 		//called a "statement" in the CFG
-		//variable, setter, control flow, or scope
+		//variable, setter, control flow, scope, or function call
 		Statement* parseLogic();
 
 		Statement* parseControl();
