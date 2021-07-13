@@ -53,6 +53,7 @@ namespace caliburn
 
 	enum Visibility
 	{
+		NONE,
 		PUBLIC,
 		PROTECTED,
 		PRIVATE,
@@ -63,6 +64,22 @@ namespace caliburn
 		STATIC
 
 	};
+
+	Visibility strToVis(std::string str)
+	{
+		if (str == "public")
+			return Visibility::PUBLIC;
+		if (str == "protected")
+			return Visibility::PROTECTED;
+		if (str == "private")
+			return Visibility::PRIVATE;
+		if (str == "shared")
+			return Visibility::SHARED;
+		if (str == "static")
+			return Visibility::STATIC;
+		
+		return NONE;
+	}
 
 	struct SpirVPhi
 	{
