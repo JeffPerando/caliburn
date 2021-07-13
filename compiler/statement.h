@@ -10,6 +10,8 @@
 
 namespace caliburn
 {
+	constexpr auto CALIBURN_RETURN_VAR("__retval__");
+
 	/*
 	* A statement is the base class for the abstract syntax tree.
 	*/
@@ -26,9 +28,13 @@ namespace caliburn
 		/*
 		Used for adding the assembly code to the SPIR-V file in progress.
 
-		Returns the assignment that other instructions will use to point to this statement. 0 is not valid.
+		Returns the SSA that other instructions will use to point to this statement, or 0 if one wasn't made.
 		*/
 		virtual uint32_t toSPIRV(SpirVAssembler* codeAsm) = 0;
+
+		//virtual bool isRuntimeConst() = 0;
+
+		//virtual void evaluate() = 0;
 
 	};
 

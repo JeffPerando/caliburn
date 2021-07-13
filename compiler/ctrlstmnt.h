@@ -42,7 +42,7 @@ namespace caliburn
 				});
 
 			ifBranch->toSPIRV(codeAsm);
-
+			
 			codeAsm->push(spirv::OpBranch());
 			codeAsm->push(endSSA);
 
@@ -127,13 +127,13 @@ namespace caliburn
 		
 		ReturnStatement() : Statement(0) {}
 
-		//TODO consider using phi instructions to optimize (may require code analysis)
 		uint32_t toSPIRV(SpirVAssembler* codeAsm)
 		{
 			if (val)
 			{
 				uint32_t retval = val->toSPIRV(codeAsm);
 
+				//codeAsm->pushVarSetter(CALIBURN_RETURN_VAR, retval);
 				codeAsm->pushAll({ spirv::OpReturnValue(), retval });
 
 			}
