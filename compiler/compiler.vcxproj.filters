@@ -29,14 +29,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="caliburn.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="syntax.h">
       <Filter>Header Files\caliburn</Filter>
-    </ClInclude>
-    <ClInclude Include="tokenizer.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="parser.h">
       <Filter>Header Files\caliburn</Filter>
@@ -78,6 +72,9 @@
       <Filter>Header Files\caliburn</Filter>
     </ClInclude>
     <ClInclude Include="assignstmnt.h">
+      <Filter>Header Files\caliburn</Filter>
+    </ClInclude>
+    <ClInclude Include="tokenizer.h">
       <Filter>Header Files\caliburn</Filter>
     </ClInclude>
   </ItemGroup>
