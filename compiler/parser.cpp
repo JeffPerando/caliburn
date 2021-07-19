@@ -51,7 +51,7 @@ void Parser::parseIdentifierList(std::vector<std::string>& ids)
 
 		if (tkn.identifier == CALIBURN_T_COMMA)
 		{
-			tkn = tokens->next();
+			tokens->consume();
 			continue;
 		}
 
