@@ -36,9 +36,9 @@ namespace caliburn
 		}
 
 		//fetch upcoming
-		T peek()
+		T peek(size_t offset = 1)
 		{
-			return vec->at(index + 1);
+			return vec->at(index + offset);
 		}
 
 		//increment
