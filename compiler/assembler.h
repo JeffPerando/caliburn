@@ -21,6 +21,12 @@ namespace caliburn
 		SSA(uint32_t v) : value(v) {}
 	};
 
+	struct TypedSSA
+	{
+		uint32_t typeID;
+		SSA value;
+	};
+
 	struct SpirVPhiOption
 	{
 		uint32_t label = 0;
