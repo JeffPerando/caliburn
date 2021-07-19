@@ -10,39 +10,32 @@
 
 namespace caliburn
 {
-	class CompiledType
+	struct CompiledType
 	{
+		std::string canonName;
 		//in bytes
-		virtual size_t size() const = 0;
-
-		virtual int32_t attribs() const = 0;
+		size_t size;
+		int32_t attribs;
 
 		virtual bool isCompatible(Operator op) const = 0;
 
-		virtual uint32_t typeOpSpirV(SpirVAssembler* codeAsm) const = 0;
+		virtual uint32_t typeDeclSpirV(SpirVAssembler* codeAsm) const = 0;
 
-		virtual uint32_t mathOpSpirV(Operator op, CompiledType* otherType) const = 0;
+		virtual uint32_t mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA) const = 0;
 
 	};
 
-	class IntSType : public CompiledType
+	struct IntSType : public CompiledType
 	{
-		size_t intLen;
-
 		IntSType() : IntSType(4) {}
-		IntSType(size_t s) : intLen(s) {}
-
-		size_t size() const
+		IntSType(size_t s)
 		{
-			return intLen;
+			size = s;
+			canonName = "int" + (s * 8);
+			attribs = TypeAttrib::PRIMITIVE | TypeAttrib::SIGNED;
 		}
 
-		int32_t attribs() const
-		{
-			return TypeAttrib::PRIMITIVE | TypeAttrib::SIGNED;
-		}
-
-		bool isCompatible(Operator op) const
+		bool isCompatible(Operator op, CompiledType* rType) const
 		{
 			return op != Operator::APPEND;
 		}
