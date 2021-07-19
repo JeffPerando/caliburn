@@ -11,7 +11,7 @@
 namespace caliburn
 {
 	constexpr auto CALIBURN_RETURN_VAR("__retval__");
-
+	
 	/*
 	* A statement is the base class for the abstract syntax tree.
 	*/
@@ -43,13 +43,13 @@ namespace caliburn
 		ContextStmnt* parent = nullptr;
 		ContextStmnt(int32_t id) : Statement(id) {}
 		~ContextStmnt() { Statement::~Statement(); }
-
+		/*
 		virtual uint32_t addField(std::string name, Visibility vis) = 0;
 
 		virtual uint32_t resolveType(std::string id) = 0;
 
 		virtual uint32_t resolveName(std::string id) = 0;
-
+		*/
 	};
 
 }
