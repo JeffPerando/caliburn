@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "spirv.h"
+#include "type.h"
 
 namespace caliburn
 {
@@ -110,206 +111,25 @@ namespace caliburn
 			return nextSSA;
 		}
 
-		uint32_t pushType(TypeData* type)
-		{
-			uint32_t ssa = typeAssigns[type->getFullName()].value;
+		void push(uint32_t op);
 
-			if (!ssa)
-			{
-				ssa = newAssign();
-				typeAssigns[type->getFullName()] = SSA(ssa);
-				
-			}
+		void pushAll(std::initializer_list<SpvOp> args);
 
-			return ssa;
-		}
+		void pushStr(std::string str);
 
-		uint32_t pushSSA(SpvOp op)
-		{
-			auto ssa = newAssign();
+		uint32_t pushType(TypeData* type);
 
-			ops.push_back(op);
-			ops.push_back(ssa);
+		uint32_t pushSSA(SpvOp op);
 
-			return ssa;
-		}
+		void startScope(uint32_t label);
 
-		void push(uint32_t op)
-		{
-			ops.push_back(op);
+		void endScope();
 
-		}
+		void pushVarSetter(std::string name, uint32_t value);
 
-		void pushAll(std::initializer_list<SpvOp> args)
-		{
-			ops.insert(ops.end(), args);
-			
-		}
+		uint32_t getVar(std::string name);
 
-		void pushStr(std::string str)
-		{
-			size_t copied = (((str.length() & ~0x3) >> 2) + ((str.length() & 0x3) > 0 * 1) + 1);
-			ops.resize(ops.size() + copied, 0);
-			std::memcpy(ops.end()._Ptr - copied, str.c_str(), str.length());
-
-		}
-
-		void startScope(uint32_t label)
-		{
-			SpirVStack* scope = new SpirVStack();
-
-			scope->label = label;
-
-			if (currentStack)
-			{
-				currentStack->child = scope;
-				scope->parent = currentStack;
-				currentStack = scope;
-				
-			}
-			else
-			{
-				currentStack = scope;
-
-			}
-
-		}
-
-		void endScope()
-		{
-			SpirVStack* stack = currentStack;
-
-			if (!stack)
-			{
-				//TODO complain
-				return;
-			}
-
-			if (stack->child)
-			{
-				//TODO complain
-				return;
-			}
-
-			stack->parent->child = nullptr;
-			currentStack = stack->parent;
-
-			delete stack;
-
-			if (!currentStack)
-			{
-				return;
-			}
-
-			for (auto field : currentStack->fieldPhis)
-			{
-				SpirVPhi* phi = field.second;
-
-				if (phi->options.size() < 2)
-				{
-					continue;
-				}
-
-				auto options = phi->options;
-
-				auto fieldValue = newAssign();
-
-				pushAll({ spirv::OpPhi(options.size() * 2), phi->type, fieldValue });
-
-				for (auto option : phi->options)
-				{
-					pushAll({ option.label, option.ssa });
-
-				}
-
-				pushVarSetter(field.first, fieldValue);
-
-			}
-
-		}
-
-		void pushVarSetter(std::string name, uint32_t value)
-		{
-			if (!currentStack)
-			{
-				//TODO complain
-				return;
-			}
-
-			SpirVStack* stack = currentStack;
-			SpirVStack* foundStack = nullptr;
-			uint32_t bottomLabel = stack->label;
-
-			while (stack)
-			{
-				uint32_t fieldSSA = stack->fields[name].value;
-
-				if (fieldSSA)
-				{
-					foundStack = stack;
-					break;
-				}
-				else
-				{
-					stack = stack->parent;
-
-				}
-
-			}
-
-			if (!foundStack)
-			{
-				foundStack = currentStack;
-			}
-
-			foundStack->fields[name] = SSA(value);
-			SpirVPhi* phi = foundStack->fieldPhis[name];
-
-			if (!phi)
-			{
-				phi = new SpirVPhi();
-				foundStack->fieldPhis[name] = phi;
-
-			}
-
-			phi->options.push_back(SpirVPhiOption(bottomLabel, value));
-
-		}
-
-		uint32_t getVar(std::string name)
-		{
-			if (!currentStack)
-			{
-				//TODO complain
-			}
-
-			SpirVStack* stack = currentStack;
-
-			while (stack)
-			{
-				uint32_t fieldSSA = stack->fields[name].value;
-
-				if (fieldSSA)
-				{
-					return fieldSSA;
-				}
-
-				stack = stack->parent;
-
-			}
-
-			return 0;
-		}
-
-		uint32_t* writeFile()
-		{
-			ops.push_back(spirv::MagicNumber());
-			ops.push_back(spirv::Version(1, 0));
-			ops.push_back(CALIBURN_MAGIC_NUMBER);
-			ops.push_back(0);//REMEMBER TO SET THIS TO THE BOUNDS
-			ops.push_back(0);
-
-		}
+		uint32_t* writeFile();
 
 	};
 }
