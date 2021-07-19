@@ -89,10 +89,8 @@ namespace caliburn
 		Parser() {}
 		~Parser() {}
 
-		std::vector<Statement*>* parse(std::vector<Token>* tokenList);
+		void parse(std::vector<Token>* tokenList, std::vector<Statement*>* ast);
 
 	};
-
-	void parse(buffer<Token>* tokens, std::vector<Statement*>* ast);
 
 }

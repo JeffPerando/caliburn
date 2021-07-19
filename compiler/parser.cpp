@@ -8,13 +8,11 @@
 //I'm so sorry
 using namespace caliburn;
 
-std::vector<Statement*>* Parser::parse(std::vector<Token>* tokenList)
+void Parser::parse(std::vector<Token>* tokenList, std::vector<Statement*>* ast)
 {
 	//don't want to pollute the heap too much
 	auto bufferTmp = buffer<Token>(tokenList);
 	tokens = &bufferTmp;
-
-	auto ast = new std::vector<Statement*>();
 
 	while (tokens->hasNext())
 	{
@@ -32,7 +30,6 @@ std::vector<Statement*>* Parser::parse(std::vector<Token>* tokenList)
 
 	}
 
-	return ast;
 }
 
 void Parser::parseIdentifierList(std::vector<std::string>& ids)

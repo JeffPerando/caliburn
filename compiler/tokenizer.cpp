@@ -67,7 +67,7 @@ bool caliburn::isOperator(char chr)
 
 //TODO use 32-bit wide chars for dat UTF-8 support
 //or, y'know, find a UTF-8 library (NOT BOOST)
-void caliburn::tokenize(std::string txt, std::vector<Token>* tokens)
+void caliburn::tokenize(std::string txt, std::vector<Token>& tokens)
 {
 	uint64_t line = 1, col = 1;
 	uint64_t cur = 0;
@@ -138,7 +138,7 @@ void caliburn::tokenize(std::string txt, std::vector<Token>* tokens)
 
 		if (tokenItr != tokenValues.end() && (!isOperator(txt[cur]) || !isOperator(txt[cur + 1])))
 		{
-			tokens->push_back(Token(std::string(1, txt[cur]), tokenID, line, col));
+			tokens.push_back(Token(std::string(1, txt[cur]), tokenID, line, col));
 			cur += 1;
 			col += 1;
 			continue;
@@ -193,7 +193,7 @@ void caliburn::tokenize(std::string txt, std::vector<Token>* tokens)
 
 		}
 		
-		tokens->push_back(Token(tokenStr, tokenID, line, col));
+		tokens.push_back(Token(tokenStr, tokenID, line, col));
 		cur += tokenLen;
 		col += tokenLen;
 

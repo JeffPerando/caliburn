@@ -36,6 +36,6 @@ namespace caliburn
 
 	bool isOperator(char chr);
 
-	void tokenize(std::string txt, std::vector<Token>* tokens);
+	void tokenize(std::string txt, std::vector<Token>& tokens);
 
 }
