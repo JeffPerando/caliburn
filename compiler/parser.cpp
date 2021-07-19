@@ -356,7 +356,7 @@ Statement* Parser::parseAnyVar()
 	return parseVariable(true);
 }
 
-Statement* Parser::parseVariable(bool implicitAllowed = false)
+Statement* Parser::parseVariable(bool implicitAllowed)
 {
 	TypeData* type = nullptr;
 	std::vector<std::string> vars;
