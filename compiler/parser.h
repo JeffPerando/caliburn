@@ -4,6 +4,7 @@
 #include "buffer.h"
 #include "statement.h"
 #include "tokenizer.h"
+#include "type.h"
 
 namespace caliburn
 {
@@ -12,9 +13,15 @@ namespace caliburn
 	private:
 		buffer<Token>* tokens = nullptr;
 
+		void parseIdentifierList(std::vector<std::string>& ids);
+
+		void parseGenerics(std::vector<TypeData*>& generics);
+
 		Statement* parseAny(std::initializer_list<caliburn::Statement* (caliburn::Parser::*)()> fns);
 
-		void parseIdentifierList(std::vector<std::string>& ids);
+		std::string parseNamespace();
+
+		TypeData* parseTypeName();
 
 		Statement* parseDecl();
 		
@@ -38,7 +45,9 @@ namespace caliburn
 
 		Statement* parseMethod();
 
-		Statement* parseVariable();
+		Statement* parseAnyVar();
+
+		Statement* parseVariable(bool implicitAllowed = true);
 
 		Statement* parseSetter();
 

@@ -35,22 +35,7 @@ namespace caliburn
 		DataType, LogicOp, Lvalue, Rvalue
 	};
 	*/
-	enum Operator
-	{
-		//==, >, <
-		EQUALS, GREATER, LESSER,
-		//+, -, *, /
-		ADD, SUB, MUL, DIV,
-		//%, ^, &, |
-		MOD, POW, BIT_AND, BIT_OR,
-		//$, ++, //
-		BIT_XOR, APPEND, INTDIV,
-		//!, ~, -
-		BOOL_NOT, BIT_NOT, NEGATE,
-		//|x|, x[n]
-		ABS, ARRAY_ACCESS
-	};
-
+	
 	enum Visibility
 	{
 		NONE,
@@ -125,14 +110,14 @@ namespace caliburn
 			return nextSSA;
 		}
 
-		uint32_t pushType(std::string name)
+		uint32_t pushType(TypeData* type)
 		{
-			uint32_t ssa = typeAssigns[name].value;
+			uint32_t ssa = typeAssigns[type->getFullName()].value;
 
 			if (!ssa)
 			{
 				ssa = newAssign();
-				typeAssigns[name] = SSA(ssa);
+				typeAssigns[type->getFullName()] = SSA(ssa);
 				
 			}
 

@@ -18,7 +18,8 @@ namespace caliburn
 
 	struct FuncArg
 	{
-		std::string type, name;
+		TypeData* type = nullptr;
+		std::string name;
 		ValueStatement* argDefault = nullptr;
 		uint32_t ssa = 0;
 
@@ -26,7 +27,7 @@ namespace caliburn
 
 	struct FunctionStatement : public Statement
 	{
-		std::string returnType = "";
+		TypeData* returnType = nullptr;
 		std::string name = "FORGOT TO NAME YOUR FUNCTION!";
 		uint32_t ssa = 0;
 		std::vector<FuncArg> args;

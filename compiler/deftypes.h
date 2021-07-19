@@ -5,61 +5,48 @@
 #include <string>
 #include <vector>
 
-#include "spirv.h"
+#include "assembler.h"
+#include "type.h"
 
 namespace caliburn
 {
-	enum TypeAttrib
+	class CompiledType
 	{
-		//simple data types like integers
-		PRIMITIVE =		0b00000001,
-		//has the concept of a negative
-		SIGNED =		0b00000010,
-		//is an IEEE 16-bit (or higher) floating point
-		FLOAT =			0b00000100,
-		//is a generic, e.g. array<T> or list<T>
-		GENERIC =		0b00001000,
-		//is considered a finite set of elements, like a buffer or array
-		//can be accessed using [], e.g. v[x]
-		COMPOSITE =		0b00010000,
-		//is, well, atomic
-		ATOMIC =		0b00100000
-	};
+		//in bytes
+		virtual size_t size() const = 0;
 
-	struct TypeData
-	{
-		std::string const name;
-		uint32_t const attribs;
-		//in BYTES. B Y T E S (and no I don't expect a 4 MB+ data type)
-		uint32_t const typicalSize;
-		uint32_t const defOp;
-		
-		TypeData(std::string n, uint32_t a, uint32_t s, uint32_t op) :
-			name(n), attribs(a), typicalSize(s), defOp(op) {}
+		virtual int32_t attribs() const = 0;
+
+		virtual bool isCompatible(Operator op) const = 0;
+
+		virtual uint32_t typeOpSpirV(SpirVAssembler* codeAsm) const = 0;
+
+		virtual uint32_t mathOpSpirV(Operator op, CompiledType* otherType) const = 0;
 
 	};
 
-	struct GenericType : public TypeData
+	class IntSType : public CompiledType
 	{
-		//pls treat as read-only ty
-		std::vector<TypeData*> generics = std::vector<TypeData*>(4);
+		size_t intLen;
 
-		GenericType(std::string n, uint32_t a, uint32_t s, uint32_t op, std::vector<TypeData*>* gs) :
-			TypeData(n, a | GENERIC, s, op)
+		IntSType() : IntSType(4) {}
+		IntSType(size_t s) : intLen(s) {}
+
+		size_t size() const
 		{
-			generics.insert(generics.end(), gs->begin(), gs->end());
-
+			return intLen;
 		}
-	};
 
-	class IntType : public TypeData
-	{
-		IntType(std::string n, uint32_t a, uint32_t s) :
-			TypeData(n, a, s, spirv::OpTypeInt()) {}
-	};
+		int32_t attribs() const
+		{
+			return TypeAttrib::PRIMITIVE | TypeAttrib::SIGNED;
+		}
 
-	static const std::map<std::string, TypeData> defaultTypes = {
-		{"int", TypeData("int", PRIMITIVE | SIGNED, 4, spirv::OpTypeInt())}
+		bool isCompatible(Operator op) const
+		{
+			return op != Operator::APPEND;
+		}
+
 	};
 
 }

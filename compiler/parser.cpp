@@ -59,6 +59,34 @@ void Parser::parseIdentifierList(std::vector<std::string>& ids)
 
 }
 
+void Parser::parseGenerics(std::vector<TypeData*>& generics)
+{
+	if (tokens->current().identifier == CALIBURN_T_LT_SIGN)
+	{
+		tokens->consume();
+
+		while (true)
+		{
+			generics.push_back(parseTypeName());
+
+			Token tkn = tokens->current();
+
+			if (tkn.identifier == CALIBURN_T_GT_SIGN)
+			{
+				tokens->consume();
+				break;
+			}
+			else if (tkn.identifier == CALIBURN_T_COMMA)
+			{
+				continue;
+			}
+
+			//TODO complain
+		}
+
+	}
+}
+
 Statement* Parser::parseAny(std::initializer_list<caliburn::Statement* (caliburn::Parser::*)()> fns)
 {
 	/*
@@ -88,6 +116,43 @@ Statement* Parser::parseAny(std::initializer_list<caliburn::Statement* (caliburn
 	}
 
 	return nullptr;
+}
+
+std::string Parser::parseNamespace()
+{
+	if (tokens->current().identifier == CALIBURN_T_IDENTIFIER &&
+		tokens->peek().identifier == CALIBURN_T_COLON)
+	{
+		Token tkn = tokens->current();
+		tokens->consume(2);
+		return tkn.token;
+	}
+
+	return "";
+}
+
+TypeData* Parser::parseTypeName()
+{
+	std::string moduleName = parseNamespace();
+
+	Token tkn = tokens->current();
+
+	if (tkn.identifier != CALIBURN_T_IDENTIFIER)
+	{
+		//TODO complain?
+		return nullptr;
+	}
+
+	tokens->consume();
+
+	TypeData* type = new TypeData();
+
+	type->mod = moduleName;
+	type->name = tkn.token;
+
+	parseGenerics(type->generics);
+
+	return type;
 }
 
 Statement* Parser::parseDecl()
@@ -149,7 +214,7 @@ Statement* Parser::parseScope()
 Statement* Parser::parseLogic()
 {
 	return parseAny({ &Parser::parseControl, &Parser::parseScope,
-		&Parser::parseVariable, &Parser::parseSetter });
+		&Parser::parseAnyVar, &Parser::parseSetter });
 }
 
 Statement* Parser::parseControl()
@@ -227,30 +292,14 @@ Statement* Parser::parseFunction()
 
 	}
 
-	std::string type = tkn.token;//TODO resolve type?
-	std::string name = tokens->next().token;
-	std::vector<std::string> generics, gpuThreadData;
+	TypeData* type = parseTypeName();
+	std::string name = tokens->current().token;
+	std::vector<TypeData*> generics;
+	std::vector<std::string> gpuThreadData;
+	
+	tokens->consume();
 
-	tkn = tokens->next();
-
-	//parse generic(s)
-	if (tkn.token == "<")
-	{
-		parseIdentifierList(generics);
-
-		if (generics.size() == 0)
-		{
-			//TODO complain
-		}
-
-		if (tokens->current().token != ">")
-		{
-			//TODO also complain
-		}
-
-		tkn = tokens->next();
-
-	}
+	parseGenerics(generics);
 
 	//parse GPU threading data
 	if (tkn.token == "[")
@@ -302,57 +351,52 @@ Statement* Parser::parseFunction()
 	return func;
 }
 
-Statement* Parser::parseVariable()
+Statement* Parser::parseAnyVar()
 {
-	std::string type;
-	//the CLOSEST I'll ever get to template hell
-	std::vector<std::pair<std::string, ValueStatement*>> vars;
+	return parseVariable(true);
+}
+
+Statement* Parser::parseVariable(bool implicitAllowed = false)
+{
+	TypeData* type = nullptr;
+	std::vector<std::string> vars;
+	ValueStatement* defVal = nullptr;
 
 	Token tkn = tokens->current();
 
-	if (tkn.token != "let")
+	if (tkn.identifier == CALIBURN_T_KEYWORD)
 	{
-		//TODO resolve type
-
-		return nullptr;
-	}
-
-	while (true)
-	{
-		std::string name;
-		ValueStatement* initValue = nullptr;
-		tkn = tokens->next();
-
-		if (tkn.identifier != CALIBURN_T_IDENTIFIER)
+		if (tkn.token == "let" && implicitAllowed)
 		{
+			tokens->consume();
+
+		}
+		else
+		{
+			//TODO complain
 			return nullptr;
 		}
 
-		name = tkn.token;
-
-		tkn = tokens->next();
-
-		if (tkn.token == "=")
-		{
-			tokens->consume();
-			initValue = (ValueStatement*)parseValue();
-
-		}
-
-		vars.push_back(std::pair<std::string, ValueStatement*>(name, initValue));
-
-		//the parse function will stop on the first non-valid token
-		if (tokens->current().identifier == CALIBURN_T_COMMA)
-		{
-			continue;
-		}
-
-		break;
 	}
+	else
+	{
+		type = parseTypeName();
+
+	}
+
+	parseIdentifierList(vars);
 
 	if (vars.size() == 0)
 	{
+		//TODO complain
 		return nullptr;
+	}
+
+	if (tokens->current().token == "=")
+	{
+		tokens->consume();
+		defVal = (ValueStatement*)parseValue();
+
 	}
 
 }

@@ -77,5 +77,11 @@
     <ClInclude Include="tokenizer.h">
       <Filter>Header Files\caliburn</Filter>
     </ClInclude>
+    <ClInclude Include="type.h">
+      <Filter>Header Files\caliburn</Filter>
+    </ClInclude>
+    <ClInclude Include="module.h">
+      <Filter>Header Files\caliburn</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

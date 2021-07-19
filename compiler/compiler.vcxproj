@@ -160,6 +160,7 @@
     <ClInclude Include="fieldstmnt.h" />
     <ClInclude Include="ctrlstmnt.h" />
     <ClInclude Include="funcstmnt.h" />
+    <ClInclude Include="module.h" />
     <ClInclude Include="parser.h" />
     <ClInclude Include="scopestmnt.h" />
     <ClInclude Include="spirv.h" />
@@ -167,6 +168,7 @@
     <ClInclude Include="syntax.h" />
     <ClInclude Include="tokenizer.h" />
     <ClInclude Include="topstmnt.h" />
+    <ClInclude Include="type.h" />
     <ClInclude Include="valuestmnt.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
