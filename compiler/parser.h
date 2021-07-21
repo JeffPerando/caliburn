@@ -8,8 +8,6 @@
 
 namespace caliburn
 {
-	using ParseMethod = Statement*(Parser::*)();
-
 	class Parser
 	{
 	private:
@@ -94,5 +92,7 @@ namespace caliburn
 		void parse(std::vector<Token>* tokenList, std::vector<Statement*>* ast);
 
 	};
+
+	using ParseMethod = Statement * (Parser::*)();
 
 }
