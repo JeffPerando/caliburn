@@ -8,6 +8,8 @@
 
 namespace caliburn
 {
+	typedef ParseMethod;
+
 	class Parser
 	{
 	private:
@@ -22,6 +24,8 @@ namespace caliburn
 		std::string parseNamespace();
 
 		ParsedType* parseTypeName();
+
+		bool parseSemicolon();
 
 		Statement* parseDecl();
 		

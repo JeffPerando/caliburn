@@ -2,6 +2,7 @@
 #include "parser.h"
 
 #include "ctrlstmnt.h"
+#include "miscstmt.h"
 #include "funcstmnt.h"
 #include "scopestmnt.h"
 
@@ -152,9 +153,24 @@ ParsedType* Parser::parseTypeName()
 	return type;
 }
 
+bool Parser::parseSemicolon()
+{
+	//here because we need the line/column data
+	Token tkn = tokens->current();
+
+	if (tkn.identifier == CALIBURN_T_END)
+	{
+		tokens->consume();
+		return true;
+	}
+
+	//TODO complain
+	return false;
+}
+
 Statement* Parser::parseDecl()
 {
-	return parseAny({
+	Statement* stmt = parseAny({
 		&Parser::parseLogic,
 		&Parser::parseFunction,
 		&Parser::parseShader,
@@ -165,24 +181,85 @@ Statement* Parser::parseDecl()
 		&Parser::parseNamespaceDef,
 		&Parser::parseDescriptor,
 		&Parser::parseStruct });
+
+	if (!parseSemicolon())
+	{
+		//TODO complain
+	}
+
+	return stmt;
 }
 
 Statement* Parser::parseImport()
 {
-	Token tkn = tokens->current();
+	if (tokens->current() != "import")
+	{
+		return nullptr;
+	}
 
-	if (tkn.str != "import")
+	Token importMod = tokens->next();
+	tokens->consume();
+
+	return new ImportStatement(importMod);
+}
+
+Statement* Parser::parseUsing()
+{
+	if (tokens->current() != "using")
+	{
+		return nullptr;
+	}
+
+	Token usedNamespace = tokens->next();
+	tokens->consume();
+
+	return new UsingStatement(usedNamespace);
+}
+
+Statement* Parser::parseTypedef()
+{
+	if (tokens->current() != "type")
+	{
+		return nullptr;
+	}
+
+	if (tokens->next().identifier != CALIBURN_T_IDENTIFIER)
+	{
+		return nullptr;
+	}
+
+	std::string name = tokens->current();
+
+	if (tokens->next() != "=")
 	{
 		return nullptr;
 	}
 
 	tokens->consume();
 
-	//TODO create import statement
-	return nullptr;
+	ParsedType* aliasedType = parseTypeName();
+
+	auto stmt = new TypedefStatement();
+	
+	stmt->name = name;
+	stmt->actualType = aliasedType;
+
+	return stmt;
 }
 
 //TODO more parser methods
+
+/*
+Statement* parseNamespaceDef();
+
+Statement* parseShader();
+
+Statement* parseDescriptor();
+
+Statement* parseStruct();
+
+Statement* parseClass();
+*/
 
 Statement* Parser::parseScope()
 {
@@ -284,26 +361,19 @@ Statement* Parser::parseFor()
 	tokens->consume();
 
 	Statement* pre = parseLogic();
-	ValueStatement* cond = (ValueStatement*)parseValue();
+	parseSemicolon();
 
-	if (tokens->current().identifier != CALIBURN_T_END)
-	{
-		//TODO complain
-		delete pre;
-		delete cond;
-		return nullptr;
-	}
+	ValueStatement* cond = (ValueStatement*)parseValue();
+	parseSemicolon();
 
 	Statement* post = parseLogic();
 
 	if (tokens->current().identifier != CALIBURN_T_END_PAREN)
 	{
-		//TODO complain
-		delete pre;
-		delete cond;
-		delete post;
 		return nullptr;
 	}
+
+	tokens->consume();
 
 	Statement* loop = parseLogic();
 
