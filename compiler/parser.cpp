@@ -43,7 +43,7 @@ void Parser::parseIdentifierList(std::vector<std::string>& ids)
 			break;
 		}
 
-		ids.push_back(tkn.token);
+		ids.push_back(tkn.str);
 		tkn = tokens->next();
 
 		if (tkn.identifier == CALIBURN_T_COMMA)
@@ -84,7 +84,7 @@ void Parser::parseGenerics(std::vector<ParsedType*>& generics)
 	}
 }
 
-Statement* Parser::parseAny(std::initializer_list<caliburn::Statement* (caliburn::Parser::*)()> fns)
+Statement* Parser::parseAny(std::initializer_list<ParseMethod> fns)
 {
 	/*
 	this code is really smart, and stupid. at the same time.
@@ -122,7 +122,7 @@ std::string Parser::parseNamespace()
 	{
 		Token tkn = tokens->current();
 		tokens->consume(2);
-		return tkn.token;
+		return tkn.str;
 	}
 
 	return "";
@@ -145,7 +145,7 @@ ParsedType* Parser::parseTypeName()
 	ParsedType* type = new ParsedType();
 
 	type->mod = moduleName;
-	type->name = tkn.token;
+	type->name = tkn.str;
 
 	parseGenerics(type->generics);
 
@@ -171,7 +171,7 @@ Statement* Parser::parseImport()
 {
 	Token tkn = tokens->current();
 
-	if (tkn.token != "import")
+	if (tkn.str != "import")
 	{
 		return nullptr;
 	}
@@ -231,7 +231,7 @@ Statement* Parser::parseIf()
 {
 	Token tkn = tokens->current();
 
-	if (tkn.token != "if")
+	if (tkn.str != "if")
 	{
 		return nullptr;
 	}
@@ -259,7 +259,7 @@ Statement* Parser::parseIf()
 	parsed->condition = condition;
 	parsed->ifBranch = parseLogic();
 
-	if (tokens->current().token == "else")
+	if (tokens->current().str == "else")
 	{
 		tokens->consume();
 		parsed->elseBranch = parseLogic();
@@ -273,7 +273,7 @@ Statement* Parser::parseFunction()
 {
 	Token tkn = tokens->current();
 
-	if (tkn.token != "def")
+	if (tkn.str != "def")
 	{
 		return nullptr;
 	}
@@ -281,7 +281,7 @@ Statement* Parser::parseFunction()
 	tkn = tokens->next();
 
 	//parse optional visibility
-	Visibility vis = strToVis(tkn.token);
+	Visibility vis = strToVis(tkn.str);
 
 	if (vis != Visibility::NONE)
 	{
@@ -299,7 +299,7 @@ Statement* Parser::parseFunction()
 	parseGenerics(generics);
 
 	//parse GPU threading data
-	if (tkn.token == "[")
+	if (tkn.str == "[")
 	{
 		parseIdentifierList(gpuThreadData);
 
@@ -308,7 +308,7 @@ Statement* Parser::parseFunction()
 			//TODO complain
 		}
 
-		if (tokens->current().token != "]")
+		if (tokens->current().str != "]")
 		{
 			//TODO also complain
 		}
@@ -317,7 +317,7 @@ Statement* Parser::parseFunction()
 
 	}
 
-	if (tkn.token != "(")
+	if (tkn.str != "(")
 	{
 		return nullptr;
 	}
@@ -326,7 +326,7 @@ Statement* Parser::parseFunction()
 
 	tkn = tokens->next();
 
-	if (tkn.token != ")")
+	if (tkn.str != ")")
 	{
 		return nullptr;
 	}
@@ -363,7 +363,7 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 
 	if (tkn.identifier == CALIBURN_T_KEYWORD)
 	{
-		if (tkn.token == "let" && implicitAllowed)
+		if (tkn.str == "let" && implicitAllowed)
 		{
 			tokens->consume();
 
@@ -389,11 +389,17 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 		return nullptr;
 	}
 
-	if (tokens->current().token == "=")
+	if (tokens->current().str == "=")
 	{
 		tokens->consume();
 		defVal = (ValueStatement*)parseValue();
+		//type = defVal->type;
 
+	}
+	else if (!type)
+	{
+		//TODO complain
+		return nullptr;
 	}
 
 }
