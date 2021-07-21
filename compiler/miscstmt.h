@@ -39,6 +39,13 @@ namespace caliburn
 		std::string name = "";
 		ParsedType* actualType = nullptr;
 
+		TypedefStatement() : Statement(0) {}
+
+		uint32_t toSPIRV(SpirVAssembler* codeAsm)
+		{
+			return 0;
+		}
+
 	};
 
 }
