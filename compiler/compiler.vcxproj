@@ -156,6 +156,7 @@
     <ClInclude Include="assembler.h" />
     <ClInclude Include="assignstmnt.h" />
     <ClInclude Include="buffer.h" />
+    <ClInclude Include="compiler.h" />
     <ClInclude Include="compilererr.h" />
     <ClInclude Include="deftypes.h" />
     <ClInclude Include="fieldstmnt.h" />

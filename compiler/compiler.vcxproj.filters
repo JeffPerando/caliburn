@@ -86,5 +86,8 @@
     <ClInclude Include="module.h">
       <Filter>Header Files\caliburn</Filter>
     </ClInclude>
+    <ClInclude Include="compiler.h">
+      <Filter>Header Files\caliburn</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
