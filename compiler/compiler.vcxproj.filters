@@ -89,5 +89,8 @@
     <ClInclude Include="compiler.h">
       <Filter>Header Files\caliburn</Filter>
     </ClInclude>
+    <ClInclude Include="modlib.h">
+      <Filter>Header Files\caliburn</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
