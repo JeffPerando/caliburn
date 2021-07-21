@@ -269,6 +269,54 @@ Statement* Parser::parseIf()
 	return parsed;
 }
 
+Statement* Parser::parseFor()
+{
+	if (tokens->current() != "for")
+	{
+		return nullptr;
+	}
+
+	if (tokens->next().identifier != CALIBURN_T_START_PAREN)
+	{
+		return nullptr;
+	}
+
+	tokens->consume();
+
+	Statement* pre = parseLogic();
+	ValueStatement* cond = (ValueStatement*)parseValue();
+
+	if (tokens->current().identifier != CALIBURN_T_END)
+	{
+		//TODO complain
+		delete pre;
+		delete cond;
+		return nullptr;
+	}
+
+	Statement* post = parseLogic();
+
+	if (tokens->current().identifier != CALIBURN_T_END_PAREN)
+	{
+		//TODO complain
+		delete pre;
+		delete cond;
+		delete post;
+		return nullptr;
+	}
+
+	Statement* loop = parseLogic();
+
+	ForStatement* stmt = new ForStatement();
+
+	stmt->preLoop = pre;
+	stmt->cond = cond;
+	stmt->postLoop = post;
+	stmt->loop = loop;
+
+	return stmt;
+}
+
 Statement* Parser::parseFunction()
 {
 	Token tkn = tokens->current();
