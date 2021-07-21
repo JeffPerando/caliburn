@@ -59,8 +59,9 @@ namespace caliburn
 
 	struct ForStatement : public Statement
 	{
+		Statement* preLoop = nullptr;
 		ValueStatement* cond = nullptr;
-		Statement* incr = nullptr;
+		Statement* postLoop = nullptr;
 		Statement* loop = nullptr;
 
 		ForStatement() : Statement(0) {}
@@ -74,16 +75,21 @@ namespace caliburn
 			uint32_t loopSSA = codeAsm->newAssign();
 
 			//Start point
+			//for
 			codeAsm->pushAll({
 				spirv::OpBranch(), startSSA,
-				spirv::OpLabel(), startSSA,
-				//for
+				spirv::OpLabel(), startSSA });
+
+			//(int i = 0;
+			preLoop->toSPIRV(codeAsm);
+
+			codeAsm->pushAll({
 				spirv::OpLoopMerge(0), mergeSSA, contSSA, 0, //TODO base flag off optimize level
 				//workaround for OpLoopMerge needing a branch op after
 				spirv::OpBranch(), bodySSA,
 				spirv::OpLabel(), bodySSA });
 			
-			//(int i; i < j;
+			//i < j;
 			uint32_t condSSA = cond->toSPIRV(codeAsm);
 
 			//branch
@@ -99,7 +105,7 @@ namespace caliburn
 				spirv::OpLabel(), contSSA });
 			//}
 			//i++)
-			incr->toSPIRV(codeAsm);
+			postLoop->toSPIRV(codeAsm);
 
 			codeAsm->pushAll({
 				//loop back
