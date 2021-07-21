@@ -162,6 +162,7 @@
     <ClInclude Include="fieldstmnt.h" />
     <ClInclude Include="ctrlstmnt.h" />
     <ClInclude Include="funcstmnt.h" />
+    <ClInclude Include="miscstmt.h" />
     <ClInclude Include="modlib.h" />
     <ClInclude Include="module.h" />
     <ClInclude Include="parser.h" />
