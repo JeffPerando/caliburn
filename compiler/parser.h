@@ -8,6 +8,8 @@
 
 namespace caliburn
 {
+	using ParseMethod = Statement*(Parser::*)();
+
 	class Parser
 	{
 	private:
@@ -17,7 +19,7 @@ namespace caliburn
 
 		void parseGenerics(std::vector<ParsedType*>& generics);
 
-		Statement* parseAny(std::initializer_list<caliburn::Statement* (caliburn::Parser::*)()> fns);
+		Statement* parseAny(std::initializer_list<ParseMethod> fns);
 
 		std::string parseNamespace();
 
