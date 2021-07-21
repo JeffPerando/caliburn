@@ -56,7 +56,7 @@ void Parser::parseIdentifierList(std::vector<std::string>& ids)
 
 }
 
-void Parser::parseGenerics(std::vector<TypeData*>& generics)
+void Parser::parseGenerics(std::vector<ParsedType*>& generics)
 {
 	if (tokens->current().identifier == CALIBURN_T_LT_SIGN)
 	{
@@ -128,7 +128,7 @@ std::string Parser::parseNamespace()
 	return "";
 }
 
-TypeData* Parser::parseTypeName()
+ParsedType* Parser::parseTypeName()
 {
 	std::string moduleName = parseNamespace();
 
@@ -142,7 +142,7 @@ TypeData* Parser::parseTypeName()
 
 	tokens->consume();
 
-	TypeData* type = new TypeData();
+	ParsedType* type = new ParsedType();
 
 	type->mod = moduleName;
 	type->name = tkn.token;
@@ -289,9 +289,9 @@ Statement* Parser::parseFunction()
 
 	}
 
-	TypeData* type = parseTypeName();
-	std::string name = tokens->current().token;
-	std::vector<TypeData*> generics;
+	ParsedType* type = parseTypeName();
+	std::string name = tokens->current().str;
+	std::vector<ParsedType*> generics;
 	std::vector<std::string> gpuThreadData;
 	
 	tokens->consume();
@@ -355,7 +355,7 @@ Statement* Parser::parseAnyVar()
 
 Statement* Parser::parseVariable(bool implicitAllowed)
 {
-	TypeData* type = nullptr;
+	ParsedType* type = nullptr;
 	std::vector<std::string> vars;
 	ValueStatement* defVal = nullptr;
 

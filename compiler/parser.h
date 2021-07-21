@@ -15,13 +15,13 @@ namespace caliburn
 
 		void parseIdentifierList(std::vector<std::string>& ids);
 
-		void parseGenerics(std::vector<TypeData*>& generics);
+		void parseGenerics(std::vector<ParsedType*>& generics);
 
 		Statement* parseAny(std::initializer_list<caliburn::Statement* (caliburn::Parser::*)()> fns);
 
 		std::string parseNamespace();
 
-		TypeData* parseTypeName();
+		ParsedType* parseTypeName();
 
 		Statement* parseDecl();
 		

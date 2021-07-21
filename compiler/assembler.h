@@ -123,7 +123,7 @@ namespace caliburn
 
 		void pushStr(std::string str);
 
-		uint32_t pushType(TypeData* type);
+		uint32_t pushType(ParsedType* type);
 
 		uint32_t pushSSA(SpvOp op);
 

@@ -43,18 +43,18 @@ namespace caliburn
 		ABS, ARRAY_ACCESS
 	};
 
-	struct TypeData
+	struct ParsedType
 	{
 	private:
 		std::string fullName;
 	public:
 		std::string mod;
 		std::string name;
-		std::vector<TypeData*> generics;
+		std::vector<ParsedType*> generics;
 		
-		~TypeData()
+		~ParsedType()
 		{
-			for (TypeData* type : generics)
+			for (ParsedType* type : generics)
 			{
 				delete type;
 			}

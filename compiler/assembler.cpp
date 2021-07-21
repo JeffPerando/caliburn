@@ -4,7 +4,7 @@
 
 using namespace caliburn;
 
-uint32_t SpirVAssembler::pushType(TypeData* type)
+uint32_t SpirVAssembler::pushType(ParsedType* type)
 {
 	uint32_t ssa = typeAssigns[type->getFullName()].value;
 
