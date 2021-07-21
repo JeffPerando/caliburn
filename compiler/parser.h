@@ -31,7 +31,7 @@ namespace caliburn
 
 		Statement* parseTypedef();
 
-		Statement* parseModule();
+		Statement* parseNamespaceDef();
 
 		Statement* parseShader();
 

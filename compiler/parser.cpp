@@ -162,7 +162,7 @@ Statement* Parser::parseDecl()
 		&Parser::parseImport,
 		&Parser::parseUsing,
 		&Parser::parseTypedef,
-		&Parser::parseModule,
+		&Parser::parseNamespaceDef,
 		&Parser::parseDescriptor,
 		&Parser::parseStruct });
 }
