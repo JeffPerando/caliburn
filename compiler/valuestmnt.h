@@ -10,6 +10,8 @@ namespace caliburn
 		ValueStatement(uint32_t t) : Statement(t) {}
 		~ValueStatement() { Statement::~Statement(); }
 
+		virtual bool isLValue() = 0;
+
 	};
 
 	struct LiteralIntStmnt : public ValueStatement
@@ -17,6 +19,11 @@ namespace caliburn
 		int32_t value = 0;
 
 		LiteralIntStmnt() : ValueStatement(0) {}
+
+		bool isLValue()
+		{
+			return false;
+		}
 
 		uint32_t toSPIRV(SpirVAssembler* codeAsm)
 		{
