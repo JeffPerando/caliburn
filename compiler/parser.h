@@ -17,7 +17,9 @@ namespace caliburn
 
 		void parseIdentifierList(std::vector<std::string>& ids);
 
-		void parseGenerics(std::vector<ParsedType*>& generics);
+		void parseValueList(std::vector<Statement*>& xs);
+		
+		bool parseGenerics(std::vector<ParsedType*>& generics);
 
 		Statement* parseAny(std::initializer_list<ParseMethod> fns);
 
@@ -49,6 +51,12 @@ namespace caliburn
 
 		Statement* parseMethod();
 
+		//called a "statement" in the CFG
+		//variable, setter, control flow, scope, or function call
+		Statement* parseLogic();
+
+		Statement* parseFuncCall();
+
 		Statement* parseAnyVar();
 
 		Statement* parseVariable(bool implicitAllowed = true);
@@ -56,10 +64,6 @@ namespace caliburn
 		Statement* parseSetter();
 
 		Statement* parseScope();
-
-		//called a "statement" in the CFG
-		//variable, setter, control flow, scope, or function call
-		Statement* parseLogic();
 
 		Statement* parseControl();
 
@@ -83,9 +87,11 @@ namespace caliburn
 
 		Statement* parseValue();
 
-		Statement* parseLValue();
+		Statement* parseValue(bool doPostfix);
 
-		Statement* parseRValue();
+		Statement* parseAnyFieldOrFuncVal();
+
+		Statement* parseFieldOrFuncValue(bool canHaveNamespace);
 
 		Statement* parseLiteral();
 

@@ -11,12 +11,12 @@ namespace caliburn
 	struct Token
 	{
 		std::string str;
-		uint64_t identifier;
+		uint64_t type;
 		uint64_t line, column;
 
 		//the fact that this has to exist is bothersome
 		Token(std::string t, uint64_t id, uint64_t l, uint64_t c) :
-			str(t), identifier(id), line(l), column(c) {}
+			str(t), type(id), line(l), column(c) {}
 
 		operator std::string() const
 		{
