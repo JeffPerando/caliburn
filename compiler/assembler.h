@@ -57,21 +57,7 @@ namespace caliburn
 
 	};
 
-	Visibility strToVis(std::string str)
-	{
-		if (str == "public")
-			return Visibility::PUBLIC;
-		if (str == "protected")
-			return Visibility::PROTECTED;
-		if (str == "private")
-			return Visibility::PRIVATE;
-		if (str == "shared")
-			return Visibility::SHARED;
-		if (str == "static")
-			return Visibility::STATIC;
-		
-		return NONE;
-	}
+	Visibility strToVis(std::string str);
 
 	struct SpirVPhi
 	{

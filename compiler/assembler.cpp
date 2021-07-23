@@ -1,8 +1,23 @@
 
 #include "assembler.h"
-#include "type.h"
 
 using namespace caliburn;
+
+Visibility strToVis(std::string str)
+{
+	if (str == "public")
+		return Visibility::PUBLIC;
+	if (str == "protected")
+		return Visibility::PROTECTED;
+	if (str == "private")
+		return Visibility::PRIVATE;
+	if (str == "shared")
+		return Visibility::SHARED;
+	if (str == "static")
+		return Visibility::STATIC;
+
+	return NONE;
+}
 
 uint32_t SpirVAssembler::pushType(ParsedType* type)
 {
@@ -203,4 +218,5 @@ uint32_t* SpirVAssembler::writeFile()
 	ops.push_back(0);//REMEMBER TO SET THIS TO THE BOUNDS
 	ops.push_back(0);
 
+	return nullptr;
 }
