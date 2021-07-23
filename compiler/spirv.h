@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define SPIRV_OP SpvOp inline
+
 namespace caliburn
 {
     typedef uint32_t SpvOp;
@@ -10,7 +12,7 @@ namespace caliburn
 
     namespace spirv
     {
-        uint32_t MagicNumber()
+        uint32_t inline MagicNumber()
         {
             return 0x07230203;
         }
@@ -23,7 +25,7 @@ namespace caliburn
         */
         //what.
         //So given the limited examples... yeah... I wrote this...
-        uint32_t Version(int major, int minor)
+        uint32_t inline Version(int major, int minor)
         {
             return ((major & 0xFFF) << 16) | ((minor & 0xFF) << 8);
         }
@@ -66,1780 +68,1780 @@ namespace caliburn
         //also they're sorted by opcode
         //sorry
 
-        SpvOp spirvOp(int wordCount, int opCode)
+        SPIRV_OP spirvOp(int wordCount, int opCode)
         {
             return ((wordCount & 0xFFFF) << 16) | (opCode & 0xFFFF);
         }
 
-        SpvOp OpNop()
+        SPIRV_OP OpNop()
         {
             return spirvOp(1, 0);
         }
 
-        SpvOp OpUndef()
+        SPIRV_OP OpUndef()
         {
             return spirvOp(3, 1);
         }
 
-        SpvOp OpSourceContinued(SpvVar variable)
+        SPIRV_OP OpSourceContinued(SpvVar variable)
         {
             return spirvOp(2 + variable, 2);
         }
 
-        SpvOp OpSource(SpvVar variable)
+        SPIRV_OP OpSource(SpvVar variable)
         {
             return spirvOp(3 + variable, 3);
         }
 
-        SpvOp OpSourceExtension(SpvVar variable)
+        SPIRV_OP OpSourceExtension(SpvVar variable)
         {
             return spirvOp(2 + variable, 4);
         }
 
-        SpvOp OpName(SpvVar variable)
+        SPIRV_OP OpName(SpvVar variable)
         {
             return spirvOp(3 + variable, 5);
         }
 
-        SpvOp OpMemberName(SpvVar variable)
+        SPIRV_OP OpMemberName(SpvVar variable)
         {
             return spirvOp(4 + variable, 6);
         }
 
-        SpvOp OpString(SpvVar variable)
+        SPIRV_OP OpString(SpvVar variable)
         {
             return spirvOp(3 + variable, 7);
         }
 
-        SpvOp OpLine()
+        SPIRV_OP OpLine()
         {
             return spirvOp(4, 8);
         }
 
-        SpvOp OpExtension(SpvVar variable)
+        SPIRV_OP OpExtension(SpvVar variable)
         {
             return spirvOp(2 + variable, 10);
         }
 
-        SpvOp OpExtInstImport(SpvVar variable)
+        SPIRV_OP OpExtInstImport(SpvVar variable)
         {
             return spirvOp(3 + variable, 11);
         }
 
-        SpvOp OpExtInst(SpvVar variable)
+        SPIRV_OP OpExtInst(SpvVar variable)
         {
             return spirvOp(5 + variable, 12);
         }
 
-        SpvOp OpMemoryModel()
+        SPIRV_OP OpMemoryModel()
         {
             return spirvOp(3, 14);
         }
 
-        SpvOp OpEntryPoint(SpvVar variable)
+        SPIRV_OP OpEntryPoint(SpvVar variable)
         {
             return spirvOp(4 + variable, 15);
         }
 
-        SpvOp OpExecutionMode(SpvVar variable)
+        SPIRV_OP OpExecutionMode(SpvVar variable)
         {
             return spirvOp(3 + variable, 16);
         }
 
-        SpvOp OpCapability()
+        SPIRV_OP OpCapability()
         {
             return spirvOp(2, 17);
         }
 
-        SpvOp OpTypeVoid()
+        SPIRV_OP OpTypeVoid()
         {
             return spirvOp(2, 19);
         }
 
-        SpvOp OpTypeBool()
+        SPIRV_OP OpTypeBool()
         {
             return spirvOp(2, 20);
         }
 
-        SpvOp OpTypeInt()
+        SPIRV_OP OpTypeInt()
         {
             return spirvOp(4, 21);
         }
 
-        SpvOp OpTypeFloat()
+        SPIRV_OP OpTypeFloat()
         {
             return spirvOp(3, 22);
         }
 
-        SpvOp OpTypeVector()
+        SPIRV_OP OpTypeVector()
         {
             return spirvOp(4, 23);
         }
 
-        SpvOp OpTypeMatrix()
+        SPIRV_OP OpTypeMatrix()
         {
             return spirvOp(4, 24);
         }
 
-        SpvOp OpTypeImage(SpvVar variable)
+        SPIRV_OP OpTypeImage(SpvVar variable)
         {
             return spirvOp(9 + variable, 25);
         }
 
-        SpvOp OpTypeSampler()
+        SPIRV_OP OpTypeSampler()
         {
             return spirvOp(2, 26);
         }
 
-        SpvOp OpTypeSampledImage()
+        SPIRV_OP OpTypeSampledImage()
         {
             return spirvOp(3, 27);
         }
 
-        SpvOp OpTypeArray()
+        SPIRV_OP OpTypeArray()
         {
             return spirvOp(4, 28);
         }
 
-        SpvOp OpTypeRuntimeArray()
+        SPIRV_OP OpTypeRuntimeArray()
         {
             return spirvOp(3, 29);
         }
 
-        SpvOp OpTypeStruct(SpvVar variable)
+        SPIRV_OP OpTypeStruct(SpvVar variable)
         {
             return spirvOp(2 + variable, 30);
         }
 
-        SpvOp OpTypeOpaque(SpvVar variable)
+        SPIRV_OP OpTypeOpaque(SpvVar variable)
         {
             return spirvOp(3 + variable, 31);
         }
 
-        SpvOp OpTypePointer()
+        SPIRV_OP OpTypePointer()
         {
             return spirvOp(4, 32);
         }
 
-        SpvOp OpTypeFunction(SpvVar variable)
+        SPIRV_OP OpTypeFunction(SpvVar variable)
         {
             return spirvOp(3 + variable, 33);
         }
 
-        SpvOp OpTypeDevent()
+        SPIRV_OP OpTypeDevent()
         {
             return spirvOp(2, 34);
         }
 
-        SpvOp OpTypeDeviceEvent()
+        SPIRV_OP OpTypeDeviceEvent()
         {
             return spirvOp(2, 35);
         }
 
-        SpvOp OpTypeReserveId()
+        SPIRV_OP OpTypeReserveId()
         {
             return spirvOp(2, 36);
         }
 
-        SpvOp OpTypeQueue()
+        SPIRV_OP OpTypeQueue()
         {
             return spirvOp(2, 37);
         }
 
-        SpvOp OpTypePipe()
+        SPIRV_OP OpTypePipe()
         {
             return spirvOp(2, 38);
         }
 
-        SpvOp OpTypeForwardPointer()
+        SPIRV_OP OpTypeForwardPointer()
         {
             return spirvOp(3, 39);
         }
 
-        SpvOp OpConstantTrue()
+        SPIRV_OP OpConstantTrue()
         {
             return spirvOp(3, 41);
         }
 
-        SpvOp OpConstantFalse()
+        SPIRV_OP OpConstantFalse()
         {
             return spirvOp(3, 42);
         }
 
-        SpvOp OpConstant(SpvVar variable)
+        SPIRV_OP OpConstant(SpvVar variable)
         {
             return spirvOp(4 + variable, 43);
         }
 
-        SpvOp OpConstantComposite(SpvVar variable)
+        SPIRV_OP OpConstantComposite(SpvVar variable)
         {
             return spirvOp(3 + variable, 44);
         }
 
-        SpvOp OpConstantSampler()
+        SPIRV_OP OpConstantSampler()
         {
             return spirvOp(6, 45);
         }
 
-        SpvOp OpConstantNull()
+        SPIRV_OP OpConstantNull()
         {
             return spirvOp(3, 46);
         }
 
-        SpvOp OpSpecConstantTrue()
+        SPIRV_OP OpSpecConstantTrue()
         {
             return spirvOp(3, 48);
         }
 
-        SpvOp OpSpecConstantFalse()
+        SPIRV_OP OpSpecConstantFalse()
         {
             return spirvOp(3, 49);
         }
 
-        SpvOp OpSpecConstantFalse(SpvVar variable)
+        SPIRV_OP OpSpecConstantFalse(SpvVar variable)
         {
             return spirvOp(4 + variable, 50);
         }
 
-        SpvOp OpSpecConstantComposite(SpvVar variable)
+        SPIRV_OP OpSpecConstantComposite(SpvVar variable)
         {
             return spirvOp(5 + variable, 51);
         }
 
-        SpvOp OpSpecConstantOp(SpvVar variable)
+        SPIRV_OP OpSpecConstantOp(SpvVar variable)
         {
             return spirvOp(4 + variable, 52);
         }
 
-        SpvOp OpFunction()
+        SPIRV_OP OpFunction()
         {
             return spirvOp(5, 54);
         }
 
-        SpvOp OpFunctionParameter()
+        SPIRV_OP OpFunctionParameter()
         {
             return spirvOp(3, 55);
         }
 
-        SpvOp OpFunctionEnd()
+        SPIRV_OP OpFunctionEnd()
         {
             return spirvOp(1, 56);
         }
 
-        SpvOp OpFunctionCall(SpvVar variable)
+        SPIRV_OP OpFunctionCall(SpvVar variable)
         {
             return spirvOp(4 + variable, 57);
         }
 
-        SpvOp OpVariable(SpvVar variable)
+        SPIRV_OP OpVariable(SpvVar variable)
         {
             return spirvOp(4 + variable, 59);
         }
 
-        SpvOp OpImageTexelPointer()
+        SPIRV_OP OpImageTexelPointer()
         {
             return spirvOp(6, 60);
         }
 
-        SpvOp OpLoad(SpvVar variable)
+        SPIRV_OP OpLoad(SpvVar variable)
         {
             return spirvOp(4 + variable, 61);
         }
 
-        SpvOp OpStore(SpvVar variable)
+        SPIRV_OP OpStore(SpvVar variable)
         {
             return spirvOp(3 + variable, 62);
         }
 
-        SpvOp OpCopyMemory(SpvVar variable)
+        SPIRV_OP OpCopyMemory(SpvVar variable)
         {
             return spirvOp(3 + variable, 63);
         }
 
-        SpvOp OpCopyMemorySized(SpvVar variable)
+        SPIRV_OP OpCopyMemorySized(SpvVar variable)
         {
             return spirvOp(4 + variable, 64);
         }
 
-        SpvOp OpAccessChain(SpvVar variable)
+        SPIRV_OP OpAccessChain(SpvVar variable)
         {
             return spirvOp(4 + variable, 65);
         }
 
         //Execute opcode 66
-        SpvOp OpInBoundsAccessChain(SpvVar variable)
+        SPIRV_OP OpInBoundsAccessChain(SpvVar variable)
         {
             return spirvOp(4 + variable, 66);
         }
 
-        SpvOp OpPtrAccessChain(SpvVar variable)
+        SPIRV_OP OpPtrAccessChain(SpvVar variable)
         {
             return spirvOp(5 + variable, 67);
         }
 
-        SpvOp OpArrayLength()
+        SPIRV_OP OpArrayLength()
         {
             return spirvOp(5, 68);
         }
 
         //nice
-        SpvOp OpGenericPtrMemSemantics()
+        SPIRV_OP OpGenericPtrMemSemantics()
         {
             return spirvOp(4, 69);
         }
 
-        SpvOp OpInBoundsPtrAccessChain(SpvVar variable)
+        SPIRV_OP OpInBoundsPtrAccessChain(SpvVar variable)
         {
             return spirvOp(5 + variable, 70);
         }
 
-        SpvOp OpDecorate(SpvVar variable)
+        SPIRV_OP OpDecorate(SpvVar variable)
         {
             return spirvOp(3 + variable, 71);
         }
 
-        SpvOp OpMemberDecorate(SpvVar variable)
+        SPIRV_OP OpMemberDecorate(SpvVar variable)
         {
             return spirvOp(4 + variable, 72);
         }
 
-        SpvOp OpDecorationGroup()
+        SPIRV_OP OpDecorationGroup()
         {
             return spirvOp(2, 73);
         }
 
-        SpvOp OpGroupDecorate(SpvVar variable)
+        SPIRV_OP OpGroupDecorate(SpvVar variable)
         {
             return spirvOp(2 + variable, 74);
         }
 
-        SpvOp OpGroupMemberDecorate(SpvVar variable)
+        SPIRV_OP OpGroupMemberDecorate(SpvVar variable)
         {
             return spirvOp(2 + variable, 75);
         }
 
-        SpvOp OpVectorExtractDynamic()
+        SPIRV_OP OpVectorExtractDynamic()
         {
             return spirvOp(5, 77);
         }
 
-        SpvOp OpVectorInsertDynamic()
+        SPIRV_OP OpVectorInsertDynamic()
         {
             return spirvOp(6, 78);
         }
 
-        SpvOp OpVectorShuffle(SpvVar variable)
+        SPIRV_OP OpVectorShuffle(SpvVar variable)
         {
             return spirvOp(5 + variable, 79);
         }
 
-        SpvOp OpCompositeConstruct(SpvVar variable)
+        SPIRV_OP OpCompositeConstruct(SpvVar variable)
         {
             return spirvOp(3 + variable, 80);
         }
 
-        SpvOp OpCompositeExtract(SpvVar variable)
+        SPIRV_OP OpCompositeExtract(SpvVar variable)
         {
             return spirvOp(4 + variable, 81);
         }
 
-        SpvOp OpCompositeInsert(SpvVar variable)
+        SPIRV_OP OpCompositeInsert(SpvVar variable)
         {
             return spirvOp(5 + variable, 82);
         }
 
-        SpvOp OpCopyObject()
+        SPIRV_OP OpCopyObject()
         {
             return spirvOp(4, 83);
         }
 
-        SpvOp OpTranspose()
+        SPIRV_OP OpTranspose()
         {
             return spirvOp(4, 84);
         }
 
-        SpvOp OpSampledImage()
+        SPIRV_OP OpSampledImage()
         {
             return spirvOp(5, 86);
         }
 
-        SpvOp OpImageSampleImplicitLod(SpvVar variable)
+        SPIRV_OP OpImageSampleImplicitLod(SpvVar variable)
         {
             return spirvOp(5 + variable, 87);
         }
 
-        SpvOp OpImageSampleExplicitLod(SpvVar variable)
+        SPIRV_OP OpImageSampleExplicitLod(SpvVar variable)
         {
             return spirvOp(7 + variable, 88);
         }
 
-        SpvOp OpImageSampleDrefImplicitLod(SpvVar variable)
+        SPIRV_OP OpImageSampleDrefImplicitLod(SpvVar variable)
         {
             return spirvOp(6 + variable, 89);
         }
 
-        SpvOp OpImageSampleDrefExplicitLod(SpvVar variable)
+        SPIRV_OP OpImageSampleDrefExplicitLod(SpvVar variable)
         {
             return spirvOp(8 + variable, 90);
         }
 
-        SpvOp OpImageSampleProjImplicitLod(SpvVar variable)
+        SPIRV_OP OpImageSampleProjImplicitLod(SpvVar variable)
         {
             return spirvOp(5 + variable, 91);
         }
 
-        SpvOp OpImageSampleProjExplicitLod(SpvVar variable)
+        SPIRV_OP OpImageSampleProjExplicitLod(SpvVar variable)
         {
             return spirvOp(7 + variable, 92);
         }
 
-        SpvOp OpImageSampleProjDrefImplicitLod(SpvVar variable)
+        SPIRV_OP OpImageSampleProjDrefImplicitLod(SpvVar variable)
         {
             return spirvOp(6 + variable, 93);
         }
 
-        SpvOp OpImageSampleProjDrefExplicitLod(SpvVar variable)
+        SPIRV_OP OpImageSampleProjDrefExplicitLod(SpvVar variable)
         {
             return spirvOp(8 + variable, 94);
         }
 
-        SpvOp OpImageFetch(SpvVar variable)
+        SPIRV_OP OpImageFetch(SpvVar variable)
         {
             return spirvOp(5 + variable, 95);
         }
 
-        SpvOp OpImageGather(SpvVar variable)
+        SPIRV_OP OpImageGather(SpvVar variable)
         {
             return spirvOp(6 + variable, 96);
         }
 
-        SpvOp OpImageDrefGather(SpvVar variable)
+        SPIRV_OP OpImageDrefGather(SpvVar variable)
         {
             return spirvOp(6 + variable, 97);
         }
 
-        SpvOp OpImageRead(SpvVar variable)
+        SPIRV_OP OpImageRead(SpvVar variable)
         {
             return spirvOp(5 + variable, 98);
         }
 
-        SpvOp OpImageWrite(SpvVar variable)
+        SPIRV_OP OpImageWrite(SpvVar variable)
         {
             return spirvOp(4 + variable, 99);
         }
 
-        SpvOp OpImage()
+        SPIRV_OP OpImage()
         {
             return spirvOp(4, 100);
         }
 
-        SpvOp OpImageQueryFormat()
+        SPIRV_OP OpImageQueryFormat()
         {
             return spirvOp(4, 101);
         }
 
-        SpvOp OpImageQueryOrder()
+        SPIRV_OP OpImageQueryOrder()
         {
             return spirvOp(4, 102);
         }
 
-        SpvOp OpImageQuerySizeLod()
+        SPIRV_OP OpImageQuerySizeLod()
         {
             return spirvOp(5, 103);
         }
 
-        SpvOp OpImageQuerySize()
+        SPIRV_OP OpImageQuerySize()
         {
             return spirvOp(4, 104);
         }
 
-        SpvOp OpImageQueryLod()
+        SPIRV_OP OpImageQueryLod()
         {
             return spirvOp(5, 105);
         }
 
-        SpvOp OpImageQueryLevels()
+        SPIRV_OP OpImageQueryLevels()
         {
             return spirvOp(4, 106);
         }
 
-        SpvOp OpImageQuerySamples()
+        SPIRV_OP OpImageQuerySamples()
         {
             return spirvOp(4, 107);
         }
 
-        SpvOp OpConvertFToU()
+        SPIRV_OP OpConvertFToU()
         {
             return spirvOp(4, 109);
         }
 
-        SpvOp OpConvertFToS()
+        SPIRV_OP OpConvertFToS()
         {
             return spirvOp(4, 110);
         }
 
-        SpvOp OpConvertSToF()
+        SPIRV_OP OpConvertSToF()
         {
             return spirvOp(4, 111);
         }
 
-        SpvOp OpConvertUToF()
+        SPIRV_OP OpConvertUToF()
         {
             return spirvOp(4, 112);
         }
 
-        SpvOp OpUConvert()
+        SPIRV_OP OpUConvert()
         {
             return spirvOp(4, 113);
         }
 
-        SpvOp OpSConvert()
+        SPIRV_OP OpSConvert()
         {
             return spirvOp(4, 114);
         }
 
-        SpvOp OpFConvert()
+        SPIRV_OP OpFConvert()
         {
             return spirvOp(4, 115);
         }
 
-        SpvOp OpQuantizeToF16()
+        SPIRV_OP OpQuantizeToF16()
         {
             return spirvOp(4, 116);
         }
 
-        SpvOp OpConvertPtrToU()
+        SPIRV_OP OpConvertPtrToU()
         {
             return spirvOp(4, 117);
         }
 
-        SpvOp OpSatConvertSToU()
+        SPIRV_OP OpSatConvertSToU()
         {
             return spirvOp(4, 118);
         }
 
-        SpvOp OpSatConvertUToS()
+        SPIRV_OP OpSatConvertUToS()
         {
             return spirvOp(4, 119);
         }
 
-        SpvOp OpConvertUToPtr()
+        SPIRV_OP OpConvertUToPtr()
         {
             return spirvOp(4, 120);
         }
 
-        SpvOp OpPtrCastToGeneric()
+        SPIRV_OP OpPtrCastToGeneric()
         {
             return spirvOp(4, 121);
         }
 
-        SpvOp OpGenericCastToPtr()
+        SPIRV_OP OpGenericCastToPtr()
         {
             return spirvOp(4, 122);
         }
 
-        SpvOp OpGenericCastToPtrExplicit()
+        SPIRV_OP OpGenericCastToPtrExplicit()
         {
             return spirvOp(5, 123);
         }
 
-        SpvOp OpBitcast()
+        SPIRV_OP OpBitcast()
         {
             return spirvOp(4, 124);
         }
 
-        SpvOp OpSNegate()
+        SPIRV_OP OpSNegate()
         {
             return spirvOp(4, 126);
         }
 
-        SpvOp OpFNegate()
+        SPIRV_OP OpFNegate()
         {
             return spirvOp(4, 127);
         }
 
-        SpvOp OpIAdd()
+        SPIRV_OP OpIAdd()
         {
             return spirvOp(5, 128);
         }
 
-        SpvOp OpFAdd()
+        SPIRV_OP OpFAdd()
         {
             return spirvOp(5, 129);
         }
 
-        SpvOp OpISub()
+        SPIRV_OP OpISub()
         {
             return spirvOp(5, 130);
         }
 
-        SpvOp OpFSub()
+        SPIRV_OP OpFSub()
         {
             return spirvOp(5, 131);
         }
 
-        SpvOp OpIMul()
+        SPIRV_OP OpIMul()
         {
             return spirvOp(5, 132);
         }
 
-        SpvOp OpFMul()
+        SPIRV_OP OpFMul()
         {
             return spirvOp(5, 133);
         }
 
-        SpvOp OpUDiv()
+        SPIRV_OP OpUDiv()
         {
             return spirvOp(5, 134);
         }
 
-        SpvOp OpSDiv()
+        SPIRV_OP OpSDiv()
         {
             return spirvOp(5, 135);
         }
 
-        SpvOp OpFDiv()
+        SPIRV_OP OpFDiv()
         {
             return spirvOp(5, 136);
         }
 
-        SpvOp OpUMod()
+        SPIRV_OP OpUMod()
         {
             return spirvOp(5, 137);
         }
 
-        SpvOp OpSRem()
+        SPIRV_OP OpSRem()
         {
             return spirvOp(5, 138);
         }
 
-        SpvOp OpSMod()
+        SPIRV_OP OpSMod()
         {
             return spirvOp(5, 139);
         }
 
-        SpvOp OpFRem()
+        SPIRV_OP OpFRem()
         {
             return spirvOp(5, 140);
         }
 
-        SpvOp OpFMod()
+        SPIRV_OP OpFMod()
         {
             return spirvOp(5, 141);
         }
 
-        SpvOp OpVectorTimesScalar()
+        SPIRV_OP OpVectorTimesScalar()
         {
             return spirvOp(5, 142);
         }
 
-        SpvOp OpMatrixTimesScalar()
+        SPIRV_OP OpMatrixTimesScalar()
         {
             return spirvOp(5, 143);
         }
 
-        SpvOp OpVectorTimesMatrix()
+        SPIRV_OP OpVectorTimesMatrix()
         {
             return spirvOp(5, 144);
         }
 
-        SpvOp OpMatrixTimesVector()
+        SPIRV_OP OpMatrixTimesVector()
         {
             return spirvOp(5, 145);
         }
 
-        SpvOp OpMatrixTimesMatrix()
+        SPIRV_OP OpMatrixTimesMatrix()
         {
             return spirvOp(5, 146);
         }
 
-        SpvOp OpOuterProduct()
+        SPIRV_OP OpOuterProduct()
         {
             return spirvOp(5, 147);
         }
 
-        SpvOp OpDot()
+        SPIRV_OP OpDot()
         {
             return spirvOp(5, 148);
         }
 
-        SpvOp OpIAddCarry()
+        SPIRV_OP OpIAddCarry()
         {
             return spirvOp(5, 149);
         }
 
-        SpvOp OpISubBorrow()
+        SPIRV_OP OpISubBorrow()
         {
             return spirvOp(5, 150);
         }
 
-        SpvOp OpUMulExtended()
+        SPIRV_OP OpUMulExtended()
         {
             return spirvOp(5, 151);
         }
 
-        SpvOp OpSMulExtended()
+        SPIRV_OP OpSMulExtended()
         {
             return spirvOp(5, 152);
         }
 
-        SpvOp OpAny()
+        SPIRV_OP OpAny()
         {
             return spirvOp(4, 154);
         }
 
-        SpvOp OpAll()
+        SPIRV_OP OpAll()
         {
             return spirvOp(4, 155);
         }
 
-        SpvOp OpIsNan()
+        SPIRV_OP OpIsNan()
         {
             return spirvOp(4, 156);
         }
 
-        SpvOp OpIsInf()
+        SPIRV_OP OpIsInf()
         {
             return spirvOp(4, 157);
         }
 
-        SpvOp OpIsFinite()
+        SPIRV_OP OpIsFinite()
         {
             return spirvOp(4, 158);
         }
 
-        SpvOp OpIsNormal()
+        SPIRV_OP OpIsNormal()
         {
             return spirvOp(4, 159);
         }
 
-        SpvOp OpSignBitSet()
+        SPIRV_OP OpSignBitSet()
         {
             return spirvOp(4, 160);
         }
 
         //Deprecated
-        SpvOp OpLessOrGreater()
+        SPIRV_OP OpLessOrGreater()
         {
             return spirvOp(5, 161);
         }
 
-        SpvOp OpOrdered()
+        SPIRV_OP OpOrdered()
         {
             return spirvOp(5, 162);
         }
 
-        SpvOp OpUnordered()
+        SPIRV_OP OpUnordered()
         {
             return spirvOp(5, 163);
         }
 
-        SpvOp OpLogicalEqual()
+        SPIRV_OP OpLogicalEqual()
         {
             return spirvOp(5, 164);
         }
 
-        SpvOp OpLogicalNotEqual()
+        SPIRV_OP OpLogicalNotEqual()
         {
             return spirvOp(5, 165);
         }
 
-        SpvOp OpLogicalOr()
+        SPIRV_OP OpLogicalOr()
         {
             return spirvOp(5, 166);
         }
 
-        SpvOp OpLogicalAnd()
+        SPIRV_OP OpLogicalAnd()
         {
             return spirvOp(5, 167);
         }
 
-        SpvOp OpLogicalNot()
+        SPIRV_OP OpLogicalNot()
         {
             return spirvOp(4, 168);
         }
 
-        SpvOp OpSelect()
+        SPIRV_OP OpSelect()
         {
             return spirvOp(6, 169);
         }
 
-        SpvOp OpIEqual()
+        SPIRV_OP OpIEqual()
         {
             return spirvOp(5, 170);
         }
 
-        SpvOp OpINotEqual()
+        SPIRV_OP OpINotEqual()
         {
             return spirvOp(5, 171);
         }
 
-        SpvOp OpUGreaterThan()
+        SPIRV_OP OpUGreaterThan()
         {
             return spirvOp(5, 172);
         }
 
-        SpvOp OpSGreaterThan()
+        SPIRV_OP OpSGreaterThan()
         {
             return spirvOp(5, 173);
         }
 
-        SpvOp OpUGreaterThanEqual()
+        SPIRV_OP OpUGreaterThanEqual()
         {
             return spirvOp(5, 174);
         }
 
-        SpvOp OpSGreaterThanEqual()
+        SPIRV_OP OpSGreaterThanEqual()
         {
             return spirvOp(5, 175);
         }
 
-        SpvOp OpULessThan()
+        SPIRV_OP OpULessThan()
         {
             return spirvOp(5, 176);
         }
 
-        SpvOp OpSLessThan()
+        SPIRV_OP OpSLessThan()
         {
             return spirvOp(5, 177);
         }
 
-        SpvOp OpULessThanEqual()
+        SPIRV_OP OpULessThanEqual()
         {
             return spirvOp(5, 178);
         }
 
-        SpvOp OpSLessThanEqual()
+        SPIRV_OP OpSLessThanEqual()
         {
             return spirvOp(5, 179);
         }
 
-        SpvOp OpFOrdEqual()
+        SPIRV_OP OpFOrdEqual()
         {
             return spirvOp(5, 180);
         }
 
-        SpvOp OpFUnordEqual()
+        SPIRV_OP OpFUnordEqual()
         {
             return spirvOp(5, 181);
         }
 
-        SpvOp OpFOrdNotEqual()
+        SPIRV_OP OpFOrdNotEqual()
         {
             return spirvOp(5, 182);
         }
 
-        SpvOp OpFUnordNotEqual()
+        SPIRV_OP OpFUnordNotEqual()
         {
             return spirvOp(5, 183);
         }
 
-        SpvOp OpFOrdLessThan()
+        SPIRV_OP OpFOrdLessThan()
         {
             return spirvOp(5, 184);
         }
 
-        SpvOp OpFUnordLessThan()
+        SPIRV_OP OpFUnordLessThan()
         {
             return spirvOp(5, 185);
         }
 
-        SpvOp OpFOrdGreaterThan()
+        SPIRV_OP OpFOrdGreaterThan()
         {
             return spirvOp(5, 186);
         }
 
-        SpvOp OpFUnordGreaterThan()
+        SPIRV_OP OpFUnordGreaterThan()
         {
             return spirvOp(5, 187);
         }
 
-        SpvOp OpFOrdLessThanEqual()
+        SPIRV_OP OpFOrdLessThanEqual()
         {
             return spirvOp(5, 188);
         }
 
-        SpvOp OpFUnordLessThanEqual()
+        SPIRV_OP OpFUnordLessThanEqual()
         {
             return spirvOp(5, 189);
         }
 
-        SpvOp OpFOrdGreaterThanEqual()
+        SPIRV_OP OpFOrdGreaterThanEqual()
         {
             return spirvOp(5, 190);
         }
 
-        SpvOp OpFUnordGreaterThanEqual()
+        SPIRV_OP OpFUnordGreaterThanEqual()
         {
             return spirvOp(5, 191);
         }
 
-        SpvOp OpShiftRightLogical()
+        SPIRV_OP OpShiftRightLogical()
         {
             return spirvOp(5, 194);
         }
 
-        SpvOp OpShiftRightArithmetic()
+        SPIRV_OP OpShiftRightArithmetic()
         {
             return spirvOp(5, 195);
         }
 
-        SpvOp OpShiftLeftLogical()
+        SPIRV_OP OpShiftLeftLogical()
         {
             return spirvOp(5, 196);
         }
 
-        SpvOp OpBitwiseOr()
+        SPIRV_OP OpBitwiseOr()
         {
             return spirvOp(5, 197);
         }
 
-        SpvOp OpBitwiseXor()
+        SPIRV_OP OpBitwiseXor()
         {
             return spirvOp(5, 198);
         }
 
-        SpvOp OpBitwiseAnd()
+        SPIRV_OP OpBitwiseAnd()
         {
             return spirvOp(5, 199);
         }
 
-        SpvOp OpNot()
+        SPIRV_OP OpNot()
         {
             return spirvOp(4, 200);
         }
 
-        SpvOp OpBitFieldInsert()
+        SPIRV_OP OpBitFieldInsert()
         {
             return spirvOp(7, 201);
         }
 
-        SpvOp OpBitFieldSExtract()
+        SPIRV_OP OpBitFieldSExtract()
         {
             return spirvOp(6, 202);
         }
 
-        SpvOp OpBitFieldUExtract()
+        SPIRV_OP OpBitFieldUExtract()
         {
             return spirvOp(6, 203);
         }
 
-        SpvOp OpBitReverse()
+        SPIRV_OP OpBitReverse()
         {
             return spirvOp(4, 204);
         }
 
-        SpvOp OpBitCount()
+        SPIRV_OP OpBitCount()
         {
             return spirvOp(4, 205);
         }
 
-        SpvOp OpDPdx()
+        SPIRV_OP OpDPdx()
         {
             return spirvOp(4, 207);
         }
 
-        SpvOp OpDPdy()
+        SPIRV_OP OpDPdy()
         {
             return spirvOp(4, 208);
         }
 
-        SpvOp OpFwidth()
+        SPIRV_OP OpFwidth()
         {
             return spirvOp(4, 209);
         }
 
-        SpvOp OpDPdxFine()
+        SPIRV_OP OpDPdxFine()
         {
             return spirvOp(4, 210);
         }
 
-        SpvOp OpDPdyFine()
+        SPIRV_OP OpDPdyFine()
         {
             return spirvOp(4, 211);
         }
 
-        SpvOp OpFwidthFine()
+        SPIRV_OP OpFwidthFine()
         {
             return spirvOp(4, 212);
         }
 
-        SpvOp OpDPdxCoarse()
+        SPIRV_OP OpDPdxCoarse()
         {
             return spirvOp(4, 213);
         }
 
-        SpvOp OpDPdyCoarse()
+        SPIRV_OP OpDPdyCoarse()
         {
             return spirvOp(4, 214);
         }
 
-        SpvOp OpFwidthCoarse()
+        SPIRV_OP OpFwidthCoarse()
         {
             return spirvOp(4, 215);
         }
 
-        SpvOp OpEmitVertex()
+        SPIRV_OP OpEmitVertex()
         {
             return spirvOp(1, 218);
         }
 
-        SpvOp OpEndPrimitive()
+        SPIRV_OP OpEndPrimitive()
         {
             return spirvOp(1, 219);
         }
 
-        SpvOp OpEmitStreamVertex()
+        SPIRV_OP OpEmitStreamVertex()
         {
             return spirvOp(1, 220);
         }
 
-        SpvOp OpEndStreamPrimitive()
+        SPIRV_OP OpEndStreamPrimitive()
         {
             return spirvOp(2, 221);
         }
 
-        SpvOp OpControlBarrier()
+        SPIRV_OP OpControlBarrier()
         {
             return spirvOp(4, 224);
         }
 
-        SpvOp OpMemoryBarrier()
+        SPIRV_OP OpMemoryBarrier()
         {
             return spirvOp(4, 225);
         }
 
-        SpvOp OpAtomicLoad()
+        SPIRV_OP OpAtomicLoad()
         {
             return spirvOp(6, 227);
         }
 
-        SpvOp OpAtomicStore()
+        SPIRV_OP OpAtomicStore()
         {
             return spirvOp(5, 228);
         }
 
-        SpvOp OpAtomicExchange()
+        SPIRV_OP OpAtomicExchange()
         {
             return spirvOp(7, 229);
         }
 
-        SpvOp OpAtomicCompareExchange()
+        SPIRV_OP OpAtomicCompareExchange()
         {
             return spirvOp(9, 230);
         }
 
-        SpvOp OpAtomicCompareExchangeWeak()
+        SPIRV_OP OpAtomicCompareExchangeWeak()
         {
             return spirvOp(9, 231);
         }
 
-        SpvOp OpAtomicIIncrement()
+        SPIRV_OP OpAtomicIIncrement()
         {
             return spirvOp(6, 232);
         }
 
-        SpvOp OpAtomicIDecrement()
+        SPIRV_OP OpAtomicIDecrement()
         {
             return spirvOp(6, 233);
         }
 
-        SpvOp OpAtomicIAdd()
+        SPIRV_OP OpAtomicIAdd()
         {
             return spirvOp(7, 234);
         }
 
-        SpvOp OpAtomicISub()
+        SPIRV_OP OpAtomicISub()
         {
             return spirvOp(7, 235);
         }
 
-        SpvOp OpAtomicSMin()
+        SPIRV_OP OpAtomicSMin()
         {
             return spirvOp(7, 236);
         }
 
-        SpvOp OpAtomicUMin()
+        SPIRV_OP OpAtomicUMin()
         {
             return spirvOp(7, 237);
         }
 
-        SpvOp OpAtomicSMax()
+        SPIRV_OP OpAtomicSMax()
         {
             return spirvOp(7, 238);
         }
 
-        SpvOp OpAtomicUMax()
+        SPIRV_OP OpAtomicUMax()
         {
             return spirvOp(7, 239);
         }
 
-        SpvOp OpAtomicAnd()
+        SPIRV_OP OpAtomicAnd()
         {
             return spirvOp(7, 240);
         }
 
-        SpvOp OpAtomicOr()
+        SPIRV_OP OpAtomicOr()
         {
             return spirvOp(7, 241);
         }
 
-        SpvOp OpAtomicXor()
+        SPIRV_OP OpAtomicXor()
         {
             return spirvOp(7, 242);
         }
 
-        SpvOp OpPhi(SpvVar variable)
+        SPIRV_OP OpPhi(SpvVar variable)
         {
             return spirvOp(3 + variable, 245);
         }
 
-        SpvOp OpLoopMerge(SpvVar variable)
+        SPIRV_OP OpLoopMerge(SpvVar variable)
         {
             return spirvOp(4 + variable, 246);
         }
 
-        SpvOp OpSelectionMerge()
+        SPIRV_OP OpSelectionMerge()
         {
             return spirvOp(3, 247);
         }
 
-        SpvOp OpLabel()
+        SPIRV_OP OpLabel()
         {
             return spirvOp(2, 248);
         }
 
-        SpvOp OpBranch()
+        SPIRV_OP OpBranch()
         {
             return spirvOp(2, 249);
         }
 
-        SpvOp OpBranchConditional(SpvVar variable)
+        SPIRV_OP OpBranchConditional(SpvVar variable)
         {
             return spirvOp(4 + variable, 250);
         }
 
-        SpvOp OpSwitch(SpvVar variable)
+        SPIRV_OP OpSwitch(SpvVar variable)
         {
             return spirvOp(3 + variable, 251);
         }
 
-        SpvOp OpKill()
+        SPIRV_OP OpKill()
         {
             return spirvOp(1, 252);
         }
 
-        SpvOp OpReturn()
+        SPIRV_OP OpReturn()
         {
             return spirvOp(1, 253);
         }
 
-        SpvOp OpReturnValue()
+        SPIRV_OP OpReturnValue()
         {
             return spirvOp(2, 254);
         }
 
-        SpvOp OpUnreachable()
+        SPIRV_OP OpUnreachable()
         {
             return spirvOp(1, 255);
         }
 
-        SpvOp OpLifetimeStart()
+        SPIRV_OP OpLifetimeStart()
         {
             return spirvOp(3, 256);
         }
 
-        SpvOp OpLifetimeStop()
+        SPIRV_OP OpLifetimeStop()
         {
             return spirvOp(3, 257);
         }
 
-        SpvOp OpGroupAsyncCopy()
+        SPIRV_OP OpGroupAsyncCopy()
         {
             return spirvOp(9, 259);
         }
 
-        SpvOp OpGroupWaitEvents()
+        SPIRV_OP OpGroupWaitEvents()
         {
             return spirvOp(4, 260);
         }
 
-        SpvOp OpGroupAll()
+        SPIRV_OP OpGroupAll()
         {
             return spirvOp(5, 261);
         }
 
-        SpvOp OpGroupAny()
+        SPIRV_OP OpGroupAny()
         {
             return spirvOp(5, 262);
         }
 
-        SpvOp OpGroupBroadcast()
+        SPIRV_OP OpGroupBroadcast()
         {
             return spirvOp(6, 263);
         }
 
-        SpvOp OpGroupIAdd()
+        SPIRV_OP OpGroupIAdd()
         {
             return spirvOp(6, 264);
         }
 
-        SpvOp OpGroupFAdd()
+        SPIRV_OP OpGroupFAdd()
         {
             return spirvOp(6, 265);
         }
 
-        SpvOp OpGroupFMin()
+        SPIRV_OP OpGroupFMin()
         {
             return spirvOp(6, 266);
         }
 
-        SpvOp OpGroupUMin()
+        SPIRV_OP OpGroupUMin()
         {
             return spirvOp(6, 267);
         }
 
-        SpvOp OpGroupSMin()
+        SPIRV_OP OpGroupSMin()
         {
             return spirvOp(6, 268);
         }
 
-        SpvOp OpGroupFMax()
+        SPIRV_OP OpGroupFMax()
         {
             return spirvOp(6, 269);
         }
 
-        SpvOp OpGroupUMax()
+        SPIRV_OP OpGroupUMax()
         {
             return spirvOp(6, 270);
         }
 
-        SpvOp OpGroupSMax()
+        SPIRV_OP OpGroupSMax()
         {
             return spirvOp(6, 271);
         }
 
-        SpvOp OpReadPipe()
+        SPIRV_OP OpReadPipe()
         {
             return spirvOp(7, 274);
         }
 
-        SpvOp OpWritePipe()
+        SPIRV_OP OpWritePipe()
         {
             return spirvOp(7, 275);
         }
 
-        SpvOp OpReservedReadPipe()
+        SPIRV_OP OpReservedReadPipe()
         {
             return spirvOp(9, 276);
         }
 
-        SpvOp OpReservedWritePipe()
+        SPIRV_OP OpReservedWritePipe()
         {
             return spirvOp(9, 277);
         }
 
-        SpvOp OpReserveReadPipePackets()
+        SPIRV_OP OpReserveReadPipePackets()
         {
             return spirvOp(7, 278);
         }
 
-        SpvOp OpReserveWritePipePackets()
+        SPIRV_OP OpReserveWritePipePackets()
         {
             return spirvOp(7, 279);
         }
 
-        SpvOp OpCommitReadPipe()
+        SPIRV_OP OpCommitReadPipe()
         {
             return spirvOp(5, 280);
         }
 
-        SpvOp OpCommitWritePipe()
+        SPIRV_OP OpCommitWritePipe()
         {
             return spirvOp(5, 281);
         }
 
-        SpvOp OpIsValidReserveId()
+        SPIRV_OP OpIsValidReserveId()
         {
             return spirvOp(4, 282);
         }
 
-        SpvOp OpGetNumPipePackets()
+        SPIRV_OP OpGetNumPipePackets()
         {
             return spirvOp(5, 283);
         }
 
-        SpvOp OpGetMaxPipePackets()
+        SPIRV_OP OpGetMaxPipePackets()
         {
             return spirvOp(6, 284);
         }
 
-        SpvOp OpGroupReserveReadPipePackets()
+        SPIRV_OP OpGroupReserveReadPipePackets()
         {
             return spirvOp(8, 285);
         }
 
-        SpvOp OpGroupReserveWritePipePackets()
+        SPIRV_OP OpGroupReserveWritePipePackets()
         {
             return spirvOp(8, 286);
         }
 
-        SpvOp OpGroupCommitReadPipe()
+        SPIRV_OP OpGroupCommitReadPipe()
         {
             return spirvOp(6, 287);
         }
 
-        SpvOp OpGroupCommitWritePipe()
+        SPIRV_OP OpGroupCommitWritePipe()
         {
             return spirvOp(6, 288);
         }
 
-        SpvOp OpEnqueueMarker()
+        SPIRV_OP OpEnqueueMarker()
         {
             return spirvOp(7, 291);
         }
 
-        SpvOp OpEnqueueKernel(SpvVar variable)
+        SPIRV_OP OpEnqueueKernel(SpvVar variable)
         {
             return spirvOp(13 + variable, 292);
         }
 
-        SpvOp OpGetKernelNDrangeSubGroupCount()
+        SPIRV_OP OpGetKernelNDrangeSubGroupCount()
         {
             return spirvOp(8, 293);
         }
 
-        SpvOp OpGetKernelNDrangeMaxSubGroupSize()
+        SPIRV_OP OpGetKernelNDrangeMaxSubGroupSize()
         {
             return spirvOp(8, 294);
         }
 
-        SpvOp OpGetKernelWorkGroupSize()
+        SPIRV_OP OpGetKernelWorkGroupSize()
         {
             return spirvOp(7, 295);
         }
 
-        SpvOp OpGetKernelPreferredWorkGroupSizeMultiple()
+        SPIRV_OP OpGetKernelPreferredWorkGroupSizeMultiple()
         {
             return spirvOp(7, 296);
         }
 
-        SpvOp OpRetainEvent()
+        SPIRV_OP OpRetainEvent()
         {
             return spirvOp(2, 297);
         }
 
-        SpvOp OpReleaseEvent()
+        SPIRV_OP OpReleaseEvent()
         {
             return spirvOp(2, 298);
         }
 
-        SpvOp OpCreateUserEvent()
+        SPIRV_OP OpCreateUserEvent()
         {
             return spirvOp(3, 299);
         }
 
-        SpvOp OpIsValidEvent()
+        SPIRV_OP OpIsValidEvent()
         {
             return spirvOp(4, 300);
         }
 
-        SpvOp OpSetUserEventStatus()
+        SPIRV_OP OpSetUserEventStatus()
         {
             return spirvOp(3, 301);
         }
 
-        SpvOp OpCaptureEventProfilingInfo()
+        SPIRV_OP OpCaptureEventProfilingInfo()
         {
             return spirvOp(4, 302);
         }
 
-        SpvOp OpGetDefaultQueue()
+        SPIRV_OP OpGetDefaultQueue()
         {
             return spirvOp(3, 303);
         }
 
-        SpvOp OpBuildNDRange()
+        SPIRV_OP OpBuildNDRange()
         {
             return spirvOp(6, 304);
         }
 
-        SpvOp OpImageQuerySamples(SpvVar variable)
+        SPIRV_OP OpImageQuerySamples(SpvVar variable)
         {
             return spirvOp(5 + variable, 305);
         }
 
-        SpvOp OpImageSparseSampleExplicitLod(SpvVar variable)
+        SPIRV_OP OpImageSparseSampleExplicitLod(SpvVar variable)
         {
             return spirvOp(7 + variable, 306);
         }
 
-        SpvOp OpImageSparseSampleDrefImplicitLod(SpvVar variable)
+        SPIRV_OP OpImageSparseSampleDrefImplicitLod(SpvVar variable)
         {
             return spirvOp(6 + variable, 307);
         }
 
-        SpvOp OpImageSparseSampleDrefExplicitLod(SpvVar variable)
+        SPIRV_OP OpImageSparseSampleDrefExplicitLod(SpvVar variable)
         {
             return spirvOp(8 + variable, 308);
         }
 
-        SpvOp OpImageSparseSampleProjImplicitLod(SpvVar variable)
+        SPIRV_OP OpImageSparseSampleProjImplicitLod(SpvVar variable)
         {
             return spirvOp(5 + variable, 309);
         }
 
-        SpvOp OpImageSparseSampleProjExplicitLod(SpvVar variable)
+        SPIRV_OP OpImageSparseSampleProjExplicitLod(SpvVar variable)
         {
             return spirvOp(7 + variable, 310);
         }
 
-        SpvOp OpImageSparseSampleProjDrefImplicitLod(SpvVar variable)
+        SPIRV_OP OpImageSparseSampleProjDrefImplicitLod(SpvVar variable)
         {
             return spirvOp(6 + variable, 311);
         }
 
-        SpvOp OpImageSparseFetch(SpvVar variable)
+        SPIRV_OP OpImageSparseFetch(SpvVar variable)
         {
             return spirvOp(5 + variable, 313);
         }
 
-        SpvOp OpImageSparseGather(SpvVar variable)
+        SPIRV_OP OpImageSparseGather(SpvVar variable)
         {
             return spirvOp(6 + variable, 314);
         }
 
-        SpvOp OpImageSparseDrefGather(SpvVar variable)
+        SPIRV_OP OpImageSparseDrefGather(SpvVar variable)
         {
             return spirvOp(6 + variable, 315);
         }
 
-        SpvOp OpImageSparseDrefGather()
+        SPIRV_OP OpImageSparseDrefGather()
         {
             return spirvOp(4, 316);
         }
 
-        SpvOp OpNoLine()
+        SPIRV_OP OpNoLine()
         {
             return spirvOp(1, 317);
         }
 
-        SpvOp OpAtomicFlagTestAndSet()
+        SPIRV_OP OpAtomicFlagTestAndSet()
         {
             return spirvOp(6, 318);
         }
 
-        SpvOp OpAtomicFlagClear()
+        SPIRV_OP OpAtomicFlagClear()
         {
             return spirvOp(4, 319);
         }
 
-        SpvOp OpImageSparseRead(SpvVar variable)
+        SPIRV_OP OpImageSparseRead(SpvVar variable)
         {
             return spirvOp(5 + variable, 320);
         }
 
         //Version >= 1.1
-        SpvOp OpSizeOf()
+        SPIRV_OP OpSizeOf()
         {
             return spirvOp(4, 321);
         }
 
         //Version >= 1.1
-        SpvOp OpTypePipeStorage()
+        SPIRV_OP OpTypePipeStorage()
         {
             return spirvOp(3, 322);
         }
 
         //Version >= 1.1
-        SpvOp OpConstantPipeStorage()
+        SPIRV_OP OpConstantPipeStorage()
         {
             return spirvOp(6, 323);
         }
 
         //Version >= 1.1
-        SpvOp OpCreatePipeFromPipeStorage()
+        SPIRV_OP OpCreatePipeFromPipeStorage()
         {
             return spirvOp(4, 324);
         }
 
         //Version >= 1.1
-        SpvOp OpGetKernelLocalSizeForSubgroupCount()
+        SPIRV_OP OpGetKernelLocalSizeForSubgroupCount()
         {
             return spirvOp(8, 325);
         }
 
         //Version >= 1.1
-        SpvOp OpGetKernelMaxNumSubgroups()
+        SPIRV_OP OpGetKernelMaxNumSubgroups()
         {
             return spirvOp(7, 326);
         }
 
         //Version >= 1.1
-        SpvOp OpTypeNamedBarrier()
+        SPIRV_OP OpTypeNamedBarrier()
         {
             return spirvOp(3, 327);
         }
 
         //Version >= 1.1
-        SpvOp OpNamedBarrierInitialize()
+        SPIRV_OP OpNamedBarrierInitialize()
         {
             return spirvOp(4, 328);
         }
 
         //Version >= 1.1
-        SpvOp OpMemoryNamedBarrier()
+        SPIRV_OP OpMemoryNamedBarrier()
         {
             return spirvOp(4, 329);
         }
 
         //Version >= 1.1
-        SpvOp OpModuleProcessed(SpvVar variable)
+        SPIRV_OP OpModuleProcessed(SpvVar variable)
         {
             return spirvOp(2 + variable, 330);
         }
 
         //Version >= 1.2
-        SpvOp OpExecutionModeId(SpvVar variable)
+        SPIRV_OP OpExecutionModeId(SpvVar variable)
         {
             return spirvOp(3 + variable, 331);
         }
 
         //Version >= 1.2
-        SpvOp OpDecorateId(SpvVar variable)
+        SPIRV_OP OpDecorateId(SpvVar variable)
         {
             return spirvOp(3 + variable, 332);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformElect()
+        SPIRV_OP OpGroupNonUniformElect()
         {
             return spirvOp(4, 333);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformAll()
+        SPIRV_OP OpGroupNonUniformAll()
         {
             return spirvOp(5, 334);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformAny()
+        SPIRV_OP OpGroupNonUniformAny()
         {
             return spirvOp(5, 335);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformAllEqual()
+        SPIRV_OP OpGroupNonUniformAllEqual()
         {
             return spirvOp(5, 336);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformBroadcast()
+        SPIRV_OP OpGroupNonUniformBroadcast()
         {
             return spirvOp(6, 337);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformBroadcastFirst()
+        SPIRV_OP OpGroupNonUniformBroadcastFirst()
         {
             return spirvOp(5, 338);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformBallot()
+        SPIRV_OP OpGroupNonUniformBallot()
         {
             return spirvOp(5, 339);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformInverseBallot()
+        SPIRV_OP OpGroupNonUniformInverseBallot()
         {
             return spirvOp(5, 340);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformBallotBitExtract()
+        SPIRV_OP OpGroupNonUniformBallotBitExtract()
         {
             return spirvOp(6, 341);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformBallotBitCount()
+        SPIRV_OP OpGroupNonUniformBallotBitCount()
         {
             return spirvOp(6, 342);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformBallotFindLSB()
+        SPIRV_OP OpGroupNonUniformBallotFindLSB()
         {
             return spirvOp(5, 343);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformBallotFindMSB()
+        SPIRV_OP OpGroupNonUniformBallotFindMSB()
         {
             return spirvOp(5, 344);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformShuffle()
+        SPIRV_OP OpGroupNonUniformShuffle()
         {
             return spirvOp(6, 345);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformShuffleXor()
+        SPIRV_OP OpGroupNonUniformShuffleXor()
         {
             return spirvOp(6, 346);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformShuffleUp()
+        SPIRV_OP OpGroupNonUniformShuffleUp()
         {
             return spirvOp(6, 347);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformShuffleDown()
+        SPIRV_OP OpGroupNonUniformShuffleDown()
         {
             return spirvOp(6, 348);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformIAdd(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformIAdd(SpvVar variable)
         {
             return spirvOp(6 + variable, 349);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformFAdd(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformFAdd(SpvVar variable)
         {
             return spirvOp(6 + variable, 350);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformIMul(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformIMul(SpvVar variable)
         {
             return spirvOp(6 + variable, 351);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformFMul(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformFMul(SpvVar variable)
         {
             return spirvOp(6 + variable, 352);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformSMin(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformSMin(SpvVar variable)
         {
             return spirvOp(6 + variable, 353);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformUMin(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformUMin(SpvVar variable)
         {
             return spirvOp(6 + variable, 354);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformFMin(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformFMin(SpvVar variable)
         {
             return spirvOp(6 + variable, 355);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformSMax(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformSMax(SpvVar variable)
         {
             return spirvOp(6 + variable, 356);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformUMax(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformUMax(SpvVar variable)
         {
             return spirvOp(6 + variable, 357);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformFMax(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformFMax(SpvVar variable)
         {
             return spirvOp(6 + variable, 358);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformBitwiseAnd(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformBitwiseAnd(SpvVar variable)
         {
             return spirvOp(6 + variable, 359);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformBitwiseOr(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformBitwiseOr(SpvVar variable)
         {
             return spirvOp(6 + variable, 360);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformBitwiseXor(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformBitwiseXor(SpvVar variable)
         {
             return spirvOp(6 + variable, 361);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformLogicalAnd(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformLogicalAnd(SpvVar variable)
         {
             return spirvOp(6 + variable, 362);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformLogicalOr(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformLogicalOr(SpvVar variable)
         {
             return spirvOp(6 + variable, 363);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformLogicalXor(SpvVar variable)
+        SPIRV_OP OpGroupNonUniformLogicalXor(SpvVar variable)
         {
             return spirvOp(6 + variable, 364);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformQuadBroadcast()
+        SPIRV_OP OpGroupNonUniformQuadBroadcast()
         {
             return spirvOp(6, 365);
         }
 
         //Version >= 1.3
-        SpvOp OpGroupNonUniformQuadSwap()
+        SPIRV_OP OpGroupNonUniformQuadSwap()
         {
             return spirvOp(6, 366);
         }
 
-        SpvOp OpCopyLogical()
+        SPIRV_OP OpCopyLogical()
         {
             return spirvOp(4, 400);
         }
 
         //Version >= 1.4
-        SpvOp OpPtrEqual()
+        SPIRV_OP OpPtrEqual()
         {
             return spirvOp(5, 401);
         }
 
         //Version >= 1.4
-        SpvOp OpPtrNotEqual()
+        SPIRV_OP OpPtrNotEqual()
         {
             return spirvOp(5, 402);
         }
 
         //Version >= 1.4
-        SpvOp OpPtrDiff()
+        SPIRV_OP OpPtrDiff()
         {
             return spirvOp(5, 403);
         }
 
         //Version >= 1.2
-        SpvOp OpMemberDecorateString(SpvVar variable)
+        SPIRV_OP OpMemberDecorateString(SpvVar variable)
         {
             return spirvOp(5 + variable, 5633);
         }
