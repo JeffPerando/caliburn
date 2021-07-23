@@ -1,11 +1,6 @@
 
 #include "parser.h"
 
-#include "ctrlstmnt.h"
-#include "miscstmt.h"
-#include "funcstmnt.h"
-#include "scopestmnt.h"
-
 //I'm so sorry
 using namespace caliburn;
 
@@ -401,26 +396,29 @@ Statement* Parser::parseFunction()
 
 Statement* Parser::parseLogic()
 {
-	return parseAny({ &Parser::parseControl, &Parser::parseScope,
-		&Parser::parseAnyVar, &Parser::parseSetter });
-}
+	auto stmt = parseAny({ &Parser::parseControl, &Parser::parseScope,
+		&Parser::parseAnyVar, &Parser::parseSetter});
 
-Statement* Parser::parseFuncCall()
-{
-	Token tkn = tokens->current();
+	if (stmt) return stmt;
 
-	if (tkn.type == CALIBURN_T_KEYWORD)
-	{
-		if (tkn != "dispatch")
-		{
-			return nullptr;
-		}
-	}
-	else if (tkn.type != CALIBURN_T_IDENTIFIER)
+	//from hereon, parse function call
+
+	stmt = parseAnyFieldOrFuncValue();
+
+	if (!stmt)
 	{
 		return nullptr;
 	}
 
+	//TODO check stmt and complain
+	/*
+	if (stmt.type == CALIBURN_FIELD_ACCESS)
+	{
+		//complain
+		return nullptr;
+	}
+	*/
+	return stmt;
 }
 
 Statement* Parser::parseAnyVar()
@@ -623,6 +621,7 @@ Statement* Parser::parseValue()
 Statement* Parser::parseValue(bool doPostfix)
 {
 	Statement* foundValue = nullptr;
+	std::vector<Statement*> dispatchParams;
 
 	Token tkn = tokens->current();
 
@@ -637,6 +636,25 @@ Statement* Parser::parseValue(bool doPostfix)
 		else if (tkn == "super")
 		{
 			foundValue = nullptr;//new SuperStatement();
+		}
+		else if (tkn == "dispatch")
+		{
+			if (tokens->next().type != CALIBURN_T_START_BRACKET)
+			{
+				//TODO complain
+				return nullptr;
+			}
+
+			parseValueList(dispatchParams);
+
+			if (tokens->current().type != CALIBURN_T_END_BRACKET)
+			{
+				//TODO complain
+				return nullptr;
+			}
+
+			tokens->consume();
+
 		}
 		else
 		{
@@ -654,40 +672,14 @@ Statement* Parser::parseValue(bool doPostfix)
 		ParsedType* type = parseTypeName();
 		*/
 	}
+
 	//field, constructor...
-	else if (tkn.type == CALIBURN_T_IDENTIFIER)
+	if (tkn.type == CALIBURN_T_IDENTIFIER)
 	{
-		std::string mod = parseNamespace();
-		std::string name = tokens->current();
 		tokens->consume();
+		foundValue = parseAnyFieldOrFuncValue();
 
-		std::vector<ParsedType*> generics;
-		bool isGeneric = parseGenerics(generics);
-
-		if (tokens->current().type == CALIBURN_T_START_PAREN)
-		{
-			tokens->consume();
-
-			std::vector<Statement*> args;
-			parseValueList(args);
-
-			if (tokens->current().type != CALIBURN_T_END_PAREN)
-			{
-				//TODO complain
-				return nullptr;
-			}
-
-			tokens->consume();
-
-			//foundValue = new FuncCallStatement();
-		}
-		else if (isGeneric)
-		{
-			//TODO complain
-			return nullptr;
-		}
-
-		//foundValue = new FieldAccessStatement(mod, name);
+		//TODO check and feed dispatch params
 	}
 	//(x)
 	else if (tkn.type == CALIBURN_T_START_PAREN)
@@ -857,7 +849,7 @@ Statement* Parser::parseValue(bool doPostfix)
 	return foundValue;
 }
 
-Statement* Parser::parseAnyFieldOrFuncVal()
+Statement* Parser::parseAnyFieldOrFuncValue()
 {
 	return parseFieldOrFuncValue(true);
 }
@@ -894,8 +886,13 @@ Statement* Parser::parseFieldOrFuncValue(bool canHaveNamespace)
 
 		//return new FuncCall(type, args);
 	}
+	else if (type->generics.size() > 0)
+	{
+		delete type;
+		return nullptr;
+	}
 
-	//return new FieldAccessStatement(mod, name);
+	//return new FieldAccessStatement(type.mod, type.name);
 }
 
 //Statement* Parser::parseLiteral();

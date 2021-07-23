@@ -6,13 +6,19 @@
 #include "tokenizer.h"
 #include "type.h"
 
+#include "ctrlstmnt.h"
+#include "miscstmt.h"
+#include "funcstmnt.h"
+#include "scopestmnt.h"
+
 namespace caliburn
 {
-	typedef ParseMethod;
+	class Parser;
+
+	using ParseMethod = Statement * (Parser::*)();
 
 	class Parser
 	{
-	private:
 		buffer<Token>* tokens = nullptr;
 
 		void parseIdentifierList(std::vector<std::string>& ids);
@@ -55,8 +61,6 @@ namespace caliburn
 		//variable, setter, control flow, scope, or function call
 		Statement* parseLogic();
 
-		Statement* parseFuncCall();
-
 		Statement* parseAnyVar();
 
 		Statement* parseVariable(bool implicitAllowed = true);
@@ -89,7 +93,7 @@ namespace caliburn
 
 		Statement* parseValue(bool doPostfix);
 
-		Statement* parseAnyFieldOrFuncVal();
+		Statement* parseAnyFieldOrFuncValue();
 
 		Statement* parseFieldOrFuncValue(bool canHaveNamespace);
 
@@ -102,7 +106,5 @@ namespace caliburn
 		void parse(std::vector<Token>* tokenList, std::vector<Statement*>* ast);
 
 	};
-
-	using ParseMethod = Statement * (Parser::*)();
 
 }
