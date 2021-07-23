@@ -3,7 +3,7 @@
 
 using namespace caliburn;
 
-Visibility strToVis(std::string str)
+Visibility caliburn::strToVis(std::string str)
 {
 	if (str == "public")
 		return Visibility::PUBLIC;
