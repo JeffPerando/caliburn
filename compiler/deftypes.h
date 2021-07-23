@@ -14,8 +14,8 @@ namespace caliburn
 	{
 		std::string canonName;
 		//in bytes
-		size_t size;
-		int32_t attribs;
+		size_t size = 1;
+		int32_t attribs = 0;
 
 		virtual bool isCompatible(Operator op) const = 0;
 

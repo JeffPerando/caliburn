@@ -29,7 +29,6 @@ namespace caliburn
 	{
 		ParsedType* returnType = nullptr;
 		std::string name = "FORGOT TO NAME YOUR FUNCTION!";
-		uint32_t ssa = 0;
 		std::vector<FuncArg> args;
 		FuncControl control = FuncControl::Inline;
 		uint32_t calls = 0;
@@ -39,7 +38,7 @@ namespace caliburn
 
 		uint32_t toSPIRV(SpirVAssembler* codeAsm)
 		{
-			ssa = codeAsm->newAssign();
+			uint32_t ssa = codeAsm->newAssign();
 
 			uint32_t returnTypeSSA = codeAsm->pushType(returnType);
 
@@ -59,7 +58,8 @@ namespace caliburn
 			funcBody->toSPIRV(codeAsm);
 
 			codeAsm->push(spirv::OpFunctionEnd());
-
+			
+			return ssa;
 		}
 
 	};

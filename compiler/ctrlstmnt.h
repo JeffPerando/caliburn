@@ -114,6 +114,7 @@ namespace caliburn
 				spirv::OpLabel(), mergeSSA
 				});
 			
+			return startSSA;
 		}
 
 	};

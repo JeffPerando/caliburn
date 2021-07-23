@@ -6,7 +6,6 @@
 
 #include "assembler.h"
 #include "deftypes.h"
-#include "spirv.h"
 
 namespace caliburn
 {
