@@ -47,7 +47,7 @@ void SpirVAssembler::pushAll(std::initializer_list<SpvOp> args)
 
 void SpirVAssembler::pushStr(std::string str)
 {
-	size_t copied = ((str.length() & ~0x3) >> 2) + ((str.length() & 0x3) == 0);
+	size_t copied = (str.length() >> 2) + ((str.length() & 0x3) != 0);
 	ops.resize(ops.size() + copied, 0);
 	std::memcpy(ops.end()._Ptr - copied, str.c_str(), str.length());
 
