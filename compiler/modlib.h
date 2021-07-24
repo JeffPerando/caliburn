@@ -33,13 +33,10 @@ namespace caliburn
 		void getModules(std::vector<std::string>& names, std::vector<Module*>& mods)
 		{
 			lock.lock_shared();
-
 			for (auto name : names)
 			{
 				mods.push_back(modules[name]);
-
 			}
-
 			lock.unlock_shared();
 
 		}

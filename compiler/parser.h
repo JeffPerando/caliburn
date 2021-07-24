@@ -42,7 +42,7 @@ namespace caliburn
 		Statement* parseUsing();
 
 		Statement* parseTypedef();
-
+		/*
 		Statement* parseNamespaceDef();
 
 		Statement* parseShader();
@@ -52,10 +52,10 @@ namespace caliburn
 		Statement* parseStruct();
 
 		Statement* parseClass();
-
+		*/
 		Statement* parseFunction();
 
-		Statement* parseMethod();
+		//Statement* parseMethod();
 
 		//called a "statement" in the CFG
 		//variable, setter, control flow, scope, or function call
@@ -65,7 +65,7 @@ namespace caliburn
 
 		Statement* parseVariable(bool implicitAllowed = true);
 
-		Statement* parseSetter();
+		//Statement* parseSetter();
 
 		Statement* parseScope();
 
@@ -74,7 +74,7 @@ namespace caliburn
 		Statement* parseIf();
 
 		Statement* parseFor();
-
+		/*
 		Statement* parseWhile();
 
 		Statement* parseDoWhile();
@@ -88,7 +88,7 @@ namespace caliburn
 		Statement* parsePass();
 
 		Statement* parseReturn();
-
+		*/
 		Statement* parseValue();
 
 		Statement* parseValue(bool doPostfix);
@@ -97,7 +97,7 @@ namespace caliburn
 
 		Statement* parseFieldOrFuncValue(bool canHaveNamespace);
 
-		Statement* parseLiteral();
+		//Statement* parseLiteral();
 
 	public:
 		Parser() {}
