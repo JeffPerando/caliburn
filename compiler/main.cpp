@@ -1,24 +1,19 @@
 
 #include <iostream>
-#include <vector>
+
+#include "tokenizer.h"
 
 int main()
 {
-    std::vector<uint32_t> test;
-    test.push_back(42);
-    //test.insert(test.end(), 5);
-    
-    std::string str = "LOLOL";
-    size_t copied = (str.length() >> 2) + ((str.length() & 0x3) != 0);
-    test.resize(test.size() + copied, 0);
-    std::memcpy(test.end()._Ptr - copied, str.c_str(), str.length());
+    std::string test = "x | y";
+    auto tokens = std::vector<caliburn::Token>();
 
-    test.push_back(69);
-    
-    for (auto i : test)
+    caliburn::tokenize(test, tokens);
+
+    for (auto t : tokens)
     {
-        std::cout << i << " ";
+        std::cout << t.type << std::endl;
+
     }
 
-    std::cout << "Hello World!\n";
 }
