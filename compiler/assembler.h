@@ -43,7 +43,7 @@ namespace caliburn
 	};
 	*/
 	
-	enum Visibility
+	enum class Visibility
 	{
 		NONE,
 		PUBLIC,
@@ -57,7 +57,7 @@ namespace caliburn
 
 	};
 
-	Visibility strToVis(std::string str);
+	caliburn::Visibility strToVis(std::string str);
 
 	struct SpirVPhi
 	{

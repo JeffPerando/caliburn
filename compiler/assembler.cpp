@@ -16,7 +16,7 @@ Visibility caliburn::strToVis(std::string str)
 	if (str == "static")
 		return Visibility::STATIC;
 
-	return NONE;
+	return Visibility::NONE;
 }
 
 uint32_t SpirVAssembler::pushType(ParsedType* type)
