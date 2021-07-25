@@ -11,11 +11,11 @@ namespace caliburn
 	struct Token
 	{
 		std::string str;
-		uint64_t type;
+		TokenType type = TokenType::NONE;
 		uint64_t line, column;
 
 		//the fact that this has to exist is bothersome
-		Token(std::string t, uint64_t id, uint64_t l, uint64_t c) :
+		Token(std::string t, TokenType id, uint64_t l, uint64_t c) :
 			str(t), type(id), line(l), column(c) {}
 
 		operator std::string() const
@@ -29,23 +29,35 @@ namespace caliburn
 		}
 
 	};
-	
-	size_t findOp(std::string txt, uint64_t cur);
 
-	size_t findStr(std::string txt, uint64_t cur, char delim);
+	using FindFunc = bool(*)(char chr);
 
-	size_t findInt(std::string txt, uint64_t cur);
+	inline bool isIdentifier(char chr);
 
-	size_t findIdentifier(std::string txt, uint64_t cur);
+	inline bool isComment(char chr);
 
-	bool isIntStart(char chr);
+	inline bool isWhitespace(char chr);
 
-	bool isInt(char chr);
+	inline bool isOperator(char chr);
 
-	bool isIdentifier(char chr);
+	inline bool isDecInt(char chr);
 
-	bool isOperator(char chr);
+	inline bool isHexInt(char chr);
 
-	void tokenize(std::string txt, std::vector<Token>& tokens);
+	inline bool isOctInt(char chr);
+
+	inline bool isBinInt(char chr);
+
+	inline TokenType getSpecial(char chr);
+
+	size_t find(FindFunc func, std::string& txt, uint64_t cur);
+
+	size_t findStr(std::string& txt, uint64_t cur, char delim);
+
+	size_t scanDecInt(std::string& txt, size_t offset);
+
+	bool findIntLiteral(std::string& txt, uint64_t cur, TokenType& type, uint64_t& finalLen);
+
+	void tokenize(std::string& txt, std::vector<Token>& tokens);
 
 }

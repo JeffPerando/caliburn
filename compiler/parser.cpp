@@ -34,7 +34,7 @@ void Parser::parseIdentifierList(std::vector<std::string>& ids)
 	{
 		Token tkn = tokens->current();
 
-		if (tkn.type != CALIBURN_T_IDENTIFIER)
+		if (tkn.type != TokenType::IDENTIFIER)
 		{
 			break;
 		}
@@ -42,7 +42,7 @@ void Parser::parseIdentifierList(std::vector<std::string>& ids)
 		ids.push_back(tkn.str);
 		tkn = tokens->next();
 
-		if (tkn.type != CALIBURN_T_COMMA)
+		if (tkn.type != TokenType::COMMA)
 		{
 			break;
 		}
@@ -66,7 +66,7 @@ void Parser::parseValueList(std::vector<Statement*>& xs)
 
 		xs.push_back(val);
 		
-		if (tokens->current().type != CALIBURN_T_COMMA)
+		if (tokens->current().type != TokenType::COMMA)
 		{
 			break;
 		}
@@ -82,7 +82,7 @@ bool Parser::parseGenerics(std::vector<ParsedType*>& generics)
 	bool actualGeneric = false;
 	auto oldIndex = tokens->currentIndex();
 
-	if (tokens->current().type == CALIBURN_T_LT_SIGN)
+	if (tokens->current() == "<")
 	{
 		tokens->consume();
 
@@ -102,12 +102,12 @@ bool Parser::parseGenerics(std::vector<ParsedType*>& generics)
 
 			Token tkn = tokens->current();
 
-			if (tkn.type == CALIBURN_T_GT_SIGN)
+			if (tkn == ">")
 			{
 				tokens->consume();
 				break;
 			}
-			else if (tkn.type == CALIBURN_T_COMMA)
+			else if (tkn.type == TokenType::COMMA)
 			{
 				tokens->consume();
 				continue;
@@ -170,8 +170,8 @@ Statement* Parser::parseAny(std::initializer_list<ParseMethod> fns)
 
 std::string Parser::parseNamespace()
 {
-	if (tokens->current().type == CALIBURN_T_IDENTIFIER &&
-		tokens->peek().type == CALIBURN_T_COLON)
+	if (tokens->current().type == TokenType::IDENTIFIER &&
+		tokens->peek().type == TokenType::COLON)
 	{
 		Token tkn = tokens->current();
 		tokens->consume(2);
@@ -187,7 +187,7 @@ ParsedType* Parser::parseTypeName()
 
 	Token tkn = tokens->current();
 
-	if (tkn.type != CALIBURN_T_IDENTIFIER)
+	if (tkn.type != TokenType::IDENTIFIER)
 	{
 		//TODO complain?
 		return nullptr;
@@ -210,7 +210,7 @@ bool Parser::parseSemicolon()
 	//here because we need the line/column data
 	Token tkn = tokens->current();
 
-	if (tkn.type == CALIBURN_T_END)
+	if (tkn.type == TokenType::END)
 	{
 		tokens->consume();
 		return true;
@@ -225,14 +225,14 @@ Statement* Parser::parseDecl()
 	Statement* stmt = parseAny({
 		&Parser::parseLogic,
 		&Parser::parseFunction,
-		&Parser::parseShader,
-		&Parser::parseClass,
+		//&Parser::parseShader,
+		//&Parser::parseClass,
 		&Parser::parseImport,
 		&Parser::parseUsing,
 		&Parser::parseTypedef,
-		&Parser::parseNamespaceDef,
+		/*Parser::parseNamespaceDef,
 		&Parser::parseDescriptor,
-		&Parser::parseStruct });
+		&Parser::parseStruct*/ });
 
 	if (!parseSemicolon())
 	{
@@ -275,7 +275,7 @@ Statement* Parser::parseTypedef()
 		return nullptr;
 	}
 
-	if (tokens->next().type != CALIBURN_T_IDENTIFIER)
+	if (tokens->next().type != TokenType::IDENTIFIER)
 	{
 		return nullptr;
 	}
@@ -397,7 +397,7 @@ Statement* Parser::parseFunction()
 Statement* Parser::parseLogic()
 {
 	auto stmt = parseAny({ &Parser::parseControl, &Parser::parseScope,
-		&Parser::parseAnyVar, &Parser::parseSetter});
+		&Parser::parseAnyVar, /*&Parser::parseSetter*/});
 
 	if (stmt) return stmt;
 
@@ -434,7 +434,7 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 
 	Token tkn = tokens->current();
 
-	if (tkn.type == CALIBURN_T_KEYWORD)
+	if (tkn.type == TokenType::KEYWORD)
 	{
 		if (tkn.str == "let" && implicitAllowed)
 		{
@@ -483,7 +483,7 @@ Statement* Parser::parseScope()
 {
 	Token tkn = tokens->current();
 
-	if (tkn.type != CALIBURN_T_START_SCOPE)
+	if (tkn.type != TokenType::START_SCOPE)
 	{
 		return nullptr;
 	}
@@ -492,7 +492,7 @@ Statement* Parser::parseScope()
 
 	ScopeStatement* scope = new ScopeStatement();
 
-	while (tokens->current().type != CALIBURN_T_END_SCOPE)
+	while (tokens->current().type != TokenType::END_SCOPE)
 	{
 		scope->innerCode.push_back(parseDecl());
 		
@@ -507,13 +507,13 @@ Statement* Parser::parseControl()
 {
 	Token tkn = tokens->current();
 
-	if (tkn.type != CALIBURN_T_KEYWORD)
+	if (tkn.type != TokenType::KEYWORD)
 	{
 		return nullptr;
 	}
 
-	return parseAny({ &Parser::parseIf, &Parser::parseFor, &Parser::parseWhile,
-		&Parser::parseDoWhile, &Parser::parseSwitch });
+	return parseAny({ &Parser::parseIf, &Parser::parseFor, /*&Parser::parseWhile,
+		&Parser::parseDoWhile, &Parser::parseSwitch */});
 }
 
 Statement* Parser::parseIf()
@@ -525,7 +525,7 @@ Statement* Parser::parseIf()
 		return nullptr;
 	}
 
-	if (tokens->peek().type != CALIBURN_T_START_PAREN)
+	if (tokens->peek().type != TokenType::START_PAREN)
 	{
 		return nullptr;
 	}
@@ -534,7 +534,7 @@ Statement* Parser::parseIf()
 
 	ValueStatement* condition = (ValueStatement*)parseValue();
 
-	if (tokens->current().type != CALIBURN_T_END_PAREN)
+	if (tokens->current().type != TokenType::END_PAREN)
 	{
 		//BIG OOF
 		delete condition;
@@ -565,7 +565,7 @@ Statement* Parser::parseFor()
 		return nullptr;
 	}
 
-	if (tokens->next().type != CALIBURN_T_START_PAREN)
+	if (tokens->next().type != TokenType::START_PAREN)
 	{
 		return nullptr;
 	}
@@ -580,7 +580,7 @@ Statement* Parser::parseFor()
 
 	Statement* post = parseLogic();
 
-	if (tokens->current().type != CALIBURN_T_END_PAREN)
+	if (tokens->current().type != TokenType::END_PAREN)
 	{
 		return nullptr;
 	}
@@ -618,6 +618,8 @@ Statement* Parser::parseValue()
 	return parseValue(true);
 }
 
+//TODO parse using Shunting-yard algorithm (or at least check for compliance)
+//https://en.wikipedia.org/wiki/Shunting-yard_algorithm
 Statement* Parser::parseValue(bool doPostfix)
 {
 	Statement* foundValue = nullptr;
@@ -625,7 +627,7 @@ Statement* Parser::parseValue(bool doPostfix)
 
 	Token tkn = tokens->current();
 
-	if (tkn.type == CALIBURN_T_KEYWORD)
+	if (tkn.type == TokenType::KEYWORD)
 	{
 		tokens->consume();
 
@@ -639,7 +641,7 @@ Statement* Parser::parseValue(bool doPostfix)
 		}
 		else if (tkn == "dispatch")
 		{
-			if (tokens->next().type != CALIBURN_T_START_BRACKET)
+			if (tokens->next().type != TokenType::START_BRACKET)
 			{
 				//TODO complain
 				return nullptr;
@@ -647,7 +649,7 @@ Statement* Parser::parseValue(bool doPostfix)
 
 			parseValueList(dispatchParams);
 
-			if (tokens->current().type != CALIBURN_T_END_BRACKET)
+			if (tokens->current().type != TokenType::END_BRACKET)
 			{
 				//TODO complain
 				return nullptr;
@@ -674,7 +676,7 @@ Statement* Parser::parseValue(bool doPostfix)
 	}
 
 	//field, constructor...
-	if (tkn.type == CALIBURN_T_IDENTIFIER)
+	if (tkn.type == TokenType::IDENTIFIER)
 	{
 		tokens->consume();
 		foundValue = parseAnyFieldOrFuncValue();
@@ -682,12 +684,12 @@ Statement* Parser::parseValue(bool doPostfix)
 		//TODO check and feed dispatch params
 	}
 	//(x)
-	else if (tkn.type == CALIBURN_T_START_PAREN)
+	else if (tkn.type == TokenType::START_PAREN)
 	{
 		tokens->consume();
 		foundValue = parseValue();
 
-		if (tokens->current().type != CALIBURN_T_END_PAREN)
+		if (tokens->current().type != TokenType::END_PAREN)
 		{
 			//TODO complain
 			return nullptr;
@@ -697,14 +699,14 @@ Statement* Parser::parseValue(bool doPostfix)
 
 	}
 	//[xs...] (array list)
-	else if (tkn.type == CALIBURN_T_START_BRACKET)
+	else if (tkn.type == TokenType::START_BRACKET)
 	{
 		tokens->consume();
 		std::vector<Statement*> arrayList;
 
 		parseValueList(arrayList);
 
-		if (tokens->current().type != CALIBURN_T_END_BRACKET)
+		if (tokens->current().type != TokenType::END_BRACKET)
 		{
 			//TODO complain
 			return nullptr;
@@ -716,12 +718,12 @@ Statement* Parser::parseValue(bool doPostfix)
 
 	}
 	//|x| (abs value)
-	else if (tkn.type == CALIBURN_T_LINE)
+	else if (tkn == "|")
 	{
 		tokens->consume();
 		foundValue = parseValue();
 
-		if (tokens->current().type != CALIBURN_T_LINE)
+		if (tokens->current() != "|")
 		{
 			//TODO complain
 			return nullptr;
@@ -731,7 +733,7 @@ Statement* Parser::parseValue(bool doPostfix)
 		//foundValue = new AbsOpStatement(foundValue);
 	}
 	//!x, ~x, -x, etc.
-	else if (tkn.type == CALIBURN_T_OPERATOR)
+	else if (tkn.type == TokenType::OPERATOR)
 	{
 		//!x (bool invert)
 		if (tkn == "!")
@@ -758,7 +760,7 @@ Statement* Parser::parseValue(bool doPostfix)
 		//TODO complain
 		return nullptr;
 	}
-	else foundValue = parseLiteral();
+	//else foundValue = parseLiteral();
 
 	if (!foundValue)
 	{
@@ -777,7 +779,7 @@ Statement* Parser::parseValue(bool doPostfix)
 		tkn = tokens->current();
 
 		//x + y
-		if (tkn.type == CALIBURN_T_OPERATOR)
+		if (tkn.type == TokenType::OPERATOR)
 		{
 			//NOTE not all operators that end in = are a setter (namely == and >=), so this needs a workaround
 			if (tkn.str[tkn.str.size() - 1] == '=')
@@ -804,7 +806,7 @@ Statement* Parser::parseValue(bool doPostfix)
 			//foundValue = new ValueOperatorStatement(foundValue, tkn.str, rhs);
 		}
 		//x[y]
-		else if (tkn.type == CALIBURN_T_START_BRACKET)
+		else if (tkn.type == TokenType::START_BRACKET)
 		{
 			tokens->consume();
 			Statement* index = parseValue();
@@ -816,7 +818,7 @@ Statement* Parser::parseValue(bool doPostfix)
 				return nullptr;
 			}
 
-			if (tokens->current().type != CALIBURN_T_END_BRACKET)
+			if (tokens->current().type != TokenType::END_BRACKET)
 			{
 				//TODO complain
 				delete foundValue;
@@ -827,7 +829,7 @@ Statement* Parser::parseValue(bool doPostfix)
 			//foundValue = new ArrayAccessStatement(value, index);
 		}
 		//x.y or x.y()
-		else if (tkn.type == CALIBURN_T_PERIOD)
+		else if (tkn.type == TokenType::PERIOD)
 		{
 			tokens->consume();
 			Statement* fieldOrFunc = parseFieldOrFuncValue(false);
@@ -873,13 +875,13 @@ Statement* Parser::parseFieldOrFuncValue(bool canHaveNamespace)
 
 	tkn = tokens->next();
 
-	if (tkn.type == CALIBURN_T_START_PAREN)
+	if (tkn.type == TokenType::START_PAREN)
 	{
 		auto args = new std::vector<Statement*>();
 		parseValueList(*args);
 		tkn = tokens->current();
 
-		if (tkn.type != CALIBURN_T_END_PAREN)
+		if (tkn.type != TokenType::END_PAREN)
 		{
 			//TODO complain
 		}
