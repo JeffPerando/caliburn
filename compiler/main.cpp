@@ -5,7 +5,7 @@
 
 int main()
 {
-    std::string test = "5";
+    std::string test = "2DTexture";
     auto tokens = std::vector<caliburn::Token>();
 
     caliburn::tokenize(test, tokens);

@@ -121,13 +121,13 @@ size_t caliburn::scanDecInt(std::string& txt, size_t offset)
 	return count;
 }
 
-bool caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type, uint64_t& finalLen)
+size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 {
 	//integer validation
 	//the alternative was writing regular expressions; which would be fine, but not performant.
 	if (!isDecInt(txt[cur]))
 	{
-		return false;
+		return 0;
 	}
 
 	bool isValidLit = true;
@@ -197,7 +197,7 @@ bool caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type, u
 		firstInvalid = cur + count;
 		if (count == 0)
 		{
-			return false;
+			return 0;
 		}
 
 		//found a float
@@ -258,8 +258,6 @@ bool caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type, u
 
 	if (isValidLit)
 	{
-		finalLen = count;
-
 		if (isDouble)
 		{
 			type = TokenType::LITERAL_DOUBLE;
@@ -277,10 +275,10 @@ bool caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type, u
 			type = TokenType::LITERAL_INT;
 		}
 
-		return true;
+		return count;
 	}
 
-	return false;
+	return 0;
 }
 
 //TODO use 32-bit wide chars for UTF-8 support
@@ -383,12 +381,22 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 		}
 		else
 		{
-			if (!isDecInt(txt[cur]) || !findIntLiteral(txt, cur, tokenID, tokenLen))
+			size_t intLen = findIntLiteral(txt, cur, tokenID);
+			size_t identLen = find(&caliburn::isIdentifier, txt, cur);
+			
+			if (identLen > intLen)
 			{
-				tokenLen = find(&caliburn::isIdentifier, txt, cur);
+				tokenLen = identLen;
 				tokenID = TokenType::IDENTIFIER;
 			}
 			
+			else
+			{
+				tokenLen = intLen;
+			}
+
+		}
+		
 		}
 		
 		std::string tokenStr = txt.substr(cur, tokenLen);
