@@ -40,6 +40,8 @@ namespace caliburn
 
 	inline bool isOperator(char chr);
 
+	inline bool isStrDelim(char chr);
+
 	inline bool isDecInt(char chr);
 
 	inline bool isHexInt(char chr);

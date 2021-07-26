@@ -9,9 +9,8 @@ using namespace caliburn;
 
 bool caliburn::isIdentifier(char chr)
 {
-	return !isComment(chr) && !isWhitespace(chr) &&
-		getSpecial(chr) == TokenType::NONE &&
-		!isOperator(chr);
+	return !isComment(chr) && !isStrDelim(chr) && !isWhitespace(chr) &&
+		!isOperator(chr) && getSpecial(chr) == TokenType::NONE;
 }
 
 bool caliburn::isComment(char chr)
@@ -28,6 +27,11 @@ bool caliburn::isOperator(char chr)
 {
 	static const auto ops = std::string(OPERATORS);
 	return std::binary_search(ops.begin(), ops.end(), chr);
+}
+
+bool caliburn::isStrDelim(char chr)
+{
+	return chr == '\"' || chr == '\'';
 }
 
 bool caliburn::isDecInt(char chr)
