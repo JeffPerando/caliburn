@@ -81,30 +81,68 @@ size_t caliburn::find(caliburn::FindFunc func, std::string& txt, uint64_t start)
 	return tokenLen;
 }
 
-size_t caliburn::findStr(std::string& txt, uint64_t cur, char delim)
+//TODO fix memory leak (needs proper memory allocator support)
+char* caliburn::findStr(std::string& txt, uint64_t& cur, uint64_t& line)
 {
+	constexpr size_t bufferLen = 4096;
+	char* buffer = new char[bufferLen]{0};
 	bool isEscaped = false;
-	size_t tokenLen = 1;
-	while (txt[cur + tokenLen] != delim && txt[cur + tokenLen - 1] != '\\')
+	size_t tokenLen = 0;
+	size_t i;
+
+	char delim = txt[cur];
+
+	for (i = cur + 1; i < txt.length(); ++i)
 	{
-		char current = txt[cur + tokenLen];
+		if (tokenLen == bufferLen)
+		{
+			if (txt[i] != delim)
+			{
+				//TODO complain about size of string literal
+			}
+			break;
+		}
+
+		char current = txt[i];
 
 		if (current == '\\')
 		{
 			isEscaped = true;
 		}
-		//TODO maybe don't include the delimiters in the finished string
+		else if (current == '\n')
+		{
+			//skip whitespace, keep track of line #
+			do
+			{
+				i += 1;
+
+				if (i == txt.length())
+				{
+					break;
+				}
+
+				if (txt[i] == '\n')
+				{
+					line += 1;
+				}
+
+			} while (isWhitespace(txt[i]));
+
+			continue;
+		}
 		else if (current == delim && !isEscaped)
 		{
 			break;
 		}
 
-		//TODO skip whitespace when an escaped newline is found (multiline string support)
+		buffer[tokenLen] = current;
 		tokenLen += 1;
-
+		
 	}
-	tokenLen += 1;
-	return tokenLen;
+
+	cur = i;
+	
+	return buffer;
 }
 
 size_t caliburn::scanDecInt(std::string& txt, size_t offset)
@@ -359,6 +397,7 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 		}
 
 		uint64_t tokenLen = 1;
+		const char* tokenPtr = nullptr;
 		TokenType tokenID = getSpecial(txt[cur]);
 
 		if (tokenID != TokenType::NONE)
@@ -374,9 +413,9 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 			tokenLen = find(&caliburn::isOperator, txt, cur);
 			tokenID = TokenType::OPERATOR;
 		}
-		else if (txt[cur] == '\"' || txt[cur] == '\'')
+		else if (isStrDelim(txt[cur]))
 		{
-			tokenLen = findStr(txt, cur, txt[cur]);
+			tokenPtr = findStr(txt, cur, line);
 			tokenID = TokenType::LITERAL_STR;
 		}
 		else
@@ -389,7 +428,6 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 				tokenLen = identLen;
 				tokenID = TokenType::IDENTIFIER;
 			}
-			
 			else
 			{
 				tokenLen = intLen;
@@ -397,10 +435,17 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 
 		}
 		
+		std::string tokenStr;
+		
+		if (tokenPtr != nullptr)
+		{
+			tokenStr = std::string(tokenPtr, tokenLen);
+		}
+		else
+		{
+			tokenStr = txt.substr(cur, tokenLen);
 		}
 		
-		std::string tokenStr = txt.substr(cur, tokenLen);
-
 		if (tokenID == TokenType::IDENTIFIER)
 		{
 			if (std::binary_search(KEYWORDS.begin(), KEYWORDS.end(), tokenStr))

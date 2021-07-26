@@ -54,7 +54,7 @@ namespace caliburn
 
 	size_t find(FindFunc func, std::string& txt, uint64_t cur);
 
-	size_t findStr(std::string& txt, uint64_t cur, char delim);
+	char* findStr(std::string& txt, uint64_t& cur, uint64_t& line);
 
 	size_t scanDecInt(std::string& txt, size_t offset);
 
