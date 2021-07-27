@@ -56,8 +56,6 @@ namespace caliburn
 
 	char* findStr(std::string& txt, uint64_t& cur, uint64_t& line);
 
-	size_t scanDecInt(std::string& txt, size_t offset);
-
 	size_t findIntLiteral(std::string& txt, uint64_t cur, TokenType& type);
 
 	void tokenize(std::string& txt, std::vector<Token>& tokens);

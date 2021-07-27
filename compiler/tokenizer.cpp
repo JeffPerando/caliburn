@@ -41,17 +41,17 @@ bool caliburn::isDecInt(char chr)
 
 bool caliburn::isHexInt(char chr)
 {
-	return isDecInt(chr) || (chr >= 'a' && chr <= 'f') || (chr >= 'A' && chr <= 'F');
+	return isDecInt(chr) || (chr >= 'a' && chr <= 'f') || (chr >= 'A' && chr <= 'F') || chr == '_';
 }
 
 bool caliburn::isOctInt(char chr)
 {
-	return chr >= '0' && chr <= '7';
+	return chr >= '0' && chr <= '7' || chr == '_';
 }
 
 bool caliburn::isBinInt(char chr)
 {
-	return chr == '0' || chr == '1';
+	return chr == '0' || chr == '1' || chr == '_';
 }
 
 TokenType caliburn::getSpecial(char chr)
@@ -71,7 +71,11 @@ TokenType caliburn::getSpecial(char chr)
 
 size_t caliburn::find(caliburn::FindFunc func, std::string& txt, uint64_t start)
 {
-	size_t tokenLen = 1;
+	if (!func)
+	{
+		return 0;
+	}
+	size_t tokenLen = 0;
 	while (start + tokenLen < txt.length())
 	{
 		if (!func(txt[start + tokenLen]))
@@ -145,20 +149,6 @@ char* caliburn::findStr(std::string& txt, uint64_t& cur, uint64_t& line)
 	return buffer;
 }
 
-size_t caliburn::scanDecInt(std::string& txt, size_t offset)
-{
-	size_t count = 0;
-	for (size_t i = offset; i < txt.length(); ++i)
-	{
-		if (!isDecInt(txt[i]))
-		{
-			break;
-		}
-		++count;
-	}
-	return count;
-}
-
 size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 {
 	//integer validation
@@ -172,128 +162,129 @@ size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 	bool isLong = false;
 	bool isFloat = false;
 	bool isDouble = false;
-	size_t firstInvalid = 0;
-	size_t initialLen = 0;
+	size_t firstInvalid = cur + 1;
 	size_t count = 0;
 
-	if (txt[cur] == '0')
+	//find either a hex, binary, or octal integer
+	if (txt[cur] == '0' && cur + 1 < txt.length())
 	{
 		char litType = txt[cur + 1];
+		FindFunc func = nullptr;
+
 		if (litType == 'x')
 		{
-			count = 2;
-			for (size_t i = cur + 2; i < txt.length(); ++i)
-			{
-				if (isHexInt(txt[i]) || txt[i] == '_')
-				{
-					++count;
-					continue;
-				}
-
-				firstInvalid = i;
-				break;
-			}
+			func = isHexInt;
 		}
 		else if (litType == 'b')
 		{
-			count = 2;
-			for (size_t i = cur + 2; i < txt.length(); ++i)
-			{
-				if (isBinInt(txt[i]) || txt[i] == '_')
-				{
-					++count;
-					continue;
-				}
-
-				firstInvalid = i;
-				break;
-			}
+			func = isBinInt;
 		}
 		else if (litType == 'c')
 		{
-			count = 2;
-			for (size_t i = cur + 2; i < txt.length(); ++i)
-			{
-				if (isOctInt(txt[i]) || txt[i] == '_')
-				{
-					++count;
-					continue;
-				}
+			func = isOctInt;
+		}
 
-				firstInvalid = i;
-				break;
+		if (func)
+		{
+			count = 2 + find(func, txt, cur + 2);
+			firstInvalid = count + 1;
+
+			if (count == 2)
+			{
+				isValidLit = false;
 			}
 
 		}
 		
 	}
 	
+	//find a base-10 int
 	if (count == 0)
 	{
-		count = scanDecInt(txt, cur);
-		initialLen = count;
+		//will be at least one, given the check at the start of the function
+		count = find(&isDecInt, txt, cur);
 		firstInvalid = cur + count;
-		if (count == 0)
+		
+		//find a float
+		if (firstInvalid + 1 < txt.length())
 		{
-			return 0;
-		}
-
-		//found a float
-		if (txt[firstInvalid] == '.' && firstInvalid + 1 < txt.length())
-		{
-			isFloat = true;
-			++count;
-
-			count += scanDecInt(txt, cur + count);
-			firstInvalid = cur + count;
-
-			if (firstInvalid + 3 < txt.length())
+			if (txt[firstInvalid] == '.')
 			{
-				char newInvalid = txt[firstInvalid];
-				if ((newInvalid == 'e' || newInvalid == 'E') &&
-					(txt[firstInvalid + 1] == '+' || txt[firstInvalid + 1] == '-'))
-				{
-					count += 2;
-					count += scanDecInt(txt, cur + count);
-					firstInvalid = cur + count;
+				isFloat = true;
+				++count;
 
+				size_t fracCount = find(&isDecInt, txt, firstInvalid + 1);
+				count += fracCount;
+				firstInvalid = cur + count;
+
+				if (fracCount == 0)
+				{
+					isValidLit = false;
 				}
 
 			}
 			
 		}
 
-	}
-	
-	char invalidChr = txt[firstInvalid];
-	
-	if (invalidChr == 'f' || invalidChr == 'F')
-	{
-		if (isFloat)
+		//find an exponent
+		if (firstInvalid + 3 < txt.length())
 		{
-			++count;
-		}
-		
-	}
-	else if (invalidChr == 'd' || invalidChr == 'D')
-	{
-		if (isFloat)
-		{
-			isDouble = true;
-			++count;
-		}
-		
-	}
-	else if (invalidChr == 'l' || invalidChr == 'L')
-	{
-		if (!isFloat)
-		{
-			isLong = true;
-			++count;
-		}
-		
-	}
+			if ((txt[firstInvalid] == 'e' || txt[firstInvalid] == 'E') &&
+				(txt[firstInvalid + 1] == '+' || txt[firstInvalid + 1] == '-'))
+			{
+				count += 2;
+				firstInvalid += 2;
+				size_t expCount = find(&isDecInt, txt, firstInvalid);
+				count += expCount;
+				firstInvalid += expCount;
 
+				if (expCount == 0)
+				{
+					isValidLit = false;
+				}
+
+			}
+
+		}
+
+	}
+	
+	//find suffix
+	if (firstInvalid < txt.length())
+	{
+		char invalidChr = txt[firstInvalid];
+
+		if (invalidChr == 'f' || invalidChr == 'F')
+		{
+			if (!isFloat)
+			{
+				isFloat = true;
+			}
+
+			++count;
+
+		}
+		else if (invalidChr == 'd' || invalidChr == 'D')
+		{
+			if (isFloat)
+			{
+				isDouble = true;
+				++count;
+			}
+
+		}
+		else if (invalidChr == 'l' || invalidChr == 'L')
+		{
+			if (!isFloat)
+			{
+				isLong = true;
+				++count;
+			}
+
+		}
+
+	}
+	
 	if (isValidLit)
 	{
 		if (isDouble)
@@ -313,10 +304,13 @@ size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 			type = TokenType::LITERAL_INT;
 		}
 
-		return count;
+	}
+	else
+	{
+		type = TokenType::LITERAL_INVALID;
 	}
 
-	return 0;
+	return count;
 }
 
 //TODO use 32-bit wide chars for UTF-8 support

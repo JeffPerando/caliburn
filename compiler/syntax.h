@@ -9,6 +9,7 @@ namespace caliburn
 	{
 		NONE,
 		IDENTIFIER,
+		LITERAL_INVALID,
 		LITERAL_STR,
 		LITERAL_INT,
 		LITERAL_LONG,
