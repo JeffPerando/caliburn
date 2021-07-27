@@ -206,7 +206,7 @@ size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 		firstInvalid = cur + count;
 		
 		//find a float
-		if (firstInvalid + 1 < txt.length())
+		if (firstInvalid < txt.length())
 		{
 			if (txt[firstInvalid] == '.')
 			{
@@ -227,7 +227,7 @@ size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 		}
 
 		//find an exponent
-		if (firstInvalid + 3 < txt.length())
+		if (firstInvalid + 2 < txt.length())
 		{
 			if ((txt[firstInvalid] == 'e' || txt[firstInvalid] == 'E') &&
 				(txt[firstInvalid + 1] == '+' || txt[firstInvalid + 1] == '-'))
