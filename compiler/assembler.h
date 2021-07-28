@@ -103,7 +103,7 @@ namespace caliburn
 			for (int s = 0; s < 2; ++s)
 			{
 				//int types
-				for (int bits = 8; bits < 1024; bits >>= 1)
+				for (int bits = 8; bits <= 512; bits <<= 1)
 				{
 					defaultTypes.emplace(ParsedType((s ? "int" : "uint") + bits),
 						IntType(bits, s == 1));
