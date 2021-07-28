@@ -8,7 +8,7 @@ namespace caliburn
 	struct ValueStatement : public Statement
 	{
 		ValueStatement(uint32_t t) : Statement(t) {}
-		~ValueStatement() { Statement::~Statement(); }
+		virtual ~ValueStatement() {}
 
 		virtual bool isLValue() = 0;
 
@@ -27,14 +27,7 @@ namespace caliburn
 
 		uint32_t toSPIRV(SpirVAssembler* codeAsm)
 		{
-			if (!registered)
-			{
-				codeAsm->pushSSA(spirv::OpConstant(0));
-				//codeAsm->push(codeAsm->pushType("int32"));
-
-			}
-
-			return ssa;
+			
 		}
 
 	};

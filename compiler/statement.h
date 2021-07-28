@@ -16,13 +16,10 @@ namespace caliburn
 	*/
 	struct Statement
 	{
-	protected:
-		bool registered = false;
-		uint32_t ssa = 0;
 	public:
 		int32_t const type;
 		Statement(int32_t stmntType) : type(stmntType) {}
-		~Statement() {}
+		virtual ~Statement() {}
 
 		/*
 		Used for adding the assembly code to the SPIR-V file in progress.
@@ -31,7 +28,7 @@ namespace caliburn
 		*/
 		virtual uint32_t toSPIRV(SpirVAssembler* codeAsm) = 0;
 
-		//virtual bool isRuntimeConst() = 0;
+		//virtual bool isCompileConst() = 0;
 
 		//virtual void evaluate() = 0;
 
