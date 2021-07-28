@@ -195,10 +195,9 @@ ParsedType* Parser::parseTypeName()
 
 	tokens->consume();
 
-	ParsedType* type = new ParsedType();
+	ParsedType* type = new ParsedType(tkn.str);
 
 	type->mod = moduleName;
-	type->name = tkn.str;
 
 	parseGenerics(type->generics);
 

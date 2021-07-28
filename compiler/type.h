@@ -8,29 +8,35 @@
 
 namespace caliburn
 {
+	class SpirVAssembler;
+
 	//Used for resolved types
 	enum TypeAttrib
 	{
 		//simple data types like integers
-		PRIMITIVE =		0b00000001,
+		TA_PRIMITIVE =		0b00000001,
 		//has the concept of a negative
-		SIGNED =		0b00000010,
+		TA_SIGNED =			0b00000010,
 		//is an IEEE 16-bit (or higher) floating point
-		FLOAT =			0b00000100,
+		TA_FLOAT =			0b00000100,
 		//is a generic, e.g. array<T> or list<T>
-		GENERIC =		0b00001000,
+		TA_GENERIC =		0b00001000,
 		//is considered a finite set of elements, like a buffer or array
 		//can be accessed using [], e.g. v[x]
-		COMPOSITE =		0b00010000,
+		TA_COMPOSITE =		0b00010000,
 		//is, well, atomic
-		ATOMIC =		0b00100000,
-		ALL =			0b00111111
+		TA_ATOMIC =			0b00100000,
+		TA_ALL =			0b00111111
 	};
 
-	enum Operator
+	enum class Operator
 	{
 		//==, >, <
-		EQUALS, GREATER, LESSER,
+		COMP_EQ, COMP_GT, COMP_LT,
+		//>=, <=
+		COMP_GTE, COMP_LTE,
+		//&&, ||
+		COMP_AND, COMP_OR,
 		//+, -, *, /
 		ADD, SUB, MUL, DIV,
 		//%, ^, &, |
@@ -52,7 +58,10 @@ namespace caliburn
 		std::string name;
 		std::vector<ParsedType*> generics;
 		
-		~ParsedType()
+		ParsedType(std::string n) : ParsedType("", n) {}
+		ParsedType(std::string m, std::string n) : mod(m), name(n) {}
+
+		virtual ~ParsedType()
 		{
 			for (ParsedType* type : generics)
 			{
@@ -60,7 +69,35 @@ namespace caliburn
 			}
 
 		}
+		
+		bool operator < (const ParsedType& rhs) const
+		{
+			if (mod < rhs.mod)
+			{
+				return true;
+			}
 
+			if (name < rhs.name)
+			{
+				return true;
+			}
+
+			if (generics.size() < rhs.generics.size())
+			{
+				return true;
+			}
+
+			for (uint32_t i = 0; i < generics.size(); ++i)
+			{
+				if (generics[i] < rhs.generics[i])
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+		
 		std::string getFullName()
 		{
 			if (fullName.length() > 0)
@@ -94,6 +131,32 @@ namespace caliburn
 
 			return fullName;
 		}
+
+		ParsedType* addGeneric(ParsedType* s)
+		{
+			generics.push_back(s);
+			return this;
+		}
+		
+	};
+
+	struct CompiledType
+	{
+		std::string canonName;
+		//in bits
+		uint32_t size = 1;
+		uint32_t attribs = 0;
+
+		bool isA(TypeAttrib a) const
+		{
+			return (attribs & a) != 0;
+		}
+
+		virtual bool isCompatible(Operator op, CompiledType* rType) const = 0;
+
+		virtual uint32_t typeDeclSpirV(SpirVAssembler* codeAsm) const = 0;
+
+		virtual uint32_t mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA) = 0;
 
 	};
 

@@ -171,7 +171,7 @@ void SpirVAssembler::endScope()
 
 		auto fieldValue = newAssign();
 
-		pushAll({ spirv::OpPhi(options.size() * 2), phi->type, fieldValue });
+		pushAll({ spirv::OpPhi(uint32_t(options.size()) * 2), phi->type, fieldValue });
 
 		for (auto option : phi->options)
 		{

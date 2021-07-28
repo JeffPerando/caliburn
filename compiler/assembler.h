@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "deftypes.h"
 #include "spirv.h"
-#include "type.h"
 
 namespace caliburn
 {
@@ -89,14 +89,28 @@ namespace caliburn
 	{
 	private:
 		std::vector<SpvOp> ops = std::vector<SpvOp>(8192);
-		std::map<std::string, SSA> typeAssigns;
+		std::map<ParsedType, CompiledType*> defaultTypes;
+		std::map<ParsedType, SSA> typeAssigns;
 		SpirVStack* currentStack = nullptr;
 		uint32_t nextSSA = 0;
 		int optimizeLvl = 0;
 
 	public:
-		SpirVAssembler(int o) : optimizeLvl(0) {}
-
+		
+		SpirVAssembler() : SpirVAssembler(0) {}
+		SpirVAssembler(int o) : optimizeLvl(o)
+		{
+			for (int s = 0; s < 2; ++s)
+			{
+				//int types
+				for (int bits = 8; bits < 1024; bits >>= 1)
+				{
+					defaultTypes.emplace(ParsedType((s ? "int" : "uint") + bits),
+						IntType(bits, s == 1));
+				}
+			}
+		}
+		
 		uint32_t newAssign()
 		{
 			nextSSA += 1;
