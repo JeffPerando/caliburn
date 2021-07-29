@@ -6,7 +6,7 @@ using namespace caliburn;
 
 bool IntType::isCompatible(Operator op, CompiledType* rType) const
 {
-	if (rType->isA(TA_PRIMITIVE))
+	if (rType->category == TypeCategory::PRIMITIVE)
 	{
 		return op != Operator::APPEND;
 	}
@@ -16,13 +16,13 @@ bool IntType::isCompatible(Operator op, CompiledType* rType) const
 uint32_t IntType::typeDeclSpirV(SpirVAssembler* codeAsm) const
 {
 	auto ssa = codeAsm->newAssign();
-	codeAsm->pushAll({ spirv::OpTypeInt(), size, (uint32_t)isA(TypeAttrib::TA_SIGNED) });
+	codeAsm->pushAll({ spirv::OpTypeInt(), ssa, size, (uint32_t)hasA(TypeAttrib::TA_SIGNED) });
 	return ssa;
 }
 
 uint32_t IntType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA)
 {
-	if (rType->isA(TA_FLOAT))
+	if (rType->hasA(TA_FLOAT))
 	{
 		//TODO convert current type to equivalent floating point
 		return 0;
@@ -40,12 +40,12 @@ uint32_t IntType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Opera
 	case Operator::SUB: opcode = spirv::OpISub(); break;
 	case Operator::MUL: opcode = spirv::OpIMul(); break;
 	case Operator::DIV:
-		if (!rType->isA(TA_SIGNED) && !isA(TA_SIGNED))
+		if (!rType->hasA(TA_SIGNED) && !hasA(TA_SIGNED))
 			opcode = spirv::OpUDiv();
 		else opcode = spirv::OpSDiv();
 		break;
 	case Operator::MOD:
-		if (!rType->isA(TA_SIGNED) && !isA(TA_SIGNED))
+		if (!rType->hasA(TA_SIGNED) && !hasA(TA_SIGNED))
 			opcode = spirv::OpUMod();
 		else opcode = spirv::OpSMod();
 		break;

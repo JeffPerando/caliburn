@@ -13,22 +13,25 @@ namespace caliburn
 	//Used for resolved types
 	enum TypeAttrib
 	{
-		//simple data types like integers
-		TA_PRIMITIVE =		0b00000001,
 		//has the concept of a negative
-		TA_SIGNED =			0b00000010,
+		TA_SIGNED =			0b00000001,
 		//is an IEEE 16-bit (or higher) floating point
-		TA_FLOAT =			0b00000100,
+		TA_FLOAT =			0b00000010,
 		//is a generic, e.g. array<T> or list<T>
-		TA_GENERIC =		0b00001000,
+		TA_GENERIC =		0b00000100,
 		//is considered a finite set of elements, like a buffer or array
 		//can be accessed using [], e.g. v[x]
-		TA_COMPOSITE =		0b00010000,
+		TA_COMPOSITE =		0b00001000,
 		//is, well, atomic
-		TA_ATOMIC =			0b00100000,
-		TA_ALL =			0b00111111
+		TA_ATOMIC =			0b00010000,
+		TA_ALL =			0b00011111
 	};
 
+	enum class TypeCategory
+	{
+		PRIMITIVE, VECTOR, MATRIX, ARRAY, POINTER, STRING, CUSTOM
+	};
+	
 	enum class Operator
 	{
 		//==, >, <
@@ -70,7 +73,7 @@ namespace caliburn
 
 		}
 		
-		bool operator < (const ParsedType& rhs) const
+		bool operator<(const ParsedType& rhs) const
 		{
 			if (mod < rhs.mod)
 			{
@@ -142,12 +145,16 @@ namespace caliburn
 
 	struct CompiledType
 	{
-		std::string canonName;
+		const TypeCategory category;
+		const std::string canonName;
 		//in bits
-		uint32_t size = 1;
-		uint32_t attribs = 0;
+		const uint32_t size = 1;
+		const uint32_t attribs = 0;
 
-		bool isA(TypeAttrib a) const
+		CompiledType(TypeCategory c, std::string n, uint32_t s, uint32_t a) :
+			category(c), canonName(n), size(s), attribs(a) {}
+
+		bool hasA(TypeAttrib a) const
 		{
 			return (attribs & a) != 0;
 		}
