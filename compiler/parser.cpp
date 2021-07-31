@@ -474,6 +474,7 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 		return nullptr;
 	}
 
+	//return new VariableStatement();
 }
 
 //Statement* Parser::parseSetter();

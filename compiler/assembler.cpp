@@ -19,20 +19,6 @@ Visibility caliburn::strToVis(std::string str)
 	return Visibility::NONE;
 }
 
-uint32_t SpirVAssembler::pushType(ParsedType* type)
-{
-	uint32_t ssa = typeAssigns[type->getFullName()].value;
-
-	if (!ssa)
-	{
-		ssa = newAssign();
-		typeAssigns[type->getFullName()] = SSA(ssa);
-
-	}
-
-	return ssa;
-}
-
 void SpirVAssembler::push(uint32_t op)
 {
 	ops.push_back(op);
@@ -51,16 +37,6 @@ void SpirVAssembler::pushStr(std::string str)
 	ops.resize(ops.size() + copied, 0);
 	std::memcpy(ops.end()._Ptr - copied, str.c_str(), str.length());
 
-}
-
-uint32_t SpirVAssembler::pushSSA(SpvOp op)
-{
-	auto ssa = newAssign();
-
-	ops.push_back(op);
-	ops.push_back(ssa);
-
-	return ssa;
 }
 
 void SpirVAssembler::pushVarSetter(std::string name, uint32_t value)
@@ -210,13 +186,48 @@ uint32_t SpirVAssembler::getVar(std::string name)
 	return 0;
 }
 
+CompiledType* SpirVAssembler::resolveType(ParsedType* type)
+{
+	auto it = defaultTypes.find(type->name);
+	CompiledType* resolved;
+
+	if (it == defaultTypes.end())
+	{
+		//TODO find custom type
+		resolved = nullptr;
+		
+	}
+	else
+	{
+		resolved = it->second;
+
+	}
+
+	if (!resolved)
+	{
+		return nullptr;
+	}
+
+	if (type->generics.size() > 0)
+	{
+		for (ParsedType* g : type->generics)
+		{
+			resolved->addGeneric(resolveType(g));
+		}
+
+	}
+
+	return resolved;
+}
+/*
 uint32_t* SpirVAssembler::writeFile()
 {
 	ops.push_back(spirv::MagicNumber());
 	ops.push_back(spirv::Version(1, 0));
 	ops.push_back(CALIBURN_MAGIC_NUMBER);
-	ops.push_back(0);//REMEMBER TO SET THIS TO THE BOUNDS
+	ops.push_back(0);//TODO REMEMBER TO SET THIS TO THE BOUNDS
 	ops.push_back(0);
 
 	return nullptr;
 }
+*/

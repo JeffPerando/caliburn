@@ -148,7 +148,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="assembler.cpp" />
-    <ClCompile Include="deftypes.cpp" />
+    <ClCompile Include="floattype.cpp" />
+    <ClCompile Include="inttype.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="tokenizer.cpp" />
@@ -162,7 +163,9 @@
     <ClInclude Include="deftypes.h" />
     <ClInclude Include="fieldstmnt.h" />
     <ClInclude Include="ctrlstmnt.h" />
+    <ClInclude Include="typefloat.h" />
     <ClInclude Include="funcstmnt.h" />
+    <ClInclude Include="typeint.h" />
     <ClInclude Include="miscstmt.h" />
     <ClInclude Include="modlib.h" />
     <ClInclude Include="module.h" />

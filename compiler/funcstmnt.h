@@ -6,7 +6,7 @@
 
 namespace caliburn
 {
-	enum class FuncControl : uint32_t
+	enum FuncControl : uint32_t
 	{
 		None = 0x00,
 		Inline = 0x01,
@@ -37,7 +37,7 @@ namespace caliburn
 		FunctionStatement() : Statement(0) {}
 
 		uint32_t toSPIRV(SpirVAssembler* codeAsm)
-		{
+		{/*
 			uint32_t ssa = codeAsm->newAssign();
 
 			uint32_t returnTypeSSA = codeAsm->pushType(returnType);
@@ -59,7 +59,8 @@ namespace caliburn
 
 			codeAsm->push(spirv::OpFunctionEnd());
 			
-			return ssa;
+			return ssa;*/
+			return 0;
 		}
 
 	};

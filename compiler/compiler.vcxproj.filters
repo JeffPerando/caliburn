@@ -30,7 +30,10 @@
     <ClCompile Include="assembler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="deftypes.cpp">
+    <ClCompile Include="inttype.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="floattype.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -96,6 +99,12 @@
       <Filter>Header Files\caliburn</Filter>
     </ClInclude>
     <ClInclude Include="miscstmt.h">
+      <Filter>Header Files\caliburn</Filter>
+    </ClInclude>
+    <ClInclude Include="typefloat.h">
+      <Filter>Header Files\caliburn</Filter>
+    </ClInclude>
+    <ClInclude Include="typeint.h">
       <Filter>Header Files\caliburn</Filter>
     </ClInclude>
   </ItemGroup>

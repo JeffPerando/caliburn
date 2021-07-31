@@ -12,6 +12,8 @@
 
 namespace caliburn
 {
+	class Statement;
+
 	constexpr uint32_t CALIBURN_MAGIC_NUMBER = (0);
 
 	struct SSA
@@ -19,12 +21,17 @@ namespace caliburn
 		uint32_t value = 0;
 		SSA() {}
 		SSA(uint32_t v) : value(v) {}
+
+		operator uint32_t()
+		{
+			return value;
+		}
 	};
 
 	struct TypedSSA
 	{
-		uint32_t typeID;
-		SSA value;
+		CompiledType* type = nullptr;
+		SSA value = 0;
 	};
 
 	struct SpirVPhiOption
@@ -36,13 +43,6 @@ namespace caliburn
 		SpirVPhiOption(uint32_t l, uint32_t a) : label(l), ssa(a) {}
 	};
 
-	/*
-	enum SSAType
-	{
-		DataType, LogicOp, Lvalue, Rvalue
-	};
-	*/
-	
 	enum class Visibility
 	{
 		NONE,
@@ -57,7 +57,7 @@ namespace caliburn
 
 	};
 
-	caliburn::Visibility strToVis(std::string str);
+	Visibility strToVis(std::string str);
 
 	struct SpirVPhi
 	{
@@ -89,27 +89,50 @@ namespace caliburn
 	{
 	private:
 		std::vector<SpvOp> ops = std::vector<SpvOp>(8192);
+		std::vector<CompiledType*> usedTypes;
+		std::map<CompiledType*, SSA> typeSSAs;
+
 		std::map<ParsedType, CompiledType*> defaultTypes;
-		std::map<ParsedType, SSA> typeAssigns;
+		
+		std::map<std::pair<uint32_t, bool>, IntType*> defaultIntTypes;
+		std::map<uint32_t, FloatType*> defaultFloatTypes;
+		std::map<uint64_t, TypedSSA> intConstants;
+
 		SpirVStack* currentStack = nullptr;
 		uint32_t nextSSA = 0;
 		int optimizeLvl = 0;
 
 	public:
-		
 		SpirVAssembler() : SpirVAssembler(0) {}
 		SpirVAssembler(int o) : optimizeLvl(o)
 		{
-			for (int s = 0; s < 2; ++s)
+			//int types
+			for (int bits = 8; bits <= 512; bits <<= 1)
 			{
-				//int types
-				for (int bits = 8; bits <= 512; bits <<= 1)
+				for (int s = 0; s < 2; ++s)
 				{
+					bool hasSign = (s == 1);
+					auto intType = new IntType(bits, hasSign);
 					defaultTypes.emplace(ParsedType((s ? "int" : "uint") + bits),
-						IntType(bits, s == 1));
+						intType);
+					defaultIntTypes.emplace(std::pair<uint32_t, bool>(bits, hasSign), intType);
+
 				}
+				
 			}
+
+			//float types
+			for (int bits = 16; bits <= 64; bits <<= 1)
+			{
+				auto floatType = new FloatType(bits);
+				defaultTypes.emplace(ParsedType(("float") + bits), floatType);
+				defaultFloatTypes.emplace(bits, floatType);
+
+			}
+
 		}
+
+		//SSA helpers and pushers
 		
 		uint32_t newAssign()
 		{
@@ -123,19 +146,57 @@ namespace caliburn
 
 		void pushStr(std::string str);
 
-		uint32_t pushType(ParsedType* type);
+		void pushVarSetter(std::string name, uint32_t value);
 
-		uint32_t pushSSA(SpvOp op);
+		uint32_t getTypeSSA(CompiledType* type)
+		{
+			return typeSSAs[type];
+		}
+
+		uint32_t getVar(std::string name);
+
+		//Scope helpers
 
 		void startScope(uint32_t label);
 
 		void endScope();
 
-		void pushVarSetter(std::string name, uint32_t value);
+		//Type helpers
 
-		uint32_t getVar(std::string name);
+		CompiledType* resolveType(ParsedType* type);
 
-		uint32_t* writeFile();
+		IntType* getIntType(uint32_t bits, bool sign)
+		{
+			return defaultIntTypes[std::pair<uint32_t, bool>(bits, sign)];
+		}
+
+		FloatType* getFloatType(uint32_t bits)
+		{
+			return defaultFloatTypes[bits];
+		}
+
+		TypedSSA getOrPushIntConst(uint64_t i, uint32_t bits = 32, bool sign = true)
+		{
+			TypedSSA ret = intConstants[i];
+
+			if (ret.value == 0)
+			{
+				ret.type = getIntType(bits, sign);
+				ret.value = newAssign();
+				pushAll({spirv::OpConstant(bits / 32), typeSSAs[ret.type], ret.value});
+				
+				if (bits > 32)
+				{
+					push(uint32_t(i >> 32) & 0xFFFFFFFF);
+				}
+
+				push(uint32_t(i) & 0xFFFFFFFF);
+
+			}
+
+			return ret;
+		}
 
 	};
+
 }

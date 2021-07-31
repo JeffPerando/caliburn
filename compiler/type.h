@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <exception>
 #include <map>
 #include <string>
 #include <sstream>
@@ -32,6 +33,13 @@ namespace caliburn
 		PRIMITIVE, VECTOR, MATRIX, ARRAY, POINTER, STRING, CUSTOM
 	};
 	
+	enum class TypeCompat
+	{
+		COMPATIBLE,
+		INCOMPATIBLE_TYPE,
+		INCOMPATIBLE_OP
+	};
+
 	enum class Operator
 	{
 		//==, >, <
@@ -61,6 +69,7 @@ namespace caliburn
 		std::string name;
 		std::vector<ParsedType*> generics;
 		
+		ParsedType() : ParsedType("INVALID_TYPE") {}
 		ParsedType(std::string n) : ParsedType("", n) {}
 		ParsedType(std::string m, std::string n) : mod(m), name(n) {}
 
@@ -148,9 +157,12 @@ namespace caliburn
 		const TypeCategory category;
 		const std::string canonName;
 		//in bits
-		const uint32_t size = 1;
-		const uint32_t attribs = 0;
-
+		const uint32_t size;
+		const uint32_t attribs;
+	protected:
+		//Since every type is made for a particular assembler, storing the SSA is fine
+		uint32_t ssa = 0;
+	public:
 		CompiledType(TypeCategory c, std::string n, uint32_t s, uint32_t a) :
 			category(c), canonName(n), size(s), attribs(a) {}
 
@@ -159,11 +171,24 @@ namespace caliburn
 			return (attribs & a) != 0;
 		}
 
-		virtual bool isCompatible(Operator op, CompiledType* rType) const = 0;
+		uint32_t getSSA()
+		{
+			return ssa;
+		}
 
-		virtual uint32_t typeDeclSpirV(SpirVAssembler* codeAsm) const = 0;
+		virtual void addGeneric(CompiledType* type)
+		{
+			throw new std::exception("cannot add a generic to this type!");
+		}
 
-		virtual uint32_t mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA) = 0;
+		virtual TypeCompat isCompatible(Operator op, CompiledType* rType) const = 0;
+
+		virtual uint32_t typeDeclSpirV(SpirVAssembler* codeAsm) = 0;
+
+		virtual uint32_t mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA, CompiledType*& endType) const = 0;
+
+		//used for BIT_NOT, NEGATE, ABS
+		virtual uint32_t mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, CompiledType*& endType) const = 0;
 
 	};
 
