@@ -151,19 +151,26 @@ char* caliburn::findStr(std::string& txt, uint64_t& cur, uint64_t& line)
 
 size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 {
+	size_t count = 0;
+	size_t intCount = 0;
 	//integer validation
 	//the alternative was writing regular expressions; which would be fine, but not performant.
+	if (txt[cur] == '-')
+	{
+		count += 1;
+		cur += 1;
+	}
+	
 	if (!isDecInt(txt[cur]))
 	{
 		return 0;
 	}
 
+	size_t firstInvalid = cur + 1;
 	bool isValidLit = true;
 	bool isLong = false;
 	bool isFloat = false;
 	bool isDouble = false;
-	size_t firstInvalid = cur + 1;
-	size_t count = 0;
 
 	//find either a hex, binary, or octal integer
 	if (txt[cur] == '0' && cur + 1 < txt.length())
@@ -186,10 +193,10 @@ size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 
 		if (func)
 		{
-			count = 2 + find(func, txt, cur + 2);
+			intCount = 2 + find(func, txt, cur + 2);
 			firstInvalid = count + 1;
 
-			if (count == 2)
+			if (intCount == 2)
 			{
 				isValidLit = false;
 			}
@@ -199,11 +206,11 @@ size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 	}
 	
 	//find a base-10 int
-	if (count == 0)
+	if (intCount == 0)
 	{
 		//will be at least one, given the check at the start of the function
-		count = find(&isDecInt, txt, cur);
-		firstInvalid = cur + count;
+		intCount = find(&isDecInt, txt, cur);
+		firstInvalid = cur + intCount;
 		
 		//find a float
 		if (firstInvalid < txt.length())
@@ -214,7 +221,7 @@ size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 				++count;
 
 				size_t fracCount = find(&isDecInt, txt, firstInvalid + 1);
-				count += fracCount;
+				intCount += fracCount;
 				firstInvalid = cur + count;
 
 				if (fracCount == 0)
@@ -248,6 +255,8 @@ size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 		}
 
 	}
+
+	count += intCount;
 	
 	//find suffix
 	if (firstInvalid < txt.length())
@@ -401,8 +410,11 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 			col += 1;
 			continue;
 		}
-		
-		if (isOperator(txt[cur]))
+
+		//int literals can start with a -, so check for that first
+		size_t intLen = findIntLiteral(txt, cur, tokenID);
+
+		if (intLen == 0 && isOperator(txt[cur]))
 		{
 			tokenLen = find(&caliburn::isOperator, txt, cur);
 			tokenID = TokenType::OPERATOR;
@@ -414,7 +426,6 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 		}
 		else
 		{
-			size_t intLen = findIntLiteral(txt, cur, tokenID);
 			size_t identLen = find(&caliburn::isIdentifier, txt, cur);
 			
 			if (identLen > intLen)
