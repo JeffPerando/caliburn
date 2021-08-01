@@ -52,13 +52,13 @@ uint32_t IntType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Opera
 {
 	uint32_t lhs = lvalueSSA;
 	uint32_t rhs = rvalueSSA;
-	uint32_t resultTypeSSA = codeAsm->getTypeSSA((IntType*)this);
+	uint32_t resultTypeSSA = this->ssa;
 	uint32_t result = codeAsm->newAssign();
 
 	if (rType->hasA(TA_FLOAT) || op == Operator::DIV)
 	{
 		CompiledType* fpLHS = codeAsm->getFloatType(this->size);
-		uint32_t fpLHSTypeSSA = codeAsm->getTypeSSA(fpLHS);
+		uint32_t fpLHSTypeSSA = fpLHS->getSSA();
 
 		uint32_t converted = codeAsm->newAssign();
 		uint32_t convertOp = spirv::OpConvertSToF();
@@ -96,7 +96,7 @@ uint32_t IntType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Opera
 		else
 		{
 			//rhs is wider, convert lhs to rhs width
-			resultTypeSSA = codeAsm->getTypeSSA(rType);
+			resultTypeSSA = rType->getSSA();
 
 			if (!rType->hasA(TypeAttrib::TA_SIGNED))
 			{

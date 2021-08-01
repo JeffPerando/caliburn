@@ -90,8 +90,7 @@ namespace caliburn
 	private:
 		std::vector<SpvOp> ops = std::vector<SpvOp>(8192);
 		std::vector<CompiledType*> usedTypes;
-		std::map<CompiledType*, SSA> typeSSAs;
-
+		
 		std::map<ParsedType, CompiledType*> defaultTypes;
 		
 		std::map<std::pair<uint32_t, bool>, IntType*> defaultIntTypes;
@@ -148,11 +147,6 @@ namespace caliburn
 
 		void pushVarSetter(std::string name, uint32_t value);
 
-		uint32_t getTypeSSA(CompiledType* type)
-		{
-			return typeSSAs[type];
-		}
-
 		uint32_t getVar(std::string name);
 
 		//Scope helpers
@@ -183,7 +177,7 @@ namespace caliburn
 			{
 				ret.type = getIntType(bits, sign);
 				ret.value = newAssign();
-				pushAll({spirv::OpConstant(bits / 32), typeSSAs[ret.type], ret.value});
+				pushAll({spirv::OpConstant(bits / 32), ret.type->getSSA(), ret.value});
 				
 				if (bits > 32)
 				{

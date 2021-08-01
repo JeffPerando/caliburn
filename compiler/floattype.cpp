@@ -50,13 +50,13 @@ uint32_t FloatType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Ope
 {
 	uint32_t lhs = lvalueSSA;
 	uint32_t rhs = rvalueSSA;
-	uint32_t resultTypeSSA = codeAsm->getTypeSSA((CompiledType*)this);
+	uint32_t resultTypeSSA = this->ssa;
 	uint32_t result = codeAsm->newAssign();
 
 	if (!rType->hasA(TA_FLOAT))
 	{
 		FloatType* fpRHS = codeAsm->getFloatType(rType->size);
-		uint32_t fpRHSTypeSSA = codeAsm->getTypeSSA(fpRHS);
+		uint32_t fpRHSTypeSSA = fpRHS->getSSA();
 
 		uint32_t converted = codeAsm->newAssign();
 		uint32_t convertOp = spirv::OpConvertSToF();
@@ -88,7 +88,7 @@ uint32_t FloatType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Ope
 		else
 		{
 			//rhs is wider, convert lhs to rhs width
-			resultTypeSSA = codeAsm->getTypeSSA(rType);
+			resultTypeSSA = rType->getSSA();
 
 			codeAsm->pushAll({ spirv::OpFConvert(), resultTypeSSA, converted, lhs });
 
@@ -123,7 +123,7 @@ uint32_t FloatType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Ope
 	{
 		auto intResultType = codeAsm->getIntType(this->size, true);
 		uint32_t intDivResult = codeAsm->newAssign();
-		codeAsm->pushAll({ spirv::OpConvertFToS(), codeAsm->getTypeSSA(intResultType), intDivResult, result });
+		codeAsm->pushAll({ spirv::OpConvertFToS(), intResultType->getSSA(), intDivResult, result });
 		endType = intResultType;
 		return intDivResult;
 	}
