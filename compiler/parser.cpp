@@ -32,17 +32,17 @@ void Parser::parseIdentifierList(std::vector<std::string>& ids)
 {
 	while (true)
 	{
-		Token tkn = tokens->current();
+		Token* tkn = tokens->current();
 
-		if (tkn.type != TokenType::IDENTIFIER)
+		if (tkn->type != TokenType::IDENTIFIER)
 		{
 			break;
 		}
 
-		ids.push_back(tkn.str);
+		ids.push_back(tkn->str);
 		tkn = tokens->next();
 
-		if (tkn.type != TokenType::COMMA)
+		if (tkn->type != TokenType::COMMA)
 		{
 			break;
 		}
@@ -66,7 +66,7 @@ void Parser::parseValueList(std::vector<Statement*>& xs)
 
 		xs.push_back(val);
 		
-		if (tokens->current().type != TokenType::COMMA)
+		if (tokens->current()->type != TokenType::COMMA)
 		{
 			break;
 		}
@@ -82,7 +82,7 @@ bool Parser::parseGenerics(std::vector<ParsedType*>& generics)
 	bool actualGeneric = false;
 	auto oldIndex = tokens->currentIndex();
 
-	if (tokens->current() == "<")
+	if (*tokens->current() == "<")
 	{
 		tokens->consume();
 
@@ -100,14 +100,14 @@ bool Parser::parseGenerics(std::vector<ParsedType*>& generics)
 
 			generics.push_back(type);
 
-			Token tkn = tokens->current();
+			Token* tkn = tokens->current();
 
-			if (tkn == ">")
+			if (*tkn == ">")
 			{
 				tokens->consume();
 				break;
 			}
-			else if (tkn.type == TokenType::COMMA)
+			else if (tkn->type == TokenType::COMMA)
 			{
 				tokens->consume();
 				continue;
@@ -170,12 +170,12 @@ Statement* Parser::parseAny(std::initializer_list<ParseMethod> fns)
 
 std::string Parser::parseNamespace()
 {
-	if (tokens->current().type == TokenType::IDENTIFIER &&
-		tokens->peek().type == TokenType::COLON)
+	if (tokens->current()->type == TokenType::IDENTIFIER &&
+		tokens->peek()->type == TokenType::COLON)
 	{
-		Token tkn = tokens->current();
+		Token* tkn = tokens->current();
 		tokens->consume(2);
-		return tkn.str;
+		return tkn->str;
 	}
 
 	return "";
@@ -185,9 +185,9 @@ ParsedType* Parser::parseTypeName()
 {
 	std::string moduleName = parseNamespace();
 
-	Token tkn = tokens->current();
+	Token* tkn = tokens->current();
 
-	if (tkn.type != TokenType::IDENTIFIER)
+	if (tkn->type != TokenType::IDENTIFIER)
 	{
 		//TODO complain?
 		return nullptr;
@@ -195,7 +195,7 @@ ParsedType* Parser::parseTypeName()
 
 	tokens->consume();
 
-	ParsedType* type = new ParsedType(tkn.str);
+	ParsedType* type = new ParsedType(tkn->str);
 
 	type->mod = moduleName;
 
@@ -207,9 +207,9 @@ ParsedType* Parser::parseTypeName()
 bool Parser::parseSemicolon()
 {
 	//here because we need the line/column data
-	Token tkn = tokens->current();
+	Token* tkn = tokens->current();
 
-	if (tkn.type == TokenType::END)
+	if (tkn->type == TokenType::END)
 	{
 		tokens->consume();
 		return true;
@@ -243,45 +243,45 @@ Statement* Parser::parseDecl()
 
 Statement* Parser::parseImport()
 {
-	if (tokens->current() != "import")
+	if (*tokens->current() != "import")
 	{
 		return nullptr;
 	}
 
-	Token importMod = tokens->next();
+	Token* importMod = tokens->next();
 	tokens->consume();
 
-	return new ImportStatement(importMod);
+	return new ImportStatement(*importMod);
 }
 
 Statement* Parser::parseUsing()
 {
-	if (tokens->current() != "using")
+	if (*tokens->current() != "using")
 	{
 		return nullptr;
 	}
 
-	Token usedNamespace = tokens->next();
+	Token* usedNamespace = tokens->next();
 	tokens->consume();
 
-	return new UsingStatement(usedNamespace);
+	return new UsingStatement(*usedNamespace);
 }
 
 Statement* Parser::parseTypedef()
 {
-	if (tokens->current() != "type")
+	if (*tokens->current() != "type")
 	{
 		return nullptr;
 	}
 
-	if (tokens->next().type != TokenType::IDENTIFIER)
+	if (tokens->next()->type != TokenType::IDENTIFIER)
 	{
 		return nullptr;
 	}
 
-	std::string name = tokens->current();
+	std::string name = tokens->current()->str;
 
-	if (tokens->next() != "=")
+	if (*tokens->next() != "=")
 	{
 		return nullptr;
 	}
@@ -314,9 +314,9 @@ Statement* Parser::parseClass();
 
 Statement* Parser::parseFunction()
 {
-	Token tkn = tokens->current();
+	Token* tkn = tokens->current();
 
-	if (tkn.str != "def")
+	if (tkn->str != "def")
 	{
 		return nullptr;
 	}
@@ -324,7 +324,7 @@ Statement* Parser::parseFunction()
 	tkn = tokens->next();
 
 	//parse optional visibility
-	Visibility vis = strToVis(tkn.str);
+	Visibility vis = strToVis(tkn->str);
 
 	if (vis != Visibility::NONE)
 	{
@@ -333,7 +333,7 @@ Statement* Parser::parseFunction()
 	}
 
 	ParsedType* type = parseTypeName();
-	std::string name = tokens->current().str;
+	std::string name = tokens->current()->str;
 	std::vector<ParsedType*> generics;
 	std::vector<std::string> gpuThreadData;
 
@@ -342,7 +342,7 @@ Statement* Parser::parseFunction()
 	parseGenerics(generics);
 
 	//parse GPU threading data
-	if (tkn.str == "[")
+	if (tkn->str == "[")
 	{
 		parseIdentifierList(gpuThreadData);
 
@@ -351,7 +351,7 @@ Statement* Parser::parseFunction()
 			//TODO complain
 		}
 
-		if (tokens->current().str != "]")
+		if (tokens->current()->str != "]")
 		{
 			//TODO also complain
 		}
@@ -360,7 +360,7 @@ Statement* Parser::parseFunction()
 
 	}
 
-	if (tkn.str != "(")
+	if (tkn->str != "(")
 	{
 		return nullptr;
 	}
@@ -369,7 +369,7 @@ Statement* Parser::parseFunction()
 
 	tkn = tokens->next();
 
-	if (tkn.str != ")")
+	if (tkn->str != ")")
 	{
 		return nullptr;
 	}
@@ -431,11 +431,11 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 	std::vector<std::string> vars;
 	ValueStatement* defVal = nullptr;
 
-	Token tkn = tokens->current();
+	Token* tkn = tokens->current();
 
-	if (tkn.type == TokenType::KEYWORD)
+	if (tkn->type == TokenType::KEYWORD)
 	{
-		if (tkn.str == "let" && implicitAllowed)
+		if (tkn->str == "let" && implicitAllowed)
 		{
 			tokens->consume();
 
@@ -461,7 +461,7 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 		return nullptr;
 	}
 
-	if (tokens->current().str == "=")
+	if (tokens->current()->str == "=")
 	{
 		tokens->consume();
 		defVal = (ValueStatement*)parseValue();
@@ -481,9 +481,9 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 
 Statement* Parser::parseScope()
 {
-	Token tkn = tokens->current();
+	Token* tkn = tokens->current();
 
-	if (tkn.type != TokenType::START_SCOPE)
+	if (tkn->type != TokenType::START_SCOPE)
 	{
 		return nullptr;
 	}
@@ -492,7 +492,7 @@ Statement* Parser::parseScope()
 
 	ScopeStatement* scope = new ScopeStatement();
 
-	while (tokens->current().type != TokenType::END_SCOPE)
+	while (tokens->current()->type != TokenType::END_SCOPE)
 	{
 		scope->innerCode.push_back(parseDecl());
 		
@@ -505,9 +505,9 @@ Statement* Parser::parseScope()
 
 Statement* Parser::parseControl()
 {
-	Token tkn = tokens->current();
+	Token* tkn = tokens->current();
 
-	if (tkn.type != TokenType::KEYWORD)
+	if (tkn->type != TokenType::KEYWORD)
 	{
 		return nullptr;
 	}
@@ -518,14 +518,14 @@ Statement* Parser::parseControl()
 
 Statement* Parser::parseIf()
 {
-	Token tkn = tokens->current();
+	Token* tkn = tokens->current();
 
-	if (tkn.str != "if")
+	if (tkn->str != "if")
 	{
 		return nullptr;
 	}
 
-	if (tokens->peek().type != TokenType::START_PAREN)
+	if (tokens->peek()->type != TokenType::START_PAREN)
 	{
 		return nullptr;
 	}
@@ -534,7 +534,7 @@ Statement* Parser::parseIf()
 
 	ValueStatement* condition = (ValueStatement*)parseValue();
 
-	if (tokens->current().type != TokenType::END_PAREN)
+	if (tokens->current()->type != TokenType::END_PAREN)
 	{
 		//BIG OOF
 		delete condition;
@@ -548,7 +548,7 @@ Statement* Parser::parseIf()
 	parsed->condition = condition;
 	parsed->ifBranch = parseLogic();
 
-	if (tokens->current().str == "else")
+	if (tokens->current()->str == "else")
 	{
 		tokens->consume();
 		parsed->elseBranch = parseLogic();
@@ -560,12 +560,12 @@ Statement* Parser::parseIf()
 
 Statement* Parser::parseFor()
 {
-	if (tokens->current() != "for")
+	if (*tokens->current() != "for")
 	{
 		return nullptr;
 	}
 
-	if (tokens->next().type != TokenType::START_PAREN)
+	if (tokens->next()->type != TokenType::START_PAREN)
 	{
 		return nullptr;
 	}
@@ -580,7 +580,7 @@ Statement* Parser::parseFor()
 
 	Statement* post = parseLogic();
 
-	if (tokens->current().type != TokenType::END_PAREN)
+	if (tokens->current()->type != TokenType::END_PAREN)
 	{
 		return nullptr;
 	}
@@ -625,17 +625,17 @@ Statement* Parser::parseValue(bool doPostfix)
 	Statement* foundValue = nullptr;
 	std::vector<Statement*> dispatchParams;
 
-	Token tkn = tokens->current();
+	Token* tkn = tokens->current();
 
-	if (tkn.type == TokenType::KEYWORD)
+	if (tkn->type == TokenType::KEYWORD)
 	{
 		tokens->consume();
 
-		if (tkn == "this")
+		if (*tkn == "this")
 		{
 			foundValue = nullptr;//new ThisStatement();
 		}
-		else if (tkn == "super")
+		else if (*tkn == "super")
 		{
 			foundValue = nullptr;//new SuperStatement();
 		}
@@ -657,18 +657,18 @@ Statement* Parser::parseValue(bool doPostfix)
 	}
 
 	//field, constructor...
-	if (tkn.type == TokenType::IDENTIFIER)
+	if (tkn->type == TokenType::IDENTIFIER)
 	{
 		foundValue = parseAnyFieldOrFuncValue();
 
 	}
 	//(x)
-	else if (tkn.type == TokenType::START_PAREN)
+	else if (tkn->type == TokenType::START_PAREN)
 	{
 		tokens->consume();
 		foundValue = parseValue();
 
-		if (tokens->current().type != TokenType::END_PAREN)
+		if (tokens->current()->type != TokenType::END_PAREN)
 		{
 			//TODO complain
 			return nullptr;
@@ -678,14 +678,14 @@ Statement* Parser::parseValue(bool doPostfix)
 
 	}
 	//[xs...] (array list)
-	else if (tkn.type == TokenType::START_BRACKET)
+	else if (tkn->type == TokenType::START_BRACKET)
 	{
 		tokens->consume();
 		std::vector<Statement*> arrayList;
 
 		parseValueList(arrayList);
 
-		if (tokens->current().type != TokenType::END_BRACKET)
+		if (tokens->current()->type != TokenType::END_BRACKET)
 		{
 			return nullptr;
 		}
@@ -696,12 +696,12 @@ Statement* Parser::parseValue(bool doPostfix)
 
 	}
 	//|x| (abs value)
-	else if (tkn == "|")
+	else if (*tkn == "|")
 	{
 		tokens->consume();
 		foundValue = parseValue();
 
-		if (tokens->current() != "|")
+		if (*tokens->current() != "|")
 		{
 			//TODO complain
 			return nullptr;
@@ -711,24 +711,24 @@ Statement* Parser::parseValue(bool doPostfix)
 		//foundValue = new AbsOpStatement(foundValue);
 	}
 	//!x, ~x, -x, etc.
-	else if (tkn.type == TokenType::OPERATOR)
+	else if (tkn->type == TokenType::OPERATOR)
 	{
 		//!x (bool invert)
-		if (tkn == "!")
+		if (*tkn == "!")
 		{
 			tokens->consume();
 			//foundValue = new BoolInvOpStatement(parseValue());
 
 		}
 		//~x (bitwise invert)
-		else if (tkn == "~")
+		else if (*tkn == "~")
 		{
 			tokens->consume();
 			//foundValue = new BitInvOpStatement(parseValue());
 
 		}
 		//-x (int negate)
-		else if (tkn == "-")
+		else if (*tkn == "-")
 		{
 			tokens->consume();
 			//foundValue = new IntNegOpStatement(parseValue());
@@ -757,10 +757,10 @@ Statement* Parser::parseValue(bool doPostfix)
 		tkn = tokens->current();
 
 		//x + y
-		if (tkn.type == TokenType::OPERATOR)
+		if (tkn->type == TokenType::OPERATOR)
 		{
 			//NOTE not all operators that end in = are a setter (namely == and >=), so this needs a workaround
-			if (tkn.str[tkn.str.size() - 1] == '=')
+			if (tkn->str[tkn->str.size() - 1] == '=')
 			{
 				//nvm we just found a setter, which isn't a valid value
 				//so no I don't want stupid things like x = (y = z);
@@ -784,7 +784,7 @@ Statement* Parser::parseValue(bool doPostfix)
 			//foundValue = new ValueOperatorStatement(foundValue, tkn.str, rhs);
 		}
 		//x[y]
-		else if (tkn.type == TokenType::START_BRACKET)
+		else if (tkn->type == TokenType::START_BRACKET)
 		{
 			tokens->consume();
 
@@ -799,7 +799,7 @@ Statement* Parser::parseValue(bool doPostfix)
 				return nullptr;
 			}
 
-			if (tokens->current().type != TokenType::END_BRACKET)
+			if (tokens->current()->type != TokenType::END_BRACKET)
 			{
 				//TODO complain
 				for (auto i : indices)
@@ -815,7 +815,7 @@ Statement* Parser::parseValue(bool doPostfix)
 			//foundValue = new ArrayAccessStatement(value, index);
 		}
 		//x.y or x.y()
-		else if (tkn.type == TokenType::PERIOD)
+		else if (tkn->type == TokenType::PERIOD)
 		{
 			tokens->consume();
 			Statement* fieldOrFunc = parseFieldOrFuncValue(false);
@@ -861,7 +861,7 @@ Statement* Parser::parseFieldOrFuncValue(bool canHaveNamespace)
 
 	std::vector<Statement*> accessors;
 
-	if (tokens->current().type == TokenType::START_BRACKET)
+	if (tokens->current()->type == TokenType::START_BRACKET)
 	{
 		//tis either an array accessor or dispatch
 
@@ -876,7 +876,7 @@ Statement* Parser::parseFieldOrFuncValue(bool canHaveNamespace)
 			return nullptr;
 		}
 
-		if (tokens->current().type != TokenType::END_BRACKET)
+		if (tokens->current()->type != TokenType::END_BRACKET)
 		{
 			//TODO complain again
 			delete type;
@@ -891,12 +891,12 @@ Statement* Parser::parseFieldOrFuncValue(bool canHaveNamespace)
 
 	}
 
-	if (tokens->current().type == TokenType::START_PAREN)
+	if (tokens->current()->type == TokenType::START_PAREN)
 	{
 		std::vector<Statement*> args;
 		parseValueList(args);
 		
-		if (tokens->current().type != TokenType::END_PAREN)
+		if (tokens->current()->type != TokenType::END_PAREN)
 		{
 			//TODO complain
 		}

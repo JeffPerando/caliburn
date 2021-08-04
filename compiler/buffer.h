@@ -23,22 +23,22 @@ namespace caliburn
 		}
 
 		//fetch current
-		T current()
+		T* current()
 		{
-			return vec->at(index);
+			return &vec->at(index);
 		}
 
 		//increment and fetch
-		T next()
+		T* next()
 		{
 			index += 1;
-			return vec->at(index);
+			return &vec->at(index);
 		}
 
 		//fetch upcoming
-		T peek(size_t offset = 1)
+		T* peek(size_t offset = 1)
 		{
-			return vec->at(index + offset);
+			return &vec->at(index + offset);
 		}
 
 		//increment
