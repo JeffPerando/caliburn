@@ -639,25 +639,6 @@ Statement* Parser::parseValue(bool doPostfix)
 		{
 			foundValue = nullptr;//new SuperStatement();
 		}
-		else if (tkn == "dispatch")
-		{
-			if (tokens->next().type != TokenType::START_BRACKET)
-			{
-				//TODO complain
-				return nullptr;
-			}
-
-			parseValueList(dispatchParams);
-
-			if (tokens->current().type != TokenType::END_BRACKET)
-			{
-				//TODO complain
-				return nullptr;
-			}
-
-			tokens->consume();
-
-		}
 		else
 		{
 			//TODO complain
@@ -678,10 +659,8 @@ Statement* Parser::parseValue(bool doPostfix)
 	//field, constructor...
 	if (tkn.type == TokenType::IDENTIFIER)
 	{
-		tokens->consume();
 		foundValue = parseAnyFieldOrFuncValue();
 
-		//TODO check and feed dispatch params
 	}
 	//(x)
 	else if (tkn.type == TokenType::START_PAREN)
@@ -708,7 +687,6 @@ Statement* Parser::parseValue(bool doPostfix)
 
 		if (tokens->current().type != TokenType::END_BRACKET)
 		{
-			//TODO complain
 			return nullptr;
 		}
 
@@ -809,9 +787,12 @@ Statement* Parser::parseValue(bool doPostfix)
 		else if (tkn.type == TokenType::START_BRACKET)
 		{
 			tokens->consume();
-			Statement* index = parseValue();
 
-			if (!index)
+			std::vector<Statement*> indices;
+
+			parseValueList(indices);
+
+			if (indices.size() == 0)
 			{
 				//TODO complain
 				delete foundValue;
@@ -821,11 +802,16 @@ Statement* Parser::parseValue(bool doPostfix)
 			if (tokens->current().type != TokenType::END_BRACKET)
 			{
 				//TODO complain
+				for (auto i : indices)
+				{
+					delete i;
+				}
 				delete foundValue;
-				delete index;
 				return nullptr;
 			}
 
+			tokens->consume();
+			
 			//foundValue = new ArrayAccessStatement(value, index);
 		}
 		//x.y or x.y()
@@ -865,36 +851,80 @@ Statement* Parser::parseFieldOrFuncValue(bool canHaveNamespace)
 		return nullptr;
 	}
 
-	Token tkn = tokens->current();
-
 	if (!canHaveNamespace && type->mod != "")
 	{
 		delete type;
 		return nullptr;
 	}
 
-	tkn = tokens->next();
+	tokens->consume();
 
-	if (tkn.type == TokenType::START_PAREN)
+	std::vector<Statement*> accessors;
+
+	if (tokens->current().type == TokenType::START_BRACKET)
 	{
-		auto args = new std::vector<Statement*>();
-		parseValueList(*args);
-		tkn = tokens->current();
+		//tis either an array accessor or dispatch
 
-		if (tkn.type != TokenType::END_PAREN)
+		tokens->consume();
+		
+		parseValueList(accessors);
+
+		if (accessors.size() == 0)
 		{
 			//TODO complain
+			delete type;
+			return nullptr;
+		}
+
+		if (tokens->current().type != TokenType::END_BRACKET)
+		{
+			//TODO complain again
+			delete type;
+			for (auto a : accessors)
+			{
+				delete a;
+			}
+			return nullptr;
+		}
+
+		tokens->consume();
+
+	}
+
+	if (tokens->current().type == TokenType::START_PAREN)
+	{
+		std::vector<Statement*> args;
+		parseValueList(args);
+		
+		if (tokens->current().type != TokenType::END_PAREN)
+		{
+			//TODO complain
+		}
+
+		if (accessors.size() > 0)
+		{
+			//return new GPUDispatch();
 		}
 
 		//return new FuncCall(type, args);
 	}
 	else if (type->generics.size() > 0)
 	{
+		//someone's trying to use a type name as a field
 		delete type;
 		return nullptr;
 	}
 
-	//return new FieldAccessStatement(type.mod, type.name);
+	//auto found = new FieldAccessStatement(type.mod, type.name);
+
+	/*
+	if (accessors.size() > 0)
+	{
+		found = new ArrayAccess(found, accessors);
+	}
+	*/
+
+	//return found;
 }
 
 //Statement* Parser::parseLiteral();
