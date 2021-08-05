@@ -12,7 +12,7 @@ namespace caliburn
 		Statement* ifBranch = nullptr;
 		Statement* elseBranch = nullptr;
 
-		IfStatement() : Statement(0) {}
+		IfStatement() : Statement(StatementType::IF) {}
 
 		uint32_t toSPIRV(SpirVAssembler* codeAsm)
 		{
@@ -64,7 +64,7 @@ namespace caliburn
 		Statement* postLoop = nullptr;
 		Statement* loop = nullptr;
 
-		ForStatement() : Statement(0) {}
+		ForStatement() : Statement(StatementType::FOR) {}
 
 		uint32_t toSPIRV(SpirVAssembler* codeAsm)
 		{
@@ -124,7 +124,7 @@ namespace caliburn
 		ValueStatement* cond = nullptr;
 		Statement* loop = nullptr;
 
-		WhileStatement() : Statement(0) {}
+		WhileStatement() : Statement(StatementType::WHILE) {}
 
 		uint32_t toSPIRV(SpirVAssembler* codeAsm)
 		{
@@ -175,7 +175,7 @@ namespace caliburn
 	{
 		ValueStatement* val = nullptr;
 		
-		ReturnStatement() : Statement(0) {}
+		ReturnStatement() : Statement(StatementType::RETURN) {}
 
 		uint32_t toSPIRV(SpirVAssembler* codeAsm)
 		{

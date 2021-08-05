@@ -7,7 +7,7 @@ namespace caliburn
 {
 	struct ValueStatement : public Statement
 	{
-		ValueStatement(uint32_t t) : Statement(t) {}
+		ValueStatement(StatementType t) : Statement(t) {}
 		virtual ~ValueStatement() {}
 
 		virtual bool isLValue() = 0;
@@ -18,7 +18,7 @@ namespace caliburn
 	{
 		int32_t value = 0;
 
-		LiteralIntStmnt() : ValueStatement(0) {}
+		LiteralIntStmnt() : ValueStatement(StatementType::VALUE) {}
 
 		bool isLValue()
 		{

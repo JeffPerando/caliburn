@@ -34,7 +34,7 @@ namespace caliburn
 		uint32_t calls = 0;
 		Statement* funcBody = nullptr;
 
-		FunctionStatement() : Statement(0) {}
+		FunctionStatement() : Statement(StatementType::FUNCTION) {}
 
 		uint32_t toSPIRV(SpirVAssembler* codeAsm)
 		{/*

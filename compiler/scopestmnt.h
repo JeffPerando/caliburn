@@ -8,7 +8,7 @@ namespace caliburn
 	struct ScopeStatement : public ContextStmnt
 	{
 		std::vector<Statement*> innerCode;
-		ScopeStatement() : ContextStmnt(0) {}
+		ScopeStatement() : ContextStmnt(StatementType::SCOPE) {}
 		~ScopeStatement() { Statement::~Statement(); }
 
 		uint32_t toSPIRV(SpirVAssembler* codeAsm)

@@ -11,14 +11,54 @@ namespace caliburn
 {
 	constexpr auto CALIBURN_RETURN_VAR("__retval__");
 	
+	enum class StatementType
+	{
+		UNKNOWN,
+
+		IMPORT,
+		USING,
+		TYPEDEF,
+		SHADER,
+		FUNCTION,
+		STRUCT,
+		CLASS,
+		DESCRIPTOR,
+		INPUT,
+		
+		//Flow control
+		IF,
+		FOR,
+		FORALL,
+		WHILE,
+		DOWHILE,
+		SWITCH,
+		CASE,
+		
+		RETURN,
+		CONTINUE,
+		BREAK,
+		PASS,
+
+		//misc. logic
+		VARIABLE,
+		SETTER,
+		FUNC_CALL,
+		SCOPE,
+
+		//Other things
+		VALUE,
+		OP_OVERRIDE
+
+	};
+
 	/*
 	* A statement is the base class for the abstract syntax tree.
 	*/
 	struct Statement
 	{
 	public:
-		int32_t const type;
-		Statement(int32_t stmntType) : type(stmntType) {}
+		StatementType const type;
+		Statement(StatementType stmntType) : type(stmntType) {}
 		virtual ~Statement() {}
 
 		/*
@@ -37,8 +77,8 @@ namespace caliburn
 	struct ContextStmnt : public Statement
 	{
 		ContextStmnt* parent = nullptr;
-		ContextStmnt(int32_t id) : Statement(id) {}
-		~ContextStmnt() { Statement::~Statement(); }
+		ContextStmnt(StatementType t) : Statement(t) {}
+		virtual ~ContextStmnt() { Statement::~Statement(); }
 		/*
 		virtual uint32_t addField(std::string name, Visibility vis) = 0;
 

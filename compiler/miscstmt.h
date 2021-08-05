@@ -9,7 +9,8 @@ namespace caliburn
 	{
 		std::string const importedModule;
 
-		ImportStatement(std::string m) : importedModule(m), Statement(0) {}
+		ImportStatement(std::string m) : importedModule(m),
+			Statement(StatementType::IMPORT) {}
 		~ImportStatement() {}
 
 		uint32_t toSPIRV(SpirVAssembler* codeAsm)
@@ -24,7 +25,8 @@ namespace caliburn
 	{
 		std::string const usedNamespace;
 
-		UsingStatement(std::string n) : usedNamespace(n), Statement(0) {}
+		UsingStatement(std::string n) : usedNamespace(n),
+			Statement(StatementType::USING) {}
 		~UsingStatement() {}
 
 		uint32_t toSPIRV(SpirVAssembler* codeAsm)
@@ -39,7 +41,7 @@ namespace caliburn
 		std::string name = "";
 		ParsedType* actualType = nullptr;
 
-		TypedefStatement() : Statement(0) {}
+		TypedefStatement() : Statement(StatementType::TYPEDEF) {}
 
 		uint32_t toSPIRV(SpirVAssembler* codeAsm)
 		{
