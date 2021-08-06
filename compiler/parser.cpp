@@ -206,7 +206,6 @@ ParsedType* Parser::parseTypeName()
 
 bool Parser::parseSemicolon()
 {
-	//here because we need the line/column data
 	Token* tkn = tokens->current();
 
 	if (tkn->type == TokenType::END)
@@ -598,9 +597,44 @@ Statement* Parser::parseFor()
 
 	return stmt;
 }
-/*
-Statement* Parser::parseWhile();
 
+Statement* Parser::parseWhile()
+{
+	Token* tkn = tokens->current();
+
+	if (tkn->str != "while")
+	{
+		return nullptr;
+	}
+
+	if (tokens->next()->type != TokenType::START_PAREN)
+	{
+		return nullptr;
+	}
+
+	tokens->consume();
+
+	ValueStatement* cond = (ValueStatement*)parseValue();
+
+	if (tokens->current()->type != TokenType::END_PAREN)
+	{
+		//TODO complain
+		delete cond;
+		return nullptr;
+	}
+
+	tokens->consume();
+
+	Statement* loop = parseLogic();
+
+	WhileStatement* stmt = new WhileStatement();
+	
+	stmt->cond = cond;
+	stmt->loop = loop;
+
+	return stmt;
+}
+/*
 Statement* Parser::parseDoWhile();
 
 Statement* Parser::parseSwitch();

@@ -74,9 +74,9 @@ namespace caliburn
 		Statement* parseIf();
 
 		Statement* parseFor();
-		/*
+		
 		Statement* parseWhile();
-
+		/*
 		Statement* parseDoWhile();
 
 		Statement* parseSwitch();

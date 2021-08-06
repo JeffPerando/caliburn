@@ -58,6 +58,7 @@ namespace caliburn
 	{
 	public:
 		StatementType const type;
+
 		Statement(StatementType stmntType) : type(stmntType) {}
 		virtual ~Statement() {}
 
