@@ -13,6 +13,16 @@ namespace caliburn
 
 		uint32_t toSPIRV(SpirVAssembler* codeAsm)
 		{
+			codeAsm->startScope(0);
+
+			for (auto stmt : innerCode)
+			{
+				stmt->toSPIRV(codeAsm);
+
+			}
+
+			codeAsm->endScope();
+
 			return 0;
 		}
 
