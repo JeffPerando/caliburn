@@ -148,11 +148,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="assembler.cpp" />
-    <ClCompile Include="floattype.cpp" />
-    <ClCompile Include="inttype.cpp" />
+    <ClCompile Include="typefloat.cpp" />
+    <ClCompile Include="typeint.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="tokenizer.cpp" />
+    <ClCompile Include="typevector.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="assembler.h" />
@@ -178,6 +179,7 @@
     <ClInclude Include="topstmnt.h" />
     <ClInclude Include="type.h" />
     <ClInclude Include="valuestmnt.h" />
+    <ClInclude Include="typevector.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

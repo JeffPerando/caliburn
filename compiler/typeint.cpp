@@ -4,12 +4,27 @@
 
 using namespace caliburn;
 
+uint32_t IntType::getSizeBytes() const
+{
+	return intBits / 8 + ((intBits & 0b111) != 0);
+}
+
+uint32_t IntType::getAlignBytes() const
+{
+	return getSizeBytes();
+}
+
+CompiledType* IntType::clone()
+{
+	return new IntType(intBits, this->hasA(TypeAttrib::SIGNED));
+}
+
 TypeCompat IntType::isCompatible(Operator op, CompiledType* rType) const
 {
 	if (rType == nullptr)
 	{
 		if ((op == Operator::NEGATE || op == Operator::ABS)
-			&& !hasA(TypeAttrib::TA_SIGNED))
+			&& !hasA(TypeAttrib::SIGNED))
 		{
 			return TypeCompat::INCOMPATIBLE_OP;
 		}
@@ -19,7 +34,7 @@ TypeCompat IntType::isCompatible(Operator op, CompiledType* rType) const
 
 	if (rType->category == TypeCategory::PRIMITIVE)
 	{
-		if (rType->hasA(TypeAttrib::TA_FLOAT) && this->size > rType->size)
+		if (rType->hasA(TypeAttrib::FLOAT) && this->getSizeBytes() > rType->getSizeBytes())
 		{
 			return TypeCompat::INCOMPATIBLE_TYPE;
 		}
@@ -44,7 +59,7 @@ uint32_t IntType::typeDeclSpirV(SpirVAssembler* codeAsm)
 	}
 
 	ssa = codeAsm->newAssign();
-	codeAsm->pushAll({ spirv::OpTypeInt(), ssa, size, (uint32_t)hasA(TypeAttrib::TA_SIGNED) });
+	codeAsm->pushAll({ spirv::OpTypeInt(), ssa, intBits, (uint32_t)hasA(TypeAttrib::SIGNED) });
 	return ssa;
 }
 
@@ -55,15 +70,15 @@ uint32_t IntType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Opera
 	uint32_t resultTypeSSA = this->ssa;
 	uint32_t result = codeAsm->newAssign();
 
-	if (rType->hasA(TA_FLOAT) || op == Operator::DIV)
+	if (rType->hasA(TypeAttrib::FLOAT) || op == Operator::DIV)
 	{
-		CompiledType* fpLHS = codeAsm->getFloatType(this->size);
+		CompiledType* fpLHS = codeAsm->getFloatType(this->getSizeBytes());
 		uint32_t fpLHSTypeSSA = fpLHS->getSSA();
 
 		uint32_t converted = codeAsm->newAssign();
 		uint32_t convertOp = spirv::OpConvertSToF();
 
-		if (!rType->hasA(TypeAttrib::TA_SIGNED))
+		if (!rType->hasA(TypeAttrib::SIGNED))
 		{
 			convertOp = spirv::OpConvertUToF();
 		}
@@ -73,16 +88,16 @@ uint32_t IntType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Opera
 		return fpLHS->mathOpSpirV(codeAsm, converted, op, rType, rhs, endType);
 	}
 
-	if (this->size != rType->size)
+	if (this->getSizeBytes() != rType->getSizeBytes())
 	{
 		uint32_t converted = codeAsm->newAssign();
 		uint32_t convertOp = spirv::OpSConvert();
 
-		if (this->size > rType->size)
+		if (this->getSizeBytes() > rType->getSizeBytes())
 		{
 			//lhs is wider, convert rhs to lhs width
 
-			if (!hasA(TypeAttrib::TA_SIGNED))
+			if (!hasA(TypeAttrib::SIGNED))
 			{
 				convertOp = spirv::OpUConvert();
 			}
@@ -98,7 +113,7 @@ uint32_t IntType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Opera
 			//rhs is wider, convert lhs to rhs width
 			resultTypeSSA = rType->getSSA();
 
-			if (!rType->hasA(TypeAttrib::TA_SIGNED))
+			if (!rType->hasA(TypeAttrib::SIGNED))
 			{
 				convertOp = spirv::OpUConvert();
 			}
@@ -120,22 +135,22 @@ uint32_t IntType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Opera
 
 	switch (op)
 	{
-	case Operator::ADD: opcode = spirv::OpIAdd(); break;
-	case Operator::SUB: opcode = spirv::OpISub(); break;
-	case Operator::MUL: opcode = spirv::OpIMul(); break;
-	case Operator::INTDIV:
-		if (!rType->hasA(TA_SIGNED) && !hasA(TA_SIGNED))
-			opcode = spirv::OpUDiv();
-		else opcode = spirv::OpSDiv();
-		break;
-	case Operator::MOD:
-		if (!rType->hasA(TA_SIGNED) && !hasA(TA_SIGNED))
-			opcode = spirv::OpUMod();
-		else opcode = spirv::OpSMod();
-		break;
-	case Operator::BIT_AND: opcode = spirv::OpBitwiseAnd(); break;
-	case Operator::BIT_OR: opcode = spirv::OpBitwiseOr(); break;
-	case Operator::BIT_XOR: opcode = spirv::OpBitwiseXor(); break;
+		case Operator::ADD: opcode = spirv::OpIAdd(); break;
+		case Operator::SUB: opcode = spirv::OpISub(); break;
+		case Operator::MUL: opcode = spirv::OpIMul(); break;
+		case Operator::INTDIV:
+			if (!rType->hasA(TypeAttrib::SIGNED) && !hasA(TypeAttrib::SIGNED))
+				opcode = spirv::OpUDiv();
+			else opcode = spirv::OpSDiv();
+			break;
+		case Operator::MOD:
+			if (!rType->hasA(TypeAttrib::SIGNED) && !hasA(TypeAttrib::SIGNED))
+				opcode = spirv::OpUMod();
+			else opcode = spirv::OpSMod();
+			break;
+		case Operator::BIT_AND: opcode = spirv::OpBitwiseAnd(); break;
+		case Operator::BIT_OR: opcode = spirv::OpBitwiseOr(); break;
+		case Operator::BIT_XOR: opcode = spirv::OpBitwiseXor(); break;
 		//case Operator::POW:
 	}
 
@@ -150,7 +165,7 @@ uint32_t IntType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Opera
 			codeAsm->pushAll({ spirv::OpBitwiseAnd(),
 				resultTypeSSA,
 				result,
-				shifted, codeAsm->getOrPushIntConst(1, this->size, this->hasA(TypeAttrib::TA_SIGNED)).value });
+				shifted, codeAsm->getOrPushIntConst(1, this->intBits, this->hasA(TypeAttrib::SIGNED)).value });
 			return result;
 		}
 

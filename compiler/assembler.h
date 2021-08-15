@@ -94,16 +94,14 @@ namespace caliburn
 		std::map<std::string, CompiledType*> defaultTypes;
 		
 		std::map<std::pair<uint32_t, bool>, IntType*> defaultIntTypes;
-		std::map<uint32_t, FloatType*> defaultFloatTypes;
+		FloatType* defaultFloatTypes[9]{ nullptr };
 		std::map<uint64_t, TypedSSA> intConstants;
 
 		SpirVStack* currentStack = nullptr;
 		uint32_t nextSSA = 0;
-		int optimizeLvl = 0;
-
+		
 	public:
-		SpirVAssembler() : SpirVAssembler(0) {}
-		SpirVAssembler(int o) : optimizeLvl(o)
+		SpirVAssembler()
 		{
 			//int types
 			for (int bits = 8; bits <= 512; bits <<= 1)
@@ -113,7 +111,7 @@ namespace caliburn
 					bool hasSign = (s == 1);
 					auto intType = new IntType(bits, hasSign);
 					defaultTypes.emplace((s ? "int" : "uint") + bits, intType);
-					defaultIntTypes.emplace(std::pair<uint32_t, bool>(bits, hasSign), intType);
+					defaultIntTypes.emplace(std::pair<uint32_t, bool>(bits / 8, hasSign), intType);
 
 				}
 				
@@ -124,9 +122,18 @@ namespace caliburn
 			{
 				auto floatType = new FloatType(bits);
 				defaultTypes.emplace("float" + bits, floatType);
-				defaultFloatTypes.emplace(bits, floatType);
+				defaultFloatTypes[bits / 8] = floatType;
 
 			}
+
+			//typical aliases
+			addPermanentAlias("byte", "int8");
+			addPermanentAlias("short", "int16");
+			addPermanentAlias("int", "int32");
+			addPermanentAlias("long", "int64");
+
+			addPermanentAlias("float", "float32");
+			addPermanentAlias("double", "float64");
 
 		}
 
@@ -158,27 +165,32 @@ namespace caliburn
 
 		CompiledType* resolveType(ParsedType* type);
 
-		IntType* getIntType(uint32_t bits, bool sign)
+		void addPermanentAlias(std::string alias, std::string original)
 		{
-			return defaultIntTypes[std::pair<uint32_t, bool>(bits, sign)];
+			defaultTypes[alias] = defaultTypes.at(original);
 		}
 
-		FloatType* getFloatType(uint32_t bits)
+		IntType* getIntType(uint32_t bytes, bool sign)
 		{
-			return defaultFloatTypes[bits];
+			return defaultIntTypes[std::pair<uint32_t, bool>(bytes, sign)];
 		}
 
-		TypedSSA getOrPushIntConst(uint64_t i, uint32_t bits = 32, bool sign = true)
+		FloatType* getFloatType(uint32_t bytes)
+		{
+			return defaultFloatTypes[bytes];
+		}
+
+		TypedSSA getOrPushIntConst(uint64_t i, uint32_t bytes = 4, bool sign = true)
 		{
 			TypedSSA ret = intConstants[i];
 
 			if (ret.value == 0)
 			{
-				ret.type = getIntType(bits, sign);
+				ret.type = getIntType(bytes, sign);
 				ret.value = newAssign();
-				pushAll({spirv::OpConstant(bits / 32), ret.type->getSSA(), ret.value});
+				pushAll({spirv::OpConstant(bytes / 4), ret.type->getSSA(), ret.value});
 				
-				if (bits > 32)
+				if (bytes > 4)
 				{
 					push(uint32_t(i >> 32) & 0xFFFFFFFF);
 				}

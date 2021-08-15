@@ -189,7 +189,7 @@ uint32_t SpirVAssembler::getVar(std::string name)
 
 CompiledType* SpirVAssembler::resolveType(ParsedType* type)
 {
-	auto it = defaultTypes.find(type->getFullName());
+	auto it = defaultTypes.find(type->getBasicName());
 	CompiledType* resolved;
 
 	if (it == defaultTypes.end())
@@ -209,15 +209,36 @@ CompiledType* SpirVAssembler::resolveType(ParsedType* type)
 		return nullptr;
 	}
 
-	if (type->generics.size() > 0)
+	if (resolved->hasA(TypeAttrib::GENERIC))
 	{
-		for (ParsedType* g : type->generics)
+		if (type->generics.size() < ((SpecializedType*)resolved)->getMandatoryGenericCount())
 		{
-			resolved->addGeneric(resolveType(g));
+			//TODO complain
+			return nullptr;
+		}
+
+		if (type->getFullName() == resolved->getFullName())
+		{
+			return resolved;
+		}
+
+		//gonna make a new generic type
+		resolved = resolved->clone();
+
+		for (auto i = 0; i < type->generics.size(); ++i)
+		{
+			CompiledType* compiledGeneric = resolveType(type->generics[i]);
+			resolved->setGeneric(i, compiledGeneric);
+
 		}
 
 	}
-
+	else if (type->generics.size() > 0)
+	{
+		//TODO complain about inappropriate generic
+		return nullptr;
+	}
+	
 	return resolved;
 }
 /*

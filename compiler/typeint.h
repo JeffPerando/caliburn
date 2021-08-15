@@ -10,12 +10,22 @@ namespace caliburn
 
 	struct IntType : public CompiledType
 	{
+	protected:
+		uint32_t const intBits;
+	public:
 		IntType() : IntType(32, true) {}
 		IntType(uint32_t b, bool s) :
 			CompiledType(TypeCategory::PRIMITIVE,
-				(s ? "int" : "uint") + b, b,
-				s ? TypeAttrib::TA_SIGNED : 0)
+				(s ? "int" : "uint") + b,
+				{s ? TypeAttrib::SIGNED : TypeAttrib::NONE}),
+			intBits(b)
 		{}
+
+		virtual uint32_t getSizeBytes() const;
+
+		virtual uint32_t getAlignBytes() const;
+
+		virtual CompiledType* clone();
 
 		virtual TypeCompat isCompatible(Operator op, CompiledType* rType) const;
 

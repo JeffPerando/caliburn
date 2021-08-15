@@ -4,6 +4,21 @@
 
 using namespace caliburn;
 
+uint32_t FloatType::getSizeBytes() const
+{
+	return floatBits / 8 + (floatBits & 0b111 != 0);
+}
+
+uint32_t FloatType::getAlignBytes() const
+{
+	return getSizeBytes();
+}
+
+CompiledType* FloatType::clone()
+{
+	return new FloatType(floatBits);
+}
+
 TypeCompat FloatType::isCompatible(Operator op, CompiledType* rType) const
 {
 	if (rType == nullptr)
@@ -42,7 +57,7 @@ uint32_t FloatType::typeDeclSpirV(SpirVAssembler* codeAsm)
 	}
 
 	ssa = codeAsm->newAssign();
-	codeAsm->pushAll({ spirv::OpTypeFloat(), ssa, size });
+	codeAsm->pushAll({ spirv::OpTypeFloat(), ssa, floatBits });
 	return ssa;
 }
 
@@ -53,15 +68,15 @@ uint32_t FloatType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Ope
 	uint32_t resultTypeSSA = this->ssa;
 	uint32_t result = codeAsm->newAssign();
 
-	if (!rType->hasA(TA_FLOAT))
+	if (!rType->hasA(TypeAttrib::FLOAT))
 	{
-		FloatType* fpRHS = codeAsm->getFloatType(rType->size);
+		FloatType* fpRHS = codeAsm->getFloatType(rType->getSizeBytes());
 		uint32_t fpRHSTypeSSA = fpRHS->getSSA();
 
 		uint32_t converted = codeAsm->newAssign();
 		uint32_t convertOp = spirv::OpConvertSToF();
 
-		if (!rType->hasA(TypeAttrib::TA_SIGNED))
+		if (!rType->hasA(TypeAttrib::SIGNED))
 		{
 			convertOp = spirv::OpConvertUToF();
 		}
@@ -71,11 +86,11 @@ uint32_t FloatType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Ope
 
 	}
 
-	if (this->size != rType->size)
+	if (this->getSizeBytes() != rType->getSizeBytes())
 	{
 		uint32_t converted = codeAsm->newAssign();
 
-		if (this->size > rType->size)
+		if (this->getSizeBytes() > rType->getSizeBytes())
 		{
 			//lhs is wider, convert rhs to lhs width
 
@@ -107,21 +122,21 @@ uint32_t FloatType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Ope
 
 	switch (op)
 	{
-	case Operator::ADD: opcode = spirv::OpFAdd(); break;
-	case Operator::SUB: opcode = spirv::OpFSub(); break;
-	case Operator::MUL: opcode = spirv::OpFMul(); break;
-	case Operator::INTDIV:
-	case Operator::DIV: opcode = spirv::OpFDiv(); break;
-	case Operator::MOD: opcode = spirv::OpFMod(); break;
-	//case Operator::POW:
-	default: return 0;//TODO complain
+		case Operator::ADD: opcode = spirv::OpFAdd(); break;
+		case Operator::SUB: opcode = spirv::OpFSub(); break;
+		case Operator::MUL: opcode = spirv::OpFMul(); break;
+		case Operator::INTDIV:
+		case Operator::DIV: opcode = spirv::OpFDiv(); break;
+		case Operator::MOD: opcode = spirv::OpFMod(); break;
+		//case Operator::POW:
+		default: return 0;//TODO complain
 	}
 
 	codeAsm->pushAll({ opcode, resultTypeSSA, result, lhs, rhs });
 
 	if (op == Operator::INTDIV)
 	{
-		auto intResultType = codeAsm->getIntType(this->size, true);
+		auto intResultType = codeAsm->getIntType(this->getSizeBytes(), true);
 		uint32_t intDivResult = codeAsm->newAssign();
 		codeAsm->pushAll({ spirv::OpConvertFToS(), intResultType->getSSA(), intDivResult, result });
 		endType = intResultType;

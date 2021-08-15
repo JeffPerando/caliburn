@@ -8,18 +8,25 @@ namespace caliburn
 {
 	class SpirVAssembler;
 
-	struct FloatType : public CompiledType
+	struct VectorType : public SpecializedType
 	{
 	protected:
-		uint32_t const floatBits;
+		const uint32_t vecElements;
 	public:
-		FloatType() : FloatType(32) {}
-		FloatType(uint32_t s) :
-			CompiledType(TypeCategory::PRIMITIVE,
-				"float" + s,
-				{ TypeAttrib::SIGNED, TypeAttrib::FLOAT }),
-			floatBits(s)
-		{}
+		VectorType(uint32_t elements, CompiledType* innerType) :
+			SpecializedType(TypeCategory::VECTOR,
+				"vec" + elements,
+				{ TypeAttrib::COMPOSITE, TypeAttrib::GENERIC }, 1),
+			vecElements(elements)
+		{
+			setGeneric(0, innerType);
+
+		}
+		
+		virtual uint32_t getMandatoryGenericCount()
+		{
+			return 0;
+		}
 
 		virtual uint32_t getSizeBytes() const;
 

@@ -14,20 +14,21 @@ namespace caliburn
 	class SpirVAssembler;
 
 	//Used for resolved types
-	enum TypeAttrib
+	enum class TypeAttrib
 	{
+		NONE =			0,
 		//has the concept of a negative
-		TA_SIGNED =			0b00000001,
+		SIGNED =		0b00000001,
 		//is an IEEE 16-bit (or higher) floating point
-		TA_FLOAT =			0b00000010,
+		FLOAT =			0b00000010,
 		//is a generic, e.g. array<T> or list<T>
-		TA_GENERIC =		0b00000100,
+		GENERIC =		0b00000100,
 		//is considered a finite set of elements, like a buffer or array
 		//can be accessed using [], e.g. v[x]
-		TA_COMPOSITE =		0b00001000,
+		COMPOSITE =		0b00001000,
 		//is, well, atomic
-		TA_ATOMIC =			0b00010000,
-		TA_ALL =			0b00011111
+		ATOMIC =		0b00010000,
+		ALL =			0b00011111
 	};
 
 	enum class TypeCategory
@@ -83,6 +84,16 @@ namespace caliburn
 			}
 
 		}
+
+		std::string getBasicName()
+		{
+			if (mod)
+			{
+				return (std::stringstream() << mod->str << ':' << name->str).str();
+			}
+
+			return name->str;
+		}
 		
 		std::string getFullName()
 		{
@@ -135,19 +146,49 @@ namespace caliburn
 	{
 		const TypeCategory category;
 		const std::string canonName;
-		//in bits
-		const uint32_t size;
-		const uint32_t attribs;
 	protected:
 		//Since every type is made for a particular assembler, storing the SSA is fine
 		uint32_t ssa = 0;
+		uint32_t attribs = 0;
 	public:
-		CompiledType(TypeCategory c, std::string n, uint32_t s, uint32_t a) :
-			category(c), canonName(n), size(s), attribs(a) {}
+		CompiledType(TypeCategory c, std::string n, std::initializer_list<TypeAttrib> as) :
+			category(c), canonName(n)
+		{
+			for (auto a : as)
+			{
+				attribs |= (int)a;
+			}
+
+		}
+
+		bool operator==(CompiledType& rhs)
+		{
+			//cheap hack, sorry
+			if (ssa == rhs.ssa)
+			{
+				return true;
+			}
+			else if (ssa != 0 && rhs.ssa != 0)
+			{
+				return false;
+			}
+
+			if (canonName != rhs.canonName)
+			{
+				return false;
+			}
+
+			if (attribs != rhs.attribs)
+			{
+				return false;
+			}
+
+			return true;
+		}
 
 		bool hasA(TypeAttrib a) const
 		{
-			return (attribs & a) != 0;
+			return (attribs & (int)a) != 0;
 		}
 
 		uint32_t getSSA()
@@ -155,10 +196,22 @@ namespace caliburn
 			return ssa;
 		}
 
-		virtual void addGeneric(CompiledType* type)
+		virtual std::string getFullName()
 		{
-			throw new std::exception("cannot add a generic to this type!");
+			return canonName;
 		}
+
+		virtual void setGeneric(size_t index, CompiledType* type)
+		{
+			throw std::exception("cannot add a generic to this type!");
+		}
+
+		virtual uint32_t getSizeBytes() const = 0;
+
+		//Conveniently, for most all primitives, alignment == size
+		virtual uint32_t getAlignBytes() const = 0;
+
+		virtual CompiledType* clone() = 0;
 
 		virtual TypeCompat isCompatible(Operator op, CompiledType* rType) const = 0;
 
@@ -168,6 +221,81 @@ namespace caliburn
 
 		//used for BIT_NOT, NEGATE, ABS
 		virtual uint32_t mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, CompiledType*& endType) const = 0;
+
+	};
+
+	struct SpecializedType : public CompiledType
+	{
+	protected:
+		size_t const genericLimit;
+		std::vector<CompiledType*> generics;
+	
+	public:
+		SpecializedType(TypeCategory cat, std::string name,
+			std::initializer_list<TypeAttrib> attribs, size_t genericCount = 1) :
+			CompiledType(cat, name, attribs), genericLimit(genericCount)
+		{
+			generics.reserve(genericCount);
+
+		}
+
+		bool operator==(CompiledType& other)
+		{
+			if (!CompiledType::operator==(other))
+			{
+				return false;
+			}
+
+			auto rhs = (SpecializedType*)&other;
+
+			if (generics.size() != rhs->generics.size())
+			{
+				return false;
+			}
+
+			for (size_t i = 0; i < generics.size(); ++i)
+			{
+				CompiledType* lhsGeneric = generics[i];
+				CompiledType* rhsGeneric = rhs->generics[i];
+
+				if (*lhsGeneric == *rhsGeneric)
+				{
+					continue;
+				}
+
+				return false;
+			}
+
+			return true;
+		}
+
+		virtual std::string getFullName()
+		{
+			std::stringstream ss;
+
+			ss << canonName;
+			ss << '<';
+			for (uint32_t i = 0; i < generics.size(); ++i)
+			{
+				ss << generics[i]->getFullName();
+			}
+			ss << '>';
+
+			return ss.str();
+		}
+
+		virtual void setGeneric(size_t index, CompiledType* type)
+		{
+			if (index >= generics.size())
+			{
+				throw std::exception("Too many generic arguments!");
+			}
+
+			generics[index] = type;
+
+		}
+
+		virtual uint32_t getMandatoryGenericCount() = 0;
 
 	};
 
