@@ -2,6 +2,7 @@
 #pragma once
 
 #include "buffer.h"
+#include "compilererr.h"
 #include "statement.h"
 #include "tokenizer.h"
 #include "type.h"
@@ -20,6 +21,9 @@ namespace caliburn
 	class Parser
 	{
 		buffer<Token>* tokens = nullptr;
+		std::vector<CaliburnException*> errors;
+
+		void postParseException(CaliburnException* ex);
 
 		void parseIdentifierList(std::vector<std::string>& ids);
 
@@ -29,7 +33,7 @@ namespace caliburn
 
 		Statement* parseAny(std::initializer_list<ParseMethod> fns);
 
-		std::string parseNamespace();
+		Token* parseNamespace();
 
 		ParsedType* parseTypeName();
 

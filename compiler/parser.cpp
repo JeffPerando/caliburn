@@ -4,6 +4,12 @@
 //I'm so sorry
 using namespace caliburn;
 
+void Parser::postParseException(CaliburnException* e)
+{
+	errors.push_back(e);
+
+}
+
 void Parser::parse(std::vector<Token>* tokenList, std::vector<Statement*>* ast)
 {
 	//don't want to pollute the heap too much
@@ -12,15 +18,16 @@ void Parser::parse(std::vector<Token>* tokenList, std::vector<Statement*>* ast)
 
 	while (tokens->hasNext())
 	{
+		Token* start = tokens->current();
 		Statement* finished = parseDecl();
 
 		if (finished)
 		{
 			ast->push_back(finished);
 		}
-		//TODO implement error system
 		else
 		{
+			postParseException(new InvalidDeclException(start));
 			break;
 		}
 
@@ -30,7 +37,7 @@ void Parser::parse(std::vector<Token>* tokenList, std::vector<Statement*>* ast)
 
 void Parser::parseIdentifierList(std::vector<std::string>& ids)
 {
-	while (true)
+	while (tokens->hasNext())
 	{
 		Token* tkn = tokens->current();
 
@@ -168,34 +175,33 @@ Statement* Parser::parseAny(std::initializer_list<ParseMethod> fns)
 	return nullptr;
 }
 
-std::string Parser::parseNamespace()
+Token* Parser::parseNamespace()
 {
 	if (tokens->current()->type == TokenType::IDENTIFIER &&
 		tokens->peek()->type == TokenType::COLON)
 	{
 		Token* tkn = tokens->current();
 		tokens->consume(2);
-		return tkn->str;
+		return tkn;
 	}
 
-	return "";
+	return nullptr;
 }
 
 ParsedType* Parser::parseTypeName()
 {
-	std::string moduleName = parseNamespace();
-
+	Token* moduleName = parseNamespace();
 	Token* tkn = tokens->current();
 
 	if (tkn->type != TokenType::IDENTIFIER)
 	{
-		//TODO complain?
+		postParseException(new ParseException("Expected identifier; this is NOT a valid identifier.", tkn));
 		return nullptr;
 	}
 
 	tokens->consume();
 
-	ParsedType* type = new ParsedType(tkn->str);
+	ParsedType* type = new ParsedType(tkn);
 
 	type->mod = moduleName;
 
@@ -214,7 +220,7 @@ bool Parser::parseSemicolon()
 		return true;
 	}
 
-	//TODO complain
+	postParseException(new UnexpectedTokenException(tkn, ';'));
 	return false;
 }
 
@@ -232,9 +238,13 @@ Statement* Parser::parseDecl()
 		&Parser::parseDescriptor,
 		&Parser::parseStruct*/ });
 
-	if (!parseSemicolon())
+	if (!stmt)
 	{
-		//TODO complain
+		postParseException(new ParseException("Invalid start to declaration:", tokens->current()));
+	}
+	else if (!parseSemicolon())
+	{
+		postParseException(new ParseException("All declarations must end with a semicolon", tokens->current()));
 	}
 
 	return stmt;
@@ -347,12 +357,12 @@ Statement* Parser::parseFunction()
 
 		if (gpuThreadData.size() == 0)
 		{
-			//TODO complain
+			postParseException(new ParseException("GPU threading data is empty or has invalid values", tkn));
 		}
 
 		if (tokens->current()->str != "]")
 		{
-			//TODO also complain
+			postParseException(new UnexpectedTokenException(tokens->current(), ']'));
 		}
 
 		tkn = tokens->next();
@@ -361,6 +371,7 @@ Statement* Parser::parseFunction()
 
 	if (tkn->str != "(")
 	{
+		postParseException(new UnexpectedTokenException(tokens->current(), '('));
 		return nullptr;
 	}
 
@@ -370,6 +381,7 @@ Statement* Parser::parseFunction()
 
 	if (tkn->str != ")")
 	{
+		postParseException(new UnexpectedTokenException(tokens->current(), ')'));
 		return nullptr;
 	}
 
@@ -441,7 +453,7 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 		}
 		else
 		{
-			//TODO complain
+			postParseException(new ParseException("Invalid start to variable:", tkn));
 			return nullptr;
 		}
 
@@ -452,24 +464,26 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 
 	}
 
+	tkn = tokens->current();
+
 	parseIdentifierList(vars);
 
 	if (vars.size() == 0)
 	{
-		//TODO complain
+		postParseException(new ParseException("Invalid name for variable:", tkn));
 		return nullptr;
 	}
 
 	if (tokens->current()->str == "=")
 	{
-		tokens->consume();
+		tkn = tokens->next();
 		defVal = (ValueStatement*)parseValue();
 		//type = defVal->type;
 
 	}
 	else if (!type)
 	{
-		//TODO complain
+		postParseException(new ParseException("All implicitly-typed variables must be manually initialized", tkn));
 		return nullptr;
 	}
 
@@ -526,6 +540,7 @@ Statement* Parser::parseIf()
 
 	if (tokens->peek()->type != TokenType::START_PAREN)
 	{
+		postParseException(new UnexpectedTokenException(tokens->current(), '('));
 		return nullptr;
 	}
 
@@ -535,7 +550,7 @@ Statement* Parser::parseIf()
 
 	if (tokens->current()->type != TokenType::END_PAREN)
 	{
-		//BIG OOF
+		postParseException(new UnexpectedTokenException(tokens->current(), ')'));
 		delete condition;
 		return nullptr;
 	}
@@ -566,6 +581,7 @@ Statement* Parser::parseFor()
 
 	if (tokens->next()->type != TokenType::START_PAREN)
 	{
+		postParseException(new UnexpectedTokenException(tokens->current(), '('));
 		return nullptr;
 	}
 
@@ -581,6 +597,7 @@ Statement* Parser::parseFor()
 
 	if (tokens->current()->type != TokenType::END_PAREN)
 	{
+		postParseException(new UnexpectedTokenException(tokens->current(), ')'));
 		return nullptr;
 	}
 
@@ -609,6 +626,7 @@ Statement* Parser::parseWhile()
 
 	if (tokens->next()->type != TokenType::START_PAREN)
 	{
+		postParseException(new UnexpectedTokenException(tokens->current(), '('));
 		return nullptr;
 	}
 
@@ -618,7 +636,7 @@ Statement* Parser::parseWhile()
 
 	if (tokens->current()->type != TokenType::END_PAREN)
 	{
-		//TODO complain
+		postParseException(new UnexpectedTokenException(tokens->current(), ')'));
 		delete cond;
 		return nullptr;
 	}
@@ -675,7 +693,7 @@ Statement* Parser::parseValue(bool doPostfix)
 		}
 		else
 		{
-			//TODO complain
+			postParseException(new ParseException("Invalid value keyword:", tkn));
 			return nullptr;
 		}
 		//TODO figure out what to do with "new" keyword
@@ -704,7 +722,7 @@ Statement* Parser::parseValue(bool doPostfix)
 
 		if (tokens->current()->type != TokenType::END_PAREN)
 		{
-			//TODO complain
+			postParseException(new UnexpectedTokenException(tokens->current(), ')'));
 			return nullptr;
 		}
 
@@ -721,6 +739,7 @@ Statement* Parser::parseValue(bool doPostfix)
 
 		if (tokens->current()->type != TokenType::END_BRACKET)
 		{
+			postParseException(new UnexpectedTokenException(tokens->current(), ']'));
 			return nullptr;
 		}
 
@@ -737,7 +756,7 @@ Statement* Parser::parseValue(bool doPostfix)
 
 		if (*tokens->current() != "|")
 		{
-			//TODO complain
+			postParseException(new ParseException("Absolute values must be surrounded by pipes ('|')", tokens->current()));
 			return nullptr;
 		}
 
@@ -769,7 +788,7 @@ Statement* Parser::parseValue(bool doPostfix)
 
 		}
 
-		//TODO complain
+		postParseException(new ParseException("Invalid prefix operator; try !, ~, -, or |value|", tokens->current()));
 		return nullptr;
 	}
 	//else foundValue = parseLiteral();
@@ -801,7 +820,7 @@ Statement* Parser::parseValue(bool doPostfix)
 				break;
 			}
 			
-			tokens->consume();
+			tkn = tokens->next();
 
 			//fun fact, this is the only reason why the postfix flag is here
 			//it's only so that the order of operations is preserved (left to right)
@@ -810,7 +829,7 @@ Statement* Parser::parseValue(bool doPostfix)
 
 			if (!rhs)
 			{
-				//TODO complain
+				postParseException(new ParseException("Invalid value for RHS of equation starts here", tkn));
 				delete foundValue;
 				return nullptr;
 			}
@@ -820,7 +839,7 @@ Statement* Parser::parseValue(bool doPostfix)
 		//x[y]
 		else if (tkn->type == TokenType::START_BRACKET)
 		{
-			tokens->consume();
+			tkn = tokens->next();
 
 			std::vector<Statement*> indices;
 
@@ -828,14 +847,14 @@ Statement* Parser::parseValue(bool doPostfix)
 
 			if (indices.size() == 0)
 			{
-				//TODO complain
+				postParseException(new ParseException("Invalid array-style accessor value starts here:", tkn));
 				delete foundValue;
 				return nullptr;
 			}
 
 			if (tokens->current()->type != TokenType::END_BRACKET)
 			{
-				//TODO complain
+				postParseException(new UnexpectedTokenException(tokens->current(), ']'));
 				for (auto i : indices)
 				{
 					delete i;
@@ -851,12 +870,12 @@ Statement* Parser::parseValue(bool doPostfix)
 		//x.y or x.y()
 		else if (tkn->type == TokenType::PERIOD)
 		{
-			tokens->consume();
+			tkn = tokens->next();
 			Statement* fieldOrFunc = parseFieldOrFuncValue(false);
 
 			if (!fieldOrFunc)
 			{
-				//TODO complain
+				postParseException(new ParseException("Invalid attempt to access a member:", tkn));
 				delete foundValue;
 				return nullptr;
 			}
@@ -885,34 +904,39 @@ Statement* Parser::parseFieldOrFuncValue(bool canHaveNamespace)
 		return nullptr;
 	}
 
-	if (!canHaveNamespace && type->mod != "")
+	if (!canHaveNamespace && type->mod != nullptr)
 	{
+		//I strongly dislike this exception message
+		postParseException(new ParseException("Found namespace, but namespace isn't allowed in this context", type->mod));
 		delete type;
 		return nullptr;
 	}
 
 	tokens->consume();
-
 	std::vector<Statement*> accessors;
 
-	if (tokens->current()->type == TokenType::START_BRACKET)
-	{
-		//tis either an array accessor or dispatch
+	Token* tkn = tokens->current();
 
-		tokens->consume();
+	if (tkn->type == TokenType::START_BRACKET)
+	{
+		//either an array accessor or dispatch
+
+		tkn = tokens->next();
 		
 		parseValueList(accessors);
 
 		if (accessors.size() == 0)
 		{
-			//TODO complain
+			postParseException(new ParseException("Invalid array accessor (or dispatch) value(s) start at:", tkn));
 			delete type;
 			return nullptr;
 		}
 
-		if (tokens->current()->type != TokenType::END_BRACKET)
+		tkn = tokens->current();
+
+		if (tkn->type != TokenType::END_BRACKET)
 		{
-			//TODO complain again
+			postParseException(new UnexpectedTokenException(tkn, ']'));
 			delete type;
 			for (auto a : accessors)
 			{
@@ -929,10 +953,17 @@ Statement* Parser::parseFieldOrFuncValue(bool canHaveNamespace)
 	{
 		std::vector<Statement*> args;
 		parseValueList(args);
+
+		tkn = tokens->current();
 		
-		if (tokens->current()->type != TokenType::END_PAREN)
+		if (tkn->type != TokenType::END_PAREN)
 		{
-			//TODO complain
+			postParseException(new UnexpectedTokenException(tkn, ')'));
+		}
+
+		if (accessors.size() > 0)
+		{
+			//return new GPUDispatch();
 		}
 
 		if (accessors.size() > 0)
@@ -945,6 +976,8 @@ Statement* Parser::parseFieldOrFuncValue(bool canHaveNamespace)
 	else if (type->generics.size() > 0)
 	{
 		//someone's trying to use a type name as a field
+		//extremely weird but OK
+		postParseException(new ParseException("Valid(ish) type with generic found, but being used as a field and not a constructor", tkn));
 		delete type;
 		return nullptr;
 	}

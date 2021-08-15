@@ -7,6 +7,8 @@
 #include <sstream>
 #include <vector>
 
+#include "tokenizer.h"
+
 namespace caliburn
 {
 	class SpirVAssembler;
@@ -65,13 +67,13 @@ namespace caliburn
 	private:
 		std::string fullName;
 	public:
-		std::string mod;
-		std::string name;
+		Token* mod;
+		Token* name;
 		std::vector<ParsedType*> generics;
 		
-		ParsedType() : ParsedType("INVALID_TYPE") {}
-		ParsedType(std::string n) : ParsedType("", n) {}
-		ParsedType(std::string m, std::string n) : mod(m), name(n) {}
+		ParsedType() : ParsedType(nullptr) {}
+		ParsedType(Token* n) : ParsedType(nullptr, n) {}
+		ParsedType(Token* m, Token* n) : mod(m), name(n) {}
 
 		virtual ~ParsedType()
 		{
@@ -82,34 +84,6 @@ namespace caliburn
 
 		}
 		
-		bool operator<(const ParsedType& rhs) const
-		{
-			if (mod < rhs.mod)
-			{
-				return true;
-			}
-
-			if (name < rhs.name)
-			{
-				return true;
-			}
-
-			if (generics.size() < rhs.generics.size())
-			{
-				return true;
-			}
-
-			for (uint32_t i = 0; i < generics.size(); ++i)
-			{
-				if (generics[i] < rhs.generics[i])
-				{
-					return true;
-				}
-			}
-
-			return false;
-		}
-		
 		std::string getFullName()
 		{
 			if (fullName.length() > 0)
@@ -117,14 +91,19 @@ namespace caliburn
 				return fullName;
 			}
 
-			std::stringstream ss;
-
-			if (mod.length() > 0)
+			if (name == nullptr)
 			{
-				ss << mod << ":";
+				return "INVALID TYPE PLS FIX";
 			}
 
-			ss << name;
+			std::stringstream ss;
+
+			if (mod != nullptr)
+			{
+				ss << mod->str << ':';
+			}
+
+			ss << name->str;
 
 			if (generics.size() > 0)
 			{

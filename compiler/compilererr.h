@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include <exception>
 #include <string>
 #include <sstream>
 
@@ -9,40 +8,79 @@
 
 namespace caliburn
 {
-	struct CompilerError : public std::exception
-	{
-		std::string const stage;
-		std::string const message;
-		uint64_t const line;
-		uint64_t const column;
+	//Exists because C++ doesn't allow for enum conversion to string
+	static const std::string COMPILE_STAGES[] =
+		{"TOKENIZER", "PARSER", "COMPILER", "OPTIMIZER"};
 
-		CompilerError() : stage("GENERIC"), message("Unknown error"), line(0), column(0) {}
-		CompilerError(std::string s, std::string m, uint64_t l, uint64_t c) :
-			stage(s), message(m), line(l), column(c) {}
+	//Some of these shouldn't throw exceptions, but who knows?
+	//Particularly the tokenizer; any character that isn't reserved is an identifier.
+	enum class CompileStage
+	{
+		TOKENIZER,
+		PARSER,
+		COMPILER,
+		OPTIMIZER
+	};
+
+	struct CaliburnException
+	{
+		CompileStage const stage;
+		std::string const message;
+		Token* const current;
+
+		CaliburnException(CompileStage s, std::string m, Token* tkn) :
+			stage(s), message(m), current(tkn) {}
 		
-		const char* what() const
+		virtual void toStr(std::string& out)
 		{
 			std::stringstream ss;
 
-			ss << "[" << stage << "] ";
+			ss << '[';
+			ss << COMPILE_STAGES[(int)stage];
+			ss << "] ";
+			ss << current->line;
+			ss << ':';
+			ss << current->column;
+			ss << ' ';
 			ss << message;
-			ss << " on line " << line << ":" << column;
 
-			return ss.str().c_str();
+			out = ss.str();
+
 		}
 
 	};
+
+	struct ParseException : public CaliburnException
+	{
+		ParseException(std::string m, Token* tkn) :
+			CaliburnException(CompileStage::PARSER, m, tkn) {}
+
+	};
+
+	struct CompilerException : public CaliburnException
+	{
+		CompilerException(std::string m, Token* tkn) :
+			CaliburnException(CompileStage::COMPILER, m, tkn) {}
+
+	};
+
+	struct InvalidDeclException : public ParseException
+	{
+		InvalidDeclException(Token* invalid) :
+			ParseException((std::stringstream() << "invalid declaration: \"" << invalid->str << '\"').str(),
+				current) {}
+
+	};
+
+	//USE THIS SPARINGLY
+	//Please use a more descriptive exception when possible
+	struct UnexpectedTokenException : public ParseException
+	{
+		UnexpectedTokenException(Token* current, char expected) :
+			ParseException(
+				(std::stringstream() << "expected \'" << expected << "\', found \'" << current->str << '\'').str(),
+				current) {}
+
+	};
 	
-	class TokenizerError : public CompilerError
-	{
-		TokenizerError(std::string m, Token* tkn) : CompilerError("TOKENIZER", m, tkn->line, tkn->column) {}
-
-	};
-
-	class ParserError : public CompilerError
-	{
-		ParserError(std::string m, Token* tkn) : CompilerError("PARSER", m, tkn->line, tkn->column) {}
-
-	};
-
 }

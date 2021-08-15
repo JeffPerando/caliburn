@@ -87,6 +87,7 @@ void SpirVAssembler::pushVarSetter(std::string name, uint32_t value)
 
 }
 
+//TODO is a label really necessary?
 void SpirVAssembler::startScope(uint32_t label)
 {
 	SpirVStack* scope = new SpirVStack();
@@ -188,7 +189,7 @@ uint32_t SpirVAssembler::getVar(std::string name)
 
 CompiledType* SpirVAssembler::resolveType(ParsedType* type)
 {
-	auto it = defaultTypes.find(type->name);
+	auto it = defaultTypes.find(type->getFullName());
 	CompiledType* resolved;
 
 	if (it == defaultTypes.end())

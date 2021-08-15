@@ -32,13 +32,26 @@ namespace caliburn
 		T* next()
 		{
 			index += 1;
+
+			if (index >= vec->size())
+			{
+				return nullptr;
+			}
+
 			return &vec->at(index);
 		}
 
 		//fetch upcoming
 		T* peek(size_t offset = 1)
 		{
-			return &vec->at(index + offset);
+			size_t upcoming = index + offset;
+
+			if (upcoming >= vec->size())
+			{
+				return nullptr;
+			}
+
+			return &vec->at(upcoming);
 		}
 
 		//increment

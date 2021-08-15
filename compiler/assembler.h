@@ -91,7 +91,7 @@ namespace caliburn
 		std::vector<SpvOp> ops = std::vector<SpvOp>(8192);
 		std::vector<CompiledType*> usedTypes;
 		
-		std::map<ParsedType, CompiledType*> defaultTypes;
+		std::map<std::string, CompiledType*> defaultTypes;
 		
 		std::map<std::pair<uint32_t, bool>, IntType*> defaultIntTypes;
 		std::map<uint32_t, FloatType*> defaultFloatTypes;
@@ -112,8 +112,7 @@ namespace caliburn
 				{
 					bool hasSign = (s == 1);
 					auto intType = new IntType(bits, hasSign);
-					defaultTypes.emplace(ParsedType((s ? "int" : "uint") + bits),
-						intType);
+					defaultTypes.emplace((s ? "int" : "uint") + bits, intType);
 					defaultIntTypes.emplace(std::pair<uint32_t, bool>(bits, hasSign), intType);
 
 				}
@@ -124,7 +123,7 @@ namespace caliburn
 			for (int bits = 16; bits <= 64; bits <<= 1)
 			{
 				auto floatType = new FloatType(bits);
-				defaultTypes.emplace(ParsedType(("float") + bits), floatType);
+				defaultTypes.emplace("float" + bits, floatType);
 				defaultFloatTypes.emplace(bits, floatType);
 
 			}
