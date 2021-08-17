@@ -39,6 +39,9 @@
     <ClCompile Include="typeint.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="typevoid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="syntax.h">
@@ -111,6 +114,9 @@
       <Filter>Header Files\caliburn</Filter>
     </ClInclude>
     <ClInclude Include="typevector.h">
+      <Filter>Header Files\caliburn</Filter>
+    </ClInclude>
+    <ClInclude Include="typevoid.h">
       <Filter>Header Files\caliburn</Filter>
     </ClInclude>
   </ItemGroup>

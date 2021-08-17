@@ -154,6 +154,7 @@
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="tokenizer.cpp" />
     <ClCompile Include="typevector.cpp" />
+    <ClCompile Include="typevoid.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="assembler.h" />
@@ -178,6 +179,7 @@
     <ClInclude Include="tokenizer.h" />
     <ClInclude Include="topstmnt.h" />
     <ClInclude Include="type.h" />
+    <ClInclude Include="typevoid.h" />
     <ClInclude Include="valuestmnt.h" />
     <ClInclude Include="typevector.h" />
   </ItemGroup>
