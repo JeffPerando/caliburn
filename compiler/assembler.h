@@ -88,7 +88,7 @@ namespace caliburn
 	class SpirVAssembler
 	{
 	private:
-		std::vector<SpvOp> ops = std::vector<SpvOp>(8192);
+		std::vector<SpvOp> ops;
 		std::vector<CompiledType*> usedTypes;
 		
 		std::map<std::string, CompiledType*> defaultTypes;
@@ -101,8 +101,10 @@ namespace caliburn
 		uint32_t nextSSA = 0;
 		
 	public:
-		SpirVAssembler()
+		SpirVAssembler(size_t opCount = 8192)
 		{
+			ops = std::vector<SpvOp>(opCount);
+
 			//int types
 			for (int bits = 8; bits <= 512; bits *= 2)
 			{
