@@ -8,14 +8,14 @@ namespace caliburn
 {
 	class SpirVAssembler;
 
-	struct VectorType : public SpecializedType
+	struct TypeVector : public SpecializedType
 	{
 	protected:
-		const uint32_t vecElements;
+		uint32_t const vecElements;
 	public:
-		VectorType(uint32_t elements, CompiledType* innerType) :
+		TypeVector(std::string fullName, uint32_t elements, CompiledType* innerType) :
 			SpecializedType(TypeCategory::VECTOR,
-				"vec" + elements,
+				fullName,
 				{ TypeAttrib::COMPOSITE, TypeAttrib::GENERIC }, 1),
 			vecElements(elements)
 		{

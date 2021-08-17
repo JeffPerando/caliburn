@@ -4,22 +4,22 @@
 
 using namespace caliburn;
 
-uint32_t VectorType::getSizeBytes() const
+uint32_t TypeVector::getSizeBytes() const
 {
 	return vecElements * generics[0]->getSizeBytes();
 }
 
-uint32_t VectorType::getAlignBytes() const
+uint32_t TypeVector::getAlignBytes() const
 {
 	return generics[0]->getAlignBytes();
 }
 
-CompiledType* VectorType::clone()
+CompiledType* TypeVector::clone()
 {
-	return new VectorType(vecElements, generics[0]);
+	return new TypeVector(canonName, vecElements, generics[0]);
 }
 
-TypeCompat VectorType::isCompatible(Operator op, CompiledType* rType) const
+TypeCompat TypeVector::isCompatible(Operator op, CompiledType* rType) const
 {
 	if (rType == nullptr)
 	{
@@ -42,7 +42,7 @@ TypeCompat VectorType::isCompatible(Operator op, CompiledType* rType) const
 	return TypeCompat::INCOMPATIBLE_TYPE;
 }
 
-uint32_t VectorType::typeDeclSpirV(SpirVAssembler* codeAsm)
+uint32_t TypeVector::typeDeclSpirV(SpirVAssembler* codeAsm)
 {
 	if (ssa != 0)
 	{
@@ -58,13 +58,13 @@ uint32_t VectorType::typeDeclSpirV(SpirVAssembler* codeAsm)
 	return ssa;
 }
 
-uint32_t VectorType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA, CompiledType*& endType) const
+uint32_t TypeVector::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA, CompiledType*& endType) const
 {
 	//TODO implement
 	return 0;
 }
 
-uint32_t VectorType::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, CompiledType*& endType) const
+uint32_t TypeVector::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, CompiledType*& endType) const
 {
 	//TODO implement
 	return 0;
