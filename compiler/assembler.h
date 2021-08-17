@@ -128,8 +128,29 @@ namespace caliburn
 
 			}
 
+			//vector types
+
+			CompiledType* fp16 = getFloatType(2);
+			CompiledType* fp32 = getFloatType(4);
+			CompiledType* fp64 = getFloatType(8);
+			CompiledType* si32 = getIntType(4);
+
+			for (int e = 2; e <= 4; ++e)
+			{
+				defaultTypes.emplace("hvec" + e, new TypeVector("hvec" + e, e, fp16));
+				defaultTypes.emplace("vec" + e, new TypeVector("vec" + e, e, fp32));
+				defaultTypes.emplace("dvec" + e, new TypeVector("dvec" + e, e, fp64));
+				defaultTypes.emplace("ivec" + e, new TypeVector("ivec" + e, e, si32));
+
+			}
+
+			//void type
+			defaultTypes.emplace("void", new TypeVoid());
+
 			//typical aliases
 			addPermanentAlias("byte", "int8");
+			//TODO replace with proper character type that modifies the behavior of the type
+			addPermanentAlias("char", "uint8");
 			addPermanentAlias("short", "int16");
 			addPermanentAlias("int", "int32");
 			addPermanentAlias("long", "int64");
