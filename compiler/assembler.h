@@ -104,7 +104,7 @@ namespace caliburn
 		SpirVAssembler()
 		{
 			//int types
-			for (int bits = 8; bits <= 512; bits <<= 1)
+			for (int bits = 8; bits <= 512; bits *= 2)
 			{
 				for (int s = 0; s < 2; ++s)
 				{
@@ -118,7 +118,7 @@ namespace caliburn
 			}
 
 			//float types
-			for (int bits = 16; bits <= 64; bits <<= 1)
+			for (int bits = 16; bits <= 64; bits *= 2)
 			{
 				auto floatType = new TypeFloat(bits);
 				defaultTypes.emplace("float" + bits, floatType);
