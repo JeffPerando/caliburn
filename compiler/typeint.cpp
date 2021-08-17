@@ -4,22 +4,22 @@
 
 using namespace caliburn;
 
-uint32_t IntType::getSizeBytes() const
+uint32_t TypeInt::getSizeBytes() const
 {
 	return intBits / 8 + ((intBits & 0b111) != 0);
 }
 
-uint32_t IntType::getAlignBytes() const
+uint32_t TypeInt::getAlignBytes() const
 {
 	return getSizeBytes();
 }
 
-CompiledType* IntType::clone()
+CompiledType* TypeInt::clone()
 {
-	return new IntType(intBits, this->hasA(TypeAttrib::SIGNED));
+	return new TypeInt(intBits, this->hasA(TypeAttrib::SIGNED));
 }
 
-TypeCompat IntType::isCompatible(Operator op, CompiledType* rType) const
+TypeCompat TypeInt::isCompatible(Operator op, CompiledType* rType) const
 {
 	if (rType == nullptr)
 	{
@@ -51,7 +51,7 @@ TypeCompat IntType::isCompatible(Operator op, CompiledType* rType) const
 	return TypeCompat::INCOMPATIBLE_TYPE;
 }
 
-uint32_t IntType::typeDeclSpirV(SpirVAssembler* codeAsm)
+uint32_t TypeInt::typeDeclSpirV(SpirVAssembler* codeAsm)
 {
 	if (ssa != 0)
 	{
@@ -63,7 +63,7 @@ uint32_t IntType::typeDeclSpirV(SpirVAssembler* codeAsm)
 	return ssa;
 }
 
-uint32_t IntType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA, CompiledType*& endType) const
+uint32_t TypeInt::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA, CompiledType*& endType) const
 {
 	uint32_t lhs = lvalueSSA;
 	uint32_t rhs = rvalueSSA;
@@ -105,7 +105,7 @@ uint32_t IntType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Opera
 			codeAsm->pushAll({ convertOp, resultTypeSSA, converted, rhs });
 
 			rhs = converted;
-			endType = (IntType*)this;
+			endType = (TypeInt*)this;
 
 		}
 		else
@@ -128,7 +128,7 @@ uint32_t IntType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Opera
 	}
 	else
 	{
-		endType = (IntType*)this;
+		endType = (TypeInt*)this;
 	}
 
 	SpvOp opcode = spirv::OpNop();
@@ -177,7 +177,7 @@ uint32_t IntType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Opera
 	return result;
 }
 
-uint32_t IntType::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, CompiledType*& resultType) const
+uint32_t TypeInt::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, CompiledType*& resultType) const
 {
 	return 0;
 }

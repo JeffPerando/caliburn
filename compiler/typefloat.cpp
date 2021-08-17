@@ -4,22 +4,22 @@
 
 using namespace caliburn;
 
-uint32_t FloatType::getSizeBytes() const
+uint32_t TypeFloat::getSizeBytes() const
 {
 	return floatBits / 8 + (floatBits & 0b111 != 0);
 }
 
-uint32_t FloatType::getAlignBytes() const
+uint32_t TypeFloat::getAlignBytes() const
 {
 	return getSizeBytes();
 }
 
-CompiledType* FloatType::clone()
+CompiledType* TypeFloat::clone()
 {
-	return new FloatType(floatBits);
+	return new TypeFloat(floatBits);
 }
 
-TypeCompat FloatType::isCompatible(Operator op, CompiledType* rType) const
+TypeCompat TypeFloat::isCompatible(Operator op, CompiledType* rType) const
 {
 	if (rType == nullptr)
 	{
@@ -49,7 +49,7 @@ TypeCompat FloatType::isCompatible(Operator op, CompiledType* rType) const
 	return TypeCompat::INCOMPATIBLE_TYPE;
 }
 
-uint32_t FloatType::typeDeclSpirV(SpirVAssembler* codeAsm)
+uint32_t TypeFloat::typeDeclSpirV(SpirVAssembler* codeAsm)
 {
 	if (ssa != 0)
 	{
@@ -61,7 +61,7 @@ uint32_t FloatType::typeDeclSpirV(SpirVAssembler* codeAsm)
 	return ssa;
 }
 
-uint32_t FloatType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA, CompiledType*& endType) const
+uint32_t TypeFloat::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA, CompiledType*& endType) const
 {
 	uint32_t lhs = lvalueSSA;
 	uint32_t rhs = rvalueSSA;
@@ -70,7 +70,7 @@ uint32_t FloatType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Ope
 
 	if (!rType->hasA(TypeAttrib::FLOAT))
 	{
-		FloatType* fpRHS = codeAsm->getFloatType(rType->getSizeBytes());
+		TypeFloat* fpRHS = codeAsm->getFloatType(rType->getSizeBytes());
 		uint32_t fpRHSTypeSSA = fpRHS->getSSA();
 
 		uint32_t converted = codeAsm->newAssign();
@@ -97,7 +97,7 @@ uint32_t FloatType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Ope
 			codeAsm->pushAll({ spirv::OpFConvert(), resultTypeSSA, converted, rhs });
 
 			rhs = converted;
-			endType = (FloatType*)this;
+			endType = (TypeFloat*)this;
 
 		}
 		else
@@ -115,7 +115,7 @@ uint32_t FloatType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Ope
 	}
 	else
 	{
-		endType = (FloatType*)this;
+		endType = (TypeFloat*)this;
 	}
 
 	SpvOp opcode = spirv::OpNop();
@@ -146,7 +146,7 @@ uint32_t FloatType::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Ope
 	return result;
 }
 
-uint32_t FloatType::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, CompiledType*& endType) const
+uint32_t TypeFloat::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, CompiledType*& endType) const
 {
 	return 0;
 }

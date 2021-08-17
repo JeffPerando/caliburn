@@ -8,13 +8,13 @@ namespace caliburn
 {
 	class SpirVAssembler;
 
-	struct FloatType : public CompiledType
+	struct TypeFloat : public CompiledType
 	{
 	protected:
 		uint32_t const floatBits;
 	public:
-		FloatType() : FloatType(32) {}
-		FloatType(uint32_t s) :
+		TypeFloat() : TypeFloat(32) {}
+		TypeFloat(uint32_t s) :
 			CompiledType(TypeCategory::PRIMITIVE,
 				"float" + s,
 				{ TypeAttrib::SIGNED, TypeAttrib::FLOAT }),
