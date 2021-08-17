@@ -46,7 +46,9 @@ namespace caliburn
 		SCOPE,
 
 		//Other things
-		VALUE,
+		MISC_VALUE,
+		MATH_EXPRESSION,
+		LITERAL,
 		OP_OVERRIDE
 
 	};
