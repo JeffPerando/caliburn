@@ -93,8 +93,8 @@ namespace caliburn
 		
 		std::map<std::string, CompiledType*> defaultTypes;
 		
-		std::map<std::pair<uint32_t, bool>, IntType*> defaultIntTypes;
-		FloatType* defaultFloatTypes[9]{ nullptr };
+		std::map<std::pair<uint32_t, bool>, TypeInt*> defaultIntTypes;
+		TypeFloat* defaultFloatTypes[9]{ nullptr };
 		std::map<uint64_t, TypedSSA> intConstants;
 
 		SpirVStack* currentStack = nullptr;
@@ -109,7 +109,7 @@ namespace caliburn
 				for (int s = 0; s < 2; ++s)
 				{
 					bool hasSign = (s == 1);
-					auto intType = new IntType(bits, hasSign);
+					auto intType = new TypeInt(bits, hasSign);
 					defaultTypes.emplace((s ? "int" : "uint") + bits, intType);
 					defaultIntTypes.emplace(std::pair<uint32_t, bool>(bits / 8, hasSign), intType);
 
@@ -120,7 +120,7 @@ namespace caliburn
 			//float types
 			for (int bits = 16; bits <= 64; bits <<= 1)
 			{
-				auto floatType = new FloatType(bits);
+				auto floatType = new TypeFloat(bits);
 				defaultTypes.emplace("float" + bits, floatType);
 				defaultFloatTypes[bits / 8] = floatType;
 
@@ -170,12 +170,12 @@ namespace caliburn
 			defaultTypes[alias] = defaultTypes.at(original);
 		}
 
-		IntType* getIntType(uint32_t bytes, bool sign)
+		TypeInt* getIntType(uint32_t bytes, bool sign = true)
 		{
 			return defaultIntTypes[std::pair<uint32_t, bool>(bytes, sign)];
 		}
 
-		FloatType* getFloatType(uint32_t bytes)
+		TypeFloat* getFloatType(uint32_t bytes)
 		{
 			return defaultFloatTypes[bytes];
 		}
