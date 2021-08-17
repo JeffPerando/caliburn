@@ -14,11 +14,30 @@ namespace caliburn
 
 	};
 
-	struct LiteralIntStmnt : public ValueStatement
+	struct NullValueStatement : public ValueStatement
 	{
+		ParsedType* resultType;
+
+		NullValueStatement(ParsedType* type) :
+			ValueStatement(StatementType::LITERAL), resultType(type)
+		{}
+
+		uint32_t toSPIRV(SpirVAssembler* codeAsm)
+		{
+			uint32_t type = codeAsm->resolveType(resultType)->typeDeclSpirV(codeAsm);
+			uint32_t ssa = codeAsm->newAssign();
+			codeAsm->pushAll({spirv::OpConstantNull(), type, ssa});
+			return ssa;
+		}
+
+	};
+
+	struct LiteralIntStatement : public ValueStatement
+	{
+		std::string lit = "";
 		int32_t value = 0;
 
-		LiteralIntStmnt() : ValueStatement(StatementType::VALUE) {}
+		LiteralIntStatement(std::string i) : ValueStatement(StatementType::LITERAL), lit(i){}
 
 		bool isLValue()
 		{
