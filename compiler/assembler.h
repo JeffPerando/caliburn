@@ -160,6 +160,16 @@ namespace caliburn
 
 		}
 
+		~SpirVAssembler()
+		{
+			for (auto type : defaultTypes)
+			{
+				delete type.second;
+
+			}
+
+		}
+
 		//SSA helpers and pushers
 		
 		uint32_t newAssign()
