@@ -13,7 +13,7 @@ namespace caliburn
 			Statement(StatementType::IMPORT) {}
 		~ImportStatement() {}
 
-		uint32_t toSPIRV(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
 		{
 			//No complaining
 			return 0;
@@ -29,7 +29,7 @@ namespace caliburn
 			Statement(StatementType::USING) {}
 		~UsingStatement() {}
 
-		uint32_t toSPIRV(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
 		{
 			return 0;
 		}
@@ -43,7 +43,7 @@ namespace caliburn
 
 		TypedefStatement() : Statement(StatementType::TYPEDEF) {}
 
-		uint32_t toSPIRV(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
 		{
 			return 0;
 		}

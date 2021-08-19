@@ -36,7 +36,7 @@ namespace caliburn
 
 		FunctionStatement() : Statement(StatementType::FUNCTION) {}
 
-		uint32_t toSPIRV(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
 		{/*
 			uint32_t ssa = codeAsm->newAssign();
 
