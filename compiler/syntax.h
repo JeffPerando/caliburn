@@ -1,10 +1,31 @@
 
 #pragma once
 
-#include <array>
+#include <vector>
 
 namespace caliburn
 {
+	static const std::vector<std::string> KEYWORDS = {
+		"as", "break",
+		"case", "class", "const" "construct", "continue",
+		"data", "def", "default", "descriptor", "destroy", "do", "dynamic",
+		"extends",
+		"false", "for",
+		"if", "import", "in", "inputs",
+		"let",
+		"namespace", "new",
+		"op", "override",
+		"pass", "private", "protected", "public",
+		"return",
+		"shared", "switch",
+		"true", "type",
+		"uses",
+		"while"
+	};
+
+	static constexpr auto WHITESPACE = " \t\n\r\f\v";
+	static constexpr auto OPERATORS = "!$%&*+-/<=>^|~";
+
 	enum class TokenType : int64_t
 	{
 		NONE,
@@ -30,27 +51,6 @@ namespace caliburn
 		OPERATOR,
 		BOOL_OPERATOR
 	};
-
-	static const std::vector<std::string> KEYWORDS = {
-		"as", "break",
-		"case", "class", "const" "construct", "continue",
-		"data", "def", "default", "descriptor", "destroy", "do", "dynamic",
-		"extends",
-		"false", "for",
-		"if", "import", "in", "inputs",
-		"let",
-		"namespace", "new",
-		"op", "override",
-		"pass", "private", "protected", "public",
-		"return",
-		"shared", "switch",
-		"true", "type",
-		"uses", "using",
-		"while"
-	};
-
-	static constexpr auto WHITESPACE = " \t\n\r\f\v";
-	static constexpr auto OPERATORS = "!$%&*+-/<=>^|~";
 
 }
 
