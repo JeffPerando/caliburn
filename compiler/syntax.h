@@ -32,7 +32,7 @@ namespace caliburn
 	};
 
 	static const std::vector<std::string> KEYWORDS = {
-		"break",
+		"as", "break",
 		"case", "class", "const" "construct", "continue",
 		"data", "def", "default", "descriptor", "destroy", "do", "dynamic",
 		"extends",
