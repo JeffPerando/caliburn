@@ -16,7 +16,6 @@ namespace caliburn
 		UNKNOWN,
 
 		IMPORT,
-		USING,
 		TYPEDEF,
 		SHADER,
 		FUNCTION,

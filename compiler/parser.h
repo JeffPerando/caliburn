@@ -43,8 +43,6 @@ namespace caliburn
 		
 		Statement* parseImport();
 
-		Statement* parseUsing();
-
 		Statement* parseTypedef();
 		/*
 		Statement* parseNamespaceDef();

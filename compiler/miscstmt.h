@@ -22,21 +22,6 @@ namespace caliburn
 
 	};
 
-	struct UsingStatement : public Statement
-	{
-		std::string const usedNamespace;
-
-		UsingStatement(std::string n) : usedNamespace(n),
-			Statement(StatementType::USING) {}
-		~UsingStatement() {}
-
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
-		{
-			return 0;
-		}
-
-	};
-
 	struct TypedefStatement : public Statement
 	{
 		std::string name = "";

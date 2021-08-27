@@ -274,19 +274,6 @@ Statement* Parser::parseImport()
 	return new ImportStatement(modName, alias);
 }
 
-Statement* Parser::parseUsing()
-{
-	if (*tokens->current() != "using")
-	{
-		return nullptr;
-	}
-
-	Token* usedNamespace = tokens->next();
-	tokens->consume();
-
-	return new UsingStatement(*usedNamespace);
-}
-
 Statement* Parser::parseTypedef()
 {
 	if (*tokens->current() != "type")
