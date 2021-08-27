@@ -7,9 +7,10 @@ namespace caliburn
 {
 	struct ImportStatement : public Statement
 	{
-		std::string const importedModule;
+		const Token* importedModule;
+		const Token* importAlias;
 
-		ImportStatement(std::string m) : importedModule(m),
+		ImportStatement(Token* m, Token* a) : importedModule(m), importAlias(a),
 			Statement(StatementType::IMPORT) {}
 		~ImportStatement() {}
 

@@ -252,15 +252,26 @@ Statement* Parser::parseDecl()
 
 Statement* Parser::parseImport()
 {
-	if (*tokens->current() != "import")
+	Token* tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD ||
+		tkn->str != "import")
 	{
 		return nullptr;
 	}
 
-	Token* importMod = tokens->next();
-	tokens->consume();
+	Token* modName = tokens->next();
+	Token* alias = nullptr;
+	tkn = tokens->next();
 
-	return new ImportStatement(*importMod);
+	if (tkn->type == TokenType::KEYWORD &&
+		tkn->str == "as")
+	{
+		alias = tokens->next();
+
+	}
+
+	return new ImportStatement(modName, alias);
 }
 
 Statement* Parser::parseUsing()
