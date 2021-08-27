@@ -55,7 +55,7 @@ namespace caliburn
 }
 
 //this has to be a preprocessor directive =/
-#define CALIBURN_TOKEN_VALUES { \
+#define CALIBURN_SYMBOL_TYPES { \
 	{';', caliburn::TokenType::END},\
 	{'{', caliburn::TokenType::START_SCOPE},\
 	{'}', caliburn::TokenType::END_SCOPE},\

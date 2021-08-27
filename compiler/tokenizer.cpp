@@ -56,11 +56,11 @@ bool caliburn::isBinInt(char chr)
 
 TokenType caliburn::getSpecial(char chr)
 {
-	static const std::map<char, TokenType> tokenValues = CALIBURN_TOKEN_VALUES;
+	static const std::map<char, TokenType> symbolTypes = CALIBURN_SYMBOL_TYPES;
 
-	auto found = tokenValues.find(chr);
+	auto found = symbolTypes.find(chr);
 
-	if (found == tokenValues.end())
+	if (found == symbolTypes.end())
 	{
 		return TokenType::NONE;
 	}
