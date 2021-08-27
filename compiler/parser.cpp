@@ -232,7 +232,6 @@ Statement* Parser::parseDecl()
 		//&Parser::parseShader,
 		//&Parser::parseClass,
 		&Parser::parseImport,
-		&Parser::parseUsing,
 		&Parser::parseTypedef,
 		/*Parser::parseNamespaceDef,
 		&Parser::parseDescriptor,
