@@ -4,7 +4,7 @@
 //#include <llvm/IR/IRBuilder.h>
 #include <stdint.h>
 
-#include "assembler.h"
+#include "spirvasm.h"
 #include "deftypes.h"
 
 namespace caliburn
@@ -52,6 +52,22 @@ namespace caliburn
 		OP_OVERRIDE
 
 	};
+
+	enum class Visibility
+	{
+		NONE,
+		PUBLIC,
+		PROTECTED,
+		PRIVATE,
+		//Shared is here because it's semantically in the same location;
+		//i.e. "int shared x;" vs. "int public x;"
+		//Shared is only valid as a local field; All others are valid everywhere else.
+		SHARED,
+		STATIC
+
+	};
+
+	Visibility strToVis(std::string str);
 
 	/*
 	* A statement is the base class for the abstract syntax tree.

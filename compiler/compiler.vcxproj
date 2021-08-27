@@ -148,6 +148,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="assembler.cpp" />
+    <ClCompile Include="spirvasm.cpp" />
+    <ClCompile Include="statement.cpp" />
     <ClCompile Include="typefloat.cpp" />
     <ClCompile Include="typeint.cpp" />
     <ClCompile Include="main.cpp" />
@@ -157,6 +159,7 @@
     <ClCompile Include="typevoid.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="allasm.h" />
     <ClInclude Include="assembler.h" />
     <ClInclude Include="assignstmnt.h" />
     <ClInclude Include="buffer.h" />
@@ -165,6 +168,8 @@
     <ClInclude Include="deftypes.h" />
     <ClInclude Include="fieldstmnt.h" />
     <ClInclude Include="ctrlstmnt.h" />
+    <ClInclude Include="litstmnt.h" />
+    <ClInclude Include="spirvasm.h" />
     <ClInclude Include="typefloat.h" />
     <ClInclude Include="funcstmnt.h" />
     <ClInclude Include="typeint.h" />

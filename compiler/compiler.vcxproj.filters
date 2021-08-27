@@ -27,9 +27,6 @@
     <ClCompile Include="parser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="assembler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="typevector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -40,6 +37,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="typevoid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="statement.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="spirvasm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="assembler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -117,6 +123,15 @@
       <Filter>Header Files\caliburn</Filter>
     </ClInclude>
     <ClInclude Include="typevoid.h">
+      <Filter>Header Files\caliburn</Filter>
+    </ClInclude>
+    <ClInclude Include="litstmnt.h">
+      <Filter>Header Files\caliburn</Filter>
+    </ClInclude>
+    <ClInclude Include="spirvasm.h">
+      <Filter>Header Files\caliburn</Filter>
+    </ClInclude>
+    <ClInclude Include="allasm.h">
       <Filter>Header Files\caliburn</Filter>
     </ClInclude>
   </ItemGroup>

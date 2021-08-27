@@ -1,5 +1,5 @@
 
-#include "assembler.h"
+#include "allasm.h"
 #include "typeint.h"
 
 using namespace caliburn;
