@@ -50,6 +50,8 @@ namespace caliburn
 
 	inline bool isBinInt(char chr);
 
+	inline bool isSpecial(char chr);
+
 	inline TokenType getSpecial(char chr);
 
 	size_t find(FindFunc func, std::string& txt, uint64_t cur);

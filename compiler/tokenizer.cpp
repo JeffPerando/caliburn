@@ -10,7 +10,7 @@ using namespace caliburn;
 bool caliburn::isIdentifier(char chr)
 {
 	return !isComment(chr) && !isStrDelim(chr) && !isWhitespace(chr) &&
-		!isOperator(chr) && getSpecial(chr) == TokenType::NONE;
+		!isOperator(chr) && !isSpecial(chr);
 }
 
 bool caliburn::isComment(char chr)
@@ -52,6 +52,14 @@ bool caliburn::isOctInt(char chr)
 bool caliburn::isBinInt(char chr)
 {
 	return chr == '0' || chr == '1' || chr == '_';
+}
+
+bool caliburn::isSpecial(char chr)
+{
+	return chr <= '/' ||
+		(chr >= ':' && chr <= '@') ||
+		(chr >= '[' && chr <= '`') ||
+		(chr >= '{' && chr <= '~');
 }
 
 TokenType caliburn::getSpecial(char chr)
