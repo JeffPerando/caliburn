@@ -71,7 +71,6 @@ void SpirVAssembler::pushVarSetter(std::string name, uint32_t value)
 
 }
 
-//TODO is a label really necessary?
 void SpirVAssembler::startScope()
 {
 	SpirVStack* scope = new SpirVStack();
