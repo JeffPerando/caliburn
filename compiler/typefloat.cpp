@@ -6,7 +6,7 @@ using namespace caliburn;
 
 uint32_t TypeFloat::getSizeBytes() const
 {
-	return floatBits / 8 + (floatBits & 0b111 != 0);
+	return floatBits / 8 + ((floatBits & 0b111) != 0);
 }
 
 uint32_t TypeFloat::getAlignBytes() const
