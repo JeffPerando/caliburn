@@ -8,8 +8,9 @@
 #include "type.h"
 
 #include "ctrlstmnt.h"
-#include "miscstmt.h"
 #include "funcstmnt.h"
+#include "miscstmt.h"
+#include "objstmt.h"
 #include "scopestmnt.h"
 
 namespace caliburn
