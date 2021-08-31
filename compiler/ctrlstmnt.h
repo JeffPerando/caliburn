@@ -32,7 +32,12 @@ namespace caliburn
 				spirv::OpLabel(), ifSSA
 				});
 
+			codeAsm->startScope();
+			codeAsm->getCurrentStack()->label = ifSSA;
+
 			ifBranch->SPIRVEmit(codeAsm);
+
+			codeAsm->endScope();
 			
 			codeAsm->push(spirv::OpBranch());
 			codeAsm->push(endSSA);
@@ -42,7 +47,12 @@ namespace caliburn
 				codeAsm->push(spirv::OpLabel());
 				codeAsm->push(elseSSA);
 
+				codeAsm->startScope();
+				codeAsm->getCurrentStack()->label = elseSSA;
+
 				elseBranch->SPIRVEmit(codeAsm);
+
+				codeAsm->endScope();
 
 				codeAsm->push(spirv::OpBranch());
 				codeAsm->push(endSSA);
@@ -80,6 +90,9 @@ namespace caliburn
 				spirv::OpBranch(), startSSA,
 				spirv::OpLabel(), startSSA });
 
+			codeAsm->startScope();
+			codeAsm->getCurrentStack()->label = startSSA;
+
 			//(int i = 0;
 			preLoop->SPIRVEmit(codeAsm);
 
@@ -97,8 +110,14 @@ namespace caliburn
 				spirv::OpBranchConditional(0), condSSA, loopSSA, mergeSSA,
 				//{
 				spirv::OpLabel(), loopSSA });
-			
+
+			codeAsm->startScope();
+			codeAsm->getCurrentStack()->label = loopSSA;
+
 			loop->SPIRVEmit(codeAsm);
+
+			//loopSSA
+			codeAsm->endScope();
 
 			codeAsm->pushAll({
 				spirv::OpBranch(), contSSA,
@@ -113,7 +132,10 @@ namespace caliburn
 				//merge point
 				spirv::OpLabel(), mergeSSA
 				});
-			
+
+			//startSSA
+			codeAsm->endScope();
+
 			return startSSA;
 		}
 
@@ -153,7 +175,12 @@ namespace caliburn
 				//{
 				spirv::OpLabel(), loopSSA });
 
+			codeAsm->startScope();
+			codeAsm->getCurrentStack()->label = loopSSA;
+
 			loop->SPIRVEmit(codeAsm);
+
+			codeAsm->endScope();
 
 			codeAsm->pushAll({
 				spirv::OpBranch(), contSSA,

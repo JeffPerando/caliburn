@@ -13,15 +13,11 @@ namespace caliburn
 
 		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
 		{
-			codeAsm->startScope();
-
 			for (auto stmt : innerCode)
 			{
 				stmt->SPIRVEmit(codeAsm);
 
 			}
-
-			codeAsm->endScope();
 
 			return 0;
 		}
