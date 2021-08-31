@@ -9,13 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Header Files\caliburn">
-      <UniqueIdentifier>{b38b14be-1f43-4d5c-893c-c00a9293cce6}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -50,89 +43,95 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="syntax.h">
-      <Filter>Header Files\caliburn</Filter>
-    </ClInclude>
-    <ClInclude Include="parser.h">
-      <Filter>Header Files\caliburn</Filter>
-    </ClInclude>
-    <ClInclude Include="topstmnt.h">
-      <Filter>Header Files\caliburn</Filter>
-    </ClInclude>
-    <ClInclude Include="spirv.h">
-      <Filter>Header Files\caliburn</Filter>
+    <ClInclude Include="allasm.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="assembler.h">
-      <Filter>Header Files\caliburn</Filter>
-    </ClInclude>
-    <ClInclude Include="valuestmnt.h">
-      <Filter>Header Files\caliburn</Filter>
-    </ClInclude>
-    <ClInclude Include="fieldstmnt.h">
-      <Filter>Header Files\caliburn</Filter>
-    </ClInclude>
-    <ClInclude Include="buffer.h">
-      <Filter>Header Files\caliburn</Filter>
-    </ClInclude>
-    <ClInclude Include="deftypes.h">
-      <Filter>Header Files\caliburn</Filter>
-    </ClInclude>
-    <ClInclude Include="scopestmnt.h">
-      <Filter>Header Files\caliburn</Filter>
-    </ClInclude>
-    <ClInclude Include="ctrlstmnt.h">
-      <Filter>Header Files\caliburn</Filter>
-    </ClInclude>
-    <ClInclude Include="funcstmnt.h">
-      <Filter>Header Files\caliburn</Filter>
-    </ClInclude>
-    <ClInclude Include="statement.h">
-      <Filter>Header Files\caliburn</Filter>
-    </ClInclude>
-    <ClInclude Include="compilererr.h">
-      <Filter>Header Files\caliburn</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="assignstmnt.h">
-      <Filter>Header Files\caliburn</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="tokenizer.h">
-      <Filter>Header Files\caliburn</Filter>
-    </ClInclude>
-    <ClInclude Include="type.h">
-      <Filter>Header Files\caliburn</Filter>
-    </ClInclude>
-    <ClInclude Include="module.h">
-      <Filter>Header Files\caliburn</Filter>
+    <ClInclude Include="buffer.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="compiler.h">
-      <Filter>Header Files\caliburn</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="modlib.h">
-      <Filter>Header Files\caliburn</Filter>
+    <ClInclude Include="compilererr.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="miscstmt.h">
-      <Filter>Header Files\caliburn</Filter>
+    <ClInclude Include="ctrlstmnt.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="typefloat.h">
-      <Filter>Header Files\caliburn</Filter>
+    <ClInclude Include="deftypes.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="typeint.h">
-      <Filter>Header Files\caliburn</Filter>
+    <ClInclude Include="fieldstmnt.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="typevector.h">
-      <Filter>Header Files\caliburn</Filter>
+    <ClInclude Include="funcsmnt.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="typevoid.h">
-      <Filter>Header Files\caliburn</Filter>
+    <ClInclude Include="funcstmnt.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="litstmnt.h">
-      <Filter>Header Files\caliburn</Filter>
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="miscstmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="modlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="module.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="objstmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scopestmnt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="spirv.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="spirvasm.h">
-      <Filter>Header Files\caliburn</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="allasm.h">
-      <Filter>Header Files\caliburn</Filter>
+    <ClInclude Include="statement.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="syntax.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tokenizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="topstmnt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="type.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="typefloat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="typeint.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="typevector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="typevoid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="valuestmnt.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
