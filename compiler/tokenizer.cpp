@@ -20,7 +20,9 @@ bool caliburn::isComment(char chr)
 
 bool caliburn::isWhitespace(char chr)
 {
-	return std::string(WHITESPACE).find(chr) != std::string::npos;
+	//considering the first 32 characters in ASCII to be whitespace.
+	//this check is cheap as chips and Good Enough(TM)
+	return chr <= ' ';
 }
 
 bool caliburn::isOperator(char chr)
@@ -56,7 +58,7 @@ bool caliburn::isBinInt(char chr)
 
 bool caliburn::isSpecial(char chr)
 {
-	return chr <= '/' ||
+	return (chr >= '!' && chr <= '/') ||
 		(chr >= ':' && chr <= '@') ||
 		(chr >= '[' && chr <= '`') ||
 		(chr >= '{' && chr <= '~');
