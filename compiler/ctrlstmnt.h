@@ -130,8 +130,7 @@ namespace caliburn
 				//loop back
 				spirv::OpBranch(), startSSA,
 				//merge point
-				spirv::OpLabel(), mergeSSA
-				});
+				spirv::OpLabel(), mergeSSA });
 
 			//startSSA
 			codeAsm->endScope();
@@ -191,8 +190,57 @@ namespace caliburn
 				//loop back
 				spirv::OpBranch(), startSSA,
 				//merge point
-				spirv::OpLabel(), mergeSSA
-				});
+				spirv::OpLabel(), mergeSSA });
+
+			return startSSA;
+		}
+
+	};
+
+	struct DoWhileStatement : public Statement
+	{
+		ValueStatement* cond = nullptr;
+		Statement* loop = nullptr;
+
+		DoWhileStatement() : Statement(StatementType::DOWHILE) {}
+
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		{
+			uint32_t mergeSSA = codeAsm->newAssign();
+			uint32_t contSSA = codeAsm->newAssign();
+			uint32_t startSSA = codeAsm->newAssign();
+			uint32_t bodySSA = codeAsm->newAssign();
+			uint32_t loopSSA = codeAsm->newAssign();
+
+			codeAsm->pushAll({
+				spirv::OpBranch(), loopSSA,
+				spirv::OpLabel(), startSSA,
+				//for
+				spirv::OpLoopMerge(0), mergeSSA, contSSA, 0, //TODO base flag off optimize level
+				//workaround for OpLoopMerge needing a branch op after
+				spirv::OpBranch(), bodySSA,
+				spirv::OpLabel(), bodySSA });
+
+			uint32_t condSSA = cond->SPIRVEmit(codeAsm);
+
+			codeAsm->pushAll({
+				spirv::OpBranchConditional(0), condSSA, loopSSA, mergeSSA,
+				spirv::OpLabel(), loopSSA });
+
+			codeAsm->startScope();
+			codeAsm->getCurrentStack()->label = loopSSA;
+
+			loop->SPIRVEmit(codeAsm);
+
+			codeAsm->endScope();
+
+			codeAsm->pushAll({
+				spirv::OpBranch(), contSSA,
+				spirv::OpLabel(), contSSA });
+			
+			codeAsm->pushAll({
+				spirv::OpBranch(), startSSA,
+				spirv::OpLabel(), mergeSSA });
 
 			return startSSA;
 		}
@@ -222,6 +270,30 @@ namespace caliburn
 			
 			return 0;
 		}
+	};
+
+	struct BreakStatement : public Statement
+	{
+		BreakStatement() : Statement(StatementType::BREAK) {}
+		
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		{
+			//*shrug*
+			return 0;
+		}
+
+	};
+
+	struct ContinueStatement : public Statement
+	{
+		ContinueStatement() : Statement(StatementType::CONTINUE) {}
+		
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		{
+			//*shrug*
+			return 0;
+		}
+
 	};
 
 }

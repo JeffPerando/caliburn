@@ -79,19 +79,19 @@ namespace caliburn
 		Statement* parseFor();
 		
 		Statement* parseWhile();
-		/*
+		
 		Statement* parseDoWhile();
-
-		Statement* parseSwitch();
 
 		Statement* parseBreak();
 
 		Statement* parseContinue();
+		/*
+		Statement* parseSwitch();
 
 		Statement* parsePass();
-
-		Statement* parseReturn();
 		*/
+		Statement* parseReturn();
+		
 		Statement* parseValue();
 
 		Statement* parseValue(bool doPostfix);

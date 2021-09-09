@@ -649,19 +649,135 @@ Statement* Parser::parseWhile()
 
 	return stmt;
 }
-/*
-Statement* Parser::parseDoWhile();
 
+Statement* Parser::parseDoWhile()
+{
+	Token* tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD)
+	{
+		return nullptr;
+	}
+
+	if (tkn->str != "do")
+	{
+		return nullptr;
+	}
+
+	tokens->consume();
+
+	Statement* body = parseLogic();
+
+	tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "while")
+	{
+		delete body;
+		return nullptr;
+	}
+
+	tkn = tokens->next();
+
+	if (tkn->type != TokenType::START_PAREN)
+	{
+		//TODO complain
+		delete body;
+		return nullptr;
+	}
+
+	tokens->consume();
+
+	Statement* cond = parseValue();
+
+	tkn = tokens->current();
+
+	if (tkn->type != TokenType::END_PAREN)
+	{
+		//TODO complain
+		delete body;
+		delete cond;
+		return nullptr;
+	}
+
+	tokens->consume();
+
+	auto ret = new DoWhileStatement();
+
+	ret->loop = body;
+	ret->cond = (ValueStatement*)cond;
+
+	return ret;
+}
+
+Statement* Parser::parseBreak()
+{
+	Token* tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD)
+	{
+		return nullptr;
+	}
+
+	if (tkn->str != "break")
+	{
+		return nullptr;
+	}
+
+	tokens->consume();
+
+	return new BreakStatement();
+}
+
+Statement* Parser::parseContinue()
+{
+	Token* tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD)
+	{
+		return nullptr;
+	}
+
+	if (tkn->str != "continue")
+	{
+		return nullptr;
+	}
+
+	tokens->consume();
+	
+	return new ContinueStatement();
+}
+/*
 Statement* Parser::parseSwitch();
 
-Statement* Parser::parseBreak();
-
-Statement* Parser::parseContinue();
-
 Statement* Parser::parsePass();
-
-Statement* Parser::parseReturn();
 */
+Statement* Parser::parseReturn()
+{
+	Token* tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD)
+	{
+		return nullptr;
+	}
+
+	if (tkn->str != "return")
+	{
+		return nullptr;
+	}
+
+	ReturnStatement* ret = new ReturnStatement();
+
+	tkn = tokens->next();
+
+	//technically cheating but w/e
+	if (tkn->type != TokenType::END)
+	{
+		ret->val = (ValueStatement*)parseValue();
+	}
+
+	return ret;
+}
+
 Statement* Parser::parseValue()
 {
 	return parseValue(true);
