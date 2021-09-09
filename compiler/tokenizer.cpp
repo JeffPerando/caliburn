@@ -190,7 +190,7 @@ size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 	bool isDouble = false;
 
 	//find either a hex, binary, or octal integer
-	if (txt[cur] == '0' && cur + 1 < txt.length())
+	if (txt[cur] == '0' && cur + 2 < txt.length())
 	{
 		char litType = txt[cur + 1];
 		FindFunc func = nullptr;
@@ -253,11 +253,18 @@ size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 		//find an exponent
 		if (firstInvalid + 2 < txt.length())
 		{
-			if ((txt[firstInvalid] == 'e' || txt[firstInvalid] == 'E') &&
-				(txt[firstInvalid + 1] == '+' || txt[firstInvalid + 1] == '-'))
+			if (txt[firstInvalid] == 'e' || txt[firstInvalid] == 'E')
 			{
-				count += 2;
-				firstInvalid += 2;
+				count += 1;
+				firstInvalid += 1;
+
+				if (txt[firstInvalid + 1] == '+' || txt[firstInvalid + 1] == '-')
+				{
+					count += 1;
+					firstInvalid += 1;
+
+				}
+
 				size_t expCount = find(&isDecInt, txt, firstInvalid);
 				count += expCount;
 				firstInvalid += expCount;
