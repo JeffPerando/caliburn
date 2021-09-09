@@ -26,9 +26,10 @@ namespace caliburn
 	static constexpr auto WHITESPACE = " \t\n\r\f\v";
 	static constexpr auto OPERATORS = "!$%&*+-/<=>^|~";
 
-	enum class TokenType : int64_t
+	enum class TokenType : uint64_t
 	{
 		NONE,
+		UNKNOWN,
 		IDENTIFIER,
 		LITERAL_INVALID,
 		LITERAL_STR,
