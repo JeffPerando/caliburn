@@ -67,7 +67,7 @@ namespace caliburn
 		//the following all need to be parsed manually
 		//that is to say, you won't find them in the tables below
 		//!, ~, -
-		LOGIC_NOT, BIT_NOT, NEGATE,
+		BOOL_NOT, BIT_NOT, NEGATE,
 		//|x|, x[n]
 		ABS, ARRAY_ACCESS
 	};
