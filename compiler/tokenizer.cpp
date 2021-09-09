@@ -72,6 +72,13 @@ TokenType caliburn::getSpecial(char chr)
 
 	if (found == symbolTypes.end())
 	{
+		//isSpecial checks the char against certain ranges in ASCII
+		//if a char is special but has no meaning in Caliburn, then it's unknown.
+		if (isSpecial(chr))
+		{
+			return TokenType::UNKNOWN;
+		}
+
 		return TokenType::NONE;
 	}
 
