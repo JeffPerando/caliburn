@@ -109,7 +109,7 @@ bool Parser::parseGenerics(std::vector<ParsedType*>& generics)
 
 			Token* tkn = tokens->current();
 
-			if (*tkn == ">")
+			if (tkn->str == ">")
 			{
 				tokens->consume();
 				break;
@@ -227,15 +227,15 @@ bool Parser::parseSemicolon()
 Statement* Parser::parseDecl()
 {
 	Statement* stmt = parseAny({
-		&Parser::parseLogic,
 		&Parser::parseFunction,
 		//&Parser::parseShader,
 		//&Parser::parseClass,
 		&Parser::parseImport,
 		&Parser::parseTypedef,
-		/*Parser::parseNamespaceDef,
-		&Parser::parseDescriptor,
-		&Parser::parseStruct*/ });
+		//&Parser::parseDescriptor,
+		//&Parser::parseStruct,
+		&Parser::parseLogic
+		});
 
 	if (!stmt)
 	{
@@ -307,8 +307,6 @@ Statement* Parser::parseTypedef()
 //TODO more parser methods
 
 /*
-Statement* Parser::parseNamespaceDef();
-
 Statement* Parser::parseShader();
 
 Statement* Parser::parseDescriptor();
@@ -616,6 +614,11 @@ Statement* Parser::parseWhile()
 {
 	Token* tkn = tokens->current();
 
+	if (tkn->type != TokenType::KEYWORD)
+	{
+		return nullptr;
+	}
+
 	if (tkn->str != "while")
 	{
 		return nullptr;
@@ -796,11 +799,11 @@ Statement* Parser::parseValue(bool doPostfix)
 	{
 		tokens->consume();
 
-		if (*tkn == "this")
+		if (tkn->str == "this")
 		{
 			foundValue = nullptr;//new ThisStatement();
 		}
-		else if (*tkn == "super")
+		else if (tkn->str == "super")
 		{
 			foundValue = nullptr;//new SuperStatement();
 		}
@@ -862,7 +865,7 @@ Statement* Parser::parseValue(bool doPostfix)
 
 	}
 	//|x| (abs value)
-	else if (*tkn == "|")
+	else if (tkn->str == "|")
 	{
 		tokens->consume();
 		foundValue = parseValue();
@@ -877,24 +880,24 @@ Statement* Parser::parseValue(bool doPostfix)
 		//foundValue = new AbsOpStatement(foundValue);
 	}
 	//!x, ~x, -x, etc.
-	else if (tkn->type == TokenType::OPERATOR)
+	else if (tkn->type == TokenType::MATH_OPERATOR)
 	{
 		//!x (bool invert)
-		if (*tkn == "!")
+		if (tkn->str == "!")
 		{
 			tokens->consume();
 			//foundValue = new BoolInvOpStatement(parseValue());
 
 		}
 		//~x (bitwise invert)
-		else if (*tkn == "~")
+		else if (tkn->str == "~")
 		{
 			tokens->consume();
 			//foundValue = new BitInvOpStatement(parseValue());
 
 		}
 		//-x (int negate)
-		else if (*tkn == "-")
+		else if (tkn->str == "-")
 		{
 			tokens->consume();
 			//foundValue = new IntNegOpStatement(parseValue());
@@ -925,8 +928,7 @@ Statement* Parser::parseValue(bool doPostfix)
 		//x + y
 		if (tkn->type == TokenType::MATH_OPERATOR || tkn->type == TokenType::LOGIC_OPERATOR)
 		{
-			//NOTE not all operators that end in = are a setter (namely == and >=), so this needs a workaround
-			if (tkn->str[tkn->str.size() - 1] == '=')
+			if (tkn->type == TokenType::MATH_OPERATOR && tkn->str[tkn->str.size() - 1] == '=')
 			{
 				//nvm we just found a setter, which isn't a valid value
 				//so no I don't want stupid things like x = (y = z);
