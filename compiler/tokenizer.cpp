@@ -66,7 +66,7 @@ bool caliburn::isSpecial(char chr)
 
 TokenType caliburn::getSpecial(char chr)
 {
-	static const std::map<char, TokenType> symbolTypes = CALIBURN_SYMBOL_TYPES;
+	static const std::map<char, TokenType> symbolTypes = CALIBURN_CHAR_SYMBOL_TYPES;
 
 	auto found = symbolTypes.find(chr);
 
@@ -346,7 +346,7 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 	uint64_t line = 1, col = 1;
 	uint64_t cur = 0;
 
-	std::map<std::string, TokenType> specialOps = CALIBURN_SPECIAL_OPERATORS;
+	std::map<std::string, TokenType> specialStrs = CALIBURN_STR_SYMBOL_TYPES;
 
 	while (cur < txt.length())
 	{
@@ -434,7 +434,7 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 		if (intLen == 0 && isOperator(txt[cur]))
 		{
 			tokenLen = find(&caliburn::isOperator, txt, cur);
-			tokenID = TokenType::OPERATOR;
+			tokenID = TokenType::MATH_OPERATOR;
 		}
 		else if (isStrDelim(txt[cur]))
 		{
@@ -474,21 +474,14 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 			{
 				tokenID = TokenType::KEYWORD;
 
-				if (tokenStr == "true" || tokenStr == "false")
-				{
-					tokenID = TokenType::LITERAL_BOOL;
-				}
-
 			}
 
 		}
-		else if (tokenID == TokenType::OPERATOR)
+
+		auto found = specialStrs.find(tokenStr);
+		if (found != specialStrs.end())
 		{
-			auto found = specialOps.find(tokenStr);
-			if (found != specialOps.end())
-			{
-				tokenID = found->second;
-			}
+			tokenID = found->second;
 		}
 
 		tokens.push_back(Token(tokenStr, tokenID, line, col));

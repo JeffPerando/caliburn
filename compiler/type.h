@@ -43,26 +43,6 @@ namespace caliburn
 		INCOMPATIBLE_OP
 	};
 
-	enum class Operator
-	{
-		//==, >, <
-		COMP_EQ, COMP_GT, COMP_LT,
-		//>=, <=
-		COMP_GTE, COMP_LTE,
-		//&&, ||
-		COMP_AND, COMP_OR,
-		//+, -, *, /
-		ADD, SUB, MUL, DIV,
-		//%, ^, &, |
-		MOD, POW, BIT_AND, BIT_OR,
-		//$, ++, //
-		BIT_XOR, APPEND, INTDIV,
-		//!, ~, -
-		BOOL_NOT, BIT_NOT, NEGATE,
-		//|x|, x[n]
-		ABS, ARRAY_ACCESS
-	};
-
 	struct ParsedType
 	{
 	private:

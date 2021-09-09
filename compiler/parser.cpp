@@ -923,7 +923,7 @@ Statement* Parser::parseValue(bool doPostfix)
 		tkn = tokens->current();
 
 		//x + y
-		if (tkn->type == TokenType::OPERATOR)
+		if (tkn->type == TokenType::MATH_OPERATOR || tkn->type == TokenType::LOGIC_OPERATOR)
 		{
 			//NOTE not all operators that end in = are a setter (namely == and >=), so this needs a workaround
 			if (tkn->str[tkn->str.size() - 1] == '=')
