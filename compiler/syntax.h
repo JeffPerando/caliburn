@@ -54,10 +54,10 @@ namespace caliburn
 
 	enum class Operator
 	{
-		LOGIC_EQ, LOGIC_NEQ,
-		LOGIC_GT, LOGIC_LT,
-		LOGIC_GTE, LOGIC_LTE,
-		LOGIC_AND, LOGIC_OR,
+		COMP_EQ, COMP_NEQ,
+		COMP_GT, COMP_LT,
+		COMP_GTE, COMP_LTE,
+		COND_AND, COND_OR,
 
 		ADD, SUB, MUL, DIV,
 		MOD, POW,
@@ -116,11 +116,11 @@ namespace caliburn
 	{"$",	Operator::BIT_XOR}}
 
 #define CALIBURN_LOGIC_OPS {		\
-	{"&&",	Operator::LOGIC_AND},	\
-	{"||",	Operator::LOGIC_OR},	\
-	{"==",	Operator::LOGIC_EQ},	\
-	{"!=",	Operator::LOGIC_NEQ},	\
-	{">",	Operator::LOGIC_GT},	\
-	{"<",	Operator::LOGIC_LT},	\
-	{">=",	Operator::LOGIC_GTE},	\
-	{"<=",	Operator::LOGIC_LTE}}
+	{"&&",	Operator::COND_AND},	\
+	{"||",	Operator::COND_OR},	\
+	{"==",	Operator::COMP_EQ},		\
+	{"!=",	Operator::COMP_NEQ},	\
+	{">",	Operator::COMP_GT},		\
+	{"<",	Operator::COMP_LT},		\
+	{">=",	Operator::COMP_GTE},	\
+	{"<=",	Operator::COMP_LTE}}
