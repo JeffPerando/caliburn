@@ -102,7 +102,7 @@ namespace caliburn
 
 		//Scope helpers
 
-		SpirVStack* getCurrentStack()
+		SpirVStack* getCurrentScope()
 		{
 			return currentStack;
 		}
