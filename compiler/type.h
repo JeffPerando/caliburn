@@ -33,7 +33,7 @@ namespace caliburn
 
 	enum class TypeCategory
 	{
-		VOID, PRIMITIVE, VECTOR, MATRIX, ARRAY, POINTER, STRING, CUSTOM
+		VOID, BOOLEAN, PRIMITIVE, VECTOR, MATRIX, ARRAY, POINTER, STRING, CUSTOM
 	};
 	
 	enum class TypeCompat
