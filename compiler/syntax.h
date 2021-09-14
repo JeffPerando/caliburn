@@ -117,7 +117,7 @@ namespace caliburn
 
 #define CALIBURN_LOGIC_OPS {		\
 	{"&&",	Operator::COND_AND},	\
-	{"||",	Operator::COND_OR},	\
+	{"||",	Operator::COND_OR},		\
 	{"==",	Operator::COMP_EQ},		\
 	{"!=",	Operator::COMP_NEQ},	\
 	{">",	Operator::COMP_GT},		\
