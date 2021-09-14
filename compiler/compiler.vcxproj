@@ -150,6 +150,7 @@
     <ClCompile Include="assembler.cpp" />
     <ClCompile Include="spirvasm.cpp" />
     <ClCompile Include="statement.cpp" />
+    <ClCompile Include="typebool.cpp" />
     <ClCompile Include="typefloat.cpp" />
     <ClCompile Include="typeint.cpp" />
     <ClCompile Include="main.cpp" />
@@ -184,6 +185,7 @@
     <ClInclude Include="tokenizer.h" />
     <ClInclude Include="topstmnt.h" />
     <ClInclude Include="type.h" />
+    <ClInclude Include="typebool.h" />
     <ClInclude Include="typefloat.h" />
     <ClInclude Include="typeint.h" />
     <ClInclude Include="typevector.h" />
