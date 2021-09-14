@@ -27,30 +27,52 @@ namespace caliburn
 		FunctionStatement() : Statement(StatementType::FUNCTION) {}
 
 		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
-		{/*
-			uint32_t ssa = codeAsm->newAssign();
+		{
+			if (returnType == nullptr)
+			{
+				//TODO complain
+			}
 
-			uint32_t returnTypeSSA = codeAsm->pushType(returnType);
-
-			codeAsm->push(spirv::OpFunction());
-			codeAsm->push(returnTypeSSA); //TODO proper type resolving
-			codeAsm->push(ssa);
-			codeAsm->push((uint32_t)control);
-			codeAsm->push(returnTypeSSA);
+			//SSAs
+			uint32_t returnTypeSSA = codeAsm->resolveType(returnType)->typeDeclSpirV(codeAsm);
+			std::vector<uint32_t> argTypeSSAs(args.size());
 
 			for (auto arg : args)
 			{
-				arg.ssa = codeAsm->newAssign();
-				codeAsm->pushAll({ spirv::OpFunctionParameter(), codeAsm->pushType(arg.type), arg.ssa });
+				argTypeSSAs.push_back(codeAsm->resolveType(arg.type)->typeDeclSpirV(codeAsm));
 
 			}
 
-			funcBody->toSPIRV(codeAsm);
+			uint32_t ssa = codeAsm->newAssign();
+			uint32_t startSSA = codeAsm->newAssign();
+
+			//push ops
+
+			codeAsm->pushAll({ spirv::OpFunction(), returnTypeSSA, ssa, (uint32_t)control, returnTypeSSA});
+			
+			codeAsm->startScope();
+			codeAsm->getCurrentScope()->label = startSSA;
+
+			for (size_t i = 0; i < args.size(); ++i)
+			{
+				FuncArg* arg = &args[i];
+				arg->ssa = codeAsm->newAssign();
+				//TODO fix. parameters need to be in OpTypePointer Function form.
+				//proper implementation will involve making either a TypeFunctionArg,
+				//or a SPIR-V assembly helper that helps prevent redundancy
+				codeAsm->pushAll({ spirv::OpFunctionParameter(), argTypeSSAs[i], arg->ssa });
+				
+			}
+
+			codeAsm->pushAll({spirv::OpLabel(), startSSA});
+
+			funcBody->SPIRVEmit(codeAsm);
+
+			codeAsm->endScope();
 
 			codeAsm->push(spirv::OpFunctionEnd());
 			
-			return ssa;*/
-			return 0;
+			return ssa;
 		}
 
 	};
