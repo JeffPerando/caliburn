@@ -30,7 +30,7 @@ namespace caliburn
             return ((major & 0xFFF) << 16) | ((minor & 0xFF) << 8);
         }
 
-        enum SpirVCapability
+        enum Capability : uint32_t
         {
             MATRIX = 0,
             SHADER = 1,
@@ -56,12 +56,22 @@ namespace caliburn
             INT16 = 22
         };
 
-        enum SpirVAddressingModel
+        enum AddressingModel : uint32_t
         {
             LOGICAL = 0,
             PHYSICAL32 = 1,
             PHYSICAL64 = 2,
             PHYSICALSTORAGEBUFFER64 = 5348
+        };
+
+        enum FuncControl : uint32_t
+        {
+            None = 0x00,
+            Inline = 0x01,
+            DontLine = 0x02,
+            Pure = 0x04,
+            Const = 0x08
+
         };
 
         //ONLY INSTRUCTIONS BELOW THIS POINT

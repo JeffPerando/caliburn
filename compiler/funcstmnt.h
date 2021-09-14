@@ -6,16 +6,6 @@
 
 namespace caliburn
 {
-	enum FuncControl : uint32_t
-	{
-		None = 0x00,
-		Inline = 0x01,
-		DontLine = 0x02,
-		Pure = 0x04,
-		Const = 0x08
-
-	};
-
 	struct FuncArg
 	{
 		ParsedType* type = nullptr;
@@ -30,7 +20,7 @@ namespace caliburn
 		ParsedType* returnType = nullptr;
 		std::string name = "FORGOT TO NAME YOUR FUNCTION!";
 		std::vector<FuncArg> args;
-		FuncControl control = FuncControl::Inline;
+		spirv::FuncControl control = spirv::FuncControl::None;
 		uint32_t calls = 0;
 		Statement* funcBody = nullptr;
 
