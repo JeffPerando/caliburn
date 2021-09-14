@@ -16,15 +16,13 @@ namespace caliburn
 		Compiler(ModuleLibrary* m) : modLib(m) {}
 		~Compiler() {}
 
-		int32_t compile(std::string file, std::vector<std::string>& compiled)
+		int32_t compile(std::string src, std::vector<std::pair<size_t, uint32_t*>>& compiled)
 		{
-			std::string src;
 			std::vector<Token> tokens;
-			std::vector<Statement*> ast;
-
 			caliburn::tokenize(src, tokens);
 
 			Parser parser;
+			std::vector<Statement*> ast;
 			parser.parse(&tokens, &ast);
 
 			return -1;
