@@ -14,7 +14,7 @@ uint32_t TypeVector::getAlignBytes() const
 	return generics[0]->getAlignBytes();
 }
 
-CompiledType* TypeVector::clone()
+CompiledType* TypeVector::clone() const
 {
 	return new TypeVector(canonName, vecElements, generics[0]);
 }

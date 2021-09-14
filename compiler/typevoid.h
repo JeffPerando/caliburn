@@ -9,21 +9,17 @@ namespace caliburn
 	{
 		TypeVoid() : CompiledType(TypeCategory::VOID, "void", {}) {}
 
-		virtual uint32_t getSizeBytes() const;
+		uint32_t getSizeBytes() const override;
 
-		//Conveniently, for most all primitives, alignment == size
-		virtual uint32_t getAlignBytes() const;
+		uint32_t getAlignBytes() const override;
 
-		virtual CompiledType* clone();
+		TypeCompat isCompatible(Operator op, CompiledType* rType) const override;
 
-		virtual TypeCompat isCompatible(Operator op, CompiledType* rType) const;
+		uint32_t typeDeclSpirV(SpirVAssembler* codeAsm) override;
 
-		virtual uint32_t typeDeclSpirV(SpirVAssembler* codeAsm);
+		uint32_t mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA, CompiledType*& endType) const override;
 
-		virtual uint32_t mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA, CompiledType*& endType) const;
-
-		//used for BIT_NOT, NEGATE, ABS
-		virtual uint32_t mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, CompiledType*& endType) const;
+		uint32_t mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, CompiledType*& endType) const override;
 
 	};
 }

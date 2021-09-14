@@ -191,7 +191,12 @@ namespace caliburn
 		//Conveniently, for most all primitives, alignment == size
 		virtual uint32_t getAlignBytes() const = 0;
 
-		virtual CompiledType* clone() = 0;
+		//ONLY exists for making a new generic form. so if you don't use generics, there's ZERO point in
+		//properly implementing this.
+		virtual CompiledType* clone() const
+		{
+			return this;
+		}
 
 		virtual TypeCompat isCompatible(Operator op, CompiledType* rType) const = 0;
 

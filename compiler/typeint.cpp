@@ -14,11 +14,6 @@ uint32_t TypeInt::getAlignBytes() const
 	return getSizeBytes();
 }
 
-CompiledType* TypeInt::clone()
-{
-	return new TypeInt(intBits, this->hasA(TypeAttrib::SIGNED));
-}
-
 TypeCompat TypeInt::isCompatible(Operator op, CompiledType* rType) const
 {
 	if (rType == nullptr)
@@ -63,10 +58,8 @@ uint32_t TypeInt::typeDeclSpirV(SpirVAssembler* codeAsm)
 	return ssa;
 }
 
-uint32_t TypeInt::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA, CompiledType*& endType) const
+uint32_t TypeInt::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lhs, Operator op, CompiledType* rType, uint32_t rhs, CompiledType*& endType) const
 {
-	uint32_t lhs = lvalueSSA;
-	uint32_t rhs = rvalueSSA;
 	uint32_t resultTypeSSA = this->ssa;
 	uint32_t result = codeAsm->newAssign();
 
@@ -160,12 +153,10 @@ uint32_t TypeInt::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Opera
 		{
 			uint32_t shifted = codeAsm->newAssign();
 			codeAsm->pushAll({
-				spirv::OpShiftRightLogical(), resultTypeSSA, shifted, lvalueSSA, rvalueSSA
-				});
+				spirv::OpShiftRightLogical(), resultTypeSSA, shifted, lhs, rhs });
 			codeAsm->pushAll({ spirv::OpBitwiseAnd(),
-				resultTypeSSA,
-				result,
-				shifted, codeAsm->getOrPushIntConst(1, this->intBits, this->hasA(TypeAttrib::SIGNED)).value });
+				resultTypeSSA, result, shifted,
+				codeAsm->getOrPushIntConst(1, this->intBits, this->hasA(TypeAttrib::SIGNED)).value });
 			return result;
 		}
 

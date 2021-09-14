@@ -14,11 +14,6 @@ uint32_t TypeFloat::getAlignBytes() const
 	return getSizeBytes();
 }
 
-CompiledType* TypeFloat::clone()
-{
-	return new TypeFloat(floatBits);
-}
-
 TypeCompat TypeFloat::isCompatible(Operator op, CompiledType* rType) const
 {
 	if (rType == nullptr)
