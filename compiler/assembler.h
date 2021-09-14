@@ -11,6 +11,8 @@ namespace caliburn
 
 		std::map<std::pair<uint32_t, bool>, TypeInt*> defaultIntTypes;
 		TypeFloat* defaultFloatTypes[9]{ nullptr };
+		TypeVector* defaultVectorTypes[5]{ nullptr };
+		TypeVoid* defaultVoidType = nullptr;
 
 	public:
 		CaliburnAssembler()
@@ -54,8 +56,14 @@ namespace caliburn
 
 			}
 
+			for (size_t i = 2; i <= 4; ++i)
+			{
+				defaultVectorTypes[i] = (TypeVector*)defaultTypes["vec" + i];
+			}
+
 			//void type
-			defaultTypes.emplace("void", new TypeVoid());
+			defaultVoidType = new TypeVoid();
+			defaultTypes.emplace("void", defaultVoidType);
 
 			//typical aliases
 			addPermanentAlias("byte", "int8");
@@ -102,6 +110,16 @@ namespace caliburn
 		TypeFloat* getFloatType(uint32_t bytes)
 		{
 			return defaultFloatTypes[bytes];
+		}
+
+		TypeVector* getVecType(uint32_t elements)
+		{
+			return defaultVectorTypes[elements];
+		}
+
+		TypeVoid* getVoidType()
+		{
+			return defaultVoidType;
 		}
 
 	};
