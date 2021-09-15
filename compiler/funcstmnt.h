@@ -20,7 +20,7 @@ namespace caliburn
 		ParsedType* returnType = nullptr;
 		std::string name = "FORGOT TO NAME YOUR FUNCTION!";
 		std::vector<FuncArg> args;
-		spirv::FuncControl control = spirv::FuncControl::None;
+		spirv::FuncControl control = spirv::FuncControl::NONE;
 		uint32_t calls = 0;
 		Statement* funcBody = nullptr;
 

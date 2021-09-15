@@ -17,61 +17,71 @@ namespace caliburn
             return 0x07230203;
         }
 
-        //So SPIR-V's version number thing is weird. Quote:
-        /*
-        The bytes are, high-order to low-order:
-        0 | Major Number | Minor Number | 0
-        Hence, version 1.3 is the value 0x00010300.
-        */
-        //what.
-        //So given the limited examples... yeah... I wrote this...
         uint32_t inline Version(int major, int minor)
         {
-            return ((major & 0xFFF) << 16) | ((minor & 0xFF) << 8);
+            return ((major & 0xFF) << 16) | ((minor & 0xFF) << 8);
         }
 
-        enum Capability : uint32_t
+        enum class Capability : uint32_t
         {
-            MATRIX = 0,
-            SHADER = 1,
-            GEOMETRY = 2,
-            TESSELLATION = 3,
-            ADDRESSES = 4,
-            LINKAGE = 5,
-            KERNEL = 6,
-            VECTOR16 = 7,
-            FLOAT16BUFFER = 8,
-            FLOAT16 = 9,
-            FLOAT64 = 10,
-            INT64 = 11,
-            INT64ATOMICS = 12,
-            IMAGEBASIC = 13,
-            IMAGEREADWRITE = 14,
-            IMAGEMIPMAP = 15,
-            PIPES = 17,
-            GROUPS = 18,
-            DEVICEQNEUEUE = 19,
-            LITERALSAMPLER = 20,
-            ATOMICSTORAGE = 21,
-            INT16 = 22
+            MATRIX =            0,
+            SHADER =            1,
+            GEOMETRY =          2,
+            TESSELLATION =      3,
+            ADDRESSES =         4,
+            LINKAGE =           5,
+            KERNEL =            6,
+            VECTOR16 =          7,
+            FLOAT16BUFFER =     8,
+            FLOAT16 =           9,
+            FLOAT64 =           10,
+            INT64 =             11,
+            INT64ATOMICS =      12,
+            IMAGEBASIC =        13,
+            IMAGEREADWRITE =    14,
+            IMAGEMIPMAP =       15,
+            PIPES =             17,
+            GROUPS =            18,
+            DEVICEQNEUEUE =     19,
+            LITERALSAMPLER =    20,
+            ATOMICSTORAGE =     21,
+            INT16 =             22
         };
 
-        enum AddressingModel : uint32_t
+        enum class AddressingModel : uint32_t
         {
-            LOGICAL = 0,
-            PHYSICAL32 = 1,
-            PHYSICAL64 = 2,
-            PHYSICALSTORAGEBUFFER64 = 5348
+            LOGICAL =                   0,
+            PHYSICAL32 =                1,
+            PHYSICAL64 =                2,
+            PHYSICALSTORAGEBUFFER64 =   5348
         };
 
         enum FuncControl : uint32_t
         {
-            None = 0x00,
-            Inline = 0x01,
-            DontLine = 0x02,
-            Pure = 0x04,
-            Const = 0x08
+            NONE =          0x00,
+            INLINE =        0x01,
+            DONTINLINE =    0x02,
+            PURE =          0x04,
+            CONST =         0x08
+        };
 
+        //Not complete, missing a lot of RT extension enums
+        enum class StorageClass : uint32_t
+        {
+            UNIFORM_CONSTANT =  0,
+            INPUT =             1,
+            UNIFORM =           2,
+            OUTPUT =            3,
+            WORKGROUP =         4,
+            CROSS_WORKGROUP =   5,
+            PRIVATE =           6,
+            FUNCTION =          7,
+            GENERIC =           8,
+            PUSH_CONSTANT =     9,
+            ATOMIC_COUNTER =    10,
+            IMAGE =             11,
+            //version >= 1.3
+            STORAGE_BUFFER =    12
         };
 
         //ONLY INSTRUCTIONS BELOW THIS POINT
