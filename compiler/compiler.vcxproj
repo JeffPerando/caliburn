@@ -169,7 +169,6 @@
     <ClInclude Include="ctrlstmnt.h" />
     <ClInclude Include="deftypes.h" />
     <ClInclude Include="fieldstmnt.h" />
-    <ClInclude Include="funcsmnt.h" />
     <ClInclude Include="funcstmnt.h" />
     <ClInclude Include="litstmnt.h" />
     <ClInclude Include="miscstmt.h" />

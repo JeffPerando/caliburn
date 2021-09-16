@@ -73,9 +73,6 @@
     <ClInclude Include="fieldstmnt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="funcsmnt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="funcstmnt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
