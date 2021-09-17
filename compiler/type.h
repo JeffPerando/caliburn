@@ -195,7 +195,7 @@ namespace caliburn
 		//properly implementing this.
 		virtual CompiledType* clone() const
 		{
-			return this;
+			return (CompiledType*)this;
 		}
 
 		virtual TypeCompat isCompatible(Operator op, CompiledType* rType) const = 0;
