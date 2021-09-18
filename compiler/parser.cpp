@@ -89,7 +89,7 @@ bool Parser::parseGenerics(std::vector<ParsedType*>& generics)
 	bool actualGeneric = false;
 	auto oldIndex = tokens->currentIndex();
 
-	if (*tokens->current() == "<")
+	if (tokens->current()->str == "<")
 	{
 		tokens->consume();
 
@@ -275,7 +275,9 @@ Statement* Parser::parseImport()
 
 Statement* Parser::parseTypedef()
 {
-	if (*tokens->current() != "type")
+	Token* tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "type")
 	{
 		return nullptr;
 	}
@@ -287,7 +289,7 @@ Statement* Parser::parseTypedef()
 
 	std::string name = tokens->current()->str;
 
-	if (*tokens->next() != "=")
+	if (tokens->next()->str != "=")
 	{
 		return nullptr;
 	}
@@ -318,7 +320,7 @@ Statement* Parser::parseFunction()
 {
 	Token* tkn = tokens->current();
 
-	if (tkn->str != "def")
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "def")
 	{
 		return nullptr;
 	}
@@ -526,7 +528,7 @@ Statement* Parser::parseIf()
 {
 	Token* tkn = tokens->current();
 
-	if (tkn->str != "if")
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "if")
 	{
 		return nullptr;
 	}
@@ -567,7 +569,9 @@ Statement* Parser::parseIf()
 
 Statement* Parser::parseFor()
 {
-	if (*tokens->current() != "for")
+	Token* tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "for")
 	{
 		return nullptr;
 	}
@@ -612,12 +616,7 @@ Statement* Parser::parseWhile()
 {
 	Token* tkn = tokens->current();
 
-	if (tkn->type != TokenType::KEYWORD)
-	{
-		return nullptr;
-	}
-
-	if (tkn->str != "while")
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "while")
 	{
 		return nullptr;
 	}
@@ -733,12 +732,7 @@ Statement* Parser::parseContinue()
 {
 	Token* tkn = tokens->current();
 
-	if (tkn->type != TokenType::KEYWORD)
-	{
-		return nullptr;
-	}
-
-	if (tkn->str != "continue")
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "continue")
 	{
 		return nullptr;
 	}
@@ -893,12 +887,7 @@ Statement* Parser::parseReturn()
 {
 	Token* tkn = tokens->current();
 
-	if (tkn->type != TokenType::KEYWORD)
-	{
-		return nullptr;
-	}
-
-	if (tkn->str != "return")
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "return")
 	{
 		return nullptr;
 	}
@@ -944,7 +933,7 @@ Statement* Parser::parseValue(bool doPostfix)
 		}
 		else
 		{
-			postParseException(new ParseException("Invalid value keyword:", tkn));
+			//postParseException(new ParseException("Invalid value keyword:", tkn));
 			return nullptr;
 		}
 		//TODO figure out what to do with "new" keyword
@@ -1005,7 +994,7 @@ Statement* Parser::parseValue(bool doPostfix)
 		tokens->consume();
 		foundValue = parseValue();
 
-		if (*tokens->current() != "|")
+		if (tokens->current()->str != "|")
 		{
 			postParseException(new ParseException("Absolute values must be surrounded by pipes ('|')", tokens->current()));
 			return nullptr;

@@ -18,16 +18,6 @@ namespace caliburn
 		Token(std::string t, TokenType id, uint64_t l, uint64_t c) :
 			str(t), type(id), line(l), column(c) {}
 
-		operator std::string() const
-		{
-			return str;
-		}
-
-		operator const char*() const
-		{
-			return str.c_str();
-		}
-
 	};
 
 	using FindFunc = bool(*)(char chr);
