@@ -180,6 +180,7 @@
     <ClInclude Include="spirv.h" />
     <ClInclude Include="spirvasm.h" />
     <ClInclude Include="statement.h" />
+    <ClInclude Include="switchstmnt.h" />
     <ClInclude Include="syntax.h" />
     <ClInclude Include="tokenizer.h" />
     <ClInclude Include="topstmnt.h" />
