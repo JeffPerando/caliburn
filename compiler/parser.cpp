@@ -306,15 +306,13 @@ Statement* Parser::parseTypedef()
 
 //TODO more parser methods
 
-/*
-Statement* Parser::parseShader();
+//Statement* Parser::parseShader();
 
-Statement* Parser::parseDescriptor();
+//Statement* Parser::parseDescriptor();
 
-Statement* Parser::parseStruct();
+//Statement* Parser::parseStruct();
 
-Statement* Parser::parseClass();
-*/
+//Statement* Parser::parseClass();
 
 Statement* Parser::parseFunction()
 {
@@ -520,7 +518,7 @@ Statement* Parser::parseControl()
 		return nullptr;
 	}
 
-	return parseAny({ &Parser::parseIf, &Parser::parseFor, /*&Parser::parseWhile,
+	return parseAny({ &Parser::parseIf, &Parser::parseFor, &Parser::parsePass, /*&Parser::parseWhile,
 		&Parser::parseDoWhile, &Parser::parseSwitch */});
 }
 
@@ -749,11 +747,148 @@ Statement* Parser::parseContinue()
 	
 	return new ContinueStatement();
 }
-/*
-Statement* Parser::parseSwitch();
 
-Statement* Parser::parsePass();
-*/
+Statement* Parser::parseSwitch()
+{
+	Token* tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "switch")
+	{
+		return nullptr;
+	}
+
+	tkn = tokens->next();
+
+	if (tkn->type != TokenType::START_PAREN)
+	{
+		//TODO complain
+		return nullptr;
+	}
+
+	SwitchStatement* stmnt = new SwitchStatement();
+
+	tokens->consume();
+	ValueStatement* swValue = (ValueStatement*)parseValue();
+
+	if (!swValue)
+	{
+		//TODO complain
+		delete stmnt;
+		return nullptr;
+	}
+
+	stmnt->condition = swValue;
+
+	tkn = tokens->current();
+
+	if (tkn->type != TokenType::END_PAREN)
+	{
+		//TODO complain
+		delete stmnt;
+		return nullptr;
+	}
+
+	tkn = tokens->next();
+	
+	if (tkn->type != TokenType::START_SCOPE)
+	{
+		//TODO complain
+		delete stmnt;
+		return nullptr;
+	}
+
+	while (tokens->hasNext())
+	{
+		Statement* swCase = parseCase();
+
+		if (!swCase)
+		{
+			break;
+		}
+
+		stmnt->cases.push_back(swCase);
+
+	}
+
+	tkn = tokens->current();
+
+	if (tkn->type != TokenType::END_SCOPE)
+	{
+		//TODO complain
+		delete stmnt;
+		return nullptr;
+	}
+
+	return stmnt;
+}
+
+Statement* Parser::parseCase()
+{
+	Token* tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "case")
+	{
+		return nullptr;
+	}
+
+	CaseStatement* stmnt = new CaseStatement();
+	ValueStatement* caseVal = (ValueStatement*)parseValue();
+
+	if (!caseVal)
+	{
+		//TODO complain
+		delete stmnt;
+		return nullptr;
+	}
+
+	stmnt->condition = caseVal;
+
+	tkn = tokens->current();
+
+	if (tkn->type != TokenType::COLON)
+	{
+		//TODO complain
+		delete stmnt;
+		return nullptr;
+	}
+
+	tokens->consume();
+
+	while (tokens->hasNext())
+	{
+		Statement* logic = parseLogic();
+		
+		if (!logic)
+		{
+			break;
+		}
+
+		stmnt->logic.push_back(logic);
+
+		if (!parseSemicolon())
+		{
+			//TODO complain
+			delete stmnt;
+			return nullptr;
+		}
+
+	}
+
+	return stmnt;
+}
+
+Statement* Parser::parsePass()
+{
+	Token* tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "pass")
+	{
+		return nullptr;
+	}
+
+	return new PassStatement();
+}
+
 Statement* Parser::parseReturn()
 {
 	Token* tkn = tokens->current();

@@ -12,6 +12,7 @@
 #include "miscstmt.h"
 #include "objstmt.h"
 #include "scopestmnt.h"
+#include "switchstmnt.h"
 
 namespace caliburn
 {
@@ -45,17 +46,17 @@ namespace caliburn
 		Statement* parseImport();
 
 		Statement* parseTypedef();
-		/*
-		Statement* parseNamespaceDef();
+		
+		//Statement* parseNamespaceDef();
 
-		Statement* parseShader();
+		//Statement* parseShader();
 
-		Statement* parseDescriptor();
+		//Statement* parseDescriptor();
 
-		Statement* parseStruct();
+		//Statement* parseStruct();
 
-		Statement* parseClass();
-		*/
+		//Statement* parseClass();
+		
 		Statement* parseFunction();
 
 		//Statement* parseMethod();
@@ -85,11 +86,13 @@ namespace caliburn
 		Statement* parseBreak();
 
 		Statement* parseContinue();
-		/*
+		
 		Statement* parseSwitch();
+		
+		Statement* parseCase();
 
 		Statement* parsePass();
-		*/
+		
 		Statement* parseReturn();
 		
 		Statement* parseValue();
