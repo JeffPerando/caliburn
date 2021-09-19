@@ -253,8 +253,7 @@ Statement* Parser::parseImport()
 {
 	Token* tkn = tokens->current();
 
-	if (tkn->type != TokenType::KEYWORD ||
-		tkn->str != "import")
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "import")
 	{
 		return nullptr;
 	}
@@ -654,12 +653,7 @@ Statement* Parser::parseDoWhile()
 {
 	Token* tkn = tokens->current();
 
-	if (tkn->type != TokenType::KEYWORD)
-	{
-		return nullptr;
-	}
-
-	if (tkn->str != "do")
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "do")
 	{
 		return nullptr;
 	}
@@ -713,12 +707,7 @@ Statement* Parser::parseBreak()
 {
 	Token* tkn = tokens->current();
 
-	if (tkn->type != TokenType::KEYWORD)
-	{
-		return nullptr;
-	}
-
-	if (tkn->str != "break")
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "break")
 	{
 		return nullptr;
 	}
