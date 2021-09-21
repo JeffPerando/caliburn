@@ -62,9 +62,11 @@ uint32_t TypeBool::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Oper
 	{
 
 	}
+
+	return 0;
 }
 
 uint32_t TypeBool::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, CompiledType*& endType) const
 {
-
+	return 0;
 }
