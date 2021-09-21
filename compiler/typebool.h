@@ -23,8 +23,6 @@ namespace caliburn
 			return 1;
 		}
 
-		CompiledType* clone() override;
-
 		TypeCompat isCompatible(Operator op, CompiledType* rType) const override;
 
 		uint32_t typeDeclSpirV(SpirVAssembler* codeAsm) override;

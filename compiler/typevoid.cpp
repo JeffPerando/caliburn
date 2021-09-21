@@ -14,13 +14,6 @@ uint32_t TypeVoid::getAlignBytes() const
 	return 0;
 }
 
-//idk why anyone would call this but w/e
-//it's only here to make a new clone of a generic
-CompiledType* TypeVoid::clone()
-{
-	return new TypeVoid();
-}
-
 TypeCompat TypeVoid::isCompatible(Operator op, CompiledType* rType) const
 {
 	if (rType == nullptr)
