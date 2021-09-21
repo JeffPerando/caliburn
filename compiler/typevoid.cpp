@@ -28,7 +28,7 @@ TypeCompat TypeVoid::isCompatible(Operator op, CompiledType* rType) const
 		return TypeCompat::INCOMPATIBLE_OP;
 	}
 
-	TypeCompat::INCOMPATIBLE_TYPE;
+	return TypeCompat::INCOMPATIBLE_TYPE;
 }
 
 uint32_t TypeVoid::typeDeclSpirV(SpirVAssembler* codeAsm)
