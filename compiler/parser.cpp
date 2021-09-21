@@ -405,8 +405,6 @@ Statement* Parser::parseLogic()
 
 	if (stmt) return stmt;
 
-	//from hereon, parse function call
-
 	stmt = parseAnyFieldOrFuncValue();
 
 	if (!stmt)
@@ -458,8 +456,6 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 
 	}
 
-	tkn = tokens->current();
-
 	parseIdentifierList(vars);
 
 	if (vars.size() == 0)
@@ -470,7 +466,7 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 
 	if (tokens->current()->str == "=")
 	{
-		tkn = tokens->next();
+		tokens->consume();
 		defVal = (ValueStatement*)parseValue();
 		//type = defVal->type;
 
@@ -1125,6 +1121,7 @@ Statement* Parser::parseAnyFieldOrFuncValue()
 
 Statement* Parser::parseFieldOrFuncValue(bool canHaveNamespace)
 {
+	//ParsedType is an identifier followed by an optional generic portion. so this is just me cheating.
 	ParsedType* type = parseTypeName();
 
 	if (!type)
