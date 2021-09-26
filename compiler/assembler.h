@@ -9,9 +9,9 @@ namespace caliburn
 	{
 		std::map<std::string, CompiledType*> defaultTypes;
 
-		std::map<std::pair<uint32_t, bool>, TypeInt*> defaultIntTypes;
-		TypeFloat* defaultFloatTypes[9]{ nullptr };
-		TypeVector* defaultVectorTypes[5]{ nullptr };
+		std::vector<TypeInt*> defaultIntTypes;
+		std::vector<TypeFloat*> defaultFloatTypes;
+		std::vector<TypeVector*> defaultVectorTypes;
 		TypeVoid* defaultVoidType = nullptr;
 
 	public:
@@ -20,14 +20,14 @@ namespace caliburn
 			//int types
 			for (int bits = 8; bits <= 512; bits *= 2)
 			{
-				for (int s = 0; s < 2; ++s)
-				{
-					bool hasSign = (s == 1);
-					auto intType = new TypeInt(bits, hasSign);
-					defaultTypes.emplace((s ? "int" : "uint") + bits, intType);
-					defaultIntTypes.emplace(std::pair<uint32_t, bool>(bits / 8, hasSign), intType);
+				auto intType = new TypeInt(bits, true);
+				auto uintType = new TypeInt(bits, false);
 
-				}
+				defaultTypes.emplace("int" + bits, intType);
+				defaultTypes.emplace("uint" + bits, uintType);
+
+				defaultIntTypes.push_back(intType);
+				defaultIntTypes.push_back(uintType);
 
 			}
 
@@ -36,7 +36,7 @@ namespace caliburn
 			{
 				auto floatType = new TypeFloat(bits);
 				defaultTypes.emplace("float" + bits, floatType);
-				defaultFloatTypes[bits / 8] = floatType;
+				defaultFloatTypes.push_back(floatType);
 
 			}
 
@@ -58,7 +58,7 @@ namespace caliburn
 
 			for (size_t i = 2; i <= 4; ++i)
 			{
-				defaultVectorTypes[i] = (TypeVector*)defaultTypes["vec" + i];
+				defaultVectorTypes.push_back((TypeVector*)defaultTypes["vec" + i]);
 			}
 
 			//void type
@@ -104,22 +104,60 @@ namespace caliburn
 
 		TypeInt* getIntType(uint32_t bytes, bool sign = true)
 		{
-			return defaultIntTypes[std::pair<uint32_t, bool>(bytes, sign)];
+			for (auto it : defaultIntTypes)
+			{
+				if (it->getSizeBytes() == bytes && (it->hasA(TypeAttrib::SIGNED) == sign))
+				{
+					return it;
+				}
+
+			}
+
+			return nullptr;
 		}
 
 		TypeFloat* getFloatType(uint32_t bytes)
 		{
-			return defaultFloatTypes[bytes];
+			for (auto ft : defaultFloatTypes)
+			{
+				if (ft->getSizeBytes() == bytes)
+				{
+					return ft;
+				}
+
+			}
+
+			return nullptr;
 		}
 
 		TypeVector* getVecType(uint32_t elements)
 		{
-			return defaultVectorTypes[elements];
+			if (elements > 4 || elements < 2)
+			{
+				return nullptr;
+			}
+			
+			return defaultVectorTypes[elements - 2];
 		}
 
 		TypeVoid* getVoidType()
 		{
 			return defaultVoidType;
+		}
+
+		const std::vector<TypeInt*>* getAllIntTypes()
+		{
+			return &defaultIntTypes;
+		}
+
+		const std::vector<TypeFloat*>* getAllFloatTypes()
+		{
+			return &defaultFloatTypes;
+		}
+
+		const std::vector<TypeVector*>* getAllVecTypes()
+		{
+			return &defaultVectorTypes;
 		}
 
 	};
