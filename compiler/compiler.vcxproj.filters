@@ -32,9 +32,6 @@
     <ClCompile Include="typevoid.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="statement.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="spirvasm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -42,6 +39,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="typebool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="langcore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -137,6 +137,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="switchstmnt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="langcore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

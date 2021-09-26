@@ -327,9 +327,9 @@ Statement* Parser::parseFunction()
 	tkn = tokens->next();
 
 	//parse optional visibility
-	Visibility vis = strToVis(tkn->str);
+	StorageModifier mod = parseStorageMod(tkn->str);
 
-	if (vis != Visibility::NONE)
+	if (mod != StorageModifier::NONE)
 	{
 		tkn = tokens->next();
 
