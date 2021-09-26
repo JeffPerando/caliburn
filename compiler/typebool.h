@@ -17,11 +17,12 @@ namespace caliburn
 			return 1;
 		}
 
-		//Conveniently, for most all primitives, alignment == size
 		uint32_t getAlignBytes() const override
 		{
 			return 1;
 		}
+
+		void getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAssembler* codeAsm) override;
 
 		TypeCompat isCompatible(Operator op, CompiledType* rType) const override;
 

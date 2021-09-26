@@ -6,7 +6,7 @@ using namespace caliburn;
 
 uint32_t TypeVector::getSizeBytes() const
 {
-	return vecElements * generics[0]->getSizeBytes();
+	return elements * generics[0]->getSizeBytes();
 }
 
 uint32_t TypeVector::getAlignBytes() const
@@ -16,7 +16,23 @@ uint32_t TypeVector::getAlignBytes() const
 
 CompiledType* TypeVector::clone() const
 {
-	return new TypeVector(canonName, vecElements, generics[0]);
+	return new TypeVector(canonName, elements, generics[0]);
+}
+
+void TypeVector::getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAssembler* codeAsm)
+{
+	auto vecs = codeAsm->getAllVecTypes();
+
+	for (auto vt : *vecs)
+	{
+		if (vt->elements < elements)
+		{
+			types->emplace(vt);
+
+		}
+
+	}
+
 }
 
 TypeCompat TypeVector::isCompatible(Operator op, CompiledType* rType) const
@@ -53,7 +69,7 @@ uint32_t TypeVector::typeDeclSpirV(SpirVAssembler* codeAsm)
 
 	ssa = codeAsm->newAssign();
 
-	codeAsm->pushAll({spirv::OpTypeVector(), ssa, subSSA, vecElements});
+	codeAsm->pushAll({spirv::OpTypeVector(), ssa, subSSA, elements});
 
 	return ssa;
 }

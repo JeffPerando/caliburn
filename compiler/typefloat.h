@@ -17,13 +17,15 @@ namespace caliburn
 		TypeFloat(uint32_t s) :
 			CompiledType(TypeCategory::PRIMITIVE,
 				"float" + s,
-				{ TypeAttrib::SIGNED, TypeAttrib::FLOAT }),
+				{TypeAttrib::SIGNED, TypeAttrib::FLOAT}),
 			floatBits(s)
 		{}
 
 		uint32_t getSizeBytes() const override;
 
 		uint32_t getAlignBytes() const override;
+		
+		void getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAssembler* codeAsm) override;
 
 		TypeCompat isCompatible(Operator op, CompiledType* rType) const override;
 

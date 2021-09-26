@@ -10,20 +10,19 @@ namespace caliburn
 
 	struct TypeVector : public SpecializedType
 	{
-	protected:
-		uint32_t const vecElements;
-	public:
-		TypeVector(std::string fullName, uint32_t elements, CompiledType* innerType) :
+		uint32_t const elements;
+
+		TypeVector(std::string fullName, uint32_t vecElements, CompiledType* innerType) :
 			SpecializedType(TypeCategory::VECTOR,
 				fullName,
-				{ TypeAttrib::COMPOSITE, TypeAttrib::GENERIC }, 1),
-			vecElements(elements)
+				{TypeAttrib::COMPOSITE, TypeAttrib::GENERIC}, 1),
+			elements(vecElements)
 		{
 			setGeneric(0, innerType);
 
 		}
 		
-		virtual uint32_t getMandatoryGenericCount()
+		virtual uint32_t getMandatoryGenericCount() override
 		{
 			return 0;
 		}
@@ -33,6 +32,8 @@ namespace caliburn
 		uint32_t getAlignBytes() const override;
 
 		CompiledType* clone() const override;
+
+		void getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAssembler* codeAsm) override;
 
 		TypeCompat isCompatible(Operator op, CompiledType* rType) const override;
 

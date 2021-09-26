@@ -14,6 +14,25 @@ uint32_t TypeInt::getAlignBytes() const
 	return getSizeBytes();
 }
 
+void TypeInt::getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAssembler* codeAsm)
+{
+	auto its = codeAsm->getAllIntTypes();
+	auto fts = codeAsm->getAllFloatTypes();
+
+	for (auto it : *its)
+	{
+		types->emplace(it);
+
+	}
+
+	for (auto ft : *fts)
+	{
+		types->emplace(ft);
+
+	}
+
+}
+
 TypeCompat TypeInt::isCompatible(Operator op, CompiledType* rType) const
 {
 	if (rType == nullptr)
@@ -144,6 +163,8 @@ uint32_t TypeInt::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lhs, Operator op
 		case Operator::BIT_AND: opcode = spirv::OpBitwiseAnd(); break;
 		case Operator::BIT_OR: opcode = spirv::OpBitwiseOr(); break;
 		case Operator::BIT_XOR: opcode = spirv::OpBitwiseXor(); break;
+		case Operator::SHIFT_LEFT: opcode = spirv::OpShiftLeftLogical(); break;
+		case Operator::SHIFT_RIGHT: opcode = spirv::OpShiftRightArithmetic(); break;
 		//case Operator::POW:
 	}
 
@@ -156,7 +177,7 @@ uint32_t TypeInt::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lhs, Operator op
 				spirv::OpShiftRightLogical(), resultTypeSSA, shifted, lhs, rhs });
 			codeAsm->pushAll({ spirv::OpBitwiseAnd(),
 				resultTypeSSA, result, shifted,
-				codeAsm->getOrPushIntConst(1, this->intBits, this->hasA(TypeAttrib::SIGNED)).value });
+				codeAsm->getOrPushIntConst(1, intBits, hasA(TypeAttrib::SIGNED)).value });
 			return result;
 		}
 

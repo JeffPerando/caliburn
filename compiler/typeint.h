@@ -25,6 +25,8 @@ namespace caliburn
 
 		uint32_t getAlignBytes() const override;
 
+		void getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAssembler* codeAsm) override;
+
 		TypeCompat isCompatible(Operator op, CompiledType* rType) const override;
 
 		uint32_t typeDeclSpirV(SpirVAssembler* codeAsm) override;

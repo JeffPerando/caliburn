@@ -4,6 +4,17 @@
 
 using namespace caliburn;
 
+void TypeBool::getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAssembler* codeAsm)
+{
+	auto its = codeAsm->getAllIntTypes();
+
+	for (auto it : *its)
+	{
+		types->emplace(it);
+	}
+
+}
+
 TypeCompat TypeBool::isCompatible(Operator op, CompiledType* rType) const
 {
 	if (!rType)

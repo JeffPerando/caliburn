@@ -14,6 +14,18 @@ uint32_t TypeFloat::getAlignBytes() const
 	return getSizeBytes();
 }
 
+void TypeFloat::getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAssembler* codeAsm)
+{
+	auto fts = codeAsm->getAllFloatTypes();
+
+	for (auto ft : *fts)
+	{
+		types->emplace(ft);
+
+	}
+
+}
+
 TypeCompat TypeFloat::isCompatible(Operator op, CompiledType* rType) const
 {
 	if (rType == nullptr)
@@ -34,6 +46,8 @@ TypeCompat TypeFloat::isCompatible(Operator op, CompiledType* rType) const
 		case Operator::BIT_AND:
 		case Operator::BIT_OR:
 		case Operator::BIT_XOR:
+		case Operator::SHIFT_LEFT:
+		case Operator::SHIFT_RIGHT:
 		case Operator::APPEND:
 		case Operator::ARRAY_ACCESS: return TypeCompat::INCOMPATIBLE_OP;
 		default: return TypeCompat::COMPATIBLE;

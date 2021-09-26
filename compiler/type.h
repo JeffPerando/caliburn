@@ -1,8 +1,10 @@
 
 #pragma once
 
+#include <algorithm>
 #include <exception>
 #include <map>
+#include <set>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -11,6 +13,7 @@
 
 namespace caliburn
 {
+	class CaliburnAssembler;
 	class SpirVAssembler;
 
 	//Used for resolved types
@@ -128,6 +131,7 @@ namespace caliburn
 		const std::string canonName;
 	protected:
 		//Since every type is made for a particular assembler, storing the SSA is fine
+		CompiledType* superType = nullptr;
 		uint32_t ssa = 0;
 		uint32_t attribs = 0;
 	public:
@@ -141,18 +145,20 @@ namespace caliburn
 
 		}
 
-		bool operator==(CompiledType& rhs)
+		//annoyed that != doesn't have a default implementation that does this
+		virtual bool operator!=(CompiledType& rhs)
+		{
+			return !(*this == rhs);
+		}
+
+		virtual bool operator==(CompiledType& rhs)
 		{
 			//cheap hack, sorry
-			if (ssa == rhs.ssa)
+			if (ssa != 0 && rhs.ssa != 0)
 			{
-				return true;
+				return ssa == rhs.ssa;
 			}
-			else if (ssa != 0 && rhs.ssa != 0)
-			{
-				return false;
-			}
-
+			
 			if (canonName != rhs.canonName)
 			{
 				return false;
@@ -181,6 +187,11 @@ namespace caliburn
 			return canonName;
 		}
 
+		CompiledType* getSuper()
+		{
+			return superType;
+		}
+
 		virtual void setGeneric(size_t index, CompiledType* type)
 		{
 			throw std::exception("cannot add a generic to this type!");
@@ -197,6 +208,8 @@ namespace caliburn
 		{
 			return (CompiledType*)this;
 		}
+
+		virtual void getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAssembler* codeAsm) = 0;
 
 		virtual TypeCompat isCompatible(Operator op, CompiledType* rType) const = 0;
 
