@@ -89,13 +89,13 @@ bool Parser::parseGenerics(std::vector<ParsedType*>& generics)
 	bool actualGeneric = false;
 	auto oldIndex = tokens->currentIndex();
 
-	if (tokens->current()->str == "<")
+	if (tokens->current()->str == "[")
 	{
 		tokens->consume();
 
 		actualGeneric = true;
 
-		while (true)
+		while (tokens->hasNext())
 		{
 			auto type = parseTypeName();
 
@@ -108,23 +108,20 @@ bool Parser::parseGenerics(std::vector<ParsedType*>& generics)
 			generics.push_back(type);
 
 			Token* tkn = tokens->current();
+			tokens->consume();
 
-			if (tkn->str == ">")
+			if (tkn->type == TokenType::COMMA)
 			{
-				tokens->consume();
-				break;
-			}
-			else if (tkn->type == TokenType::COMMA)
-			{
-				tokens->consume();
 				continue;
 			}
-			else
+
+			if (tkn->str != "]")
 			{
 				actualGeneric = false;
-				break;
-			}
 
+			}
+			
+			break;
 		}
 
 	}
