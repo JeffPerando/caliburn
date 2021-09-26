@@ -95,9 +95,7 @@ namespace caliburn
 		
 		Statement* parseReturn();
 		
-		Statement* parseValue();
-
-		Statement* parseValue(bool doPostfix);
+		ValueStatement* parseValue(bool doPostfix = true);
 
 		Statement* parseAnyFieldOrFuncValue();
 

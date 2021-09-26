@@ -464,7 +464,7 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 	if (tokens->current()->str == "=")
 	{
 		tokens->consume();
-		defVal = (ValueStatement*)parseValue();
+		defVal = parseValue();
 		//type = defVal->type;
 
 	}
@@ -533,7 +533,7 @@ Statement* Parser::parseIf()
 
 	tokens->consume();
 
-	ValueStatement* condition = (ValueStatement*)parseValue();
+	ValueStatement* condition = parseValue();
 
 	if (tokens->current()->type != TokenType::END_PAREN)
 	{
@@ -579,7 +579,7 @@ Statement* Parser::parseFor()
 	Statement* pre = parseLogic();
 	parseSemicolon();
 
-	ValueStatement* cond = (ValueStatement*)parseValue();
+	ValueStatement* cond = parseValue();
 	parseSemicolon();
 
 	Statement* post = parseLogic();
@@ -621,7 +621,7 @@ Statement* Parser::parseWhile()
 
 	tokens->consume();
 
-	ValueStatement* cond = (ValueStatement*)parseValue();
+	ValueStatement* cond = parseValue();
 
 	if (tokens->current()->type != TokenType::END_PAREN)
 	{
@@ -744,7 +744,7 @@ Statement* Parser::parseSwitch()
 	SwitchStatement* stmnt = new SwitchStatement();
 
 	tokens->consume();
-	ValueStatement* swValue = (ValueStatement*)parseValue();
+	ValueStatement* swValue = parseValue();
 
 	if (!swValue)
 	{
@@ -808,7 +808,7 @@ Statement* Parser::parseCase()
 	}
 
 	CaseStatement* stmnt = new CaseStatement();
-	ValueStatement* caseVal = (ValueStatement*)parseValue();
+	ValueStatement* caseVal = parseValue();
 
 	if (!caseVal)
 	{
@@ -881,22 +881,17 @@ Statement* Parser::parseReturn()
 	//technically cheating but w/e
 	if (tkn->type != TokenType::END)
 	{
-		ret->val = (ValueStatement*)parseValue();
+		ret->val = parseValue();
 	}
 
 	return ret;
 }
 
-Statement* Parser::parseValue()
-{
-	return parseValue(true);
-}
-
 //TODO parse using Shunting-yard algorithm (or at least check for compliance)
 //https://en.wikipedia.org/wiki/Shunting-yard_algorithm
-Statement* Parser::parseValue(bool doPostfix)
+ValueStatement* Parser::parseValue(bool doPostfix)
 {
-	Statement* foundValue = nullptr;
+	ValueStatement* foundValue = nullptr;
 	std::vector<Statement*> dispatchParams;
 
 	Token* tkn = tokens->current();
@@ -929,11 +924,10 @@ Statement* Parser::parseValue(bool doPostfix)
 		ParsedType* type = parseTypeName();
 		*/
 	}
-
 	//field, constructor...
-	if (tkn->type == TokenType::IDENTIFIER)
+	else if (tkn->type == TokenType::IDENTIFIER)
 	{
-		foundValue = parseAnyFieldOrFuncValue();
+		foundValue = (ValueStatement*)parseAnyFieldOrFuncValue();
 
 	}
 	//(x)
@@ -1103,7 +1097,7 @@ Statement* Parser::parseValue(bool doPostfix)
 
 			//TODO retarget
 			//fieldOrFunc.setTarget(foundValue);
-			foundValue = fieldOrFunc;
+			foundValue = (ValueStatement*)fieldOrFunc;
 		}
 		else break;
 	}
