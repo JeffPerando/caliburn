@@ -24,9 +24,14 @@ void read(std::string fileName, std::string& data)
 
 }
 
-
 int main()
 {
+    uint32_t u = 4000000000u;
+    int32_t i = (int32_t)u;
+
+    std::cout << i << std::endl;
+
+    /*
     std::string test;
     auto tokens = std::vector<caliburn::Token>();
 
@@ -53,7 +58,7 @@ int main()
     std::cout << "Time in microseconds:" << (time / tests) << std::endl;
 
     return 0;
-
+    */
     /*
     
     for (auto t : tokens)
