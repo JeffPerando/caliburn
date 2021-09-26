@@ -6,13 +6,13 @@
 namespace caliburn
 {
 	static const std::vector<std::string> KEYWORDS = {
-		"as", "break",
+		"args", "as", "break",
 		"case", "class", "const" "construct", "continue",
 		"data", "def", "default", "descriptor", "destroy", "do", "dynamic",
 		"extends",
 		"false", "for",
 		"if", "import", "in", "inputs",
-		"let",
+		"let", "make",
 		"namespace", "new",
 		"op", "override",
 		"pass", "private", "protected", "public",
@@ -62,6 +62,7 @@ namespace caliburn
 		ADD, SUB, MUL, DIV,
 		MOD, POW,
 		BIT_AND, BIT_OR, BIT_XOR,
+		SHIFT_LEFT, SHIFT_RIGHT,
 		APPEND, INTDIV,
 
 		//the following all need to be parsed manually
@@ -102,18 +103,20 @@ namespace caliburn
 //So here's why math ops are separate from logic ops:
 //Math ops can use (op)= to set something, e.g. +=.
 //Logic ops can't, mostly because I don't want to deal with parsing that.
-#define CALIBURN_MATH_OPS {		\
-	{"+",	Operator::ADD},		\
-	{"++",	Operator::APPEND},	\
-	{"-",	Operator::SUB},		\
-	{"*",	Operator::MUL},		\
-	{"/",	Operator::DIV},		\
-	{"//",	Operator::INTDIV},	\
-	{"%",	Operator::MOD},		\
-	{"^",	Operator::POW},		\
-	{"&",	Operator::BIT_AND},	\
-	{"|",	Operator::BIT_OR},	\
-	{"$",	Operator::BIT_XOR}}
+#define CALIBURN_MATH_OPS {			\
+	{"+",	Operator::ADD},			\
+	{"++",	Operator::APPEND},		\
+	{"-",	Operator::SUB},			\
+	{"*",	Operator::MUL},			\
+	{"/",	Operator::DIV},			\
+	{"//",	Operator::INTDIV},		\
+	{"%",	Operator::MOD},			\
+	{"^",	Operator::POW},			\
+	{"&",	Operator::BIT_AND},		\
+	{"|",	Operator::BIT_OR},		\
+	{"$",	Operator::BIT_XOR},		\
+	{"<<",	Operator::SHIFT_LEFT},	\
+	{">>",	Operator::SHIFT_RIGHT}}
 
 #define CALIBURN_LOGIC_OPS {		\
 	{"&&",	Operator::COND_AND},	\
