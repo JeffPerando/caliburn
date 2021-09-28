@@ -900,6 +900,33 @@ ValueStatement* Parser::parseValue(bool doPostfix)
 	{
 		tokens->consume();
 
+		if (tkn->str == "make")
+		{
+			/*
+			auto type = parseTypeName();
+			tkn = tokens->current();
+
+			if (tkn->type != TokenType::START_PAREN)
+			{
+				//TODO complain
+			}
+
+			tokens->consume();
+
+			std::vector<ValueStatement*> cargs;
+
+			parseValueList(cargs);
+
+			tkn = tokens->current();
+			if (tkn->type != TokenType::END_PAREN)
+			{
+				//TODO complain
+			}
+
+			tokens->consume();
+			*/
+			foundValue = nullptr;//new StackAllocStatement(parseType());
+		}
 		if (tkn->str == "this")
 		{
 			foundValue = nullptr;//new ThisStatement();
@@ -915,13 +942,11 @@ ValueStatement* Parser::parseValue(bool doPostfix)
 		}
 		//TODO figure out what to do with "new" keyword
 		//probably use it in CPU-sided memory allocation
-		/*else if (tkn != "new")
+		/*else if (tkn->str == "new")
 		{
-			//TODO complain
-			return nullptr;
+			return new HeapAllocStatement(parseType());
 		}
-
-		ParsedType* type = parseTypeName();
+		//TODO complain
 		*/
 	}
 	//field, constructor...
