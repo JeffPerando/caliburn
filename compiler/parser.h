@@ -29,7 +29,7 @@ namespace caliburn
 
 		void parseIdentifierList(std::vector<std::string>& ids);
 
-		void parseValueList(std::vector<Statement*>& xs);
+		void parseValueList(std::vector<ValueStatement*>& xs);
 		
 		bool parseGenerics(std::vector<ParsedType*>& generics);
 

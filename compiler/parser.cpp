@@ -60,11 +60,11 @@ void Parser::parseIdentifierList(std::vector<std::string>& ids)
 
 }
 
-void Parser::parseValueList(std::vector<Statement*>& xs)
+void Parser::parseValueList(std::vector<ValueStatement*>& xs)
 {
 	while (true)
 	{
-		Statement* val = parseValue();
+		ValueStatement* val = parseValue();
 
 		if (val == nullptr)
 		{
@@ -949,7 +949,7 @@ ValueStatement* Parser::parseValue(bool doPostfix)
 	else if (tkn->type == TokenType::START_BRACKET)
 	{
 		tokens->consume();
-		std::vector<Statement*> arrayList;
+		std::vector<ValueStatement*> arrayList;
 
 		parseValueList(arrayList);
 
@@ -1056,7 +1056,7 @@ ValueStatement* Parser::parseValue(bool doPostfix)
 		{
 			tkn = tokens->next();
 
-			std::vector<Statement*> indices;
+			std::vector<ValueStatement*> indices;
 
 			parseValueList(indices);
 
@@ -1129,7 +1129,7 @@ Statement* Parser::parseFieldOrFuncValue(bool canHaveNamespace)
 	}
 
 	tokens->consume();
-	std::vector<Statement*> accessors;
+	std::vector<ValueStatement*> accessors;
 
 	Token* tkn = tokens->current();
 
@@ -1167,7 +1167,7 @@ Statement* Parser::parseFieldOrFuncValue(bool canHaveNamespace)
 
 	if (tokens->current()->type == TokenType::START_PAREN)
 	{
-		std::vector<Statement*> args;
+		std::vector<ValueStatement*> args;
 		parseValueList(args);
 
 		tkn = tokens->current();
