@@ -69,10 +69,14 @@ namespace caliburn
 
 		//virtual void SPIRVTypeEval(SpirVAssembler* codeAsm) = 0;
 
+		virtual void addStorageMod(StorageModifier mod) {}
+
 		/*
 		Used for adding the assembly code to the SPIR-V file in progress.
 
 		Returns the SSA that other instructions will use to point to this statement, or 0 if one wasn't made.
+
+		and yes technically I violated camelCase, but sPIRVEmit or spirVEmit would look weird
 		*/
 		virtual uint32_t SPIRVEmit(SpirVAssembler* codeAsm) = 0;
 
