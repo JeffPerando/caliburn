@@ -66,11 +66,9 @@ bool caliburn::isSpecial(char chr)
 
 TokenType caliburn::getSpecial(char chr)
 {
-	static const std::map<char, TokenType> symbolTypes = CALIBURN_CHAR_SYMBOL_TYPES;
+	auto found = charTokenTypes.find(chr);
 
-	auto found = symbolTypes.find(chr);
-
-	if (found == symbolTypes.end())
+	if (found == charTokenTypes.end())
 	{
 		//isSpecial checks the char against certain ranges in ASCII
 		//if a char is special but has no meaning in Caliburn, then it's unknown.
@@ -353,8 +351,6 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 	uint64_t line = 1, col = 1;
 	uint64_t cur = 0;
 
-	std::map<std::string, TokenType> specialStrs = CALIBURN_STR_SYMBOL_TYPES;
-
 	while (cur < txt.length())
 	{
 		int hashtags = 0;
@@ -485,8 +481,8 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 
 		}
 
-		auto found = specialStrs.find(tokenStr);
-		if (found != specialStrs.end())
+		auto found = strTokenTypes.find(tokenStr);
+		if (found != strTokenTypes.end())
 		{
 			tokenID = found->second;
 		}
