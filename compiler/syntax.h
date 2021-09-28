@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <map>
 #include <vector>
 
 namespace caliburn
@@ -14,7 +15,7 @@ namespace caliburn
 		"if", "import", "in", "inputs",
 		"let", "make",
 		"namespace", "new",
-		"op", "override",
+		"op", "out", "override",
 		"pass", "private", "protected", "public",
 		"return",
 		"shared", "switch",
@@ -73,57 +74,61 @@ namespace caliburn
 		ABS, ARRAY_ACCESS
 	};
 
+	static const std::map<char, TokenType> charTokenTypes = {
+		{';',	TokenType::END},
+		{'{',	TokenType::START_SCOPE},
+		{'}',	TokenType::END_SCOPE},
+		{'[',	TokenType::START_BRACKET},
+		{']',	TokenType::END_BRACKET},
+		{'(',	TokenType::START_PAREN},
+		{')',	TokenType::END_PAREN},
+		{'.',	TokenType::PERIOD},
+		{',',	TokenType::COMMA},
+		{':',	TokenType::COLON}
+	};
+
+	static const std::map<std::string, TokenType> strTokenTypes = {
+		{"true",	TokenType::LITERAL_BOOL},
+		{"false",	TokenType::LITERAL_BOOL},
+		{"&&",		TokenType::LOGIC_OPERATOR},
+		{"||",		TokenType::LOGIC_OPERATOR},
+		{"==",		TokenType::LOGIC_OPERATOR},
+		{"!=",		TokenType::LOGIC_OPERATOR},
+		{">",		TokenType::LOGIC_OPERATOR},
+		{"<",		TokenType::LOGIC_OPERATOR},
+		{">=",		TokenType::LOGIC_OPERATOR},
+		{"<=",		TokenType::LOGIC_OPERATOR}
+	};
+
+	//So here's why math ops are separate from logic ops:
+	//Math ops can use (op)= to set something, e.g. +=.
+	//Logic ops can't, mostly because I don't want to deal with parsing that.
+
+	static const std::map<std::string, Operator> mathOps = {
+		{"+",	Operator::ADD},
+		{"++",	Operator::APPEND},
+		{"-",	Operator::SUB},
+		{"*",	Operator::MUL},
+		{"/",	Operator::DIV},
+		{"//",	Operator::INTDIV},
+		{"%",	Operator::MOD},
+		{"^",	Operator::POW},
+		{"&",	Operator::BIT_AND},
+		{"|",	Operator::BIT_OR},
+		{"$",	Operator::BIT_XOR},
+		{"<<",	Operator::SHIFT_LEFT},
+		{">>",	Operator::SHIFT_RIGHT}
+	};
+	
+	static const std::map<std::string, Operator> logicOps = {
+		{"&&",	Operator::COND_AND},
+		{"||",	Operator::COND_OR},
+		{"==",	Operator::COMP_EQ},
+		{"!=",	Operator::COMP_NEQ},
+		{">",	Operator::COMP_GT},
+		{"<",	Operator::COMP_LT},
+		{">=",	Operator::COMP_GTE},
+		{"<=",	Operator::COMP_LTE}
+	};
+
 }
-
-//this has to be a preprocessor directive =/
-#define CALIBURN_CHAR_SYMBOL_TYPES {	\
-	{';',	TokenType::END},			\
-	{'{',	TokenType::START_SCOPE},	\
-	{'}',	TokenType::END_SCOPE},		\
-	{'[',	TokenType::START_BRACKET},	\
-	{']',	TokenType::END_BRACKET},	\
-	{'(',	TokenType::START_PAREN},	\
-	{')',	TokenType::END_PAREN},		\
-	{'.',	TokenType::PERIOD},			\
-	{',',	TokenType::COMMA},			\
-	{':',	TokenType::COLON}}
-
-#define CALIBURN_STR_SYMBOL_TYPES { \
-	{"true",	TokenType::LITERAL_BOOL},	\
-	{"false",	TokenType::LITERAL_BOOL},	\
-	{"&&",		TokenType::LOGIC_OPERATOR}, \
-	{"||",		TokenType::LOGIC_OPERATOR}, \
-	{"==",		TokenType::LOGIC_OPERATOR}, \
-	{"!=",		TokenType::LOGIC_OPERATOR}, \
-	{">",		TokenType::LOGIC_OPERATOR}, \
-	{"<",		TokenType::LOGIC_OPERATOR}, \
-	{">=",		TokenType::LOGIC_OPERATOR}, \
-	{"<=",		TokenType::LOGIC_OPERATOR}}
-
-//So here's why math ops are separate from logic ops:
-//Math ops can use (op)= to set something, e.g. +=.
-//Logic ops can't, mostly because I don't want to deal with parsing that.
-#define CALIBURN_MATH_OPS {			\
-	{"+",	Operator::ADD},			\
-	{"++",	Operator::APPEND},		\
-	{"-",	Operator::SUB},			\
-	{"*",	Operator::MUL},			\
-	{"/",	Operator::DIV},			\
-	{"//",	Operator::INTDIV},		\
-	{"%",	Operator::MOD},			\
-	{"^",	Operator::POW},			\
-	{"&",	Operator::BIT_AND},		\
-	{"|",	Operator::BIT_OR},		\
-	{"$",	Operator::BIT_XOR},		\
-	{"<<",	Operator::SHIFT_LEFT},	\
-	{">>",	Operator::SHIFT_RIGHT}}
-
-#define CALIBURN_LOGIC_OPS {		\
-	{"&&",	Operator::COND_AND},	\
-	{"||",	Operator::COND_OR},		\
-	{"==",	Operator::COMP_EQ},		\
-	{"!=",	Operator::COMP_NEQ},	\
-	{">",	Operator::COMP_GT},		\
-	{"<",	Operator::COMP_LT},		\
-	{">=",	Operator::COMP_GTE},	\
-	{"<=",	Operator::COMP_LTE}}
