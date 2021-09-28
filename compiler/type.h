@@ -101,14 +101,21 @@ namespace caliburn
 
 			if (generics.size() > 0)
 			{
-				ss << '<';
+				ss << '[';
 
-				for (auto g : generics)
+				for (size_t i = 0; i < generics.size(); ++i)
 				{
-					ss << ' ' << g->getFullName();
+					auto g = generics[i];
+					ss << g->getFullName();
+
+					if (i + 1 < generics.size())
+					{
+						ss << ',';
+					}
+
 				}
 
-				ss << " >";
+				ss << "]";
 
 			}
 
