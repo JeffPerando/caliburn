@@ -22,6 +22,15 @@ namespace caliburn
 
 	StorageModifier parseStorageMod(std::string str);
 
+	enum class SymbolType
+	{
+		NONE, TYPE, VARIABLE, FUNCTION
+	};
+
+	//Symbol is defined along with statements; this is because symbols contain statements.
+	//the usage here is limited to ProgramContext
+	struct Symbol;
+
 	struct FunctionSignature
 	{
 		std::string name;
@@ -92,10 +101,8 @@ namespace caliburn
 
 	struct ProgramContext
 	{
-		std::map<std::string, FieldData*> fields;
-		std::map<std::string, CompiledType*> types;
+		std::map<std::string, Symbol*> symbols;
 		
-
 	};
 
 }
