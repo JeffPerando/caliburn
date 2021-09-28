@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "langcore.h"
+#include "syntax.h"
 
 namespace caliburn
 {
