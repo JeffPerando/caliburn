@@ -193,6 +193,7 @@
     <ClInclude Include="typebool.h" />
     <ClInclude Include="typefloat.h" />
     <ClInclude Include="typeint.h" />
+    <ClInclude Include="typestruct.h" />
     <ClInclude Include="typevector.h" />
     <ClInclude Include="typevoid.h" />
     <ClInclude Include="valuestmnt.h" />

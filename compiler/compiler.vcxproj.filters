@@ -142,5 +142,8 @@
     <ClInclude Include="langcore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="typestruct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

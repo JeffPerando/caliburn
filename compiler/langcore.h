@@ -46,7 +46,6 @@ namespace caliburn
 
 	struct FieldData
 	{
-		std::string name;
 		CompiledType* type = nullptr;
 		std::vector<StorageModifier> mods;
 
@@ -66,18 +65,33 @@ namespace caliburn
 
 	struct VarSymbol : public Symbol
 	{
-		FieldData* data = nullptr;
+		VarSymbol()
+		{
+			symbolType = SymbolType::VARIABLE;
+		}
+
+		FieldData data;
 
 	};
 
 	struct TypeSymbol : public Symbol
 	{
+		TypeSymbol()
+		{
+			symbolType = SymbolType::TYPE;
+		}
+
 		CompiledType* type = nullptr;
 
 	};
 
 	struct FunctionSymbol : public Symbol
 	{
+		FunctionSymbol()
+		{
+			symbolType = SymbolType::FUNCTION;
+		}
+
 		std::map<FunctionSignature, FunctionData*> functions;
 
 	};
