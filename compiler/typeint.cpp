@@ -177,7 +177,7 @@ uint32_t TypeInt::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lhs, Operator op
 				spirv::OpShiftRightLogical(), resultTypeSSA, shifted, lhs, rhs });
 			codeAsm->pushAll({ spirv::OpBitwiseAnd(),
 				resultTypeSSA, result, shifted,
-				codeAsm->getOrPushIntConst(1, intBits, hasA(TypeAttrib::SIGNED)).value });
+				/*codeAsm->getOrPushIntConst(1, intBits, hasA(TypeAttrib::SIGNED)).value */});
 			return result;
 		}
 

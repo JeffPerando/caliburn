@@ -22,7 +22,7 @@ void SpirVAssembler::pushStr(std::string str)
 	std::memcpy(ops.end()._Ptr - copied, str.c_str(), str.length());
 
 }
-
+/*
 void SpirVAssembler::pushVarSetter(std::string name, uint32_t value)
 {
 	if (!currentStack)
@@ -70,7 +70,7 @@ void SpirVAssembler::pushVarSetter(std::string name, uint32_t value)
 	phi->options.push_back(SpirVPhiOption(bottomLabel, value));
 
 }
-
+*/
 void SpirVAssembler::startScope()
 {
 	SpirVStack* scope = new SpirVStack();
@@ -137,12 +137,12 @@ void SpirVAssembler::endScope()
 
 		}
 
-		pushVarSetter(field.first, fieldValue);
+		//pushVarSetter(field.first, fieldValue);
 
 	}
 
 }
-
+/*
 uint32_t SpirVAssembler::getVar(std::string name)
 {
 	if (!currentStack)
@@ -168,7 +168,6 @@ uint32_t SpirVAssembler::getVar(std::string name)
 	return 0;
 }
 
-/*
 uint32_t* SpirVAssembler::writeFile()
 {
 	ops.push_back(spirv::MagicNumber());

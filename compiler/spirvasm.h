@@ -114,7 +114,7 @@ namespace caliburn
 		void pushAll(std::initializer_list<SpvOp> args);
 
 		void pushStr(std::string str);
-
+		/*
 		void pushVarSetter(std::string name, uint32_t value);
 
 		uint32_t getVar(std::string name);
@@ -142,7 +142,7 @@ namespace caliburn
 
 			return ret;
 		}
-
+		*/
 	};
 
 }
