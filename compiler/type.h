@@ -9,6 +9,7 @@
 #include <sstream>
 #include <vector>
 
+#include "langcore.h"
 #include "tokenizer.h"
 
 namespace caliburn
@@ -199,11 +200,17 @@ namespace caliburn
 			return superType;
 		}
 
+		Symbol* getMember(std::string name)
+		{
+			return nullptr;
+		}
+
 		virtual void setGeneric(size_t index, CompiledType* type)
 		{
 			throw std::exception("cannot add a generic to this type!");
 		}
 
+		//NOTE: because the size can depend on things like generics, members, etc., this HAS to be a method
 		virtual uint32_t getSizeBytes() const = 0;
 
 		//Conveniently, for most all primitives, alignment == size
