@@ -27,8 +27,7 @@ bool caliburn::isWhitespace(char chr)
 
 bool caliburn::isOperator(char chr)
 {
-	static const auto ops = std::string(OPERATORS);
-	return std::binary_search(ops.begin(), ops.end(), chr);
+	return std::binary_search(OPERATORS.begin(), OPERATORS.end(), chr);
 }
 
 bool caliburn::isStrDelim(char chr)

@@ -24,7 +24,7 @@ namespace caliburn
 		"while"
 	};
 
-	static constexpr auto OPERATORS = "!$%&*+-/<=>^|~";
+	static constexpr std::string_view OPERATORS = "!$%&*+-/<=>^|~";
 
 	enum class TokenType : uint64_t
 	{
