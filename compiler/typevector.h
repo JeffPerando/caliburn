@@ -12,19 +12,13 @@ namespace caliburn
 	{
 		uint32_t const elements;
 
-		TypeVector(std::string fullName, uint32_t vecElements, CompiledType* innerType) :
+		TypeVector(uint32_t vecElements, CompiledType* innerType) :
 			SpecializedType(TypeCategory::VECTOR,
-				fullName,
-				{TypeAttrib::COMPOSITE, TypeAttrib::GENERIC}, 1),
+				"vec" + vecElements, {TypeAttrib::COMPOSITE, TypeAttrib::GENERIC}),
 			elements(vecElements)
 		{
 			setGeneric(0, innerType);
 
-		}
-		
-		virtual uint32_t getMandatoryGenericCount() override
-		{
-			return 0;
 		}
 
 		uint32_t getSizeBytes() const override;

@@ -27,7 +27,8 @@ CompiledType* CaliburnAssembler::resolveType(ParsedType* type)
 
 	if (resolved->hasA(TypeAttrib::GENERIC))
 	{
-		if (type->generics.size() < ((SpecializedType*)resolved)->getMandatoryGenericCount())
+		if (type->generics.size() < ((SpecializedType*)resolved)->minGenerics ||
+			type->generics.size() > ((SpecializedType*)resolved)->maxGenerics)
 		{
 			//TODO complain
 			return nullptr;

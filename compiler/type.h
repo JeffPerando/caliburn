@@ -238,16 +238,15 @@ namespace caliburn
 
 	struct SpecializedType : public CompiledType
 	{
+		size_t const minGenerics, maxGenerics;
 	protected:
-		size_t const genericLimit;
 		std::vector<CompiledType*> generics;
-	
 	public:
 		SpecializedType(TypeCategory cat, std::string name,
-			std::initializer_list<TypeAttrib> attribs, size_t genericCount = 1) :
-			CompiledType(cat, name, attribs), genericLimit(genericCount)
+			std::initializer_list<TypeAttrib> attribs, size_t genMin = 1, size_t genMax = 1) :
+			CompiledType(cat, name, attribs), minGenerics(genMin), maxGenerics(genMax)
 		{
-			generics.reserve(genericCount);
+			generics.reserve(genMin);
 
 		}
 
@@ -306,8 +305,6 @@ namespace caliburn
 			generics[index] = type;
 
 		}
-
-		virtual uint32_t getMandatoryGenericCount() = 0;
 
 	};
 

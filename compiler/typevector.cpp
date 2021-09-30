@@ -16,7 +16,7 @@ uint32_t TypeVector::getAlignBytes() const
 
 CompiledType* TypeVector::clone() const
 {
-	return new TypeVector(canonName, elements, generics[0]);
+	return new TypeVector(elements, generics[0]);
 }
 
 void TypeVector::getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAssembler* codeAsm)

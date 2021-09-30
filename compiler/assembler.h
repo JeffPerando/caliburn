@@ -49,10 +49,10 @@ namespace caliburn
 
 			for (int e = 2; e <= 4; ++e)
 			{
-				defaultTypes.emplace("hvec" + e, new TypeVector("hvec" + e, e, fp16));
-				defaultTypes.emplace("vec" + e, new TypeVector("vec" + e, e, fp32));
-				defaultTypes.emplace("dvec" + e, new TypeVector("dvec" + e, e, fp64));
-				defaultTypes.emplace("ivec" + e, new TypeVector("ivec" + e, e, si32));
+				defaultTypes.emplace("hvec" + e, new TypeVector(e, fp16));
+				defaultTypes.emplace("vec" + e, new TypeVector(e, fp32));
+				defaultTypes.emplace("dvec" + e, new TypeVector(e, fp64));
+				defaultTypes.emplace("ivec" + e, new TypeVector(e, si32));
 
 			}
 
