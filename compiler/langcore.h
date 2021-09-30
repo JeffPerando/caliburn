@@ -4,11 +4,13 @@
 #include <map>
 #include <vector>
 
-#include "type.h"
 #include "syntax.h"
 
 namespace caliburn
 {
+	struct Statement;
+	struct CompiledType;
+
 	enum class StorageModifier
 	{
 		NONE,
@@ -30,48 +32,7 @@ namespace caliburn
 		CompiledType* returnType = nullptr;
 		std::vector<CompiledType*> args;
 
-		bool isCompatible(FunctionSignature* rhs) const
-		{
-			if (name != rhs->name)
-			{
-				return false;
-			}
-
-			if (memberType != rhs->memberType)
-			{
-				if (memberType == nullptr || rhs->memberType == nullptr)
-				{
-					return false;
-				}
-
-				if (*memberType != *rhs->memberType)
-				{
-					return false;
-				}
-
-			}
-			
-			if (*returnType != *rhs->returnType)
-			{
-				return false;
-			}
-
-			if (args.size() != rhs->args.size())
-			{
-				return false;
-			}
-
-			for (size_t i = 0; i < args.size(); ++i)
-			{
-				if (*args[i] != *rhs->args[i])
-				{
-					return false;
-				}
-
-			}
-
-			return true;
-		}
+		bool operator==(const FunctionSignature& rhs) const;
 
 	};
 
