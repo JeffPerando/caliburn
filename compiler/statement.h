@@ -96,12 +96,4 @@ namespace caliburn
 		*/
 	};
 
-	struct Symbol
-	{
-		std::string name = "BROKEN SYMBOL PLS FIX";
-		SymbolType type = SymbolType::NONE;
-		Statement* code = nullptr;
-
-	};
-
 }

@@ -22,21 +22,12 @@ namespace caliburn
 
 	StorageModifier parseStorageMod(std::string str);
 
-	enum class SymbolType
-	{
-		NONE, TYPE, VARIABLE, FUNCTION
-	};
-
-	//Symbol is defined along with statements; this is because symbols contain statements.
-	//the usage here is limited to ProgramContext
-	struct Symbol;
-
 	struct FunctionSignature
 	{
 		std::string name;
 		//only used for methods
 		CompiledType* memberType = nullptr;
-		CompiledType* returnType;
+		CompiledType* returnType = nullptr;
 		std::vector<CompiledType*> args;
 
 		bool isCompatible(FunctionSignature* rhs) const
@@ -87,6 +78,7 @@ namespace caliburn
 	struct FunctionData
 	{
 		FunctionSignature sig;
+		Statement* code = nullptr;
 		std::vector<StorageModifier> mods;
 
 	};
@@ -94,8 +86,38 @@ namespace caliburn
 	struct FieldData
 	{
 		std::string name;
-		CompiledType* type;
+		CompiledType* type = nullptr;
 		std::vector<StorageModifier> mods;
+
+	};
+
+	enum class SymbolType
+	{
+		NONE, TYPE, VARIABLE, FUNCTION
+	};
+
+	struct Symbol
+	{
+		std::string name = "BROKEN SYMBOL PLS FIX";
+		SymbolType symbolType = SymbolType::NONE;
+
+	};
+
+	struct VarSymbol : public Symbol
+	{
+		FieldData* data = nullptr;
+
+	};
+
+	struct TypeSymbol : public Symbol
+	{
+		CompiledType* type = nullptr;
+
+	};
+
+	struct FunctionSymbol : public Symbol
+	{
+		std::map<FunctionSignature, FunctionData*> functions;
 
 	};
 
