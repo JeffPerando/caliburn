@@ -6,6 +6,8 @@
 
 namespace caliburn
 {
+	/*
+	//TODO rework
 	struct AssignStatement : public Statement
 	{
 		std::string field = "";
@@ -29,5 +31,5 @@ namespace caliburn
 		}
 
 	};
-
+	*/
 }
