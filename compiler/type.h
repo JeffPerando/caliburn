@@ -18,7 +18,7 @@ namespace caliburn
 	class SpirVAssembler;
 
 	//Used for resolved types
-	enum class TypeAttrib
+	enum TypeAttrib
 	{
 		NONE =			0,
 		//has the concept of a negative
@@ -133,33 +133,39 @@ namespace caliburn
 		
 	};
 
-	struct CompiledType
+	struct CompiledType : public SymbolTable
 	{
 		const TypeCategory category;
 		const std::string canonName;
+		const size_t maxGenerics;
 	protected:
 		//Since every type is made for a particular assembler, storing the SSA is fine
-		CompiledType* superType = nullptr;
 		uint32_t ssa = 0;
-		uint32_t attribs = 0;
+		int attribs = TypeAttrib::NONE;
+		CompiledType* superType = nullptr;
+		std::vector<CompiledType*> generics;
+		//TODO add dirty flag to trigger a refresh. that or just control when aspects can be edited
+		std::string fullName = "";
 	public:
-		CompiledType(TypeCategory c, std::string n, std::initializer_list<TypeAttrib> as) :
-			category(c), canonName(n)
+		CompiledType(TypeCategory c, std::string n, int as, size_t genMax = 0) :
+			category(c), canonName(n), attribs(as & TypeAttrib::ALL), maxGenerics(genMax)
 		{
-			for (auto a : as)
+			if (maxGenerics > 0)
 			{
-				attribs |= (int)a;
-			}
+				generics.reserve(maxGenerics);
+				attribs |= TypeAttrib::GENERIC;
 
+			}
+			
 		}
 
 		//annoyed that != doesn't have a default implementation that does this
-		virtual bool operator!=(CompiledType& rhs)
+		bool operator!=(const CompiledType& rhs) const
 		{
 			return !(*this == rhs);
 		}
 
-		virtual bool operator==(CompiledType& rhs)
+		bool operator==(const CompiledType& rhs) const
 		{
 			//cheap hack, sorry
 			if (ssa != 0 && rhs.ssa != 0)
@@ -177,12 +183,30 @@ namespace caliburn
 				return false;
 			}
 
+			if (generics.size() != rhs.generics.size())
+			{
+				return false;
+			}
+
+			for (size_t i = 0; i < generics.size(); ++i)
+			{
+				CompiledType* lhsGeneric = generics[i];
+				CompiledType* rhsGeneric = rhs.generics[i];
+
+				if (*lhsGeneric == *rhsGeneric)
+				{
+					continue;
+				}
+
+				return false;
+			}
+
 			return true;
 		}
 
 		bool hasA(TypeAttrib a) const
 		{
-			return (attribs & (int)a) != 0;
+			return (attribs & a) != 0;
 		}
 
 		uint32_t getSSA()
@@ -190,9 +214,31 @@ namespace caliburn
 			return ssa;
 		}
 
-		virtual std::string getFullName()
+		std::string getFullName()
 		{
-			return canonName;
+			if (maxGenerics == 0)
+			{
+				return canonName;
+			}
+
+			if (fullName.length() > 0)
+			{
+				return fullName;
+			}
+
+			std::stringstream ss;
+
+			ss << canonName;
+			ss << '[';
+			for (uint32_t i = 0; i < generics.size(); ++i)
+			{
+				ss << generics[i]->getFullName();
+			}
+			ss << ']';
+
+			fullName = ss.str();
+
+			return fullName;
 		}
 
 		CompiledType* getSuper()
@@ -200,14 +246,33 @@ namespace caliburn
 			return superType;
 		}
 
-		Symbol* getMember(std::string name)
+		bool isSuperOf(CompiledType* type)
 		{
-			return nullptr;
+			CompiledType* head = type;
+
+			while (head)
+			{
+				if (head == this)
+				{
+					return true;
+				}
+
+				head = head->superType;
+
+			}
+
+			return false;
 		}
 
 		virtual void setGeneric(size_t index, CompiledType* type)
 		{
-			throw std::exception("cannot add a generic to this type!");
+			if (index >= maxGenerics)
+			{
+				throw std::exception("cannot add a generic to this type!");
+			}
+
+			generics[index] = type;
+
 		}
 
 		//NOTE: because the size can depend on things like generics, members, etc., this HAS to be a method
@@ -236,74 +301,19 @@ namespace caliburn
 
 	};
 
-	struct SpecializedType : public CompiledType
+	struct PrimitiveType : public CompiledType
 	{
-		size_t const minGenerics, maxGenerics;
-	protected:
-		std::vector<CompiledType*> generics;
-	public:
-		SpecializedType(TypeCategory cat, std::string name,
-			std::initializer_list<TypeAttrib> attribs, size_t genMin = 1, size_t genMax = 1) :
-			CompiledType(cat, name, attribs), minGenerics(genMin), maxGenerics(genMax)
-		{
-			generics.reserve(genMin);
+		PrimitiveType(TypeCategory c, std::string n, TypeAttrib as) :
+			CompiledType(c, n, as, 0) {}
 
+		virtual bool add(Symbol* symbol) override
+		{
+			return false;
 		}
 
-		bool operator==(CompiledType& other)
+		virtual Symbol* resolve(std::string name) override
 		{
-			if (!CompiledType::operator==(other))
-			{
-				return false;
-			}
-
-			auto rhs = (SpecializedType*)&other;
-
-			if (generics.size() != rhs->generics.size())
-			{
-				return false;
-			}
-
-			for (size_t i = 0; i < generics.size(); ++i)
-			{
-				CompiledType* lhsGeneric = generics[i];
-				CompiledType* rhsGeneric = rhs->generics[i];
-
-				if (*lhsGeneric == *rhsGeneric)
-				{
-					continue;
-				}
-
-				return false;
-			}
-
-			return true;
-		}
-
-		virtual std::string getFullName()
-		{
-			std::stringstream ss;
-
-			ss << canonName;
-			ss << '<';
-			for (uint32_t i = 0; i < generics.size(); ++i)
-			{
-				ss << generics[i]->getFullName();
-			}
-			ss << '>';
-
-			return ss.str();
-		}
-
-		virtual void setGeneric(size_t index, CompiledType* type)
-		{
-			if (index >= generics.size())
-			{
-				throw std::exception("Too many generic arguments!");
-			}
-
-			generics[index] = type;
-
+			return nullptr;
 		}
 
 	};
