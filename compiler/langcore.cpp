@@ -2,7 +2,9 @@
 #include "statement.h"
 #include "type.h"
 
-caliburn::StorageModifier caliburn::parseStorageMod(std::string str)
+using namespace caliburn;
+
+StorageModifier caliburn::parseStorageMod(std::string str)
 {
 	if (str == "public")
 		return StorageModifier::PUBLIC;
@@ -18,7 +20,27 @@ caliburn::StorageModifier caliburn::parseStorageMod(std::string str)
 	return StorageModifier::NONE;
 }
 
-bool caliburn::FunctionSignature::operator==(const FunctionSignature& rhs) const
+bool operator==(const FunctionArg& lhs, const FunctionArg& rhs)
+{
+	if (lhs.name != rhs.name)
+	{
+		return false;
+	}
+
+	if (*lhs.type != *rhs.type)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool operator!=(const FunctionArg& lhs, FunctionArg& rhs)
+{
+	return !(lhs == rhs);
+}
+
+bool FunctionSignature::operator==(const FunctionSignature& rhs) const
 {
 	if (name != rhs.name)
 	{
@@ -60,3 +82,21 @@ bool caliburn::FunctionSignature::operator==(const FunctionSignature& rhs) const
 
 	return true;
 }
+
+bool SymbolTable::add(Symbol* sym)
+{
+	if (sym->name.length() == 0 || symMap[sym->name])
+	{
+		return false;
+	}
+
+	symList.push_back(sym);
+	symMap.emplace(sym->name, sym);
+	return true;
+}
+
+Symbol* SymbolTable::resolve(std::string name)
+{
+	return symMap[name];
+}
+
