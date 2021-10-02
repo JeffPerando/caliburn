@@ -7,7 +7,7 @@ namespace caliburn
 {
 	struct TypeVoid : public CompiledType
 	{
-		TypeVoid() : CompiledType(TypeCategory::VOID, "void", {}) {}
+		TypeVoid() : CompiledType(TypeCategory::VOID, "void", TypeAttrib::NONE) {}
 
 		uint32_t getSizeBytes() const override;
 

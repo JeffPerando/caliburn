@@ -8,16 +8,16 @@ namespace caliburn
 {
 	class SpirVAssembler;
 
-	struct TypeInt : public CompiledType
+	struct TypeInt : public PrimitiveType
 	{
 	protected:
-		uint32_t const intBits;
+		const uint32_t intBits;
 	public:
 		TypeInt() : TypeInt(32, true) {}
 		TypeInt(uint32_t b, bool s) :
-			CompiledType(TypeCategory::PRIMITIVE,
+			PrimitiveType(TypeCategory::PRIMITIVE,
 				(s ? "int" : "uint") + b,
-				{s ? TypeAttrib::SIGNED : TypeAttrib::NONE}),
+				s ? TypeAttrib::SIGNED : TypeAttrib::NONE),
 			intBits(b)
 		{}
 

@@ -46,23 +46,34 @@ TypeCompat TypeInt::isCompatible(Operator op, CompiledType* rType) const
 		return TypeCompat::COMPATIBLE;
 	}
 
-	if (rType->category == TypeCategory::PRIMITIVE)
+	if (rType->category != TypeCategory::PRIMITIVE)
 	{
-		if (rType->hasA(TypeAttrib::FLOAT) && this->getSizeBytes() > rType->getSizeBytes())
-		{
-			return TypeCompat::INCOMPATIBLE_TYPE;
-		}
-
-		//TODO POW is unsupported atm
-		if (op == Operator::APPEND || op == Operator::POW)
-		{
-			return TypeCompat::INCOMPATIBLE_OP;
-		}
-
-		return TypeCompat::COMPATIBLE;
+		return TypeCompat::INCOMPATIBLE_TYPE;
+	}
+	if (rType->hasA(TypeAttrib::FLOAT) && this->getSizeBytes() > (MAX_FLOAT_BITS_SUPPORTED / 8))
+	{
+		return TypeCompat::INCOMPATIBLE_TYPE;
 	}
 
-	return TypeCompat::INCOMPATIBLE_TYPE;
+	//This giant switch acts as a list of supported operators.
+	switch (op)
+	{
+		case Operator::ADD:
+		case Operator::SUB:
+		case Operator::MUL:
+		case Operator::DIV:
+		case Operator::MOD:
+		//case Operator::POW:
+		case Operator::BIT_AND:
+		case Operator::BIT_OR:
+		case Operator::BIT_XOR:
+		case Operator::SHIFT_LEFT:
+		case Operator::SHIFT_RIGHT:
+		case Operator::INTDIV:
+		case Operator::ABS: return TypeCompat::COMPATIBLE;
+	}
+
+	return TypeCompat::INCOMPATIBLE_OP;
 }
 
 uint32_t TypeInt::typeDeclSpirV(SpirVAssembler* codeAsm)
@@ -77,7 +88,10 @@ uint32_t TypeInt::typeDeclSpirV(SpirVAssembler* codeAsm)
 	return ssa;
 }
 
-uint32_t TypeInt::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lhs, Operator op, CompiledType* rType, uint32_t rhs, CompiledType*& endType) const
+uint32_t TypeInt::mathOpSpirV(SpirVAssembler* codeAsm,
+	uint32_t lhs, Operator op,
+	CompiledType* rType, uint32_t rhs,
+	CompiledType*& endType) const
 {
 	uint32_t resultTypeSSA = this->ssa;
 	uint32_t result = codeAsm->newAssign();

@@ -8,13 +8,13 @@ namespace caliburn
 {
 	class SpirVAssembler;
 
-	struct TypeVector : public SpecializedType
+	struct TypeVector : public CompiledType
 	{
 		uint32_t const elements;
 
 		TypeVector(uint32_t vecElements, CompiledType* innerType) :
-			SpecializedType(TypeCategory::VECTOR,
-				"vec" + vecElements, {TypeAttrib::COMPOSITE, TypeAttrib::GENERIC}),
+			CompiledType(TypeCategory::VECTOR,
+				"vec" + vecElements, (TypeAttrib)(TypeAttrib::COMPOSITE | TypeAttrib::GENERIC), 1),
 			elements(vecElements)
 		{
 			setGeneric(0, innerType);

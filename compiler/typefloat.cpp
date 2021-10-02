@@ -43,14 +43,15 @@ TypeCompat TypeFloat::isCompatible(Operator op, CompiledType* rType) const
 	{
 		switch (op)
 		{
-		case Operator::BIT_AND:
-		case Operator::BIT_OR:
-		case Operator::BIT_XOR:
-		case Operator::SHIFT_LEFT:
-		case Operator::SHIFT_RIGHT:
-		case Operator::APPEND:
-		case Operator::ARRAY_ACCESS: return TypeCompat::INCOMPATIBLE_OP;
-		default: return TypeCompat::COMPATIBLE;
+			case Operator::ADD:
+			case Operator::SUB:
+			case Operator::MUL:
+			case Operator::DIV:
+			case Operator::MOD:
+			//case Operator::POW:
+			case Operator::INTDIV:
+			case Operator::ABS: return TypeCompat::COMPATIBLE;
+			default: return TypeCompat::INCOMPATIBLE_OP;
 		}
 
 	}

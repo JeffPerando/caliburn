@@ -10,7 +10,7 @@ namespace caliburn
 
 	struct TypeBool : public CompiledType
 	{
-		TypeBool() : CompiledType(TypeCategory::BOOLEAN, "bool", {}){}
+		TypeBool() : CompiledType(TypeCategory::BOOLEAN, "bool", TypeAttrib::NONE){}
 
 		uint32_t getSizeBytes() const override
 		{
