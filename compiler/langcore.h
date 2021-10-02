@@ -8,6 +8,15 @@
 
 namespace caliburn
 {
+	auto static constexpr MIN_INT_BITS_SUPPORTED = 8;
+	auto static constexpr MAX_INT_BITS_SUPPORTED = 512;
+	
+	auto static constexpr MIN_FLOAT_BITS_SUPPORTED = 16;
+	auto static constexpr MAX_FLOAT_BITS_SUPPORTED = 64;
+
+	auto static constexpr MIN_VECTOR_LEN_SUPPORTED = 2;
+	auto static constexpr MAX_VECTOR_LEN_SUPPORTED = 4;
+
 	struct Statement;
 	struct CompiledType;
 
@@ -24,13 +33,22 @@ namespace caliburn
 
 	StorageModifier parseStorageMod(std::string str);
 
+	struct FunctionArg
+	{
+		std::string name;
+		CompiledType* type;
+		//ValueStatement* defaultValue = nullptr;
+
+		//operators have been moved to langcore.cpp
+	};
+
 	struct FunctionSignature
 	{
 		std::string name;
 		//only used for methods
 		CompiledType* memberType = nullptr;
 		CompiledType* returnType = nullptr;
-		std::vector<CompiledType*> args;
+		std::vector<FunctionArg*> args;
 
 		bool operator==(const FunctionSignature& rhs) const;
 
@@ -65,41 +83,70 @@ namespace caliburn
 
 	struct VarSymbol : public Symbol
 	{
+		FieldData data;
+
 		VarSymbol()
 		{
 			symbolType = SymbolType::VARIABLE;
 		}
 
-		FieldData data;
-
 	};
 
 	struct TypeSymbol : public Symbol
 	{
+		CompiledType* type = nullptr;
+
 		TypeSymbol()
 		{
 			symbolType = SymbolType::TYPE;
 		}
 
-		CompiledType* type = nullptr;
-
 	};
 
 	struct FunctionSymbol : public Symbol
 	{
+		std::map<FunctionSignature, FunctionData*> functions;
+
 		FunctionSymbol()
 		{
 			symbolType = SymbolType::FUNCTION;
 		}
 
-		std::map<FunctionSignature, FunctionData*> functions;
+	};
+
+	struct SymbolTable
+	{
+		std::vector<Symbol*> symList;
+		std::map<std::string, Symbol*> symMap;
+
+		SymbolTable() {}
+
+		~SymbolTable()
+		{
+			for (auto sym : symList)
+			{
+				delete sym;
+			}
+
+		}
+
+		virtual bool add(Symbol* sym);
+		virtual Symbol* resolve(std::string name);
 
 	};
 
-	struct ProgramContext
+	enum class TypeConvertCompat
 	{
-		std::map<std::string, Symbol*> symbols;
-		
+		COMPATIBLE,
+		NEEDS_CONVERSION,
+		INCOMPATIBLE
+	};
+
+	struct TypeConvertResult
+	{
+		TypeConvertCompat compat;
+		CompiledType* commonType;
+
 	};
 
 }
