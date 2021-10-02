@@ -1,11 +1,10 @@
 
-#include <chrono>
-#include <fstream>
+//#include <chrono>
+//#include <fstream>
 #include <iostream>
-#include <sstream>
 
-#include "tokenizer.h"
-
+//#include "tokenizer.h"
+/*
 void read(std::string fileName, std::string& data)
 {
     std::ifstream file;
@@ -23,14 +22,9 @@ void read(std::string fileName, std::string& data)
     
 
 }
-
+*/
 int main()
 {
-    uint32_t u = 4000000000u;
-    int32_t i = (int32_t)u;
-
-    std::cout << i << std::endl;
-
     /*
     std::string test;
     auto tokens = std::vector<caliburn::Token>();
