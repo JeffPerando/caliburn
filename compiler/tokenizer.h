@@ -8,21 +8,6 @@
 
 namespace caliburn
 {
-	struct Token
-	{
-		std::string str;
-		TokenType type = TokenType::NONE;
-		uint64_t line, column;
-
-		Token(std::string t) : Token(t, TokenType::IDENTIFIER) {}
-		Token(std::string t, TokenType id) : Token(t, id, 0, 0) {}
-
-		//the fact that this has to exist is bothersome
-		Token(std::string t, TokenType id, uint64_t l, uint64_t c) :
-			str(t), type(id), line(l), column(c) {}
-
-	};
-
 	using FindFunc = bool(*)(char chr);
 
 	inline bool isIdentifier(char chr);
