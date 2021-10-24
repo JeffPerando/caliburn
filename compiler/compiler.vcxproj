@@ -197,6 +197,7 @@
     <ClInclude Include="typevector.h" />
     <ClInclude Include="typevoid.h" />
     <ClInclude Include="valuestmnt.h" />
+    <ClInclude Include="varstmnt.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

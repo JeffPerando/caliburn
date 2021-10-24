@@ -85,9 +85,6 @@
     <ClInclude Include="modlib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="module.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="objstmt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -143,6 +140,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="typestruct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="varstmnt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="module.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
