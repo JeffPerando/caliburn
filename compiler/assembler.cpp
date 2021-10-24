@@ -12,8 +12,8 @@ CaliburnAssembler::CaliburnAssembler()
 		auto intType = new TypeInt(bits, true);
 		auto uintType = new TypeInt(bits, false);
 
-		defaultTypes.emplace("int" + bits, intType);
-		defaultTypes.emplace("uint" + bits, uintType);
+		addDefaultType("int" + bits, intType);
+		addDefaultType("uint" + bits, uintType);
 
 		defaultIntTypes.push_back(intType);
 		defaultIntTypes.push_back(uintType);
@@ -28,7 +28,7 @@ CaliburnAssembler::CaliburnAssembler()
 		bits <= MAX_FLOAT_BITS; bits *= 2)
 	{
 		auto floatType = new TypeFloat(bits);
-		defaultTypes.emplace("float" + bits, floatType);
+		addDefaultType("float" + bits, floatType);
 		defaultFloatTypes.push_back(floatType);
 
 		if (vecPrefixOff >= vecPrefixes.size())
@@ -36,13 +36,20 @@ CaliburnAssembler::CaliburnAssembler()
 			continue;
 		}
 
-		for (size_t e = MIN_VECTOR_LEN_SUPPORTED;
-			e <= MAX_VECTOR_LEN_SUPPORTED; ++e)
+		for (size_t e = MIN_VECTOR_LEN;
+			e <= MAX_VECTOR_LEN; ++e)
 		{
 			//makes hvec, vec, and dvec types
 			//can support qvec types if some weirdo wants 128-bit float support
-			defaultTypes.emplace(vecPrefixes[vecPrefixOff] + ("vec" + e), new TypeVector(e, floatType));
+			auto vecType = new TypeVector(e, floatType);
+			addDefaultType(vecPrefixes[vecPrefixOff] + ("vec" + e), vecType);
 			++vecPrefixOff;
+
+			if (bits == 32)
+			{
+				defaultVectorTypes.push_back(vecType);
+
+			}
 
 		}
 
@@ -52,35 +59,27 @@ CaliburnAssembler::CaliburnAssembler()
 
 	CompiledType* si32 = getIntType(4);
 
-	for (size_t e = MIN_VECTOR_LEN_SUPPORTED;
-		e <= MAX_VECTOR_LEN_SUPPORTED; ++e)
+	for (size_t e = MIN_VECTOR_LEN;
+		e <= MAX_VECTOR_LEN; ++e)
 	{
-		defaultTypes.emplace("ivec" + e, new TypeVector(e, si32));
-
-	}
-
-	for (size_t e = MIN_VECTOR_LEN_SUPPORTED;
-		e <= MAX_VECTOR_LEN_SUPPORTED; ++e)
-	{
-		defaultVectorTypes.push_back((TypeVector*)defaultTypes["vec" + e]);
+		addDefaultType("ivec" + e, new TypeVector(e, si32));
 
 	}
 
 	//void type
-	defaultVoidType = new TypeVoid();
-	defaultTypes.emplace("void", defaultVoidType);
+	addDefaultType("void", new TypeVoid());
 
 	//typical aliases
-	addPermanentAlias("byte", "int8");
+	addTypeAlias("byte", "int8");
 	//TODO replace with proper character types that ensures chars get printed as chars
-	addPermanentAlias("char", "uint8");
-	addPermanentAlias("char8", "uint8");
-	addPermanentAlias("char32", "uint32");
-	addPermanentAlias("short", "int16");
-	addPermanentAlias("int", "int32");
-	addPermanentAlias("long", "int64");
-	addPermanentAlias("float", "float32");
-	addPermanentAlias("double", "float64");
+	addTypeAlias("char", "uint8");
+	addTypeAlias("char8", "uint8");
+	addTypeAlias("char32", "uint32");
+	addTypeAlias("short", "int16");
+	addTypeAlias("int", "int32");
+	addTypeAlias("long", "int64");
+	addTypeAlias("float", "float32");
+	addTypeAlias("double", "float64");
 
 }
 
@@ -88,7 +87,7 @@ CaliburnAssembler::~CaliburnAssembler()
 {
 	for (auto type : defaultTypes)
 	{
-		delete type.second;
+		delete type;
 
 	}
 
@@ -96,20 +95,37 @@ CaliburnAssembler::~CaliburnAssembler()
 
 CompiledType* CaliburnAssembler::resolveType(ParsedType* type)
 {
-	auto it = defaultTypes.find(type->getBasicName());
-	CompiledType* resolved;
-
-	if (it == defaultTypes.end())
+	SymbolTable* mod = &stdLib;
+	
+	if (type->mod && type->mod->str.length() > 0)
 	{
-		//TODO find custom type
-		resolved = nullptr;
+		Symbol* modSym = stdLib.resolve(type->mod->str);
+
+		if (!modSym || modSym->symbolType != SymbolType::MODULE)
+		{
+			//TODO bigger complaint
+			return nullptr;
+		}
+
+		mod = ((ModuleSymbol*)modSym)->table;
+
+		if (!mod)
+		{
+			//TODO bigger complaint
+			return nullptr;
+		}
 
 	}
-	else
-	{
-		resolved = it->second;
 
+	auto typeSym = mod->resolve(type->getBasicName());
+
+	if (!typeSym || typeSym->symbolType != SymbolType::TYPE)
+	{
+		//TODO bigger complaint
+		return nullptr;
 	}
+
+	CompiledType* resolved = ((TypeSymbol*)typeSym)->type;
 
 	if (!resolved)
 	{

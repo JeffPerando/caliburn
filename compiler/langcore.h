@@ -6,6 +6,12 @@
 
 #include "syntax.h"
 
+/*
+Contains necessary constants, data types, and functions necessary for parsing, interpreting,
+and compiling Caliburn code.
+
+Also includes the syntax header in case you need that (I believe this does as well)
+*/
 namespace caliburn
 {
 	auto static constexpr MIN_INT_BITS = 8;
@@ -18,6 +24,7 @@ namespace caliburn
 	auto static constexpr MAX_VECTOR_LEN = 4;
 
 	struct Statement;
+	struct ParsedType;
 	struct CompiledType;
 
 	enum class StorageModifier
@@ -45,8 +52,7 @@ namespace caliburn
 	struct FunctionSignature
 	{
 		std::string name;
-		//only used for methods
-		CompiledType* memberType = nullptr;
+		CompiledType* memberOf = nullptr; //only used for methods
 		CompiledType* returnType = nullptr;
 		std::vector<FunctionArg*> args;
 
@@ -64,31 +70,43 @@ namespace caliburn
 
 	struct FieldData
 	{
-		CompiledType* type = nullptr;
+		ParsedType* pType = nullptr;
+		CompiledType* cType = nullptr;
 		std::vector<StorageModifier> mods;
 
 	};
 
 	enum class SymbolType
 	{
-		NONE, TYPE, VARIABLE, FUNCTION
+		NONE, TYPE, VARIABLE, FUNCTION, MODULE
+	};
+
+	enum class VarType
+	{
+		//members are owned by a data type.
+		MEMBER,
+		//fields are owned by either a module or a function
+		FIELD,
+		//function args are arguments passed to a function. whoda thunk it?
+		//note that this includes 'this'. Methods are compiled as functions with the first argument being the object used.
+		FUNC_ARG
 	};
 
 	struct Symbol
 	{
-		std::string name = "BROKEN SYMBOL PLS FIX";
-		SymbolType symbolType = SymbolType::NONE;
+		std::string name = "";
+		const SymbolType symbolType;
+
+		Symbol(SymbolType t) : symbolType(t) {}
 
 	};
 
 	struct VarSymbol : public Symbol
 	{
 		FieldData data;
+		const VarType varType;
 
-		VarSymbol()
-		{
-			symbolType = SymbolType::VARIABLE;
-		}
+		VarSymbol(VarType t) : Symbol(SymbolType::VARIABLE), varType(t) {}
 
 	};
 
@@ -96,10 +114,7 @@ namespace caliburn
 	{
 		CompiledType* type = nullptr;
 
-		TypeSymbol()
-		{
-			symbolType = SymbolType::TYPE;
-		}
+		TypeSymbol() : Symbol(SymbolType::TYPE) {}
 
 	};
 
@@ -107,21 +122,20 @@ namespace caliburn
 	{
 		std::map<FunctionSignature, FunctionData*> functions;
 
-		FunctionSymbol()
-		{
-			symbolType = SymbolType::FUNCTION;
-		}
+		FunctionSymbol() : Symbol(SymbolType::FUNCTION) {}
 
 	};
 
 	struct SymbolTable
 	{
+		SymbolTable* const parent;
 		std::vector<Symbol*> symList;
 		std::map<std::string, Symbol*> symMap;
 
-		SymbolTable() {}
+		SymbolTable() : SymbolTable(nullptr) {}
+		SymbolTable(SymbolTable* superTable) : parent(superTable) {}
 
-		~SymbolTable()
+		virtual ~SymbolTable()
 		{
 			for (auto sym : symList)
 			{
@@ -131,7 +145,16 @@ namespace caliburn
 		}
 
 		virtual bool add(Symbol* sym);
+		virtual bool alias(std::string name, Symbol* sym);
 		virtual Symbol* resolve(std::string name);
+
+	};
+
+	struct ModuleSymbol : public Symbol
+	{
+		SymbolTable* table = nullptr;
+
+		ModuleSymbol() : Symbol(SymbolType::MODULE) {}
 
 	};
 

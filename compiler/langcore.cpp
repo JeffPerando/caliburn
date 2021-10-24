@@ -47,14 +47,14 @@ bool FunctionSignature::operator==(const FunctionSignature& rhs) const
 		return false;
 	}
 
-	if (memberType != rhs.memberType)
+	if (memberOf != rhs.memberOf)
 	{
-		if (memberType == nullptr || rhs.memberType == nullptr)
+		if (memberOf == nullptr || rhs.memberOf == nullptr)
 		{
 			return false;
 		}
 
-		if (*memberType != *rhs.memberType)
+		if (*memberOf != *rhs.memberOf)
 		{
 			return false;
 		}
@@ -85,7 +85,7 @@ bool FunctionSignature::operator==(const FunctionSignature& rhs) const
 
 bool SymbolTable::add(Symbol* sym)
 {
-	if (sym->name.length() == 0 || symMap[sym->name])
+	if (sym->name.length() == 0 || symMap.count(sym->name) != 0)
 	{
 		return false;
 	}
@@ -95,8 +95,39 @@ bool SymbolTable::add(Symbol* sym)
 	return true;
 }
 
+bool SymbolTable::alias(std::string name, Symbol* sym)
+{
+	if (name.length() == 0 || sym == nullptr)
+	{
+		return false;
+	}
+
+	//ensure the original name DOES exist, and the new name doesn't
+	if (symMap.count(sym->name) == 0 || symMap.count(name) != 0)
+	{
+		return false;
+	}
+
+	//DO NOT ADD THE SYMBOL TO THE SYMBOL LIST; IT'S USED FOR DELETES
+	//ADDING WILL RESULT IN A DOUBLE DELETE
+	symMap.emplace(name, sym);
+
+}
+
 Symbol* SymbolTable::resolve(std::string name)
 {
-	return symMap[name];
+	auto result = symMap.find(name);
+
+	if (result != symMap.end())
+	{
+		return result->second;
+	}
+
+	if (parent)
+	{
+		return parent->resolve(name);
+	}
+	
+	return nullptr;
 }
 

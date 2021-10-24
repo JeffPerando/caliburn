@@ -2,17 +2,37 @@
 #pragma once
 
 #include "deftypes.h"
+#include "langcore.h"
 
 namespace caliburn
 {
 	class CaliburnAssembler
 	{
-		std::map<std::string, CompiledType*> defaultTypes;
+		SymbolTable stdLib;
+		std::vector<CompiledType*> defaultTypes;
 
 		std::vector<TypeInt*> defaultIntTypes;
 		std::vector<TypeFloat*> defaultFloatTypes;
 		std::vector<TypeVector*> defaultVectorTypes;
 		TypeVoid* defaultVoidType = nullptr;
+
+		void addDefaultType(std::string name, CompiledType* type)
+		{
+			if (type == nullptr)
+			{
+				return;
+			}
+
+			defaultTypes.push_back(type);
+			
+			auto sym = new TypeSymbol();
+
+			sym->name = name;
+			sym->type = type;
+
+			stdLib.add(sym);
+
+		}
 
 	public:
 		CaliburnAssembler();
@@ -24,6 +44,8 @@ namespace caliburn
 		virtual void startScope() = 0;
 
 		virtual void endScope() = 0;
+
+		void addModule(SymbolTable* syms) {}
 
 		CompiledType* resolveType(std::string name)
 		{
@@ -44,9 +66,17 @@ namespace caliburn
 
 		CompiledType* resolveType(ParsedType* type);
 
-		void addPermanentAlias(std::string alias, std::string original)
+		void addTypeAlias(std::string alias, std::string original)
 		{
-			defaultTypes[alias] = defaultTypes.at(original);
+			Symbol* sym = stdLib.resolve(original);
+
+			if (!sym || sym->symbolType != SymbolType::TYPE)
+			{
+				return;
+			}
+
+			stdLib.alias(alias, sym);
+
 		}
 
 		TypeInt* getIntType(uint32_t bytes, bool sign = true)
