@@ -169,12 +169,6 @@ size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 	size_t intCount = 0;
 	//integer validation
 	//the alternative was writing regular expressions; which would be fine, but not performant.
-	if (txt[cur] == '-')
-	{
-		count += 1;
-		cur += 1;
-	}
-	
 	if (!isDecInt(txt[cur]))
 	{
 		return 0;
@@ -430,10 +424,7 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 			continue;
 		}
 
-		//int literals can start with a -, so check for that first
-		size_t intLen = findIntLiteral(txt, cur, tokenID);
-
-		if (intLen == 0 && isOperator(txt[cur]))
+		if (isOperator(txt[cur]))
 		{
 			tokenLen = find(&caliburn::isOperator, txt, cur);
 			tokenID = TokenType::MATH_OPERATOR;
@@ -445,6 +436,7 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 		}
 		else
 		{
+			size_t intLen = findIntLiteral(txt, cur, tokenID);
 			size_t identLen = find(&caliburn::isIdentifier, txt, cur);
 			
 			if (identLen > intLen)
@@ -455,6 +447,7 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 			else
 			{
 				tokenLen = intLen;
+				//tokenID is set by findIntLiteral
 			}
 
 		}
