@@ -6,8 +6,8 @@ using namespace caliburn;
 CaliburnAssembler::CaliburnAssembler()
 {
 	//int types
-	for (int bits = MIN_INT_BITS_SUPPORTED;
-		bits <= MAX_INT_BITS_SUPPORTED; bits *= 2)
+	for (int bits = MIN_INT_BITS;
+		bits <= MAX_INT_BITS; bits *= 2)
 	{
 		auto intType = new TypeInt(bits, true);
 		auto uintType = new TypeInt(bits, false);
@@ -24,8 +24,8 @@ CaliburnAssembler::CaliburnAssembler()
 
 	//float types
 	size_t vecPrefixOff = 0;
-	for (int bits = MIN_FLOAT_BITS_SUPPORTED;
-		bits <= MAX_FLOAT_BITS_SUPPORTED; bits *= 2)
+	for (int bits = MIN_FLOAT_BITS;
+		bits <= MAX_FLOAT_BITS; bits *= 2)
 	{
 		auto floatType = new TypeFloat(bits);
 		defaultTypes.emplace("float" + bits, floatType);

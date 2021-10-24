@@ -8,14 +8,14 @@
 
 namespace caliburn
 {
-	auto static constexpr MIN_INT_BITS_SUPPORTED = 8;
-	auto static constexpr MAX_INT_BITS_SUPPORTED = 512;
+	auto static constexpr MIN_INT_BITS = 8;
+	auto static constexpr MAX_INT_BITS = 512;
 	
-	auto static constexpr MIN_FLOAT_BITS_SUPPORTED = 16;
-	auto static constexpr MAX_FLOAT_BITS_SUPPORTED = 64;
+	auto static constexpr MIN_FLOAT_BITS = 16;
+	auto static constexpr MAX_FLOAT_BITS = 64;
 
-	auto static constexpr MIN_VECTOR_LEN_SUPPORTED = 2;
-	auto static constexpr MAX_VECTOR_LEN_SUPPORTED = 4;
+	auto static constexpr MIN_VECTOR_LEN = 2;
+	auto static constexpr MAX_VECTOR_LEN = 4;
 
 	struct Statement;
 	struct CompiledType;

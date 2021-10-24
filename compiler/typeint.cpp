@@ -50,7 +50,7 @@ TypeCompat TypeInt::isCompatible(Operator op, CompiledType* rType) const
 	{
 		return TypeCompat::INCOMPATIBLE_TYPE;
 	}
-	if (rType->hasA(TypeAttrib::FLOAT) && this->getSizeBytes() > (MAX_FLOAT_BITS_SUPPORTED / 8))
+	if (rType->hasA(TypeAttrib::FLOAT) && this->getSizeBytes() > (MAX_FLOAT_BITS / 8))
 	{
 		return TypeCompat::INCOMPATIBLE_TYPE;
 	}
