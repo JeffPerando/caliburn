@@ -14,9 +14,9 @@ namespace caliburn
 
 		IfStatement() : Statement(StatementType::IF) {}
 
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
-			uint32_t condSSA = condition->SPIRVEmit(codeAsm);
+			uint32_t condSSA = condition->SPIRVEmit(codeAsm, syms);
 			uint32_t ifSSA = codeAsm->newAssign();
 			uint32_t endSSA = codeAsm->newAssign();
 			uint32_t elseSSA = endSSA;
@@ -35,7 +35,7 @@ namespace caliburn
 			codeAsm->startScope();
 			codeAsm->getCurrentScope()->label = ifSSA;
 
-			ifBranch->SPIRVEmit(codeAsm);
+			ifBranch->SPIRVEmit(codeAsm, syms);
 
 			codeAsm->endScope();
 			
@@ -50,7 +50,7 @@ namespace caliburn
 				codeAsm->startScope();
 				codeAsm->getCurrentScope()->label = elseSSA;
 
-				elseBranch->SPIRVEmit(codeAsm);
+				elseBranch->SPIRVEmit(codeAsm, syms);
 
 				codeAsm->endScope();
 
@@ -76,7 +76,7 @@ namespace caliburn
 
 		ForStatement() : Statement(StatementType::FOR) {}
 
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			uint32_t mergeSSA = codeAsm->newAssign();
 			uint32_t contSSA = codeAsm->newAssign();
@@ -94,7 +94,7 @@ namespace caliburn
 			codeAsm->getCurrentScope()->label = startSSA;
 
 			//(int i = 0;
-			preLoop->SPIRVEmit(codeAsm);
+			preLoop->SPIRVEmit(codeAsm, syms);
 
 			codeAsm->pushAll({
 				spirv::OpLoopMerge(0), mergeSSA, contSSA, 0, //TODO base flag off optimize level
@@ -103,7 +103,7 @@ namespace caliburn
 				spirv::OpLabel(), bodySSA });
 			
 			//i < j;
-			uint32_t condSSA = cond->SPIRVEmit(codeAsm);
+			uint32_t condSSA = cond->SPIRVEmit(codeAsm, syms);
 
 			//branch
 			codeAsm->pushAll({
@@ -114,7 +114,7 @@ namespace caliburn
 			codeAsm->startScope();
 			codeAsm->getCurrentScope()->label = loopSSA;
 
-			loop->SPIRVEmit(codeAsm);
+			loop->SPIRVEmit(codeAsm, syms);
 
 			//loopSSA
 			codeAsm->endScope();
@@ -124,7 +124,7 @@ namespace caliburn
 				spirv::OpLabel(), contSSA });
 			//}
 			//i++)
-			postLoop->SPIRVEmit(codeAsm);
+			postLoop->SPIRVEmit(codeAsm, syms);
 
 			codeAsm->pushAll({
 				//loop back
@@ -147,7 +147,7 @@ namespace caliburn
 
 		WhileStatement() : Statement(StatementType::WHILE) {}
 
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			uint32_t mergeSSA = codeAsm->newAssign();
 			uint32_t contSSA = codeAsm->newAssign();
@@ -166,7 +166,7 @@ namespace caliburn
 				spirv::OpLabel(), bodySSA });
 
 			// true
-			uint32_t condSSA = cond->SPIRVEmit(codeAsm);
+			uint32_t condSSA = cond->SPIRVEmit(codeAsm, syms);
 
 			//branch
 			codeAsm->pushAll({
@@ -177,7 +177,7 @@ namespace caliburn
 			codeAsm->startScope();
 			codeAsm->getCurrentScope()->label = loopSSA;
 
-			loop->SPIRVEmit(codeAsm);
+			loop->SPIRVEmit(codeAsm, syms);
 
 			codeAsm->endScope();
 
@@ -204,7 +204,7 @@ namespace caliburn
 
 		DoWhileStatement() : Statement(StatementType::DOWHILE) {}
 
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			uint32_t mergeSSA = codeAsm->newAssign();
 			uint32_t contSSA = codeAsm->newAssign();
@@ -221,7 +221,7 @@ namespace caliburn
 				spirv::OpBranch(), bodySSA,
 				spirv::OpLabel(), bodySSA });
 
-			uint32_t condSSA = cond->SPIRVEmit(codeAsm);
+			uint32_t condSSA = cond->SPIRVEmit(codeAsm, syms);
 
 			codeAsm->pushAll({
 				spirv::OpBranchConditional(0), condSSA, loopSSA, mergeSSA,
@@ -230,7 +230,7 @@ namespace caliburn
 			codeAsm->startScope();
 			codeAsm->getCurrentScope()->label = loopSSA;
 
-			loop->SPIRVEmit(codeAsm);
+			loop->SPIRVEmit(codeAsm, syms);
 
 			codeAsm->endScope();
 
@@ -253,11 +253,11 @@ namespace caliburn
 		
 		ReturnStatement() : Statement(StatementType::RETURN) {}
 
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			if (val)
 			{
-				uint32_t retval = val->SPIRVEmit(codeAsm);
+				uint32_t retval = val->SPIRVEmit(codeAsm, syms);
 
 				//codeAsm->pushVarSetter(CALIBURN_RETURN_VAR, retval);
 				codeAsm->pushAll({ spirv::OpReturnValue(), retval });
@@ -276,7 +276,7 @@ namespace caliburn
 	{
 		BreakStatement() : Statement(StatementType::BREAK) {}
 		
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			//*shrug*
 			return 0;
@@ -288,7 +288,7 @@ namespace caliburn
 	{
 		ContinueStatement() : Statement(StatementType::CONTINUE) {}
 		
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			//*shrug*
 			return 0;

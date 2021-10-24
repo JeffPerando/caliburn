@@ -26,7 +26,7 @@ namespace caliburn
 
 		FunctionStatement() : Statement(StatementType::FUNCTION) {}
 
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			if (returnType == nullptr)
 			{
@@ -66,7 +66,7 @@ namespace caliburn
 
 			codeAsm->pushAll({spirv::OpLabel(), startSSA});
 
-			funcBody->SPIRVEmit(codeAsm);
+			funcBody->SPIRVEmit(codeAsm, syms);
 
 			codeAsm->endScope();
 

@@ -24,7 +24,7 @@ namespace caliburn
 
 		}
 
-		virtual uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		virtual uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			return 0;
 		}
@@ -47,7 +47,7 @@ namespace caliburn
 			}
 		}
 
-		virtual uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		virtual uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			return 0;
 		}
@@ -58,7 +58,7 @@ namespace caliburn
 	{
 		PassStatement() : Statement(StatementType::PASS) {}
 
-		virtual uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		virtual uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			return 0;
 		}

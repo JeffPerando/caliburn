@@ -58,27 +58,33 @@ namespace caliburn
 	struct Statement
 	{
 	public:
-		StatementType const type;
+		const StatementType type;
 
 		Statement(StatementType stmntType) : type(stmntType) {}
 		virtual ~Statement() {}
 
 		//virtual bool isCompileTimeConst() = 0;
 
-		//virtual void SPIRVTypeRegister(SpirVAssembler* codeAsm) = 0;
+		/*
+		Add new symbols to the table. Members, types, functions, etc.
+		*/
+		//virtual void RegisterSymbols(CaliburnAssembler* codeAsm, SymbolTable* syms) = 0;
 
-		//virtual void SPIRVTypeEval(SpirVAssembler* codeAsm) = 0;
+		/*
+		Goes after symbol registration. Used to evaluate parsed types. Add any additional symbols needed.
+		*/
+		//virtual void TypeEval(CaliburnAssembler* codeAsm, SymbolTable* syms) = 0;
 
 		virtual void addStorageMod(StorageModifier mod) {}
 
 		/*
-		Used for adding the assembly code to the SPIR-V file in progress.
+		Add the final assembly code to the SPIR-V file in progress.
 
 		Returns the SSA that other instructions will use to point to this statement, or 0 if one wasn't made.
 
 		and yes technically I violated camelCase, but sPIRVEmit or spirVEmit would look weird
 		*/
-		virtual uint32_t SPIRVEmit(SpirVAssembler* codeAsm) = 0;
+		virtual uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms) = 0;
 
 	};
 

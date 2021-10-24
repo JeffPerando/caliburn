@@ -14,7 +14,7 @@ namespace caliburn
 			Statement(StatementType::IMPORT) {}
 		~ImportStatement() {}
 
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			//No complaining
 			return 0;
@@ -29,7 +29,7 @@ namespace caliburn
 
 		TypedefStatement() : Statement(StatementType::TYPEDEF) {}
 
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			return 0;
 		}

@@ -11,11 +11,11 @@ namespace caliburn
 		ScopeStatement() : ContextStmnt(StatementType::SCOPE) {}
 		~ScopeStatement() { Statement::~Statement(); }
 
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			for (auto stmt : innerCode)
 			{
-				stmt->SPIRVEmit(codeAsm);
+				stmt->SPIRVEmit(codeAsm, syms);
 
 			}
 
