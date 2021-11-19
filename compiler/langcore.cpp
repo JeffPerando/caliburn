@@ -112,6 +112,7 @@ bool SymbolTable::alias(std::string name, Symbol* sym)
 	//ADDING WILL RESULT IN A DOUBLE DELETE
 	symMap.emplace(name, sym);
 
+	return true;
 }
 
 Symbol* SymbolTable::resolve(std::string name)

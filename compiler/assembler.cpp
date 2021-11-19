@@ -36,7 +36,7 @@ CaliburnAssembler::CaliburnAssembler()
 			continue;
 		}
 
-		for (size_t e = MIN_VECTOR_LEN;
+		for (uint32_t e = MIN_VECTOR_LEN;
 			e <= MAX_VECTOR_LEN; ++e)
 		{
 			//makes hvec, vec, and dvec types
@@ -59,7 +59,7 @@ CaliburnAssembler::CaliburnAssembler()
 
 	CompiledType* si32 = getIntType(4);
 
-	for (size_t e = MIN_VECTOR_LEN;
+	for (uint32_t e = MIN_VECTOR_LEN;
 		e <= MAX_VECTOR_LEN; ++e)
 	{
 		addDefaultType("ivec" + e, new TypeVector(e, si32));
@@ -90,6 +90,8 @@ CaliburnAssembler::~CaliburnAssembler()
 		delete type;
 
 	}
+
+	defaultTypes.clear();
 
 }
 

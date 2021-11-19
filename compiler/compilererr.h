@@ -4,7 +4,7 @@
 #include <string>
 #include <sstream>
 
-#include "tokenizer.h"
+#include "syntax.h"
 
 namespace caliburn
 {
