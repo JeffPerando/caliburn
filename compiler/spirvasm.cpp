@@ -9,7 +9,7 @@ void SpirVAssembler::push(uint32_t op)
 
 }
 
-void SpirVAssembler::pushAll(std::initializer_list<SpvOp> args)
+void SpirVAssembler::pushAll(std::initializer_list<spirv::SpvOp> args)
 {
 	ops.insert(ops.end(), args);
 

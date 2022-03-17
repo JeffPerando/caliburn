@@ -128,7 +128,7 @@ uint32_t TypeFloat::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Ope
 		endType = (TypeFloat*)this;
 	}
 
-	SpvOp opcode = spirv::OpNop();
+	spirv::SpvOp opcode = spirv::OpNop();
 
 	switch (op)
 	{

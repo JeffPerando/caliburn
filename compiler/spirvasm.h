@@ -15,24 +15,6 @@ namespace caliburn
 {
 	constexpr uint32_t CALIBURN_MAGIC_NUMBER = (0);
 
-	struct SSA
-	{
-		uint32_t value = 0;
-		SSA() {}
-		SSA(uint32_t v) : value(v) {}
-
-		operator uint32_t()
-		{
-			return value;
-		}
-	};
-
-	struct TypedSSA
-	{
-		CompiledType* type = nullptr;
-		SSA value = 0;
-	};
-
 	struct SpirVPhiOption
 	{
 		uint32_t label = 0;
@@ -71,7 +53,7 @@ namespace caliburn
 	class SpirVAssembler : public CaliburnAssembler
 	{
 	private:
-		std::vector<SpvOp> ops;
+		std::vector<spirv::SpvOp> ops;
 		std::vector<CompiledType*> usedTypes;
 
 		std::map<uint64_t, TypedSSA> intConstants;
@@ -82,7 +64,7 @@ namespace caliburn
 	public:
 		SpirVAssembler(size_t opCount = 8192)
 		{
-			ops = std::vector<SpvOp>(opCount);
+			ops = std::vector<spirv::SpvOp>(opCount);
 
 		}
 
@@ -111,7 +93,7 @@ namespace caliburn
 
 		void push(uint32_t op);
 
-		void pushAll(std::initializer_list<SpvOp> args);
+		void pushAll(std::initializer_list<spirv::SpvOp> args);
 
 		void pushStr(std::string str);
 		/*
