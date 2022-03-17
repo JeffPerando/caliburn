@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "langcore.h"
-#include "tokenizer.h"
 
 namespace caliburn
 {
@@ -43,6 +42,7 @@ namespace caliburn
 	enum class TypeCompat
 	{
 		COMPATIBLE,
+		NEEDS_CONVERSION,
 		INCOMPATIBLE_TYPE,
 		INCOMPATIBLE_OP
 	};
@@ -131,6 +131,8 @@ namespace caliburn
 			return this;
 		}
 		
+		CompiledType* resolve(CaliburnAssembler* codeAsm, SymbolTable* syms);
+
 	};
 
 	struct CompiledType : public SymbolTable

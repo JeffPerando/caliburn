@@ -47,24 +47,6 @@ namespace caliburn
 
 		void addModule(SymbolTable* syms) {}
 
-		CompiledType* resolveType(std::string name)
-		{
-			return resolveType("", name);
-		}
-
-		CompiledType* resolveType(std::string mod, std::string name)
-		{
-			ParsedType type;
-			Token modTkn(mod);
-			Token nameTkn(name);
-
-			type.mod = &modTkn;
-			type.name = &nameTkn;
-			
-			return resolveType(&type);
-		}
-
-		CompiledType* resolveType(ParsedType* type);
 
 		void addTypeAlias(std::string alias, std::string original)
 		{

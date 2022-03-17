@@ -44,6 +44,9 @@
     <ClCompile Include="langcore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="type.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allasm.h">
