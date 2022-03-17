@@ -346,44 +346,39 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 
 	while (cur < txt.length())
 	{
-		int hashtags = 0;
 		bool isComment = false;
 		bool isMultilineComment = false;
 		
 		//Avoid comments/preprocessor directives
 		if (txt[cur] == '#')
 		{
-			isComment = true;
-			hashtags++;
-
-			//avoid multiline comments
-			if (hashtags == 3)
+			if (cur < txt.length() + 1 && txt[cur + 1] == '*')
 			{
-				hashtags = 0;
-				isMultilineComment = !isMultilineComment;
-
-				if (!isMultilineComment)
-				{
-					isComment = false;
-
-				}
-
+				isMultilineComment = true;
+				isComment = true;
+				cur++;
+			}
+			else if (!isMultilineComment)
+			{
+				isComment = !isComment;
 			}
 
-			cur += 1;
-			col += 1;
-
+			col++;
+			cur++;
 			continue;
 		}
-		else
+		else if (isMultilineComment && txt[cur] == '*')
 		{
-			hashtags = 0;
-		}
+			if (cur < txt.length() + 1 && txt[cur + 1] == '#')
+			{
+				isMultilineComment = false;
+				isComment = false;
+				col++;
+				cur++;
+			}
 
-		if (isComment)
-		{
-			cur += 1;
-			col += 1;
+			col++;
+			cur++;
 			continue;
 		}
 
@@ -393,21 +388,23 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 			if (txt[cur] == '\n')
 			{
 				line += 1;
-				col = 1;
+				col = 0;
 
-				if (!isMultilineComment)
+				if (isComment && !isMultilineComment)
 				{
 					isComment = false;
-
 				}
 
 			}
-			else
-			{
-				col += 1;
 
-			}
+			col += 1;
+			cur += 1;
+			continue;
+		}
 
+		if (isComment)
+		{
+			col += 1;
 			cur += 1;
 			continue;
 		}
@@ -419,8 +416,8 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 		if (tokenID != TokenType::NONE)
 		{
 			tokens.push_back(Token(std::string(1, txt[cur]), tokenID, line, col));
-			cur += 1;
 			col += 1;
+			cur += 1;
 			continue;
 		}
 
@@ -480,8 +477,8 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 		}
 
 		tokens.push_back(Token(tokenStr, tokenID, line, col));
-		cur += tokenLen;
 		col += tokenLen;
+		cur += tokenLen;
 
 	}
 
