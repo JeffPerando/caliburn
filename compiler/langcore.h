@@ -2,6 +2,7 @@
 #pragma once
 
 #include <map>
+#include <string>
 #include <vector>
 
 #include "syntax.h"
@@ -26,6 +27,28 @@ namespace caliburn
 	struct Statement;
 	struct ParsedType;
 	struct CompiledType;
+	
+	struct SSA
+	{
+		uint32_t value = 0;
+		SSA() {}
+		SSA(uint32_t v) : value(v) {}
+
+		operator uint32_t()
+		{
+			return value;
+		}
+	};
+
+	struct TypedSSA
+	{
+		CompiledType* type = nullptr;
+		SSA value = 0;
+
+		TypedSSA() {}
+		TypedSSA(CompiledType* t, SSA v) : type(t), value(v) {}
+
+	};
 
 	/*
 	Enum denoting how much to optimize emitted shader code.
@@ -90,34 +113,16 @@ namespace caliburn
 
 	};
 
-	struct FieldData
-	{
-		ParsedType* pType = nullptr;
-		CompiledType* cType = nullptr;
-		std::vector<StorageModifier> mods;
-
-	};
-
 	enum class SymbolType
 	{
-		NONE, TYPE, VARIABLE, FUNCTION, MODULE
-	};
-
-	enum class VarType
-	{
-		//members are owned by a data type.
-		MEMBER,
-		//fields are owned by either a module or a function
-		FIELD,
-		//function args are arguments passed to a function. whoda thunk it?
-		//note that this includes 'this'. Methods are compiled as functions with the first argument being the object used.
-		FUNC_ARG
+		NONE, TYPE, VARIABLE, MEMBER, FUNCTION, MODULE
 	};
 
 	struct Symbol
 	{
-		std::string name = "";
 		const SymbolType symbolType;
+		std::string name = "";
+		std::vector<StorageModifier> mods;
 
 		Symbol(SymbolType t) : symbolType(t) {}
 
@@ -125,10 +130,17 @@ namespace caliburn
 
 	struct VarSymbol : public Symbol
 	{
-		FieldData data;
-		const VarType varType;
+		TypedSSA ssa;
 
-		VarSymbol(VarType t) : Symbol(SymbolType::VARIABLE), varType(t) {}
+		VarSymbol() : Symbol(SymbolType::VARIABLE) {}
+
+	};
+
+	struct MemberSymbol : public Symbol
+	{
+		CompiledType* memberType;
+		CompiledType* valueType;
+		uint32_t offset;
 
 	};
 

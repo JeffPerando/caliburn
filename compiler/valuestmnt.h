@@ -12,6 +12,8 @@ namespace caliburn
 
 		virtual bool isLValue() = 0;
 
+		virtual TypedSSA getSSA() = 0;
+
 	};
 
 }

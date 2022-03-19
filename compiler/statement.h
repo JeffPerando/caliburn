@@ -68,12 +68,12 @@ namespace caliburn
 		/*
 		Add new symbols to the table. Members, types, functions, etc.
 		*/
-		//virtual void RegisterSymbols(CaliburnAssembler* codeAsm, SymbolTable* syms) = 0;
+		virtual void registerSymbols(CaliburnAssembler* codeAsm, SymbolTable* syms) {}
 
 		/*
 		Goes after symbol registration. Used to evaluate parsed types. Add any additional symbols needed.
 		*/
-		//virtual void TypeEval(CaliburnAssembler* codeAsm, SymbolTable* syms) = 0;
+		virtual void typeEval(CaliburnAssembler* codeAsm, SymbolTable* syms) {}
 
 		virtual void addStorageMod(StorageModifier mod) {}
 

@@ -50,12 +50,33 @@ TypeCompat TypeInt::isCompatible(Operator op, CompiledType* rType) const
 	{
 		return TypeCompat::INCOMPATIBLE_TYPE;
 	}
-	if (rType->hasA(TypeAttrib::FLOAT) && this->getSizeBytes() > (MAX_FLOAT_BITS / 8))
+
+	if (rType->hasA(TypeAttrib::FLOAT))
 	{
-		return TypeCompat::INCOMPATIBLE_TYPE;
+		if (this->getSizeBytes() > (MAX_FLOAT_BITS / 8))
+		{
+			return TypeCompat::INCOMPATIBLE_TYPE;
+		}
+		
+		switch (op)
+		{
+			case Operator::ADD:
+			case Operator::SUB:
+			case Operator::MUL:
+			case Operator::DIV:
+			case Operator::MOD:
+			//case Operator::POW:
+			case Operator::INTDIV:
+			case Operator::ABS: return TypeCompat::NEEDS_CONVERSION;
+			case Operator::BIT_AND:
+			case Operator::BIT_OR:
+			case Operator::BIT_XOR:
+			case Operator::SHIFT_LEFT:
+			case Operator::SHIFT_RIGHT: return TypeCompat::INCOMPATIBLE_TYPE;
+		}
+
 	}
 
-	//This giant switch acts as a list of supported operators.
 	switch (op)
 	{
 		case Operator::ADD:

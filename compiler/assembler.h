@@ -47,6 +47,7 @@ namespace caliburn
 
 		void addModule(SymbolTable* syms) {}
 
+		SymbolTable* getModule(std::string name) { return nullptr; }
 
 		void addTypeAlias(std::string alias, std::string original)
 		{

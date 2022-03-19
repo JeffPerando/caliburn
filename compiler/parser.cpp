@@ -84,6 +84,34 @@ void Parser::parseValueList(std::vector<ValueStatement*>& xs)
 
 }
 
+bool Parser::parseArrayList(std::vector<ValueStatement*>& xs)
+{
+	if (tokens->current()->type != TokenType::START_BRACKET)
+	{
+		return false;
+	}
+
+	tokens->consume();
+
+	parseValueList(xs);
+
+	if (tokens->current()->type != TokenType::END_BRACKET)
+	{
+		for (auto x : xs)
+		{
+			delete x;
+		}
+
+		xs.clear();
+
+		postParseException(new UnexpectedTokenException(tokens->current(), ']'));
+
+		return false;
+	}
+
+	return true;
+}
+
 bool Parser::parseGenerics(std::vector<ParsedType*>& generics)
 {
 	bool actualGeneric = false;
@@ -402,7 +430,7 @@ Statement* Parser::parseLogic()
 
 	if (stmt) return stmt;
 
-	stmt = parseAnyFieldOrFuncValue();
+	stmt = parseFieldOrFuncValue();
 
 	if (!stmt)
 	{
@@ -887,6 +915,35 @@ Statement* Parser::parseReturn()
 	return ret;
 }
 
+Statement* Parser::parseStmtInParentheses(ParseMethod pm)
+{
+	Token* tkn = tokens->current();
+
+	if (tkn->str != "(")
+	{
+		return nullptr;
+	}
+
+	tokens->consume();
+	auto found = (this->*pm)();
+
+	if (tokens->current()->type != TokenType::END_PAREN)
+	{
+		postParseException(new UnexpectedTokenException(tokens->current(), ')'));
+		delete found;
+		return nullptr;
+	}
+
+	tokens->consume();
+
+	return found;
+}
+
+ValueStatement* Parser::parseAnyValue()
+{
+	return parseValue(true);
+}
+
 //TODO parse using Shunting-yard algorithm (or at least check for compliance)
 //https://en.wikipedia.org/wiki/Shunting-yard_algorithm
 ValueStatement* Parser::parseValue(bool doPostfix)
@@ -952,22 +1009,28 @@ ValueStatement* Parser::parseValue(bool doPostfix)
 	//field, constructor...
 	else if (tkn->type == TokenType::IDENTIFIER)
 	{
-		foundValue = (ValueStatement*)parseAnyFieldOrFuncValue();
+		std::vector<Token*> modChain;
+
+		while (tokens->current()->type == TokenType::IDENTIFIER && tokens->peek()->type == TokenType::COLON)
+		{
+			modChain.push_back(tokens->current());
+			tokens->consume(2);
+			
+		}
+
+		foundValue = (ValueStatement*)parseFieldOrFuncValue();
+
+		for (auto mod = modChain.rbegin(); mod != modChain.rend(); ++mod)
+		{
+			foundValue = new ModuleReadStatement(*mod, foundValue);
+
+		}
 
 	}
 	//(x)
 	else if (tkn->type == TokenType::START_PAREN)
 	{
-		tokens->consume();
-		foundValue = parseValue();
-
-		if (tokens->current()->type != TokenType::END_PAREN)
-		{
-			postParseException(new UnexpectedTokenException(tokens->current(), ')'));
-			return nullptr;
-		}
-
-		tokens->consume();
+		foundValue = parseValueInParentheses();
 
 	}
 	//[xs...] (array list)
@@ -980,7 +1043,6 @@ ValueStatement* Parser::parseValue(bool doPostfix)
 
 		if (tokens->current()->type != TokenType::END_BRACKET)
 		{
-			postParseException(new UnexpectedTokenException(tokens->current(), ']'));
 			return nullptr;
 		}
 
@@ -1039,7 +1101,44 @@ ValueStatement* Parser::parseValue(bool doPostfix)
 		return nullptr;
 	}
 
-	//And now for the postfix operators
+	//*technically* these are postfix, but really postfix is just for math operators.
+
+	while (true)
+	{
+		tkn = tokens->current();
+
+		if (tkn->type == TokenType::START_BRACKET)
+		{
+			std::vector<ValueStatement*> indices;
+
+			if (!parseArrayList(indices) || indices.size() == 0)
+			{
+				postParseException(new ParseException("Invalid array-style accessor value starts here:", tkn));
+				delete foundValue;
+				return nullptr;
+			}
+
+			//foundValue = new ArrayAccessStatement(value, index);
+		}
+		//x.y or x.y()
+		else if (tkn->type == TokenType::PERIOD)
+		{
+			tkn = tokens->next();
+			Statement* fieldOrFunc = parseFieldOrFuncValue();
+
+			if (!fieldOrFunc)
+			{
+				postParseException(new ParseException("Invalid attempt to access a member:", tkn));
+				delete foundValue;
+				return nullptr;
+			}
+
+			//TODO retarget
+			//fieldOrFunc.setTarget(foundValue);
+			foundValue = (ValueStatement*)fieldOrFunc;
+		}
+		else break;
+	}
 
 	if (!doPostfix)
 	{
@@ -1059,7 +1158,7 @@ ValueStatement* Parser::parseValue(bool doPostfix)
 				//so no I don't want stupid things like x = (y = z);
 				break;
 			}
-			
+
 			tkn = tokens->next();
 
 			//fun fact, this is the only reason why the postfix flag is here
@@ -1076,117 +1175,41 @@ ValueStatement* Parser::parseValue(bool doPostfix)
 
 			//foundValue = new ValueOperatorStatement(foundValue, tkn.str, rhs);
 		}
-		//x[y]
-		else if (tkn->type == TokenType::START_BRACKET)
-		{
-			tkn = tokens->next();
-
-			std::vector<ValueStatement*> indices;
-
-			parseValueList(indices);
-
-			if (indices.size() == 0)
-			{
-				postParseException(new ParseException("Invalid array-style accessor value starts here:", tkn));
-				delete foundValue;
-				return nullptr;
-			}
-
-			if (tokens->current()->type != TokenType::END_BRACKET)
-			{
-				postParseException(new UnexpectedTokenException(tokens->current(), ']'));
-				for (auto i : indices)
-				{
-					delete i;
-				}
-				delete foundValue;
-				return nullptr;
-			}
-
-			tokens->consume();
-			
-			//foundValue = new ArrayAccessStatement(value, index);
-		}
-		//x.y or x.y()
-		else if (tkn->type == TokenType::PERIOD)
-		{
-			tkn = tokens->next();
-			Statement* fieldOrFunc = parseFieldOrFuncValue(false);
-
-			if (!fieldOrFunc)
-			{
-				postParseException(new ParseException("Invalid attempt to access a member:", tkn));
-				delete foundValue;
-				return nullptr;
-			}
-
-			//TODO retarget
-			//fieldOrFunc.setTarget(foundValue);
-			foundValue = (ValueStatement*)fieldOrFunc;
-		}
 		else break;
 	}
 	
 	return foundValue;
 }
 
-Statement* Parser::parseAnyFieldOrFuncValue()
+ValueStatement* Parser::parseValueInParentheses()
 {
-	return parseFieldOrFuncValue(true);
+	return (ValueStatement*)parseStmtInParentheses((ParseMethod)&Parser::parseAnyValue);
 }
 
-Statement* Parser::parseFieldOrFuncValue(bool canHaveNamespace)
+Statement* Parser::parseFieldOrFuncValue()
 {
-	//ParsedType is an identifier followed by an optional generic portion. so this is just me cheating.
-	ParsedType* type = parseTypeName();
-
-	if (!type)
-	{
-		return nullptr;
-	}
-
-	if (!canHaveNamespace && type->mod != nullptr)
-	{
-		//I strongly dislike this exception message
-		postParseException(new ParseException("Found namespace, but namespace isn't allowed in this context", type->mod));
-		delete type;
-		return nullptr;
-	}
-
-	tokens->consume();
-	std::vector<ValueStatement*> accessors;
-
 	Token* tkn = tokens->current();
+
+	if (tkn->type != TokenType::IDENTIFIER)
+	{
+		//TODO complain
+		return nullptr;
+	}
+
+	Token* name = tkn;
+
+	tkn = tokens->next();
+	std::vector<ValueStatement*> accessors;
 
 	if (tkn->type == TokenType::START_BRACKET)
 	{
 		//either an array accessor or dispatch
 
-		tkn = tokens->next();
-		
-		parseValueList(accessors);
-
-		if (accessors.size() == 0)
+		if (!parseArrayList(accessors) || accessors.size() == 0)
 		{
 			postParseException(new ParseException("Invalid array accessor (or dispatch) value(s) start at:", tkn));
-			delete type;
 			return nullptr;
 		}
-
-		tkn = tokens->current();
-
-		if (tkn->type != TokenType::END_BRACKET)
-		{
-			postParseException(new UnexpectedTokenException(tkn, ']'));
-			delete type;
-			for (auto a : accessors)
-			{
-				delete a;
-			}
-			return nullptr;
-		}
-
-		tokens->consume();
 
 	}
 
@@ -1207,23 +1230,18 @@ Statement* Parser::parseFieldOrFuncValue(bool canHaveNamespace)
 			//return new GPUDispatch();
 		}
 
-		if (accessors.size() > 0)
-		{
-			//return new GPUDispatch();
-		}
-
 		//return new FuncCall(type, args);
 	}
-	else if (type->generics.size() > 0)
+	/*else if (type->generics.size() > 0)
 	{
 		//someone's trying to use a type name as a field
 		//extremely weird but OK
 		postParseException(new ParseException("Valid(ish) type with generic found, but being used as a field and not a constructor", tkn));
 		delete type;
 		return nullptr;
-	}
+	}*/
 
-	//auto found = new FieldAccessStatement(type.mod, type.name);
+	//auto found = new MemberReadStatement(type->mod, type->name);
 
 	/*
 	if (accessors.size() > 0)

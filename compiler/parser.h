@@ -10,9 +10,11 @@
 #include "ctrlstmnt.h"
 #include "funcstmnt.h"
 #include "miscstmt.h"
+#include "modreadstmnt.h"
 #include "objstmt.h"
 #include "scopestmnt.h"
 #include "switchstmnt.h"
+#include "varreadstmnt.h"
 
 namespace caliburn
 {
@@ -32,6 +34,8 @@ namespace caliburn
 		void parseValueList(std::vector<ValueStatement*>& xs);
 		
 		bool parseGenerics(std::vector<ParsedType*>& generics);
+
+		bool parseArrayList(std::vector<ValueStatement*>& xs);
 
 		Statement* parseAny(std::initializer_list<ParseMethod> fns);
 
@@ -95,11 +99,15 @@ namespace caliburn
 		
 		Statement* parseReturn();
 		
+		Statement* parseStmtInParentheses(ParseMethod pm);
+
+		ValueStatement* parseAnyValue();
+
 		ValueStatement* parseValue(bool doPostfix = true);
 
-		Statement* parseAnyFieldOrFuncValue();
+		ValueStatement* parseValueInParentheses();
 
-		Statement* parseFieldOrFuncValue(bool canHaveNamespace);
+		Statement* parseFieldOrFuncValue();
 
 		//Statement* parseLiteral();
 

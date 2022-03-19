@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -154,6 +154,7 @@
     <ClCompile Include="assembler.cpp" />
     <ClCompile Include="spirvasm.cpp" />
     <ClCompile Include="langcore.cpp" />
+    <ClCompile Include="spirvtrans.cpp" />
     <ClCompile Include="type.cpp" />
     <ClCompile Include="typebool.cpp" />
     <ClCompile Include="typefloat.cpp" />
@@ -173,18 +174,19 @@
     <ClInclude Include="compilererr.h" />
     <ClInclude Include="ctrlstmnt.h" />
     <ClInclude Include="deftypes.h" />
-    <ClInclude Include="fieldstmnt.h" />
     <ClInclude Include="funcstmnt.h" />
     <ClInclude Include="langcore.h" />
     <ClInclude Include="litstmnt.h" />
     <ClInclude Include="miscstmt.h" />
     <ClInclude Include="modlib.h" />
+    <ClInclude Include="modreadstmnt.h" />
     <ClInclude Include="module.h" />
     <ClInclude Include="objstmt.h" />
     <ClInclude Include="parser.h" />
     <ClInclude Include="scopestmnt.h" />
     <ClInclude Include="spirv.h" />
     <ClInclude Include="spirvasm.h" />
+    <ClInclude Include="spirvtrans.h" />
     <ClInclude Include="statement.h" />
     <ClInclude Include="switchstmnt.h" />
     <ClInclude Include="syntax.h" />
@@ -197,8 +199,10 @@
     <ClInclude Include="typestruct.h" />
     <ClInclude Include="typevector.h" />
     <ClInclude Include="typevoid.h" />
+    <ClInclude Include="value.h" />
     <ClInclude Include="valuestmnt.h" />
-    <ClInclude Include="varstmnt.h" />
+    <ClInclude Include="varreadstmnt.h" />
+    <ClInclude Include="setterstmnt.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

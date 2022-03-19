@@ -47,6 +47,9 @@
     <ClCompile Include="type.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="spirvtrans.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allasm.h">
@@ -71,9 +74,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="deftypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="fieldstmnt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="funcstmnt.h">
@@ -145,10 +145,22 @@
     <ClInclude Include="typestruct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="varstmnt.h">
+    <ClInclude Include="module.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="module.h">
+    <ClInclude Include="value.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="varreadstmnt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="spirvtrans.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="setterstmnt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="modreadstmnt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

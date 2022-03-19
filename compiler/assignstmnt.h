@@ -6,30 +6,52 @@
 
 namespace caliburn
 {
-	/*
-	//TODO rework
+	//TODO finish
 	struct AssignStatement : public Statement
 	{
-		std::string field = "";
+	private:
+		const std::string field;
+	public:
 		ValueStatement* value = nullptr;
 
-		AssignStatement() : Statement(0) {}
+		AssignStatement(std::string f) : Statement(StatementType::SETTER), field(f) {}
 
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm)
+		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			if (!value)
 			{
 				//TODO complain
+				return 0;
 			}
 
-			auto valueSSA = value->SPIRVEmit(codeAsm);
-			auto ssa = codeAsm->newAssign();
+			Symbol* sym = syms->resolve(field);
 
-			codeAsm->pushVarSetter(field, valueSSA);
+			if (!sym)
+			{
+				//TODO complain
+				return 0;
+			}
 
-			return 0;
+			if (sym->symbolType == SymbolType::FUNC_PARAM)
+			{
+				//TODO complain
+				return 0;
+			}
+
+			auto valueSSA = value->SPIRVEmit(codeAsm, syms);
+
+			if (sym->symbolType == SymbolType::VARIABLE)
+			{
+
+			}
+			else if (sym->symbolType == SymbolType::MEMBER)
+			{
+
+			}
+
+			return valueSSA;
 		}
 
 	};
-	*/
+
 }

@@ -34,12 +34,12 @@ namespace caliburn
 			}
 
 			//SSAs
-			uint32_t returnTypeSSA = codeAsm->resolveType(returnType)->typeDeclSpirV(codeAsm);
+			uint32_t returnTypeSSA = returnType->resolve(codeAsm, syms)->typeDeclSpirV(codeAsm);
 			std::vector<uint32_t> argTypeSSAs(args.size());
 
 			for (auto arg : args)
 			{
-				argTypeSSAs.push_back(codeAsm->resolveType(arg.type)->typeDeclSpirV(codeAsm));
+				argTypeSSAs.push_back(arg.type->resolve(codeAsm, syms)->typeDeclSpirV(codeAsm));
 
 			}
 

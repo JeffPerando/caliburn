@@ -94,7 +94,7 @@ CaliburnAssembler::~CaliburnAssembler()
 	defaultTypes.clear();
 
 }
-
+/*
 CompiledType* CaliburnAssembler::resolveType(ParsedType* type)
 {
 	SymbolTable* mod = &stdLib;
@@ -166,3 +166,4 @@ CompiledType* CaliburnAssembler::resolveType(ParsedType* type)
 
 	return resolved;
 }
+*/

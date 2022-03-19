@@ -27,6 +27,7 @@ namespace caliburn
 		CompileStage const stage;
 		std::string const message;
 		Token* const current;
+		std::vector<std::string> extras;
 
 		CaliburnException(CompileStage s, std::string m, Token* tkn) :
 			stage(s), message(m), current(tkn) {}
@@ -44,8 +45,19 @@ namespace caliburn
 			ss << ' ';
 			ss << message;
 
+			for (auto extra : extras)
+			{
+				ss << '\t' << extra << '\n';
+			}
+
 			out = ss.str();
 
+		}
+
+		CaliburnException* extra(std::string str)
+		{
+			extras.push_back(str);
+			return this;
 		}
 
 	};
