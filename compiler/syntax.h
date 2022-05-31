@@ -147,4 +147,6 @@ namespace caliburn
 		{"<=",	Operator::COMP_LTE}
 	};
 
+	static constexpr std::string_view GENERIC_START = "<";
+	static constexpr std::string_view GENERIC_END = ">";
 }

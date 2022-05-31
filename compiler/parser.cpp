@@ -64,20 +64,20 @@ void Parser::parseValueList(std::vector<ValueStatement*>& xs)
 {
 	while (true)
 	{
+		if (tokens->current()->type == TokenType::COMMA)
+		{
+			continue;
+		}
+
 		ValueStatement* val = parseValue();
 
-		if (val == nullptr)
+		if (!val)
 		{
 			break;
 		}
 
 		xs.push_back(val);
 		
-		if (tokens->current()->type != TokenType::COMMA)
-		{
-			break;
-		}
-
 		tokens->consume();
 
 	}
@@ -114,47 +114,45 @@ bool Parser::parseArrayList(std::vector<ValueStatement*>& xs)
 
 bool Parser::parseGenerics(std::vector<ParsedType*>& generics)
 {
-	bool actualGeneric = false;
+	bool valid = false;
 	auto oldIndex = tokens->currentIndex();
 
-	if (tokens->current()->str == "[")
+	if (tokens->current()->str != GENERIC_START)
 	{
-		tokens->consume();
+		return false;
+	}
 
-		actualGeneric = true;
+	tokens->consume();
 
-		while (tokens->hasNext())
+	while (tokens->hasNext())
+	{
+		auto tkn = tokens->current();
+
+		if (tkn->type == TokenType::COMMA)
 		{
-			auto type = parseTypeName();
-
-			if (!type)
-			{
-				actualGeneric = false;
-				break;
-			}
-
-			generics.push_back(type);
-
-			Token* tkn = tokens->current();
 			tokens->consume();
+			continue;
+		}
 
-			if (tkn->type == TokenType::COMMA)
-			{
-				continue;
-			}
-
-			if (tkn->str != "]")
-			{
-				actualGeneric = false;
-
-			}
-			
+		if (tkn->str == GENERIC_END)
+		{
+			tokens->consume();
+			valid = true;
 			break;
 		}
 
+		auto type = parseTypeName();
+
+		if (!type)
+		{
+			break;
+		}
+
+		generics.push_back(type);
+
 	}
 
-	if (!actualGeneric)
+	if (!valid)
 	{
 		for (auto type : generics)
 		{
@@ -166,7 +164,7 @@ bool Parser::parseGenerics(std::vector<ParsedType*>& generics)
 
 	}
 
-	return actualGeneric;
+	return valid;
 }
 
 Statement* Parser::parseAny(std::initializer_list<ParseMethod> fns)
