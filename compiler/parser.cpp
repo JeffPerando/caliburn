@@ -152,6 +152,11 @@ bool Parser::parseGenerics(std::vector<ParsedType*>& generics)
 
 	}
 
+	if (generics.size() == 0)
+	{
+		valid = false;
+	}
+
 	if (!valid)
 	{
 		for (auto type : generics)

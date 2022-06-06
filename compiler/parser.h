@@ -4,7 +4,7 @@
 #include "buffer.h"
 #include "compilererr.h"
 #include "statement.h"
-#include "tokenizer.h"
+#include "syntax.h"
 #include "type.h"
 
 #include "ctrlstmnt.h"
