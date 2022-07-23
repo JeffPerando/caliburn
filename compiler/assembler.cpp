@@ -69,17 +69,9 @@ CaliburnAssembler::CaliburnAssembler()
 	//void type
 	addDefaultType("void", new TypeVoid());
 
-	//typical aliases
-	addTypeAlias("byte", "int8");
 	//TODO replace with proper character types that ensures chars get printed as chars
-	addTypeAlias("char", "uint8");
 	addTypeAlias("char8", "uint8");
 	addTypeAlias("char32", "uint32");
-	addTypeAlias("short", "int16");
-	addTypeAlias("int", "int32");
-	addTypeAlias("long", "int64");
-	addTypeAlias("float", "float32");
-	addTypeAlias("double", "float64");
 
 }
 
