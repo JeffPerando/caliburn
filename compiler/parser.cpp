@@ -459,43 +459,64 @@ Statement* Parser::parseAnyVar()
 Statement* Parser::parseVariable(bool implicitAllowed)
 {
 	ParsedType* type = nullptr;
-	std::vector<std::string> vars;
-	ValueStatement* defVal = nullptr;
+	Token* name;
+	ValueStatement* initVal = nullptr;
+	bool constant = false;
 
 	Token* tkn = tokens->current();
 
-	if (tkn->type == TokenType::KEYWORD)
+	if (tkn->type != TokenType::KEYWORD)
 	{
-		if (tkn->str == "let" && implicitAllowed)
-		{
-			tokens->consume();
-
-		}
-		else
-		{
-			postParseException(new ParseException("Invalid start to variable:", tkn));
-			return nullptr;
-		}
-
-	}
-	else
-	{
-		type = parseTypeName();
-
-	}
-
-	parseIdentifierList(vars);
-
-	if (vars.size() == 0)
-	{
-		postParseException(new ParseException("Invalid name for variable:", tkn));
 		return nullptr;
 	}
 
-	if (tokens->current()->str == "=")
+	if (tkn->str == "var")
+	{
+		tkn = tokens->next();
+
+	}
+	else if (tkn->str == "const")
+	{
+		tkn = tokens->next();
+		constant = true;
+	}
+	else
+	{
+		return nullptr;
+	}
+
+	if (tkn->str == ":")
+	{
+		tkn = tokens->next();
+		type = parseTypeName();
+
+	}
+	else if (!implicitAllowed)
+	{
+		postParseException(new ParseException("Cannot have an implicit variable here", tkn));
+		return nullptr;
+	}
+
+	name = tokens->next();
+
+	if (name->type != TokenType::IDENTIFIER)
+	{
+		postParseException(new ParseException("Invalid name for a variable:", name));
+		return nullptr;
+	}
+
+	tkn = tokens->next();
+
+	if (tkn->str == ":")
+	{
+		postParseException(new ParseException("That's not how type hints work in Caliburn. Type hints go before the variable name, not after. So var: int x is valid. var x: int isn't.", tkn));
+		return nullptr;
+	}
+
+	if (tkn->str == "=")
 	{
 		tokens->consume();
-		defVal = parseValue();
+		initVal = parseValue();
 		//type = defVal->type;
 
 	}
