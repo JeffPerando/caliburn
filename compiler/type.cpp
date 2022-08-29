@@ -3,7 +3,7 @@
 
 using namespace caliburn;
 
-CompiledType* ParsedType::resolve(CaliburnAssembler* codeAsm, SymbolTable* syms)
+ConcreteType* ParsedType::resolve(CaliburnAssembler* codeAsm, SymbolTable* syms)
 {
 	if (mod != nullptr && this->mod->str.length() > 0)
 	{

@@ -152,6 +152,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="assembler.cpp" />
+    <ClCompile Include="caliburn.cpp" />
+    <ClCompile Include="cfg.cpp" />
     <ClCompile Include="spirvasm.cpp" />
     <ClCompile Include="langcore.cpp" />
     <ClCompile Include="spirvtrans.cpp" />
@@ -170,6 +172,8 @@
     <ClInclude Include="assembler.h" />
     <ClInclude Include="assignstmnt.h" />
     <ClInclude Include="buffer.h" />
+    <ClInclude Include="caliburn.h" />
+    <ClInclude Include="cfg.h" />
     <ClInclude Include="compiler.h" />
     <ClInclude Include="compilererr.h" />
     <ClInclude Include="ctrlstmnt.h" />

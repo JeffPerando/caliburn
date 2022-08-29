@@ -57,7 +57,7 @@ CaliburnAssembler::CaliburnAssembler()
 
 	//int vector types
 
-	CompiledType* si32 = getIntType(4);
+	ConcreteType* si32 = getIntType(4);
 
 	for (uint32_t e = MIN_VECTOR_LEN;
 		e <= MAX_VECTOR_LEN; ++e)

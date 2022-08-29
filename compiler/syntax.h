@@ -13,7 +13,6 @@ namespace caliburn
 		"extends",
 		"false", "for",
 		"if", "import", "in", "inputs",
-		"let",
 		"make", "module",
 		"new",
 		"op", "out", "override",
@@ -22,6 +21,7 @@ namespace caliburn
 		"shader", "shared", "switch",
 		"true", "type",
 		"uses",
+		"var",
 		"while"
 	};
 
@@ -149,4 +149,5 @@ namespace caliburn
 
 	static constexpr std::string_view GENERIC_START = "<";
 	static constexpr std::string_view GENERIC_END = ">";
+
 }

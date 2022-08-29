@@ -26,7 +26,7 @@ namespace caliburn
 
 	struct Statement;
 	struct ParsedType;
-	struct CompiledType;
+	struct ConcreteType;
 	
 	struct SSA
 	{
@@ -42,11 +42,21 @@ namespace caliburn
 
 	struct TypedSSA
 	{
-		CompiledType* type = nullptr;
+		ConcreteType* type = nullptr;
 		SSA value = 0;
 
 		TypedSSA() {}
-		TypedSSA(CompiledType* t, SSA v) : type(t), value(v) {}
+		TypedSSA(ConcreteType* t, SSA v) : type(t), value(v) {}
+
+	};
+
+	struct TypedOffset
+	{
+		ConcreteType* type = nullptr;
+		uint32_t offset = 0;
+
+		TypedOffset() {}
+		TypedOffset(ConcreteType* t, uint32_t off) : type(t), offset(off) {}
 
 	};
 
@@ -88,7 +98,7 @@ namespace caliburn
 	struct FunctionArg
 	{
 		std::string name;
-		CompiledType* type;
+		ConcreteType* type;
 		//ValueStatement* defaultValue = nullptr;
 
 		//operators have been moved to langcore.cpp
@@ -97,8 +107,8 @@ namespace caliburn
 	struct FunctionSignature
 	{
 		std::string name;
-		CompiledType* memberOf = nullptr; //only used for methods
-		CompiledType* returnType = nullptr;
+		ConcreteType* memberOf = nullptr; //only used for methods
+		ConcreteType* returnType = nullptr;
 		std::vector<FunctionArg*> args;
 
 		bool operator==(const FunctionSignature& rhs) const;
@@ -138,15 +148,15 @@ namespace caliburn
 
 	struct MemberSymbol : public Symbol
 	{
-		CompiledType* memberType;
-		CompiledType* valueType;
+		ConcreteType* memberType;
+		ConcreteType* valueType;
 		uint32_t offset;
 
 	};
 
 	struct TypeSymbol : public Symbol
 	{
-		CompiledType* type = nullptr;
+		ConcreteType* type = nullptr;
 
 		TypeSymbol() : Symbol(SymbolType::TYPE) {}
 
@@ -202,7 +212,7 @@ namespace caliburn
 	struct TypeConvertResult
 	{
 		TypeConvertCompat compat;
-		CompiledType* commonType;
+		ConcreteType* commonType;
 
 	};
 

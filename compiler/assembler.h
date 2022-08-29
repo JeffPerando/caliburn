@@ -9,7 +9,7 @@ namespace caliburn
 	class CaliburnAssembler
 	{
 		SymbolTable stdLib;
-		std::vector<CompiledType*> defaultTypes;
+		std::vector<ConcreteType*> defaultTypes;
 
 		std::vector<TypeInt*> defaultIntTypes;
 		std::vector<TypeFloat*> defaultFloatTypes;

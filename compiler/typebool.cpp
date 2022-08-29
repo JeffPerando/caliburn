@@ -4,7 +4,7 @@
 
 using namespace caliburn;
 
-void TypeBool::getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAssembler* codeAsm)
+void TypeBool::getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssembler* codeAsm)
 {
 	auto its = codeAsm->getAllIntTypes();
 
@@ -15,7 +15,7 @@ void TypeBool::getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAssem
 
 }
 
-TypeCompat TypeBool::isCompatible(Operator op, CompiledType* rType) const
+TypeCompat TypeBool::isCompatible(Operator op, ConcreteType* rType) const
 {
 	if (!rType)
 	{
@@ -65,7 +65,7 @@ uint32_t TypeBool::typeDeclSpirV(SpirVAssembler* codeAsm)
 	return ssa;
 }
 
-uint32_t TypeBool::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA, CompiledType*& endType) const
+uint32_t TypeBool::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, ConcreteType* rType, uint32_t rvalueSSA, ConcreteType*& endType) const
 {
 	uint32_t lhs = lvalueSSA;
 
@@ -77,7 +77,7 @@ uint32_t TypeBool::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Oper
 	return 0;
 }
 
-uint32_t TypeBool::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, CompiledType*& endType) const
+uint32_t TypeBool::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, ConcreteType*& endType) const
 {
 	return 0;
 }

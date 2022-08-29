@@ -423,7 +423,7 @@ void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
 
 		if (isOperator(txt[cur]))
 		{
-			tokenLen = find(&caliburn::isOperator, txt, cur);
+			tokenLen = 1;
 			tokenID = TokenType::MATH_OPERATOR;
 		}
 		else if (isStrDelim(txt[cur]))

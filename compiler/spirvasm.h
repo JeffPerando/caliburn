@@ -54,7 +54,7 @@ namespace caliburn
 	{
 	private:
 		std::vector<spirv::SpvOp> ops;
-		std::vector<CompiledType*> usedTypes;
+		std::vector<ConcreteType*> usedTypes;
 
 		std::map<uint64_t, TypedSSA> intConstants;
 

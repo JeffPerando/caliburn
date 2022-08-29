@@ -50,6 +50,12 @@
     <ClCompile Include="spirvtrans.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cfg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="caliburn.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allasm.h">
@@ -161,6 +167,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="modreadstmnt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cfg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="caliburn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

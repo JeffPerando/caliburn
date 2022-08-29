@@ -131,11 +131,11 @@ namespace caliburn
 			return this;
 		}
 		
-		CompiledType* resolve(CaliburnAssembler* codeAsm, SymbolTable* syms);
+		ConcreteType* resolve(CaliburnAssembler* codeAsm, SymbolTable* syms);
 
 	};
 
-	struct CompiledType : public SymbolTable
+	struct ConcreteType
 	{
 		const TypeCategory category;
 		const std::string canonName;
@@ -144,12 +144,13 @@ namespace caliburn
 		//Since every type is made for a particular assembler, storing the SSA is fine
 		uint32_t ssa = 0;
 		int attribs = TypeAttrib::NONE;
-		CompiledType* superType = nullptr;
-		std::vector<CompiledType*> generics;
+		ConcreteType* superType = nullptr;
+		std::map<std::string, TypedOffset> fields;
+		std::vector<ConcreteType*> generics;
 		//TODO add dirty flag to trigger a refresh. that or just control when aspects can be edited
 		std::string fullName = "";
 	public:
-		CompiledType(TypeCategory c, std::string n, int as, size_t genMax = 0) :
+		ConcreteType(TypeCategory c, std::string n, int as, size_t genMax = 0) :
 			category(c), canonName(n), attribs(as & TypeAttrib::ALL), maxGenerics(genMax)
 		{
 			if (maxGenerics > 0)
@@ -162,12 +163,12 @@ namespace caliburn
 		}
 
 		//annoyed that != doesn't have a default implementation that does this
-		bool operator!=(const CompiledType& rhs) const
+		bool operator!=(const ConcreteType& rhs) const
 		{
 			return !(*this == rhs);
 		}
 
-		bool operator==(const CompiledType& rhs) const
+		bool operator==(const ConcreteType& rhs) const
 		{
 			//cheap hack, sorry
 			if (ssa != 0 && rhs.ssa != 0)
@@ -192,8 +193,8 @@ namespace caliburn
 
 			for (size_t i = 0; i < generics.size(); ++i)
 			{
-				CompiledType* lhsGeneric = generics[i];
-				CompiledType* rhsGeneric = rhs.generics[i];
+				ConcreteType* lhsGeneric = generics[i];
+				ConcreteType* rhsGeneric = rhs.generics[i];
 
 				if (*lhsGeneric == *rhsGeneric)
 				{
@@ -243,18 +244,18 @@ namespace caliburn
 			return fullName;
 		}
 
-		CompiledType* getSuper()
+		ConcreteType* getSuper()
 		{
 			return superType;
 		}
 
-		bool isSuperOf(CompiledType* type)
+		bool isSuperOf(ConcreteType* type)
 		{
-			CompiledType* head = type;
+			ConcreteType* head = this;
 
 			while (head)
 			{
-				if (head == this)
+				if (type == head)
 				{
 					return true;
 				}
@@ -266,7 +267,7 @@ namespace caliburn
 			return false;
 		}
 
-		virtual void setGeneric(size_t index, CompiledType* type)
+		virtual void setGeneric(size_t index, ConcreteType* type)
 		{
 			if (index >= maxGenerics)
 			{
@@ -277,6 +278,16 @@ namespace caliburn
 
 		}
 
+		virtual TypedSSA* getField(std::string name)
+		{
+			return nullptr;
+		}
+
+		virtual bool declareField(std::string name, TypedSSA* data)
+		{
+			return false;
+		}
+
 		//NOTE: because the size can depend on things like generics, members, etc., this HAS to be a method
 		virtual uint32_t getSizeBytes() const = 0;
 
@@ -285,38 +296,26 @@ namespace caliburn
 
 		//ONLY exists for making a new generic form. so if you don't use generics, there's ZERO point in
 		//properly implementing this.
-		virtual CompiledType* clone() const
+		virtual ConcreteType* clone() const
 		{
-			return (CompiledType*)this;
+			return (ConcreteType*)this;
 		}
 
-		virtual void getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAssembler* codeAsm) = 0;
+		virtual void getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssembler* codeAsm) = 0;
 
-		virtual TypeCompat isCompatible(Operator op, CompiledType* rType) const = 0;
+		virtual TypeCompat isCompatible(Operator op, ConcreteType* rType) const = 0;
 
 		virtual uint32_t typeDeclSpirV(SpirVAssembler* codeAsm) = 0;
 
-		virtual uint32_t mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA, CompiledType*& endType) const = 0;
+		virtual uint32_t mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, ConcreteType* rType, uint32_t rvalueSSA, ConcreteType*& endType) const = 0;
 
 		//used for BIT_NOT, NEGATE, ABS
-		virtual uint32_t mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, CompiledType*& endType) const = 0;
+		virtual uint32_t mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, ConcreteType*& endType) const = 0;
 
 	};
 
-	struct PrimitiveType : public CompiledType
+	struct ComplexType
 	{
-		PrimitiveType(TypeCategory c, std::string n, TypeAttrib as) :
-			CompiledType(c, n, as, 0) {}
-
-		virtual bool add(Symbol* symbol) override
-		{
-			return false;
-		}
-
-		virtual Symbol* resolve(std::string name) override
-		{
-			return nullptr;
-		}
 
 	};
 

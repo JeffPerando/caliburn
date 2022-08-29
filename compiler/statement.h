@@ -9,7 +9,7 @@
 
 namespace caliburn
 {
-	constexpr auto CALIBURN_RETURN_VAR("__retval__");
+	constexpr std::string_view CALIBURN_RETURN_VAR("__retval__");
 	
 	enum class StatementType
 	{
