@@ -173,8 +173,9 @@
     <ClInclude Include="assignstmnt.h" />
     <ClInclude Include="buffer.h" />
     <ClInclude Include="caliburn.h" />
+    <ClInclude Include="cbir.h" />
     <ClInclude Include="cfg.h" />
-    <ClInclude Include="compiler.h" />
+    <ClInclude Include="cllr.h" />
     <ClInclude Include="compilererr.h" />
     <ClInclude Include="ctrlstmnt.h" />
     <ClInclude Include="deftypes.h" />

@@ -70,9 +70,6 @@
     <ClInclude Include="buffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="compiler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="compilererr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -173,6 +170,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="caliburn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cbir.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cllr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
