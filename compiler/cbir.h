@@ -20,48 +20,52 @@ Caliburn Intermediate Representation (CBIR [pronounced Cyber]):
 - Distributable.
 */
 
-namespace caliburn::cbir
+namespace caliburn
 {
-    enum class Opcode : uint32_t
-    {
-		//WARNING: THIS HAS BEEN COPIED FROM THE STATEMENT HEADER. PLS MODIFY
+	namespace cbir
+	{
+		enum class Opcode : uint32_t
+		{
+			//WARNING: THIS HAS BEEN COPIED FROM THE STATEMENT HEADER. PLS MODIFY
 
-		UNKNOWN,
+			UNKNOWN,
 
-		IMPORT,
-		TYPEDEF,
-		SHADER,
-		FUNCTION,
-		STRUCT,
-		CLASS,
-		DESCRIPTOR,
-		INPUT,
+			IMPORT,
+			TYPEDEF,
+			SHADER,
+			FUNCTION,
+			STRUCT,
+			CLASS,
+			DESCRIPTOR,
+			INPUT,
 
-		//Flow control
-		IF,
-		FOR,
-		FORALL,
-		WHILE,
-		DOWHILE,
-		SWITCH,
-		CASE,
+			//Flow control
+			IF,
+			FOR,
+			FORALL,
+			WHILE,
+			DOWHILE,
+			SWITCH,
+			CASE,
 
-		RETURN,
-		CONTINUE,
-		BREAK,
-		PASS,
+			RETURN,
+			CONTINUE,
+			BREAK,
+			PASS,
 
-		//misc. logic
-		VARIABLE,
-		SETTER,
-		FUNC_CALL,
-		SCOPE,
+			//misc. logic
+			VARIABLE,
+			SETTER,
+			FUNC_CALL,
+			SCOPE,
 
-		//Other things
-		MISC_VALUE,
-		MATH_EXPRESSION,
-		LITERAL,
-		OP_OVERRIDE
-    };
+			//Other things
+			MISC_VALUE,
+			MATH_EXPRESSION,
+			LITERAL,
+			OP_OVERRIDE
+		};
+
+	}
 
 }

@@ -15,17 +15,21 @@ Caliburn Low-Level Representation (CLLR [pronounced Caller]):
 - Not distributed; Only used internally by compiler.
 */
 
-namespace caliburn::cllr
+namespace caliburn
 {
-	enum class Opcode : uint32_t
+	namespace cllr
 	{
+		enum class Opcode : uint32_t
+		{
 
-	};
+		};
 
-	struct Instruction
-	{
-		Opcode op;
-		uint32_t operands[3];
-	};
+		struct Instruction
+		{
+			Opcode op;
+			uint32_t operands[3];
+		};
+
+	}
 
 }
