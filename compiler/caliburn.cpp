@@ -5,15 +5,15 @@
 
 using namespace caliburn;
 
-Compiler* Compiler::o(uint32_t opLvl)
+Compiler* Compiler::o(OptimizeLevel lvl)
 {
-	optimizeLvl = opLvl;
+	optimizeLvl = lvl;
 	return this;
 }
 
 Compiler* Compiler::setDynamicType(std::string inner, std::string concrete)
 {
-	dynTypes.insert(inner, concrete);
+	dynTypes[inner] = concrete;
 	return this;
 }
 
@@ -31,4 +31,9 @@ std::vector<uint32_t>* Compiler::parseSrc(std::string text)
 	//TODO check errors, convert to CBIR
 
 	return nullptr;
+}
+
+bool Compiler::compile(std::vector<uint32_t>* cbir, std::string shaderName, std::vector<Shader>& shaderDest)
+{
+	return false;
 }

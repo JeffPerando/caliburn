@@ -2,6 +2,7 @@
 #pragma once
 
 #include <map>
+#include <stdint.h>
 #include <string>
 #include <vector>
 
@@ -28,6 +29,50 @@ namespace caliburn
 	struct ParsedType;
 	struct ConcreteType;
 	
+	enum class ShaderType
+	{
+		COMPUTE,
+		VERTEX,
+		FRAGMENT,
+		TESS_CTRL,
+		TESS_EVAL,
+		GEOMETRY,
+		RT_GEN,
+		RT_CLOSE,
+		RT_ANY_HIT,
+		RT_INTERSECT,
+		RT_MISS,
+		TASK,
+		MESH
+	};
+
+	struct DescriptorSet
+	{
+		std::string name;
+		uint32_t binding;
+		uint32_t type;
+
+	};
+
+	struct VertexInputAttribute
+	{
+		std::string name;
+		uint32_t location;
+		uint32_t format;
+
+	};
+
+	struct Shader
+	{
+		std::string name;
+		ShaderType type;
+		const uint32_t* spirv;
+		size_t spirv_length;
+		std::vector<VertexInputAttribute> inputs;
+		std::vector<DescriptorSet> sets;
+
+	};
+
 	struct SSA
 	{
 		uint32_t value = 0;
