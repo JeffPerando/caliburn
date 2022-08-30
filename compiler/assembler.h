@@ -16,7 +16,7 @@ namespace caliburn
 		std::vector<TypeVector*> defaultVectorTypes;
 		TypeVoid* defaultVoidType = nullptr;
 
-		void addDefaultType(std::string name, CompiledType* type)
+		void addDefaultType(std::string name, ConcreteType* type)
 		{
 			if (type == nullptr)
 			{

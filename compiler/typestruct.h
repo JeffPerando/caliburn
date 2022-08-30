@@ -6,10 +6,10 @@
 
 namespace caliburn
 {
-	struct TypeStruct : public CompiledType
+	struct TypeStruct : public ConcreteType
 	{
-		TypeStruct(Token* name, TypeAttrib attribs, size_t genMax) :
-			CompiledType(TypeCategory::CUSTOM, name->str, (TypeAttrib)(attribs | TypeAttrib::COMPOSITE), genMax) {}
+		TypeStruct(Token* name, size_t genMax) :
+			ConcreteType(TypeCategory::STRUCT, name->str, {}, genMax) {}
 
 	};
 

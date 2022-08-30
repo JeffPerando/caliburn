@@ -17,7 +17,7 @@ namespace caliburn
 	class SpirVAssembler;
 
 	//Used for resolved types
-	enum TypeAttrib
+	enum class TypeAttrib : uint32_t
 	{
 		NONE =			0,
 		//has the concept of a negative
@@ -32,11 +32,12 @@ namespace caliburn
 		//is, well, atomic
 		ATOMIC =		0b00010000,
 		ALL =			0b00011111
+
 	};
 
 	enum class TypeCategory
 	{
-		VOID, BOOLEAN, PRIMITIVE, VECTOR, MATRIX, ARRAY, POINTER, STRING, CUSTOM
+		VOID, BOOLEAN, PRIMITIVE, VECTOR, MATRIX, ARRAY, POINTER, STRUCT
 	};
 	
 	enum class TypeCompat
@@ -143,20 +144,25 @@ namespace caliburn
 	protected:
 		//Since every type is made for a particular assembler, storing the SSA is fine
 		uint32_t ssa = 0;
-		int attribs = TypeAttrib::NONE;
+		uint32_t attribs = (uint32_t)TypeAttrib::NONE;
 		ConcreteType* superType = nullptr;
 		std::map<std::string, TypedOffset> fields;
 		std::vector<ConcreteType*> generics;
 		//TODO add dirty flag to trigger a refresh. that or just control when aspects can be edited
 		std::string fullName = "";
 	public:
-		ConcreteType(TypeCategory c, std::string n, int as, size_t genMax = 0) :
-			category(c), canonName(n), attribs(as & TypeAttrib::ALL), maxGenerics(genMax)
+		ConcreteType(TypeCategory c, std::string n, std::initializer_list<TypeAttrib> as = {}, size_t genMax = 0) :
+			category(c), canonName(n), maxGenerics(genMax)
 		{
+			for (auto attrib : as)
+			{
+				attribs |= (int)attrib;
+			}
+
 			if (maxGenerics > 0)
 			{
 				generics.reserve(maxGenerics);
-				attribs |= TypeAttrib::GENERIC;
+				attribs |= (int)TypeAttrib::GENERIC;
 
 			}
 			
@@ -209,7 +215,7 @@ namespace caliburn
 
 		bool hasA(TypeAttrib a) const
 		{
-			return (attribs & a) != 0;
+			return (attribs & (int)a) != 0;
 		}
 
 		uint32_t getSSA()

@@ -14,7 +14,7 @@ uint32_t TypeFloat::getAlignBytes() const
 	return getSizeBytes();
 }
 
-void TypeFloat::getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAssembler* codeAsm)
+void TypeFloat::getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssembler* codeAsm)
 {
 	auto fts = codeAsm->getAllFloatTypes();
 
@@ -26,7 +26,7 @@ void TypeFloat::getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAsse
 
 }
 
-TypeCompat TypeFloat::isCompatible(Operator op, CompiledType* rType) const
+TypeCompat TypeFloat::isCompatible(Operator op, ConcreteType* rType) const
 {
 	if (rType == nullptr)
 	{
@@ -71,7 +71,7 @@ uint32_t TypeFloat::typeDeclSpirV(SpirVAssembler* codeAsm)
 	return ssa;
 }
 
-uint32_t TypeFloat::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA, CompiledType*& endType) const
+uint32_t TypeFloat::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, ConcreteType* rType, uint32_t rvalueSSA, ConcreteType*& endType) const
 {
 	uint32_t lhs = lvalueSSA;
 	uint32_t rhs = rvalueSSA;
@@ -156,7 +156,7 @@ uint32_t TypeFloat::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Ope
 	return result;
 }
 
-uint32_t TypeFloat::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, CompiledType*& endType) const
+uint32_t TypeFloat::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, ConcreteType*& endType) const
 {
 	return 0;
 }

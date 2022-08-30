@@ -14,12 +14,12 @@ uint32_t TypeVector::getAlignBytes() const
 	return generics[0]->getAlignBytes();
 }
 
-CompiledType* TypeVector::clone() const
+ConcreteType* TypeVector::clone() const
 {
 	return new TypeVector(elements, generics[0]);
 }
 
-void TypeVector::getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAssembler* codeAsm)
+void TypeVector::getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssembler* codeAsm)
 {
 	auto vecs = codeAsm->getAllVecTypes();
 
@@ -35,7 +35,7 @@ void TypeVector::getConvertibleTypes(std::set<CompiledType*>* types, CaliburnAss
 
 }
 
-TypeCompat TypeVector::isCompatible(Operator op, CompiledType* rType) const
+TypeCompat TypeVector::isCompatible(Operator op, ConcreteType* rType) const
 {
 	if (rType == nullptr)
 	{
@@ -74,13 +74,13 @@ uint32_t TypeVector::typeDeclSpirV(SpirVAssembler* codeAsm)
 	return ssa;
 }
 
-uint32_t TypeVector::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, CompiledType* rType, uint32_t rvalueSSA, CompiledType*& endType) const
+uint32_t TypeVector::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, ConcreteType* rType, uint32_t rvalueSSA, ConcreteType*& endType) const
 {
 	//TODO implement
 	return 0;
 }
 
-uint32_t TypeVector::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, CompiledType*& endType) const
+uint32_t TypeVector::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, ConcreteType*& endType) const
 {
 	//TODO implement
 	return 0;
