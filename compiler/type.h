@@ -16,7 +16,6 @@ namespace caliburn
 	class CaliburnAssembler;
 	class SpirVAssembler;
 
-	//Used for resolved types
 	enum class TypeAttrib : uint32_t
 	{
 		NONE =			0,
@@ -103,7 +102,7 @@ namespace caliburn
 
 			if (generics.size() > 0)
 			{
-				ss << '[';
+				ss << GENERIC_START;
 
 				for (size_t i = 0; i < generics.size(); ++i)
 				{
@@ -117,7 +116,7 @@ namespace caliburn
 
 				}
 
-				ss << "]";
+				ss << GENERIC_END;
 
 			}
 
@@ -238,12 +237,12 @@ namespace caliburn
 			std::stringstream ss;
 
 			ss << canonName;
-			ss << '[';
+			ss << GENERIC_START;
 			for (uint32_t i = 0; i < generics.size(); ++i)
 			{
 				ss << generics[i]->getFullName();
 			}
-			ss << ']';
+			ss << GENERIC_END;
 
 			fullName = ss.str();
 
@@ -317,11 +316,6 @@ namespace caliburn
 
 		//used for BIT_NOT, NEGATE, ABS
 		virtual uint32_t mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, ConcreteType*& endType) const = 0;
-
-	};
-
-	struct ComplexType
-	{
 
 	};
 
