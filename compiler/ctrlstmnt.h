@@ -1,8 +1,7 @@
 
 #pragma once
 
-#include "statement.h"
-#include "valuestmnt.h"
+#include "ast.h"
 
 namespace caliburn
 {
@@ -243,55 +242,6 @@ namespace caliburn
 				spirv::OpLabel(), mergeSSA });
 
 			return startSSA;
-		}
-
-	};
-
-	struct ReturnStatement : public Statement
-	{
-		ValueStatement* val = nullptr;
-		
-		ReturnStatement() : Statement(StatementType::RETURN) {}
-
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
-		{
-			if (val)
-			{
-				uint32_t retval = val->SPIRVEmit(codeAsm, syms);
-
-				//codeAsm->pushVarSetter(CALIBURN_RETURN_VAR, retval);
-				codeAsm->pushAll({ spirv::OpReturnValue(), retval });
-
-			}
-			else
-			{
-				codeAsm->push(spirv::OpReturn());
-			}
-			
-			return 0;
-		}
-	};
-
-	struct BreakStatement : public Statement
-	{
-		BreakStatement() : Statement(StatementType::BREAK) {}
-		
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
-		{
-			//*shrug*
-			return 0;
-		}
-
-	};
-
-	struct ContinueStatement : public Statement
-	{
-		ContinueStatement() : Statement(StatementType::CONTINUE) {}
-		
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
-		{
-			//*shrug*
-			return 0;
 		}
 
 	};

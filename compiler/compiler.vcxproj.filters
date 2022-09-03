@@ -106,7 +106,7 @@
     <ClInclude Include="spirvasm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="statement.h">
+    <ClInclude Include="ast.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="syntax.h">

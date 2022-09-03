@@ -46,7 +46,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -192,7 +192,7 @@
     <ClInclude Include="spirv.h" />
     <ClInclude Include="spirvasm.h" />
     <ClInclude Include="spirvtrans.h" />
-    <ClInclude Include="statement.h" />
+    <ClInclude Include="ast.h" />
     <ClInclude Include="switchstmnt.h" />
     <ClInclude Include="syntax.h" />
     <ClInclude Include="tokenizer.h" />
