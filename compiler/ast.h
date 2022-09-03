@@ -16,16 +16,15 @@ namespace caliburn
 		UNKNOWN,
 
 		IMPORT,
-		TYPEDEF,
 		SHADER,
 		FUNCTION,
 		STRUCT,
 		CLASS,
 		DESCRIPTOR,
-		INPUT,
 		
 		//Flow control
 		IF,
+		ELSE,
 		FOR,
 		FORALL,
 		WHILE,
@@ -33,30 +32,17 @@ namespace caliburn
 		SWITCH,
 		CASE,
 		
-		RETURN,
-		CONTINUE,
-		BREAK,
-		PASS,
-
-		//misc. logic
-		VARIABLE,
 		SETTER,
 		FUNC_CALL,
-		SCOPE,
-
-		//Other things
-		MISC_VALUE,
-		MATH_EXPRESSION,
-		LITERAL,
-		OP_OVERRIDE
 
 	};
 
 	enum class ValueType
 	{
-		CONSTANT,
-		CALCULATED,
-		VARIABLE
+		LITERAL,
+		EXPRESSION,
+		VARIABLE,
+		FUNCTION_CALL
 	};
 
 	enum class ReturnMode : uint64_t
@@ -77,12 +63,12 @@ namespace caliburn
 
 	struct Value
 	{
-		Value() {}
+		const ValueType type;
+
+		Value(ValueType vt) : type(vt) {}
 		virtual ~Value() {}
 
 		virtual ConcreteType* getType() = 0;
-
-		virtual bool isConstant() = 0;
 
 	};
 
