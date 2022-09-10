@@ -16,11 +16,13 @@ namespace caliburn
 		UNKNOWN,
 
 		IMPORT,
-		SHADER,
 		FUNCTION,
+		SHADER,
+		DESCRIPTOR,
 		STRUCT,
 		CLASS,
-		DESCRIPTOR,
+		CONSTRUCTOR,
+		DESTRUCTOR,
 		
 		//Flow control
 		IF,
@@ -68,6 +70,8 @@ namespace caliburn
 		Value(ValueType vt) : type(vt) {}
 		virtual ~Value() {}
 
+		virtual bool isLValue() = 0;
+
 		virtual ConcreteType* getType() = 0;
 
 	};
@@ -81,13 +85,15 @@ namespace caliburn
 	struct Statement
 	{
 		const StatementType type;
+		const Statement* parent;
 
 		std::map<std::string, VariableStmt> vars;
 		std::vector<Statement*> innerCode;
 		ReturnMode mode = ReturnMode::NONE;
 		Value* retValue = nullptr;
 
-		Statement(StatementType stmntType) : type(stmntType) {}
+		Statement(StatementType stmtType) : type(stmtType), parent(nullptr) {}
+		Statement(StatementType stmtType, Statement* p) : type(stmtType), parent(p) {}
 		virtual ~Statement() {}
 
 		/*

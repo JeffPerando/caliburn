@@ -9,6 +9,9 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="Header Files\ast">
+      <UniqueIdentifier>{3e44c653-bd7d-44e0-a4c3-e859cd854c3c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -64,40 +67,16 @@
     <ClInclude Include="assembler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="assignstmnt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="buffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="compilererr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ctrlstmnt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="deftypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="funcstmnt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="litstmnt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="miscstmt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="modlib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="objstmt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="parser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scopestmnt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="spirv.h">
@@ -106,16 +85,10 @@
     <ClInclude Include="spirvasm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ast.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="syntax.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="tokenizer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="topstmnt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="type.h">
@@ -133,13 +106,7 @@
     <ClInclude Include="typevoid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="valuestmnt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="typebool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="switchstmnt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="langcore.h">
@@ -148,22 +115,7 @@
     <ClInclude Include="typestruct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="module.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="value.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="varreadstmnt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="spirvtrans.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="setterstmnt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="modreadstmnt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cfg.h">
@@ -177,6 +129,15 @@
     </ClInclude>
     <ClInclude Include="cllr.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ast.h">
+      <Filter>Header Files\ast</Filter>
+    </ClInclude>
+    <ClInclude Include="ctrlstmnt.h">
+      <Filter>Header Files\ast</Filter>
+    </ClInclude>
+    <ClInclude Include="value.h">
+      <Filter>Header Files\ast</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

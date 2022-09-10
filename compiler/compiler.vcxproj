@@ -170,7 +170,6 @@
   <ItemGroup>
     <ClInclude Include="allasm.h" />
     <ClInclude Include="assembler.h" />
-    <ClInclude Include="assignstmnt.h" />
     <ClInclude Include="buffer.h" />
     <ClInclude Include="caliburn.h" />
     <ClInclude Include="cbir.h" />
@@ -179,24 +178,14 @@
     <ClInclude Include="compilererr.h" />
     <ClInclude Include="ctrlstmnt.h" />
     <ClInclude Include="deftypes.h" />
-    <ClInclude Include="funcstmnt.h" />
     <ClInclude Include="langcore.h" />
-    <ClInclude Include="litstmnt.h" />
-    <ClInclude Include="miscstmt.h" />
-    <ClInclude Include="modlib.h" />
-    <ClInclude Include="modreadstmnt.h" />
-    <ClInclude Include="module.h" />
-    <ClInclude Include="objstmt.h" />
     <ClInclude Include="parser.h" />
-    <ClInclude Include="scopestmnt.h" />
     <ClInclude Include="spirv.h" />
     <ClInclude Include="spirvasm.h" />
     <ClInclude Include="spirvtrans.h" />
     <ClInclude Include="ast.h" />
-    <ClInclude Include="switchstmnt.h" />
     <ClInclude Include="syntax.h" />
     <ClInclude Include="tokenizer.h" />
-    <ClInclude Include="topstmnt.h" />
     <ClInclude Include="type.h" />
     <ClInclude Include="typebool.h" />
     <ClInclude Include="typefloat.h" />
@@ -205,9 +194,6 @@
     <ClInclude Include="typevector.h" />
     <ClInclude Include="typevoid.h" />
     <ClInclude Include="value.h" />
-    <ClInclude Include="valuestmnt.h" />
-    <ClInclude Include="varreadstmnt.h" />
-    <ClInclude Include="setterstmnt.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

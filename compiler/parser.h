@@ -3,24 +3,16 @@
 
 #include "buffer.h"
 #include "compilererr.h"
-#include "statement.h"
 #include "syntax.h"
 #include "type.h"
 
 #include "ctrlstmnt.h"
-#include "funcstmnt.h"
-#include "miscstmt.h"
-#include "modreadstmnt.h"
-#include "objstmt.h"
-#include "scopestmnt.h"
-#include "switchstmnt.h"
-#include "varreadstmnt.h"
 
 namespace caliburn
 {
 	class Parser;
 
-	using ParseMethod = Statement * (Parser::*)();
+	using ParseMethod = Statement* (Parser::*)();
 
 	class Parser
 	{
@@ -100,14 +92,6 @@ namespace caliburn
 		Statement* parseReturn();
 		
 		Statement* parseStmtInParentheses(ParseMethod pm);
-
-		ValueStatement* parseAnyValue();
-
-		ValueStatement* parseValue(bool doPostfix = true);
-
-		ValueStatement* parseValueInParentheses();
-
-		Statement* parseFieldOrFuncValue();
 
 		//Statement* parseLiteral();
 
