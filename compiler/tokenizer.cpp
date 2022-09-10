@@ -229,8 +229,6 @@ void Tokenizer::tokenize(std::vector<Token>& tokens)
 	col = 1;
 	cur = 0;
 
-	size_t offset = 0;
-
 	while (cur < txt.length())
 	{
 		if (txt[cur] == '\n')
@@ -244,38 +242,7 @@ void Tokenizer::tokenize(std::vector<Token>& tokens)
 
 		CharType type = asciiTypes[txt[cur]];
 
-		if (type == CharType::COMMENT)
-		{
-			do
-			{
-				++cur;
-				++col;
-			}
-			while (txt[cur] != '\n' && cur < txt.length());
-
-			continue;
-		}
-		else if (type == CharType::SPECIAL)
-		{
-			auto specialType = charTokenTypes.find(txt[cur]);
-
-			if (specialType != charTokenTypes.end())
-			{
-				tokens.push_back(Token(std::string(1, txt[cur]), specialType->second, line, col));
-			}
-		}
-		else if (type == CharType::OPERATOR)
-		{
-			tokens.push_back(Token(std::string(1, txt[cur]), TokenType::OPERATOR, line, col));
-		}
-		else if (type == CharType::STRING_DELIM)
-		{
-			auto str = findStr(txt[cur]);
-
-			tokens.push_back(Token(str, TokenType::LITERAL_STR, line, col));
-			continue;
-		}
-		else if (type == CharType::IDENTIFIER || type == CharType::INT)
+		if (type == CharType::IDENTIFIER || type == CharType::INT)
 		{
 			std::string intLit = "";
 			size_t intOffset = 0;
@@ -317,7 +284,38 @@ void Tokenizer::tokenize(std::vector<Token>& tokens)
 
 			continue;
 		}
+		else if (type == CharType::SPECIAL)
+		{
+			auto specialType = charTokenTypes.find(txt[cur]);
 
+			if (specialType != charTokenTypes.end())
+			{
+				tokens.push_back(Token(std::string(1, txt[cur]), specialType->second, line, col));
+			}
+		}
+		else if (type == CharType::OPERATOR)
+		{
+			tokens.push_back(Token(std::string(1, txt[cur]), TokenType::OPERATOR, line, col));
+		}
+		else if (type == CharType::COMMENT)
+		{
+			do
+			{
+				++cur;
+				++col;
+			}
+			while (txt[cur] != '\n' && cur < txt.length());
+
+			continue;
+		}
+		else if (type == CharType::STRING_DELIM)
+		{
+			auto str = findStr(txt[cur]);
+
+			tokens.push_back(Token(str, TokenType::LITERAL_STR, line, col));
+			continue;
+		}
+		
 		//if all else fails, skip it.
 		++col;
 		++cur;
