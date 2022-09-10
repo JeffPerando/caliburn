@@ -7,9 +7,10 @@
 namespace caliburn
 {
 	static const std::vector<std::string> KEYWORDS = {
-		"args", "as", "break",
+		"as",
+		"break",
 		"case", "class", "const" "construct", "continue",
-		"data", "def", "default", "descriptor", "destroy", "do", "dynamic",
+		"data", "def", "default", "descriptor", "destruct", "do", "dynamic",
 		"extends",
 		"false", "for",
 		"if", "import", "in", "inputs",
@@ -18,7 +19,7 @@ namespace caliburn
 		"op", "out", "override",
 		"pass", "private", "protected", "public",
 		"return",
-		"shader", "shared", "switch",
+		"shader", "shared", "struct", "switch",
 		"true", "type",
 		"uses",
 		"var",
@@ -29,15 +30,12 @@ namespace caliburn
 
 	enum class TokenType : uint64_t
 	{
-		NONE,
 		UNKNOWN,
 		IDENTIFIER,
 		LITERAL_INVALID,
 		LITERAL_STR,
 		LITERAL_INT,
-		LITERAL_LONG,
 		LITERAL_FLOAT,
-		LITERAL_DOUBLE,
 		LITERAL_BOOL,
 		KEYWORD,
 		END,
@@ -50,14 +48,13 @@ namespace caliburn
 		PERIOD,
 		COMMA,
 		COLON,
-		MATH_OPERATOR,
-		LOGIC_OPERATOR
+		OPERATOR
 	};
 
 	struct Token
 	{
 		std::string str;
-		TokenType type = TokenType::NONE;
+		TokenType type = TokenType::UNKNOWN;
 		uint64_t line, column;
 
 		Token(std::string t) : Token(t, TokenType::IDENTIFIER) {}
@@ -106,14 +103,6 @@ namespace caliburn
 	static const std::map<std::string, TokenType> strTokenTypes = {
 		{"true",	TokenType::LITERAL_BOOL},
 		{"false",	TokenType::LITERAL_BOOL},
-		{"&&",		TokenType::LOGIC_OPERATOR},
-		{"||",		TokenType::LOGIC_OPERATOR},
-		{"==",		TokenType::LOGIC_OPERATOR},
-		{"!=",		TokenType::LOGIC_OPERATOR},
-		{">",		TokenType::LOGIC_OPERATOR},
-		{"<",		TokenType::LOGIC_OPERATOR},
-		{">=",		TokenType::LOGIC_OPERATOR},
-		{"<=",		TokenType::LOGIC_OPERATOR}
 	};
 
 	//So here's why math ops are separate from logic ops:

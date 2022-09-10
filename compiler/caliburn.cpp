@@ -21,11 +21,11 @@ std::vector<uint32_t>* Compiler::parseSrc(std::string text)
 {
 	auto tokens = std::vector<Token>();
 	auto ast = std::vector<Statement*>();
-
-	tokenize(text, tokens);
+	
+	auto t = Tokenizer(text);
+	t.tokenize(tokens);
 
 	auto p = Parser();
-
 	p.parse(&tokens, &ast);
 
 	//TODO check errors, convert to CBIR

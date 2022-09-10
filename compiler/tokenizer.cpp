@@ -2,243 +2,155 @@
 #include <algorithm>
 #include <map>
 #include <iostream>
+#include <sstream>
 
 #include "tokenizer.h"
 
 using namespace caliburn;
 
-bool caliburn::isIdentifier(char chr)
+std::string Tokenizer::findStr(char delim)
 {
-	return !isComment(chr) && !isStrDelim(chr) && !isWhitespace(chr) &&
-		!isOperator(chr) && !isSpecial(chr);
-}
+	std::stringstream ss;
 
-bool caliburn::isComment(char chr)
-{
-	return chr == '#';
-}
-
-bool caliburn::isWhitespace(char chr)
-{
-	//considering the first 32 characters in ASCII to be whitespace.
-	//this check is cheap as chips and Good Enough(TM)
-	return chr <= ' ';
-}
-
-bool caliburn::isOperator(char chr)
-{
-	return std::binary_search(OPERATORS.begin(), OPERATORS.end(), chr);
-}
-
-bool caliburn::isStrDelim(char chr)
-{
-	return chr == '\"' || chr == '\'';
-}
-
-bool caliburn::isDecInt(char chr)
-{
-	return chr >= '0' && chr <= '9';
-}
-
-bool caliburn::isHexInt(char chr)
-{
-	return isDecInt(chr) || (chr >= 'a' && chr <= 'f') || (chr >= 'A' && chr <= 'F') || chr == '_';
-}
-
-bool caliburn::isOctInt(char chr)
-{
-	return chr >= '0' && chr <= '7' || chr == '_';
-}
-
-bool caliburn::isBinInt(char chr)
-{
-	return chr == '0' || chr == '1' || chr == '_';
-}
-
-bool caliburn::isSpecial(char chr)
-{
-	return (chr >= '!' && chr <= '/') ||
-		(chr >= ':' && chr <= '@') ||
-		(chr >= '[' && chr <= '`') ||
-		(chr >= '{' && chr <= '~');
-}
-
-TokenType caliburn::getSpecial(char chr)
-{
-	auto found = charTokenTypes.find(chr);
-
-	if (found == charTokenTypes.end())
+	while (cur < txt.length())
 	{
-		//isSpecial checks the char against certain ranges in ASCII
-		//if a char is special but has no meaning in Caliburn, then it's unknown.
-		if (isSpecial(chr))
+		char current = txt[cur];
+
+		if (current == delim)
 		{
-			return TokenType::UNKNOWN;
-		}
-
-		return TokenType::NONE;
-	}
-
-	//I heavily, heavily dislike the standard library
-	return found->second;
-}
-
-size_t caliburn::find(caliburn::FindFunc func, std::string& txt, uint64_t start)
-{
-	if (!func)
-	{
-		return 0;
-	}
-	size_t tokenLen = 0;
-	while (start + tokenLen < txt.length())
-	{
-		if (!func(txt[start + tokenLen]))
-			break;
-		tokenLen += 1;
-	}
-	return tokenLen;
-}
-
-//TODO fix memory leak (needs proper memory allocator support)
-char* caliburn::findStr(std::string& txt, uint64_t& cur, uint64_t& line)
-{
-	constexpr size_t bufferLen = 4096;
-	char* buffer = new char[bufferLen]{0};
-	bool isEscaped = false;
-	size_t tokenLen = 0;
-	size_t i;
-
-	char delim = txt[cur];
-
-	for (i = cur + 1; i < txt.length(); ++i)
-	{
-		if (tokenLen == bufferLen)
-		{
-			if (txt[i] != delim)
-			{
-				//TODO complain about size of string literal
-			}
+			++col;
+			++cur;
 			break;
 		}
 
-		char current = txt[i];
+		if (current == '\n')
+		{
+			++line;
+			col = 0;
 
-		if (current == '\\')
-		{
-			isEscaped = true;
-		}
-		else if (current == '\n')
-		{
-			//skip whitespace, keep track of line #
-			do
+			while (cur < txt.length())
 			{
-				i += 1;
+				char ws = txt[cur];
 
-				if (i == txt.length())
-				{
+				if (asciiTypes[ws] != CharType::WHITESPACE)
 					break;
-				}
 
-				if (txt[i] == '\n')
+				if (ws == '\n')
 				{
-					line += 1;
+					++line;
+					col = 0;
 				}
 
-			} while (isWhitespace(txt[i]));
+				++col;
+				++cur;
+
+			}
 
 			continue;
 		}
-		else if (current == delim && !isEscaped)
-		{
-			break;
-		}
 
-		buffer[tokenLen] = current;
-		tokenLen += 1;
-		
+		ss << current;
+		++col;
+		++cur;
+
 	}
 
-	cur = i;
-	
-	return buffer;
+	return ss.str();
 }
 
-size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
+std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 {
-	size_t count = 0;
-	size_t intCount = 0;
-	//integer validation
-	//the alternative was writing regular expressions; which would be fine, but not performant.
-	if (!isDecInt(txt[cur]))
+	std::vector<char> decInts =
+	{ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+	std::vector<char> hexInts =
+	{ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+		'A', 'B', 'C', 'D', 'E', 'F', 'a', 'b', 'c', 'd', 'e', 'f' };
+	std::vector<char> binInts = { '0', '1' };
+	std::vector<char> octInts = { '0', '1', '2', '3', '4', '5', '6', '7' };
+
+	if (!std::binary_search(decInts.begin(), decInts.end(), txt[cur]))
 	{
-		return 0;
+		return "";
 	}
 
-	size_t firstInvalid = cur + 1;
-	bool isValidLit = true;
-	bool isLong = false;
-	bool isFloat = false;
-	bool isDouble = false;
+	bool isPrefixed = true;
+	bool isFloat = true;
+	int width = 32;
+
+	std::vector<char>* validIntChars = &decInts;
 
 	//find either a hex, binary, or octal integer
 	if (txt[cur] == '0' && cur + 2 < txt.length())
 	{
 		char litType = txt[cur + 1];
-		FindFunc func = nullptr;
 
 		if (litType == 'x')
 		{
-			func = isHexInt;
+			validIntChars = &hexInts;
 		}
 		else if (litType == 'b')
 		{
-			func = isBinInt;
+			validIntChars = &binInts;
 		}
 		else if (litType == 'c')
 		{
-			func = isOctInt;
+			validIntChars = &octInts;
 		}
-
-		if (func)
+		else
 		{
-			intCount = 2 + find(func, txt, cur + 2);
-			firstInvalid = count + 1;
-
-			if (intCount == 2)
-			{
-				isValidLit = false;
-			}
-
+			isPrefixed = false;
 		}
-		
+
 	}
-	
-	//find a base-10 int
-	if (intCount == 0)
+
+	std::stringstream ss;
+
+	size_t offset = 0;
+	size_t firstInvalid = cur + 1;
+
+	if (isPrefixed)
 	{
-		//will be at least one, given the check at the start of the function
-		intCount = find(&isDecInt, txt, cur);
-		firstInvalid = cur + intCount;
-		
+		ss << txt[cur];
+		ss << txt[cur + 1];
+		++firstInvalid;
+	}
+
+	while (firstInvalid < txt.length())
+	{
+		++firstInvalid;
+
+		char current = txt[firstInvalid];
+
+		if (current == '_') continue;
+
+		if (std::binary_search(validIntChars->begin(), validIntChars->end(), current))
+		{
+			ss << current;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	if (!isPrefixed)
+	{
 		//find a float
-		if (firstInvalid < txt.length())
+		if (firstInvalid + 2 < txt.length())
 		{
 			if (txt[firstInvalid] == '.')
 			{
 				isFloat = true;
-				++count;
 
-				size_t fracCount = find(&isDecInt, txt, firstInvalid + 1);
-				intCount += fracCount;
-				firstInvalid = cur + count;
-
-				if (fracCount == 0)
+				do
 				{
-					isValidLit = false;
-				}
+					ss << txt[firstInvalid];
+					++firstInvalid;
+
+				} while (firstInvalid < txt.length() && std::binary_search(validIntChars->begin(), validIntChars->end(), txt[firstInvalid]));
 
 			}
-			
+
 		}
 
 		//find an exponent
@@ -246,23 +158,18 @@ size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 		{
 			if (txt[firstInvalid] == 'e' || txt[firstInvalid] == 'E')
 			{
-				count += 1;
-				firstInvalid += 1;
+				ss << txt[firstInvalid];
+				++firstInvalid;
 
-				if (txt[firstInvalid + 1] == '+' || txt[firstInvalid + 1] == '-')
+				if (txt[firstInvalid] == '+' || txt[firstInvalid] == '-')
 				{
-					count += 1;
-					firstInvalid += 1;
-
+					ss << txt[firstInvalid];
 				}
 
-				size_t expCount = find(&isDecInt, txt, firstInvalid);
-				count += expCount;
-				firstInvalid += expCount;
-
-				if (expCount == 0)
+				while (firstInvalid < txt.length() && std::binary_search(validIntChars->begin(), validIntChars->end(), txt[firstInvalid]))
 				{
-					isValidLit = false;
+					ss << txt[firstInvalid];
+					++firstInvalid;
 				}
 
 			}
@@ -271,215 +178,150 @@ size_t caliburn::findIntLiteral(std::string& txt, uint64_t cur, TokenType& type)
 
 	}
 
-	count += intCount;
-	
 	//find suffix
-	if (firstInvalid < txt.length())
+	if (firstInvalid + 1 < txt.length())
 	{
 		char invalidChr = txt[firstInvalid];
 
 		if (invalidChr == 'f' || invalidChr == 'F')
 		{
-			if (!isFloat)
-			{
-				isFloat = true;
-			}
-
-			++count;
-
+			isFloat = true;
 		}
 		else if (invalidChr == 'd' || invalidChr == 'D')
 		{
-			if (isFloat)
-			{
-				isDouble = true;
-				++count;
-			}
-
+			isFloat = true;
+			width = 64;
 		}
 		else if (invalidChr == 'l' || invalidChr == 'L')
 		{
-			if (!isFloat)
-			{
-				isLong = true;
-				++count;
-			}
-
+			width = 64;
 		}
 
 	}
-	
-	if (isValidLit)
+
+	ss << '_';
+	ss << isFloat ? "float" : "int";
+	ss << width;
+
+	type = isFloat ? TokenType::LITERAL_FLOAT : TokenType::LITERAL_INT;
+	offset = (firstInvalid - cur);
+
+	return ss.str();
+}
+
+size_t Tokenizer::findIdentifierLen()
+{
+	size_t offset = 0;
+
+	while (cur + offset < txt.length() && (asciiTypes[txt[cur + offset]] == CharType::IDENTIFIER || asciiTypes[txt[cur + offset]] == CharType::INT))
 	{
-		if (isDouble)
-		{
-			type = TokenType::LITERAL_DOUBLE;
-		}
-		else if (isFloat)
-		{
-			type = TokenType::LITERAL_FLOAT;
-		}
-		else if (isLong)
-		{
-			type = TokenType::LITERAL_LONG;
-		}
-		else
-		{
-			type = TokenType::LITERAL_INT;
-		}
-
-	}
-	else
-	{
-		type = TokenType::LITERAL_INVALID;
+		++offset;
 	}
 
-	return count;
+	return offset;
 }
 
 //TODO use 32-bit wide chars for UTF-8 support
 //or, y'know, find a UTF-8 library (NOT BOOST)
-void caliburn::tokenize(std::string& txt, std::vector<Token>& tokens)
+void Tokenizer::tokenize(std::vector<Token>& tokens)
 {
-	uint64_t line = 1, col = 1;
-	uint64_t cur = 0;
+	line = 1;
+	col = 1;
+	cur = 0;
+
+	size_t offset = 0;
 
 	while (cur < txt.length())
 	{
-		bool isComment = false;
-		bool isMultilineComment = false;
-		
-		//Avoid comments/preprocessor directives
-		if (txt[cur] == '#')
+		if (txt[cur] == '\n')
 		{
-			if (cur < txt.length() + 1 && txt[cur + 1] == '*')
-			{
-				isMultilineComment = true;
-				isComment = true;
-				cur++;
-			}
-			else if (!isMultilineComment)
-			{
-				isComment = !isComment;
-			}
+			++line;
+			col = 1;
+			++cur;
 
-			col++;
-			cur++;
-			continue;
-		}
-		else if (isMultilineComment && txt[cur] == '*')
-		{
-			if (cur < txt.length() + 1 && txt[cur + 1] == '#')
-			{
-				isMultilineComment = false;
-				isComment = false;
-				col++;
-				cur++;
-			}
-
-			col++;
-			cur++;
 			continue;
 		}
 
-		//Avoid whitespace
-		if (isWhitespace(txt[cur]))
-		{
-			if (txt[cur] == '\n')
-			{
-				line += 1;
-				col = 0;
+		CharType type = asciiTypes[txt[cur]];
 
-				if (isComment && !isMultilineComment)
+		if (type == CharType::COMMENT)
+		{
+			do
+			{
+				++cur;
+				++col;
+			}
+			while (txt[cur] != '\n' && cur < txt.length());
+
+			continue;
+		}
+		else if (type == CharType::SPECIAL)
+		{
+			auto specialType = charTokenTypes.find(txt[cur]);
+
+			if (specialType != charTokenTypes.end())
+			{
+				tokens.push_back(Token(std::string(1, txt[cur]), specialType->second, line, col));
+			}
+		}
+		else if (type == CharType::OPERATOR)
+		{
+			tokens.push_back(Token(std::string(1, txt[cur]), TokenType::OPERATOR, line, col));
+		}
+		else if (type == CharType::STRING_DELIM)
+		{
+			auto str = findStr(txt[cur]);
+
+			tokens.push_back(Token(str, TokenType::LITERAL_STR, line, col));
+			continue;
+		}
+		else if (type == CharType::IDENTIFIER || type == CharType::INT)
+		{
+			std::string intLit = "";
+			size_t intOffset = 0;
+			TokenType intType = TokenType::UNKNOWN;
+
+			if (type == CharType::INT)
+			{
+				intLit = findIntLiteral(intType, intOffset);
+
+			}
+
+			size_t idOffset = findIdentifierLen();
+
+			if (idOffset > intOffset)
+			{
+				auto idStr = txt.substr(cur, idOffset);
+				auto idType = TokenType::IDENTIFIER;
+
+				auto foundType = strTokenTypes.find(idStr);
+				if (foundType != strTokenTypes.end())
 				{
-					isComment = false;
+					idType = foundType->second;
 				}
 
-			}
+				tokens.push_back(Token(idStr, idType, line, col));
 
-			col += 1;
-			cur += 1;
-			continue;
-		}
+				col += idOffset;
+				cur += idOffset;
 
-		if (isComment)
-		{
-			col += 1;
-			cur += 1;
-			continue;
-		}
-
-		uint64_t tokenLen = 1;
-		const char* tokenPtr = nullptr;
-		TokenType tokenID = getSpecial(txt[cur]);
-
-		if (tokenID != TokenType::NONE)
-		{
-			tokens.push_back(Token(std::string(1, txt[cur]), tokenID, line, col));
-			col += 1;
-			cur += 1;
-			continue;
-		}
-
-		if (isOperator(txt[cur]))
-		{
-			tokenLen = 1;
-			tokenID = TokenType::MATH_OPERATOR;
-		}
-		else if (isStrDelim(txt[cur]))
-		{
-			tokenPtr = findStr(txt, cur, line);
-			tokenID = TokenType::LITERAL_STR;
-		}
-		else
-		{
-			size_t intLen = findIntLiteral(txt, cur, tokenID);
-			size_t identLen = find(&caliburn::isIdentifier, txt, cur);
-			
-			if (identLen > intLen)
-			{
-				tokenLen = identLen;
-				tokenID = TokenType::IDENTIFIER;
 			}
 			else
 			{
-				tokenLen = intLen;
-				//tokenID is set by findIntLiteral
-			}
+				tokens.push_back(Token(intLit, intType, line, col));
 
-		}
-		
-		std::string tokenStr;
-		
-		if (tokenPtr != nullptr)
-		{
-			tokenStr = std::string(tokenPtr, tokenLen);
-		}
-		else
-		{
-			tokenStr = txt.substr(cur, tokenLen);
-		}
-		
-		if (tokenID == TokenType::IDENTIFIER)
-		{
-			if (std::binary_search(KEYWORDS.begin(), KEYWORDS.end(), tokenStr))
-			{
-				tokenID = TokenType::KEYWORD;
+				col += intOffset;
+				cur += intOffset;
 
 			}
 
+			continue;
 		}
 
-		auto found = strTokenTypes.find(tokenStr);
-		if (found != strTokenTypes.end())
-		{
-			tokenID = found->second;
-		}
-
-		tokens.push_back(Token(tokenStr, tokenID, line, col));
-		col += tokenLen;
-		cur += tokenLen;
-
+		//if all else fails, skip it.
+		++col;
+		++cur;
+		
 	}
 
 }
