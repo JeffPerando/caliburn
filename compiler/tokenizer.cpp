@@ -354,6 +354,25 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 		}
 		else if (type == CharType::OPERATOR)
 		{
+			size_t off;
+
+			for (off = 1; off < buf->remaining(); ++off)
+			{
+				if (asciiTypes[buf->peekVal(off)] != CharType::OPERATOR)
+					break;
+			}
+
+			auto fullOp = text.substr(buf->currentIndex(), off);
+			auto meaning = specialOps.find(fullOp);
+
+			if (meaning != specialOps.end())
+			{
+				tokens.push_back(Token(fullOp, meaning->second, line, col));
+				buf->consume(off);
+				col += off;
+				continue;
+			}
+
 			tokens.push_back(Token(std::string(1, current), TokenType::OPERATOR, line, col));
 		}
 		

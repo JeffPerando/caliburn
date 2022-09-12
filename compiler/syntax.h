@@ -47,7 +47,8 @@ namespace caliburn
 		PERIOD,
 		COMMA,
 		COLON,
-		OPERATOR
+		OPERATOR,
+		ARROW
 	};
 
 	struct Token
@@ -102,6 +103,11 @@ namespace caliburn
 	static const std::map<std::string, TokenType> strTokenTypes = {
 		{"true",	TokenType::LITERAL_BOOL},
 		{"false",	TokenType::LITERAL_BOOL},
+	};
+
+	static const std::map<std::string, TokenType> specialOps = {
+		{"->",	TokenType::ARROW},
+		{"=>",	TokenType::ARROW}
 	};
 
 	//So here's why math ops are separate from logic ops:
