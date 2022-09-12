@@ -28,30 +28,33 @@ namespace caliburn
 			return &vec->at(index);
 		}
 
+		T currentVal()
+		{
+			return vec->at(index);
+		}
+
 		//increment and fetch
 		T* next()
 		{
-			index += 1;
-
-			if (index >= vec->size())
-			{
-				return nullptr;
-			}
-
+			++index;
 			return &vec->at(index);
+		}
+
+		T nextVal()
+		{
+			++index;
+			return vec->at(index);
 		}
 
 		//fetch upcoming
 		T* peek(size_t offset = 1)
 		{
-			size_t upcoming = index + offset;
+			return &vec->at(index + offset);
+		}
 
-			if (upcoming >= vec->size())
-			{
-				return nullptr;
-			}
-
-			return &vec->at(upcoming);
+		T peekVal(size_t offset = 1)
+		{
+			return vec->at(index + offset);
 		}
 
 		//increment
@@ -66,9 +69,31 @@ namespace caliburn
 			return index;
 		}
 
+		size_t length()
+		{
+			return vec->size();
+		}
+
+		size_t remaining()
+		{
+			return length() - index;
+		}
+
+		bool inRange(size_t offset)
+		{
+			return (index + offset) < length();
+		}
+
 		void revertTo(size_t i)
 		{
 			index = i;
+		}
+
+		void rewind(size_t i = 1)
+		{
+			if (i > index)
+				return;
+			index -= i;
 		}
 
 	};

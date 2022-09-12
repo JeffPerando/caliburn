@@ -2,8 +2,8 @@
 #pragma once
 
 #include <string>
-#include <vector>
 
+#include "buffer.h"
 #include "syntax.h"
 
 namespace caliburn
@@ -22,15 +22,14 @@ namespace caliburn
 
 	class Tokenizer
 	{
-		std::string& txt;
+		buffer<char>* buf = nullptr;
 		uint64_t line = 1;
 		uint64_t col = 1;
-		uint64_t cur = 0;
 
 		CharType asciiTypes[128]{};
 
 	public:
-		Tokenizer(std::string& text) : txt(text)
+		Tokenizer()
 		{
 			//I'm so sorry for this.
 			for (auto i = 0; i < 128; ++i)
@@ -89,7 +88,7 @@ namespace caliburn
 
 		virtual ~Tokenizer() {}
 
-		void tokenize(std::vector<Token>& tokens);
+		void tokenize(std::string& text, std::vector<Token>& tokens);
 
 	private:
 		std::string findStr(char delim);
