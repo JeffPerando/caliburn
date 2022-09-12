@@ -69,9 +69,21 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 	std::vector<char> binInts = { '0', '1' };
 	std::vector<char> octInts = { '0', '1', '2', '3', '4', '5', '6', '7' };
 
+	std::vector<char>* validIntChars = &decInts;
+
+	auto isDecInt = [decInts](char chr)
+	{
+		return std::binary_search(decInts.begin(), decInts.end(), chr);
+	};
+
+	auto isValidInt = [validIntChars](char chr)
+	{
+		return std::binary_search(validIntChars->begin(), validIntChars->end(), chr);
+	};
+
 	char start = buf->currentVal();
 
-	if (!std::binary_search(decInts.begin(), decInts.end(), start))
+	if (!isDecInt(start))
 	{
 		return "";
 	}
@@ -81,8 +93,6 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 	bool isFloat = true;
 	int width = 32;
 
-	std::vector<char>* validIntChars = &decInts;
-
 	std::stringstream ss;
 
 	//find either a hex, binary, or octal integer
@@ -90,29 +100,23 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 	{
 		char litType = buf->peekVal();
 
-		if (litType == 'x')
+		switch (litType)
 		{
-			validIntChars = &hexInts;
+		case 'x':
+		case 'X': validIntChars = &hexInts; break;
+		case 'b':
+		case 'B': validIntChars = &binInts; break;
+		case 'c':
+		case 'C': validIntChars = &octInts; break;
+		default: isPrefixed = false;
 		}
-		else if (litType == 'b')
-		{
-			validIntChars = &binInts;
-		}
-		else if (litType == 'c')
-		{
-			validIntChars = &octInts;
-		}
-		else
-		{
-			isPrefixed = false;
-		}
-
+		
 		if (isPrefixed)
 		{
 			ss << start;
 			ss << litType;
 
-			buf->consume();
+			buf->consume(2);
 
 		}
 
@@ -120,16 +124,18 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 
 	while (buf->hasNext())
 	{
-		char current = buf->nextVal();
+		char current = buf->currentVal();
+		buf->consume();
 
 		if (current == '_') continue;
 
-		if (std::binary_search(validIntChars->begin(), validIntChars->end(), current))
+		if (isValidInt(current))
 		{
 			ss << current;
 		}
 		else
 		{
+			buf->rewind();
 			break;
 		}
 	}
@@ -144,11 +150,11 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 				ss << '.';
 				isFloat = true;
 
-				while (buf->hasNext())
+				do
 				{
 					char dec = buf->nextVal();
 
-					if (std::binary_search(validIntChars->begin(), validIntChars->end(), dec))
+					if (isDecInt(dec))
 					{
 						ss << dec;
 					}
@@ -157,7 +163,7 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 						break;
 					}
 
-				}
+				} while (buf->hasNext());
 
 			}
 
@@ -180,7 +186,7 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 					buf->consume();
 				}
 
-				while (buf->hasNext() && std::binary_search(validIntChars->begin(), validIntChars->end(), buf->currentVal()))
+				while (buf->hasNext() && isValidInt(buf->currentVal()))
 				{
 					ss << buf->currentVal();
 					buf->consume();
