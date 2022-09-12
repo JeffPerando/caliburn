@@ -297,10 +297,19 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 				auto idStr = text.substr(buf->currentIndex(), idOffset);
 				auto idType = TokenType::IDENTIFIER;
 
-				auto foundType = strTokenTypes.find(idStr);
-				if (foundType != strTokenTypes.end())
+				if (std::binary_search(KEYWORDS.begin(), KEYWORDS.end(), idStr))
 				{
-					idType = foundType->second;
+					auto foundType = strTokenTypes.find(idStr);
+
+					if (foundType == strTokenTypes.end())
+					{
+						idType = TokenType::KEYWORD;
+					}
+					else
+					{
+						idType = foundType->second;
+					}
+
 				}
 
 				tokens.push_back(Token(idStr, idType, line, col));
