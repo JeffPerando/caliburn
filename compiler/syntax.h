@@ -32,7 +32,6 @@ namespace caliburn
 	{
 		UNKNOWN,
 		IDENTIFIER,
-		LITERAL_INVALID,
 		LITERAL_STR,
 		LITERAL_INT,
 		LITERAL_FLOAT,

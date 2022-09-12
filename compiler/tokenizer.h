@@ -20,8 +20,6 @@ namespace caliburn
 		SPECIAL
 	};
 
-	inline TokenType getSpecial(char chr);
-
 	class Tokenizer
 	{
 		std::string& txt;

@@ -213,9 +213,14 @@ size_t Tokenizer::findIdentifierLen()
 {
 	size_t offset = 0;
 
-	while (cur + offset < txt.length() && (asciiTypes[txt[cur + offset]] == CharType::IDENTIFIER || asciiTypes[txt[cur + offset]] == CharType::INT))
+	for (; cur + offset < txt.length(); ++offset)
 	{
-		++offset;
+		if (asciiTypes[txt[cur + offset]] != CharType::IDENTIFIER &&
+			asciiTypes[txt[cur + offset]] != CharType::INT)
+		{
+			break;
+		}
+
 	}
 
 	return offset;
