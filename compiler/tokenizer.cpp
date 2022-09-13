@@ -8,6 +8,11 @@
 
 using namespace caliburn;
 
+CharType Tokenizer::getType(char chr)
+{
+	return asciiTypes[chr];
+}
+
 std::string Tokenizer::findStr(char delim)
 {
 	std::stringstream ss;
@@ -32,7 +37,7 @@ std::string Tokenizer::findStr(char delim)
 			{
 				char ws = buf->nextVal();
 
-				if (asciiTypes[ws] != CharType::WHITESPACE)
+				if (getType(ws) != CharType::WHITESPACE)
 					break;
 
 				if (ws == '\n')
@@ -81,22 +86,21 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 		return std::binary_search(validIntChars->begin(), validIntChars->end(), chr);
 	};
 
-	char start = buf->currentVal();
+	char first = buf->currentVal();
 
-	if (!isDecInt(start))
+	if (!isDecInt(first))
 	{
 		return "";
 	}
 
-	size_t off = buf->currentIndex();
+	size_t startIndex = buf->currentIndex();
 	bool isPrefixed = true;
-	bool isFloat = true;
-	int width = 32;
-
+	bool isFloat = false;
+	
 	std::stringstream ss;
 
 	//find either a hex, binary, or octal integer
-	if (start == '0' && buf->remaining() > 2)
+	if (first == '0' && buf->remaining() > 2)
 	{
 		char litType = buf->peekVal();
 
@@ -110,10 +114,10 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 		case 'C': validIntChars = &octInts; break;
 		default: isPrefixed = false;
 		}
-		
+
 		if (isPrefixed)
 		{
-			ss << start;
+			ss << first;
 			ss << litType;
 
 			buf->consume(2);
@@ -121,28 +125,36 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 		}
 
 	}
+	else isPrefixed = false;
 
+	//get the actual numerical digits
 	while (buf->hasNext())
 	{
 		char current = buf->currentVal();
-		buf->consume();
-
-		if (current == '_') continue;
+		
+		if (current == '_')
+		{
+			buf->consume();
+			continue;
+		}
 
 		if (isValidInt(current))
 		{
+			//Make all lowercase hex digits uppercase, for everyone's sanity's sake
+			if (current > 96)
+				current -= 32;
 			ss << current;
+			buf->consume();
+
 		}
-		else
-		{
-			buf->rewind();
-			break;
-		}
+		else break;
+
 	}
 
+	//find a decimal/float
 	if (!isPrefixed)
 	{
-		//find a decimal/float
+		//find the fractional component
 		if (buf->remaining() >= 2)
 		{
 			if (buf->currentVal() == '.')
@@ -158,10 +170,7 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 					{
 						ss << dec;
 					}
-					else
-					{
-						break;
-					}
+					else break;
 
 				} while (buf->hasNext());
 
@@ -198,43 +207,51 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 
 	}
 
+	std::string typeSuffix = "int";
+	auto width = 32;
+
 	//find suffix
 	if (buf->hasNext())
 	{
 		char suffix = buf->currentVal();
 		buf->consume();
 
-		if (suffix == 'f' || suffix == 'F')
+		if (suffix > 96)
+			suffix -= 32;
+		
+		if (suffix == 'U')
 		{
-			isFloat = true;
+			typeSuffix = "uint";
+			suffix = buf->currentVal();
+			buf->consume();
 		}
-		else if (suffix == 'd' || suffix == 'D')
+
+		switch (suffix)
 		{
-			isFloat = true;
-			width = 64;
-		}
-		else if (suffix == 'l' || suffix == 'L')
-		{
-			width = 64;
-		}
-		else
-		{
-			buf->rewind();
+		case 'D': width = 64;
+		case 'F': isFloat = true; break;
+		case 'L': width = 64; break;
+		default: buf->rewind();
 		}
 
 	}
 
+	//This code is not useless, KEEP IT
+	//remember earlier when we checked for a fractional part? Yeah...
+	if (isFloat)
+		typeSuffix = "float";
+
 	//Attach type information to the end of the literal
-	//No, I don't want to expose this syntactically. Those literal look so ugly.
+	//No, I don't want to expose this syntactically. Those literals look so ugly.
 	ss << '_';
-	ss << isFloat ? "float" : "int";
+	ss << typeSuffix;
 	ss << width;
 
+	offset = (buf->currentIndex() - startIndex);
 	type = isFloat ? TokenType::LITERAL_FLOAT : TokenType::LITERAL_INT;
-	offset = (buf->currentIndex() - off);
 	//we've been using the buffer this whole time to help track this stuff.
 	//So we revert it so we don't need to change any code.
-	buf->revertTo(off);
+	buf->revertTo(startIndex);
 
 	return ss.str();
 }
@@ -246,8 +263,8 @@ size_t Tokenizer::findIdentifierLen()
 	while (buf->inRange(offset))
 	{
 		char chrAtOff = buf->peekVal(offset);
-		if (asciiTypes[chrAtOff] != CharType::IDENTIFIER &&
-			asciiTypes[chrAtOff] != CharType::INT)
+		if (getType(chrAtOff) != CharType::IDENTIFIER &&
+			getType(chrAtOff) != CharType::INT)
 		{
 			break;
 		}
@@ -282,7 +299,7 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 			continue;
 		}
 
-		CharType type = asciiTypes[current];
+		CharType type = getType(current);
 
 		if (type == CharType::IDENTIFIER || type == CharType::INT)
 		{
@@ -373,7 +390,7 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 
 			for (off = 1; off < buf->remaining(); ++off)
 			{
-				if (asciiTypes[buf->peekVal(off)] != CharType::OPERATOR)
+				if (getType(buf->peekVal(off)) != CharType::OPERATOR)
 					break;
 			}
 

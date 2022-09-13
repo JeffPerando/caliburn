@@ -91,6 +91,8 @@ namespace caliburn
 		void tokenize(std::string& text, std::vector<Token>& tokens);
 
 	private:
+		CharType getType(char chr);
+
 		std::string findStr(char delim);
 
 		std::string findIntLiteral(TokenType& type, uint64_t& offset);
