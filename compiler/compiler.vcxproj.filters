@@ -15,6 +15,9 @@
     <Filter Include="Header Files\cbir">
       <UniqueIdentifier>{af84cef7-3c04-4ae9-a647-511268a845d0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\spirv">
+      <UniqueIdentifier>{3d7c0e90-e786-49a1-82b2-b81a84af3c68}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -58,9 +61,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="allasm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="buffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -71,9 +71,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="parser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="spirv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="syntax.h">
@@ -106,9 +103,6 @@
     <ClInclude Include="typestruct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="spirvtrans.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cfg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -132,6 +126,15 @@
     </ClInclude>
     <ClInclude Include="cbirasm.h">
       <Filter>Header Files\cbir</Filter>
+    </ClInclude>
+    <ClInclude Include="spirvtrans.h">
+      <Filter>Header Files\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="spirv.h">
+      <Filter>Header Files\spirv</Filter>
+    </ClInclude>
+    <ClInclude Include="spirvasm.h">
+      <Filter>Header Files\spirv</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

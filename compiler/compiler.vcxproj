@@ -166,7 +166,6 @@
     <ClCompile Include="typevoid.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="allasm.h" />
     <ClInclude Include="buffer.h" />
     <ClInclude Include="caliburn.h" />
     <ClInclude Include="cbir.h" />
