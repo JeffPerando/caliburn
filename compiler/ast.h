@@ -87,6 +87,7 @@ namespace caliburn
 		const StatementType type;
 		const Statement* parent;
 
+		std::map<std::string, std::string> typeAliases;
 		std::map<std::string, VariableStmt> vars;
 		std::vector<Statement*> innerCode;
 		ReturnMode mode = ReturnMode::NONE;

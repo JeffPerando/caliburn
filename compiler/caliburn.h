@@ -76,7 +76,7 @@ namespace caliburn
 
 		An empty shaderName will result in a failed compilation.
 		*/
-		bool compile(std::vector<uint32_t>* cbir, std::string shaderName,
+		bool compileShaders(std::vector<uint32_t>* cbir, std::string shaderName,
 			std::vector<Shader>& shaderDest);
 
 	};

@@ -12,6 +12,9 @@
     <Filter Include="Header Files\ast">
       <UniqueIdentifier>{3e44c653-bd7d-44e0-a4c3-e859cd854c3c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\cbir">
+      <UniqueIdentifier>{af84cef7-3c04-4ae9-a647-511268a845d0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -33,12 +36,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="typevoid.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="spirvasm.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="assembler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="typebool.cpp">
@@ -64,9 +61,6 @@
     <ClInclude Include="allasm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="assembler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="buffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -80,9 +74,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="spirv.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="spirvasm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="syntax.h">
@@ -124,9 +115,6 @@
     <ClInclude Include="caliburn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cbir.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cllr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -138,6 +126,12 @@
     </ClInclude>
     <ClInclude Include="value.h">
       <Filter>Header Files\ast</Filter>
+    </ClInclude>
+    <ClInclude Include="cbir.h">
+      <Filter>Header Files\cbir</Filter>
+    </ClInclude>
+    <ClInclude Include="cbirasm.h">
+      <Filter>Header Files\cbir</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

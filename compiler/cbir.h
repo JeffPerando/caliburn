@@ -57,11 +57,9 @@ namespace caliburn
 			VARIABLE,
 			SETTER,
 			FUNC_CALL,
-			SCOPE,
 
 			//Other things
-			MISC_VALUE,
-			MATH_EXPRESSION,
+			EXPRESSION,
 			LITERAL,
 			OP_OVERRIDE
 		};

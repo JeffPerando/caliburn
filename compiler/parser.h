@@ -12,7 +12,7 @@ namespace caliburn
 {
 	class Parser;
 
-	using ParseMethod = Statement* (Parser::*)();
+	using ParseMethod = Statement* (Parser::*)(Statement*);
 
 	class Parser
 	{

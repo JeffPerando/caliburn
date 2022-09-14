@@ -22,8 +22,8 @@ std::vector<uint32_t>* Compiler::parseSrc(std::string text)
 	auto tokens = std::vector<Token>();
 	auto ast = std::vector<Statement*>();
 	
-	auto t = Tokenizer(text);
-	t.tokenize(tokens);
+	auto t = Tokenizer();
+	t.tokenize(text, tokens);
 
 	auto p = Parser();
 	p.parse(&tokens, &ast);
@@ -33,7 +33,7 @@ std::vector<uint32_t>* Compiler::parseSrc(std::string text)
 	return nullptr;
 }
 
-bool Compiler::compile(std::vector<uint32_t>* cbir, std::string shaderName, std::vector<Shader>& shaderDest)
+bool Compiler::compileShaders(std::vector<uint32_t>* cbir, std::string shaderName, std::vector<Shader>& shaderDest)
 {
 	return false;
 }

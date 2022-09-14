@@ -151,10 +151,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="assembler.cpp" />
     <ClCompile Include="caliburn.cpp" />
     <ClCompile Include="cfg.cpp" />
-    <ClCompile Include="spirvasm.cpp" />
     <ClCompile Include="langcore.cpp" />
     <ClCompile Include="spirvtrans.cpp" />
     <ClCompile Include="type.cpp" />
@@ -169,10 +167,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allasm.h" />
-    <ClInclude Include="assembler.h" />
     <ClInclude Include="buffer.h" />
     <ClInclude Include="caliburn.h" />
     <ClInclude Include="cbir.h" />
+    <ClInclude Include="cbirasm.h" />
     <ClInclude Include="cfg.h" />
     <ClInclude Include="cllr.h" />
     <ClInclude Include="compilererr.h" />
@@ -181,7 +179,6 @@
     <ClInclude Include="langcore.h" />
     <ClInclude Include="parser.h" />
     <ClInclude Include="spirv.h" />
-    <ClInclude Include="spirvasm.h" />
     <ClInclude Include="spirvtrans.h" />
     <ClInclude Include="ast.h" />
     <ClInclude Include="syntax.h" />
