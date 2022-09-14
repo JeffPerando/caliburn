@@ -755,7 +755,7 @@ namespace caliburn
 
         SPIRV_Op(OpBuildNDRange, 304, 6);
 
-        SPIRV_OpVar(OpImageQuerySamples, 305, 5);
+        SPIRV_OpVar(OpImageSparseSampleImplicitLod, 305, 5);
 
         SPIRV_OpVar(OpImageSparseSampleExplicitLod, 306, 7);
 
@@ -775,7 +775,7 @@ namespace caliburn
 
         SPIRV_OpVar(OpImageSparseDrefGather, 315, 6);
 
-        SPIRV_Op(OpImageSparseDrefGather, 316, 4);
+        SPIRV_Op(OpImageSparseTexelsResident, 316, 4);
 
         SPIRV_Op(OpNoLine, 317, 1);
 
