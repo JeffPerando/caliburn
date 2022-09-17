@@ -4,87 +4,85 @@
 #include <stdint.h>
 
 #define SPIRV_Op(Name, ID, Count) SpvOp inline Name() {return SpvOp(Count, ID);}
-#define SPIRV_OpVar(Name, ID, Base) SpvOp inline Name(uint32_t var) {return SpvOp(Base + var, ID);}
+#define SPIRV_OpVar(Name, ID, Base) SpvOp inline Name(uint32_t var = 0) {return SpvOp(Base + var, ID);}
 
 namespace caliburn
 {
-    using SSA = uint32_t;
-    using SpvOp = uint32_t;
-
     namespace spirv
     {
+        constexpr uint32_t SPIRV_FILE_MAGIC_NUMBER = 0x07230203;
+        //1975 is the year Monty Python and the Holy Grail came out
+        constexpr uint32_t CALIBURN_GENERATOR_MAGIC_NUMBER = 1975;
+
+        using SSA = uint32_t;
+
         struct SpvOp
         {
-            uint32_t rawInstruction = 0;
+            uint16_t words = 0;
+            uint16_t op = 0;
 
             SpvOp() {}
 
             SpvOp(uint32_t code)
             {
-                rawInstruction = code;
+                words = ((code >> 16) & 0xFFFF);
+                op = (code & 0xFFFF);
             }
 
-            SpvOp(uint32_t wordCount, uint32_t opCode)
-            {
-                rawInstruction = ((wordCount & 0xFFFF) << 16) | (opCode & 0xFFFF);
-            }
+            SpvOp(uint16_t wordCount, uint16_t opcode) : words(wordCount), op(opcode) {}
 
             operator uint32_t()
             {
-                return rawInstruction;
+                return *(uint32_t*)this;
             }
 
-            uint32_t words()
+            bool operator<(const SpvOp& op) const
             {
-                return (rawInstruction & (0xFFFF << 16)) >> 16;
-            }
-
-            uint32_t opCode()
-            {
-                return rawInstruction & 0xFFFF;
+                return op < op.op;
             }
 
         };
 
-        uint32_t inline MagicNumber()
+        struct Version
         {
-            return 0x07230203;
-        }
+        private:
+            const uint8_t unused_0 = 0;
+        public:
+            uint8_t major;
+            uint8_t minor;
+        private:
+            const uint8_t unused_1 = 0;
 
-        struct SpirVVersion
-        {
-            union
-            {
-                uint32_t raw;
-                struct
-                {
-                    uint8_t unused_0;
-                    uint8_t major;
-                    uint8_t minor;
-                    uint8_t unused_1;
-                } api;
-
-            } value;
-
-            SpirVVersion(uint8_t major = 1, uint8_t minor = 0)
-            {
-                value.api.unused_0 = 0;
-                value.api.major = major;
-                value.api.minor = minor;
-                value.api.unused_1 = 0;
-            }
+            Version(uint8_t maj = 1, uint8_t min = 0) : major(maj), minor(min) {}
 
             operator uint32_t()
             {
-                return value.raw;
+                return *(uint32_t*)this;
             }
 
         };
 
-        uint32_t inline Version(int major, int minor)
+        struct FuncControl
         {
-            return ((major & 0xFF) << 16) | ((minor & 0xFF) << 8);
-        }
+            uint32_t Inline : 1,
+                DontInline : 1,
+                Pure : 1,
+                Const : 1;
+
+            FuncControl()
+            {
+                Inline = 0;
+                DontInline = 0;
+                Pure = 0;
+                Const = 0;
+            }
+
+            operator uint32_t()
+            {
+                return *(uint32_t*)this;
+            }
+
+        };
 
         enum class Capability : uint32_t
         {
@@ -156,40 +154,93 @@ namespace caliburn
             VulkanKHR = 3
         };
 
-        struct FuncControl
-        {
-            uint32_t Inline:        1;
-            uint32_t DontInline:    1;
-            uint32_t Pure:          1;
-            uint32_t Const:         1;
-
-            FuncControl()
-            {
-                Inline = 0;
-                DontInline = 0;
-                Pure = 0;
-                Const = 0;
-            }
-
-        };
-
         //Not complete, missing a lot of RT extension enums
         enum class StorageClass : uint32_t
         {
-            Uniform_Constant =  0,
-            Input =             1,
-            Uniform =           2,
-            Output =            3,
-            Workgroup =         4,
-            Cross_Workgroup =   5,
-            Private =           6,
-            Function =          7,
-            Generic =           8,
-            Push_Constant =     9,
-            Atomic_Counter =    10,
-            Image =             11,
+            UniformConstant = 0,
+            Input = 1,
+            Uniform = 2,
+            Output = 3,
+            Workgroup = 4,
+            CrossWorkgroup = 5,
+            Private = 6,
+            Function = 7,
+            Generic = 8,
+            PushConstant = 9,
+            AtomicCounter = 10,
+            Image = 11,
             //version >= 1.3
-            Storage_Buffer =    12
+            StorageBuffer = 12,
+            CallableDataKHR = 5328,
+            IncomingCallableDataKHR = 5329,
+            RayPayloadKHR = 5338,
+            HitAttributeKHR = 5339,
+            IncomingRayPayloadKHR = 5342,
+            ShaderRecordBufferKHR = 5343,
+            //version >= 1.5
+            PhysicalStorageBuffer = 5349,
+            PhysicalStorageBufferEXT = 5349
+        };
+
+        enum class ExecutionModel : uint32_t
+        {
+            Vertex = 0,
+            TessellationControl = 1,
+            TessellationEvaluation = 2,
+            Geometry = 3,
+            Fragment = 4,
+            GLCompute = 5,
+            Kernel = 6,
+            RayGenerationKHR = 5313,
+            IntersectionKHR = 5314,
+            AnyHitKHR = 5315,
+            ClosestHitKHR = 5316,
+            MissKHR = 5317,
+            CallableKHR = 5318
+        };
+
+        enum class Dim : uint32_t
+        {
+            _1D = 0,
+            _2D = 1,
+            _3D = 2,
+            Cube = 3,
+            Rect = 4,
+            Buffer = 5,
+            SubpassData = 6
+        };
+
+        enum class SamplerAddressingMode : uint32_t
+        {
+            None = 0,
+            ClampToEdge = 1,
+            Clamp = 2,
+            Repeat = 3,
+            RepeatMirrored = 4
+        };
+
+        struct ImageOperand
+        {
+            uint32_t Bias : 1,
+                Lod : 1,
+                Grad: 1,
+                ConstOffset: 1,
+                Offset: 1,
+                ConstOffsets: 1,
+                Sample: 1,
+                MinLod: 1,
+                MakeTexelAvailable: 1,
+                MakeTexelVisible: 1,
+                NonPrivateTexel: 1,
+                VolatileTexel: 1,
+                SignExtend: 1,
+                ZeroExtend: 1;
+
+            operator uint32_t()
+            {
+                return *(uint32_t*)this;
+            }
+
         };
 
         //ONLY INSTRUCTIONS BELOW THIS POINT
@@ -286,7 +337,7 @@ namespace caliburn
 
         SPIRV_Op(OpSpecConstantFalse, 49, 3);
 
-        SPIRV_OpVar(OpSpecConstantFalse, 50, 4);
+        SPIRV_OpVar(OpSpecConstant, 50, 4);
 
         SPIRV_OpVar(OpSpecConstantComposite, 51, 5);
 

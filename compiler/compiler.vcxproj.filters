@@ -59,6 +59,9 @@
     <ClCompile Include="caliburn.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="spirvasm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="buffer.h">

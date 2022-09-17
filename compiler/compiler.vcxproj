@@ -154,6 +154,7 @@
     <ClCompile Include="caliburn.cpp" />
     <ClCompile Include="cfg.cpp" />
     <ClCompile Include="langcore.cpp" />
+    <ClCompile Include="spirvasm.cpp" />
     <ClCompile Include="spirvtrans.cpp" />
     <ClCompile Include="type.cpp" />
     <ClCompile Include="typebool.cpp" />
@@ -178,6 +179,7 @@
     <ClInclude Include="langcore.h" />
     <ClInclude Include="parser.h" />
     <ClInclude Include="spirv.h" />
+    <ClInclude Include="spirvasm.h" />
     <ClInclude Include="spirvtrans.h" />
     <ClInclude Include="ast.h" />
     <ClInclude Include="syntax.h" />
