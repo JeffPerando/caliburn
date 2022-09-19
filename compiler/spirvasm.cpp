@@ -29,9 +29,10 @@ SSA CodeSection::push(SpvOp op, std::initializer_list<uint32_t> args, bool hasSS
 	return ssa;
 }
 
+//Do NOT try to replace this with a memcpy
 void CodeSection::pushStr(std::string str)
 {
-	bool needsExtraNull = ((str.length() & 0x3) != 0);
+	bool needsExtraNull = ((str.length() & 0x3) == 0);
 	size_t packedLen = (str.length() >> 2) + needsExtraNull;
 	code.reserve(code.size() + packedLen);
 
@@ -43,12 +44,13 @@ void CodeSection::pushStr(std::string str)
 
 		for (auto i = 0; i < 4; ++i)
 		{
-			packed <<= 8;
-			packed |= *iter;
-			++iter;
-
 			if (iter == str.end())
+			{
 				break;
+			}
+
+			packed |= (((uint32_t)*iter) << i * 8);
+			++iter;
 
 		}
 
@@ -65,7 +67,13 @@ void CodeSection::pushStr(std::string str)
 
 SSA Assembler::nextSSA(SpvOp op)
 {
-	return SSA();
+	auto entry = SSAEntry { ssa, op };
+
+	++ssa;
+
+	ssaEntries.push_back(entry);
+
+	return entry.ssa;
 }
 
 void Assembler::pushExt(std::string ext)

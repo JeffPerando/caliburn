@@ -60,6 +60,8 @@ namespace caliburn
             std::vector<EntryPoint> entries;
             CodeSection imports, types, decorations, constants, globalVars, code;
 
+            std::vector<SSAEntry> ssaEntries;
+
         public:
             Assembler() :
                 imports(this, { OpExtInstImport() }),

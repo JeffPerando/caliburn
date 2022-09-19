@@ -77,6 +77,7 @@ namespace caliburn
 			VALUE_VARIABLE,
 			
 			RETURN,
+			RETURN_VALUE
 
 		};
 

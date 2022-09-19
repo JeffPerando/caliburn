@@ -26,8 +26,6 @@ namespace caliburn
 	{
 		enum class Opcode : uint32_t
 		{
-			//WARNING: THIS HAS BEEN COPIED FROM THE STATEMENT HEADER. PLS MODIFY
-
 			UNKNOWN,
 
 			IMPORT,
