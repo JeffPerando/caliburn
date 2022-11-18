@@ -1,4 +1,4 @@
-
+/*
 #include "allasm.h"
 #include "typebool.h"
 
@@ -81,3 +81,4 @@ uint32_t TypeBool::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_
 {
 	return 0;
 }
+*/

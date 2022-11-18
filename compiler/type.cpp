@@ -2,7 +2,7 @@
 #include "type.h"
 
 using namespace caliburn;
-
+/*
 ConcreteType* ParsedType::resolve(CaliburnAssembler* codeAsm, SymbolTable* syms)
 {
 	if (mod != nullptr && this->mod->str.length() > 0)
@@ -47,3 +47,4 @@ ConcreteType* ParsedType::resolve(CaliburnAssembler* codeAsm, SymbolTable* syms)
 	}
 
 }
+*/

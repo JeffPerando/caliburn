@@ -1,4 +1,4 @@
-
+/*
 #include "allasm.h"
 #include "typevector.h"
 
@@ -85,4 +85,4 @@ uint32_t TypeVector::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint3
 	//TODO implement
 	return 0;
 }
-
+*/

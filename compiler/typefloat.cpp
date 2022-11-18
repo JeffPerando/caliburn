@@ -1,4 +1,4 @@
-
+/*
 #include "allasm.h"
 #include "typefloat.h"
 
@@ -160,3 +160,4 @@ uint32_t TypeFloat::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32
 {
 	return 0;
 }
+*/

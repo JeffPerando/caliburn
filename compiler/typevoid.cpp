@@ -1,4 +1,4 @@
-
+/*
 #include "allasm.h"
 #include "typevoid.h"
 
@@ -45,3 +45,4 @@ uint32_t TypeVoid::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_
 {
 	return 0;
 }
+*/

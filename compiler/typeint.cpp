@@ -1,4 +1,4 @@
-
+/*
 #include "allasm.h"
 #include "typeint.h"
 
@@ -212,7 +212,7 @@ uint32_t TypeInt::mathOpSpirV(SpirVAssembler* codeAsm,
 				spirv::OpShiftRightLogical(), resultTypeSSA, shifted, lhs, rhs });
 			codeAsm->pushAll({ spirv::OpBitwiseAnd(),
 				resultTypeSSA, result, shifted,
-				/*codeAsm->getOrPushIntConst(1, intBits, hasA(TypeAttrib::SIGNED)).value */});
+				codeAsm->getOrPushIntConst(1, intBits, hasA(TypeAttrib::SIGNED)).value });
 			return result;
 		}
 
@@ -228,3 +228,4 @@ uint32_t TypeInt::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t
 {
 	return 0;
 }
+*/
