@@ -10,18 +10,18 @@ namespace caliburn
 		"as",
 		"break",
 		"case", "class", "const" "construct", "continue",
-		"data", "def", "default", "descriptor", "destruct", "do", "dynamic",
-		"extends",
-		"false", "for",
+		"def", "default", "descriptor", "destruct", "do", "dynamic",
+		"enum", "extends",
+		"false", "for", "from",
 		"if", "import", "in", "inputs",
 		"make", "module",
 		"new",
 		"op", "out", "override",
 		"pass", "private", "protected", "public",
 		"return",
-		"shader", "shared", "struct", "switch",
-		"true", "type",
-		"uses",
+		"shader", "shared", "strong", "struct", "switch",
+		"to", "true", "type",
+		"unreachable", "uses",
 		"var",
 		"while"
 	};
@@ -66,7 +66,7 @@ namespace caliburn
 
 	};
 
-	enum class Operator
+	enum class Operator : uint32_t
 	{
 		COMP_EQ, COMP_NEQ,
 		COMP_GT, COMP_LT,
@@ -85,6 +85,14 @@ namespace caliburn
 		BOOL_NOT, BIT_NOT, NEGATE,
 		//|x|, x[n]
 		ABS, ARRAY_ACCESS
+	};
+	
+	struct ParsedObject
+	{
+		virtual Token* firstTkn() const = 0;
+
+		virtual Token* lastTkn() const = 0;
+
 	};
 
 	static const std::map<char, TokenType> charTokenTypes = {

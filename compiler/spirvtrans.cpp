@@ -35,7 +35,7 @@ bool CodeTransform::compare(Transformer* trans, std::vector<uint32_t> codes, uin
 		}
 		else if (point->type == CodeCompareType::INSTRUCTION_CACHE_LEN)
 		{
-			trans->cache(point->cacheID, SpvOp(code).words());
+			trans->cache(point->cacheID, SpvOp(code).words);
 
 		}
 

@@ -9,30 +9,13 @@
 #include <sstream>
 #include <vector>
 
+#include "cllrasm.h"
 #include "langcore.h"
 
 namespace caliburn
 {
-	class CaliburnAssembler;
-	class SpirVAssembler;
-
-	enum class TypeAttrib : uint32_t
-	{
-		NONE =			0,
-		//has the concept of a negative
-		SIGNED =		0b00000001,
-		//is an IEEE 16-bit (or higher) floating point
-		FLOAT =			0b00000010,
-		//is a generic, e.g. array<T> or list<T>
-		GENERIC =		0b00000100,
-		//is considered a finite set of elements, like a buffer or array
-		//can be accessed using [], e.g. v[x]
-		COMPOSITE =		0b00001000,
-		//is, well, atomic
-		ATOMIC =		0b00010000,
-		ALL =			0b00011111
-
-	};
+	class ParsedType;
+	class ConcreteType;
 
 	enum class TypeCategory
 	{
@@ -47,13 +30,20 @@ namespace caliburn
 		INCOMPATIBLE_OP
 	};
 
-	struct ParsedType
+	struct TypeConvertResult
+	{
+		TypeCompat compat;
+		ConcreteType* commonType;
+
+	};
+	
+	struct ParsedType : public ParsedObject
 	{
 	private:
-		std::string fullName;
+		std::string fullName = "";
 	public:
-		Token* mod;
-		Token* name;
+		Token* const mod;
+		Token* const name;
 		std::vector<ParsedType*> generics;
 		
 		ParsedType() : ParsedType(nullptr) {}
@@ -130,38 +120,41 @@ namespace caliburn
 			generics.push_back(s);
 			return this;
 		}
-		
-		ConcreteType* resolve(CaliburnAssembler* codeAsm, SymbolTable* syms);
 
+		Token* firstTkn() const override
+		{
+			if (mod != nullptr)
+				return mod;
+			return name;
+		}
+
+		Token* lastTkn() const override
+		{
+			if (!generics.empty())
+				return generics.back()->lastTkn();
+			return name;
+		}
+		
 	};
 
-	struct ConcreteType
+	struct ConcreteType : public cllr::Emitter
 	{
 		const TypeCategory category;
 		const std::string canonName;
 		const size_t maxGenerics;
 	protected:
-		//Since every type is made for a particular assembler, storing the SSA is fine
-		uint32_t ssa = 0;
-		uint32_t attribs = (uint32_t)TypeAttrib::NONE;
 		ConcreteType* superType = nullptr;
-		std::map<std::string, TypedOffset> fields;
 		std::vector<ConcreteType*> generics;
+
 		//TODO add dirty flag to trigger a refresh. that or just control when aspects can be edited
 		std::string fullName = "";
 	public:
-		ConcreteType(TypeCategory c, std::string n, std::initializer_list<TypeAttrib> as = {}, size_t genMax = 0) :
+		ConcreteType(TypeCategory c, std::string n, size_t genMax = 0) :
 			category(c), canonName(n), maxGenerics(genMax)
 		{
-			for (auto attrib : as)
-			{
-				attribs |= (int)attrib;
-			}
-
 			if (maxGenerics > 0)
 			{
 				generics.reserve(maxGenerics);
-				attribs |= (int)TypeAttrib::GENERIC;
 
 			}
 			
@@ -175,18 +168,7 @@ namespace caliburn
 
 		bool operator==(const ConcreteType& rhs) const
 		{
-			//cheap hack, sorry
-			if (ssa != 0 && rhs.ssa != 0)
-			{
-				return ssa == rhs.ssa;
-			}
-			
 			if (canonName != rhs.canonName)
-			{
-				return false;
-			}
-
-			if (attribs != rhs.attribs)
 			{
 				return false;
 			}
@@ -210,16 +192,6 @@ namespace caliburn
 			}
 
 			return true;
-		}
-
-		bool hasA(TypeAttrib a) const
-		{
-			return (attribs & (int)a) != 0;
-		}
-
-		uint32_t getSSA()
-		{
-			return ssa;
 		}
 
 		std::string getFullName()
@@ -283,14 +255,11 @@ namespace caliburn
 
 		}
 
-		virtual TypedSSA* getField(std::string name)
+		//ONLY exists for making a new generic type. so if you don't use generics, there's ZERO point in
+		//properly implementing this.
+		virtual ConcreteType* clone() const
 		{
-			return nullptr;
-		}
-
-		virtual bool declareField(std::string name, TypedSSA* data)
-		{
-			return false;
+			return (ConcreteType*)this;
 		}
 
 		//NOTE: because the size can depend on things like generics, members, etc., this HAS to be a method
@@ -299,23 +268,9 @@ namespace caliburn
 		//Conveniently, for most all primitives, alignment == size
 		virtual uint32_t getAlignBytes() const = 0;
 
-		//ONLY exists for making a new generic form. so if you don't use generics, there's ZERO point in
-		//properly implementing this.
-		virtual ConcreteType* clone() const
-		{
-			return (ConcreteType*)this;
-		}
-
-		virtual void getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssembler* codeAsm) = 0;
-
 		virtual TypeCompat isCompatible(Operator op, ConcreteType* rType) const = 0;
 
-		virtual uint32_t typeDeclSpirV(SpirVAssembler* codeAsm) = 0;
-
-		virtual uint32_t mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, ConcreteType* rType, uint32_t rvalueSSA, ConcreteType*& endType) const = 0;
-
-		//used for BIT_NOT, NEGATE, ABS
-		virtual uint32_t mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, ConcreteType*& endType) const = 0;
+		virtual void getConvertibleTypes(std::set<ConcreteType*>& types) = 0;
 
 	};
 

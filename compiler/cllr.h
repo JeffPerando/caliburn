@@ -2,10 +2,6 @@
 #pragma once
 
 #include <stdint.h>
-#include <string>
-#include <vector>
-
-#include "langcore.h"
 
 /*
 Caliburn Low-Level Representation (CLLR [pronounced Caller]):
@@ -23,6 +19,10 @@ namespace caliburn
 {
 	namespace cllr
 	{
+		class Assembler;
+
+		using SSA = uint32_t*;
+
 		enum class Opcode : uint32_t
 		{
 			UNKNOWN,
@@ -58,6 +58,7 @@ namespace caliburn
 			LABEL,
 			JUMP,
 			JUMP_COND,
+			LOOP,
 
 			ASSIGN,
 			ASSIGN_ARRAY,
@@ -77,25 +78,19 @@ namespace caliburn
 			VALUE_VARIABLE,
 			
 			RETURN,
-			RETURN_VALUE
+			RETURN_VALUE,
+
+			OP_COUNT
 
 		};
 
 		struct Instruction
 		{
-			Opcode op;
+			SSA index = nullptr;
+			Opcode op = Opcode::UNKNOWN;
 			uint32_t operands[3] {0};
-		};
-
-		struct CLLRPipeline
-		{
-			std::string name;
-			std::vector<std::string> strs;
-			std::vector<Instruction> code;
 
 		};
-
-
 
 	}
 

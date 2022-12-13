@@ -44,7 +44,7 @@ namespace caliburn
 
             }
 
-            SSA push(SpvOp op, std::initializer_list<uint32_t> args, bool hasSSA = true);
+            SSA push(SpvOp op, std::initializer_list<uint32_t> args, bool genSSA = true);
 
             void pushStr(std::string str);
 
@@ -58,14 +58,14 @@ namespace caliburn
             AddressingModel addrModel = AddressingModel::Logical;
             MemoryModel memModel = MemoryModel::GLSL450;
             std::vector<EntryPoint> entries;
-            CodeSection imports, types, decorations, constants, globalVars, code;
+            CodeSection spvImports, spvTypes, spvDecs, spvConsts, spvGloVars, spvCode;
 
             std::vector<SSAEntry> ssaEntries;
 
         public:
             Assembler() :
-                imports(this, { OpExtInstImport() }),
-                types(this, {
+                spvImports(this, { OpExtInstImport() }),
+                spvTypes(this, {
                     OpTypeArray(),
                     OpTypeBool(),
                     OpTypeFloat(),
@@ -80,7 +80,7 @@ namespace caliburn
                     OpTypeVector(),
                     OpTypeVoid()
                         }),
-                decorations(this, {
+                spvDecs(this, {
                     OpDecorate(),
                     OpGroupDecorate(),
                     OpGroupMemberDecorate(),
@@ -88,7 +88,7 @@ namespace caliburn
                     OpMemberDecorateString(),
                     OpDecorationGroup()
                         }),
-                constants(this, {
+                spvConsts(this, {
                     OpConstant(),
                     OpConstantComposite(),
                     OpConstantFalse(),
@@ -100,28 +100,41 @@ namespace caliburn
                     OpSpecConstantOp(),
                     OpSpecConstantTrue(),
                         }),
-                globalVars(this, {
+                spvGloVars(this, {
                     OpVariable()
                         }),
-                code(this, {}) {}
+                spvCode(this, {})
+            {}
             virtual ~Assembler() {}
+            
+            CodeSection* main()
+            {
+                return &spvCode;
+            }
 
-            CodeSection* main() { return &code; }
+            CodeSection* types()
+            {
+                return &spvTypes;
+            }
 
-            CodeSection* types() { return &types; }
+            CodeSection* consts()
+            {
+                return &spvConsts;
+            }
 
-            CodeSection* consts() { return &constants; }
+            CodeSection* decors()
+            {
+                return &spvDecs;
+            }
 
-            CodeSection* decors() { return &decorations; }
+            SSA createSSA(SpvOp op);
 
-            SSA nextSSA(SpvOp op);
-
-            void pushExt(std::string ext);
+            void addExt(std::string ext);
 
             //popular import is "GLSL.std.450"
-            SSA pushImport(SpvOp op, std::string instructions);
+            SSA addImport(SpvOp op, std::string instructions);
 
-            SSA pushGlobalVar(SSA type, StorageClass stClass, SSA init = 0);
+            SSA addGlobalVar(SSA type, StorageClass stClass, SSA init = 0);
 
         };
 

@@ -3,7 +3,7 @@
 
 using namespace caliburn::spirv;
 
-SSA CodeSection::push(SpvOp op, std::initializer_list<uint32_t> args, bool hasSSA)
+SSA CodeSection::push(SpvOp op, std::initializer_list<uint32_t> args, bool genSSA)
 {
 	if (!validOps.empty())
 	{
@@ -18,9 +18,9 @@ SSA CodeSection::push(SpvOp op, std::initializer_list<uint32_t> args, bool hasSS
 
 	code.push_back(op);
 
-	if (hasSSA)
+	if (genSSA)
 	{
-		ssa = codeAsm->nextSSA(op);
+		ssa = codeAsm->createSSA(op);
 		code.push_back(ssa);
 	}
 
@@ -65,7 +65,7 @@ void CodeSection::pushStr(std::string str)
 
 }
 
-SSA Assembler::nextSSA(SpvOp op)
+SSA Assembler::createSSA(SpvOp op)
 {
 	auto entry = SSAEntry { ssa, op };
 
@@ -76,7 +76,7 @@ SSA Assembler::nextSSA(SpvOp op)
 	return entry.ssa;
 }
 
-void Assembler::pushExt(std::string ext)
+void Assembler::addExt(std::string ext)
 {
 	extensions.push_back(ext);
 }

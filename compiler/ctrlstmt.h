@@ -7,12 +7,18 @@ namespace caliburn
 {
 	struct IfStatement : public Statement
 	{
-		ValueStatement* condition = nullptr;
+		Value* condition = nullptr;
 		Statement* ifBranch = nullptr;
 		Statement* elseBranch = nullptr;
 
-		IfStatement() : Statement(StatementType::IF) {}
+		IfStatement(Statement* parent) : Statement(StatementType::IF, parent) {}
 
+		cllr::SSA toCLLR(cllr::Assembler& codeAsm) override
+		{
+
+		}
+
+		/*
 		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			uint32_t condSSA = condition->SPIRVEmit(codeAsm, syms);
@@ -63,18 +69,25 @@ namespace caliburn
 
 			return 0;
 		}
+		*/
 
 	};
 
 	struct ForStatement : public Statement
 	{
 		Statement* preLoop = nullptr;
-		ValueStatement* cond = nullptr;
+		Value* cond = nullptr;
 		Statement* postLoop = nullptr;
 		Statement* loop = nullptr;
 
-		ForStatement() : Statement(StatementType::FOR) {}
+		ForStatement(Statement* parent) : Statement(StatementType::FOR, parent) {}
 
+		cllr::SSA toCLLR(cllr::Assembler& codeAsm) override
+		{
+
+		}
+
+		/*
 		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			uint32_t mergeSSA = codeAsm->newAssign();
@@ -136,16 +149,23 @@ namespace caliburn
 
 			return startSSA;
 		}
+		*/
 
 	};
 
 	struct WhileStatement : public Statement
 	{
-		ValueStatement* cond = nullptr;
+		Value* cond = nullptr;
 		Statement* loop = nullptr;
 
-		WhileStatement() : Statement(StatementType::WHILE) {}
+		WhileStatement(Statement* parent) : Statement(StatementType::WHILE, parent) {}
 
+		cllr::SSA toCLLR(cllr::Assembler& codeAsm) override
+		{
+
+		}
+
+		/*
 		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			uint32_t mergeSSA = codeAsm->newAssign();
@@ -193,16 +213,22 @@ namespace caliburn
 
 			return startSSA;
 		}
-
+		*/
 	};
 
 	struct DoWhileStatement : public Statement
 	{
-		ValueStatement* cond = nullptr;
+		Value* cond = nullptr;
 		Statement* loop = nullptr;
 
-		DoWhileStatement() : Statement(StatementType::DOWHILE) {}
+		DoWhileStatement(Statement* parent) : Statement(StatementType::DOWHILE, parent) {}
 
+		cllr::SSA toCLLR(cllr::Assembler& codeAsm) override
+		{
+
+		}
+
+		/*
 		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 		{
 			uint32_t mergeSSA = codeAsm->newAssign();
@@ -243,6 +269,7 @@ namespace caliburn
 
 			return startSSA;
 		}
+		*/
 
 	};
 

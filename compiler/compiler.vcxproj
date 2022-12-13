@@ -153,6 +153,8 @@
   <ItemGroup>
     <ClCompile Include="caliburn.cpp" />
     <ClCompile Include="cfg.cpp" />
+    <ClCompile Include="cllrasm.cpp" />
+    <ClCompile Include="cllrspirv.cpp" />
     <ClCompile Include="langcore.cpp" />
     <ClCompile Include="spirvasm.cpp" />
     <ClCompile Include="spirvtrans.cpp" />
@@ -173,17 +175,25 @@
     <ClInclude Include="cbirasm.h" />
     <ClInclude Include="cfg.h" />
     <ClInclude Include="cllr.h" />
+    <ClInclude Include="cllrasm.h" />
+    <ClInclude Include="cllrspirv.h" />
     <ClInclude Include="compilererr.h" />
-    <ClInclude Include="ctrlstmnt.h" />
+    <ClInclude Include="ctrlstmt.h" />
     <ClInclude Include="deftypes.h" />
+    <ClInclude Include="funcstmt.h" />
     <ClInclude Include="langcore.h" />
+    <ClInclude Include="linq.h" />
     <ClInclude Include="parser.h" />
+    <ClInclude Include="scopestmt.h" />
+    <ClInclude Include="shaderstmt.h" />
     <ClInclude Include="spirv.h" />
     <ClInclude Include="spirvasm.h" />
     <ClInclude Include="spirvtrans.h" />
     <ClInclude Include="ast.h" />
+    <ClInclude Include="symbols.h" />
     <ClInclude Include="syntax.h" />
     <ClInclude Include="tokenizer.h" />
+    <ClInclude Include="rootstmt.h" />
     <ClInclude Include="type.h" />
     <ClInclude Include="typebool.h" />
     <ClInclude Include="typefloat.h" />

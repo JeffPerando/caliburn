@@ -15,6 +15,7 @@ namespace caliburn
 	{
 		UNKNOWN,
 
+		ROOT,
 		IMPORT,
 		FUNCTION,
 		SHADER,
@@ -34,6 +35,7 @@ namespace caliburn
 		SWITCH,
 		CASE,
 		
+		SCOPE,
 		SETTER,
 		FUNC_CALL,
 
@@ -53,17 +55,11 @@ namespace caliburn
 		RETURN,
 		CONTINUE,
 		BREAK,
-		PASS
+		PASS,
+		UNREACHABLE
 	};
 
-	struct VariableStmt
-	{
-		ParsedType* type = nullptr;
-		uint32_t offset = 0;
-
-	};
-
-	struct Value
+	struct Value : public ParsedObject, public cllr::Emitter
 	{
 		const ValueType type;
 
@@ -74,6 +70,9 @@ namespace caliburn
 
 		virtual ConcreteType* getType() = 0;
 
+	private:
+		virtual void deduceType() = 0;
+
 	};
 
 	/*
@@ -82,29 +81,29 @@ namespace caliburn
 	* More specifically, a statement also acts as a scope. All scopes contain
 	* variables, a return, type aliases, and inner code
 	*/
-	struct Statement
+	struct Statement : public ParsedObject, public cllr::Emitter
 	{
 		const StatementType type;
 		const Statement* parent;
 
-		std::map<std::string, std::string> typeAliases;
-		std::map<std::string, VariableStmt> vars;
+		StorageModifiers mods = {};
+		std::map<std::string, ConcreteType*> typeAliases;
 		std::vector<Statement*> innerCode;
-		ReturnMode mode = ReturnMode::NONE;
+		ReturnMode retMode = ReturnMode::NONE;
 		Value* retValue = nullptr;
 
-		Statement(StatementType stmtType) : type(stmtType), parent(nullptr) {}
 		Statement(StatementType stmtType, Statement* p) : type(stmtType), parent(p) {}
 		virtual ~Statement() {}
 
-		/*
-		virtual bool isCompileTimeConst() = 0;
+		virtual bool isCompileTimeConst() const
+		{
+			return false;
+		}
 
+		/*
 		virtual void registerSymbols(CaliburnAssembler* codeAsm, SymbolTable* syms) {}
 
 		virtual void typeEval(CaliburnAssembler* codeAsm, SymbolTable* syms) {}
-
-		virtual void addStorageMod(StorageModifier mod) {}
 
 		virtual uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms) = 0;
 		*/

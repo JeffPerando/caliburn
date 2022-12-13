@@ -16,7 +16,7 @@ namespace caliburn
 	Each level performs worse than the last, but in exchange gives the result
 	better on-paper performance.
 	*/
-	enum class OptimizeLevel : uint32_t
+	enum class OptimizeLevel
 	{
 		//Equivalent to O0; no optimizations.
 		NONE,

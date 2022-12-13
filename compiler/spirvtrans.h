@@ -47,7 +47,7 @@ namespace caliburn
 			else if (type == CodeCompareType::INSTRUCTION
 				|| type == CodeCompareType::INSTRUCTION_CACHE_LEN)
 			{
-				return SpvOp(code).opCode() == value;
+				return SpvOp(code).op == value;
 			}
 			
 			return true;

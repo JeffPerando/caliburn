@@ -6,7 +6,9 @@
 #include "syntax.h"
 #include "type.h"
 
-#include "ctrlstmnt.h"
+#include "ast.h"
+#include "scopestmt.h"
+//#include "ctrlstmnt.h"
 
 namespace caliburn
 {
@@ -16,6 +18,13 @@ namespace caliburn
 
 	class Parser
 	{
+	public:
+		Parser() {}
+		~Parser() {}
+
+		void parse(std::vector<Token>* tokenList, std::vector<Statement*>* ast);
+
+	private:
 		buffer<Token>* tokens = nullptr;
 		std::vector<CaliburnException*> errors;
 
@@ -23,84 +32,68 @@ namespace caliburn
 
 		void parseIdentifierList(std::vector<std::string>& ids);
 
-		void parseValueList(std::vector<ValueStatement*>& xs);
+		void parseValueList(std::vector<Value*>& xs);
 		
 		bool parseGenerics(std::vector<ParsedType*>& generics);
 
-		bool parseArrayList(std::vector<ValueStatement*>& xs);
+		bool parseArrayList(std::vector<Value*>& xs);
 
-		Statement* parseAny(std::initializer_list<ParseMethod> fns);
+		bool parseSemicolon();
+
+		bool parseScopeEnd(Statement* stmt);
 
 		Token* parseNamespace();
 
 		ParsedType* parseTypeName();
 
-		bool parseSemicolon();
+		StorageModifiers parseStorageMods();
 
-		Statement* parseDecl();
+		Statement* parseAny(Statement* parent, std::initializer_list<ParseMethod> fns);
+
+		Statement* parseDecl(Statement* parent);
 		
-		Statement* parseImport();
+		//Statement* parseImport(Statement* parent);
 
-		Statement* parseTypedef();
+		//Statement* parseTypedef(Statement* parent);
 		
-		//Statement* parseNamespaceDef();
+		//Statement* parseNamespaceDef(Statement* parent);
 
-		//Statement* parseShader();
+		//Statement* parseShader(Statement* parent);
 
-		//Statement* parseDescriptor();
+		//Statement* parseStruct(Statement* parent);
 
-		//Statement* parseStruct();
-
-		//Statement* parseClass();
+		//Statement* parseClass(Statement* parent);
 		
-		Statement* parseFunction();
+		Statement* parseFunction(Statement* parent);
 
-		//Statement* parseMethod();
+		//Statement* parseMethod(Statement* parent);
 
-		//called a "statement" in the CFG
-		//variable, setter, control flow, scope, or function call
-		Statement* parseLogic();
+		Statement* parseLogic(Statement* parent);
 
-		Statement* parseAnyVar();
+		//Statement* parseSetter(Statement* parent);
 
-		Statement* parseVariable(bool implicitAllowed = true);
+		Statement* parseScope(Statement* parent);
 
-		//Statement* parseSetter();
+		Statement* parseControl(Statement* parent);
 
-		Statement* parseScope();
+		Statement* parseIf(Statement* parent);
 
-		Statement* parseControl();
-
-		Statement* parseIf();
-
-		Statement* parseFor();
+		Statement* parseFor(Statement* parent);
 		
-		Statement* parseWhile();
+		Statement* parseWhile(Statement* parent);
 		
-		Statement* parseDoWhile();
+		Statement* parseDoWhile(Statement* parent);
 
-		Statement* parseBreak();
-
-		Statement* parseContinue();
+		Statement* parseSwitch(Statement* parent);
 		
-		Statement* parseSwitch();
+		Statement* parseCase(Statement* parent);
 		
-		Statement* parseCase();
-
-		Statement* parsePass();
+		//Statement* parseStmtInParentheses(ParseMethod pm);
 		
-		Statement* parseReturn();
+		Value* parseValue(bool doPostfix = true);
+
+		//Value* parseLiteral();
 		
-		Statement* parseStmtInParentheses(ParseMethod pm);
-
-		//Statement* parseLiteral();
-
-	public:
-		Parser() {}
-		~Parser() {}
-
-		void parse(std::vector<Token>* tokenList, std::vector<Statement*>* ast);
-
 	};
 
 }
