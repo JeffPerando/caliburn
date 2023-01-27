@@ -12,21 +12,17 @@ shader BasicShader uses BasicDesc, OtherDescriptor
 	# This will be treated as an input/output for other stages.
 	vec2 fragUV;
 	
-	# The arguments for a function like this are the inputs; equivalent to:
+	# The arguments for a function like this are the inputs; equivalent to this GLSL:
 	# layout(location = 0) in vec3 vtx;
 	# layout(location = 1) in vec2 uv;
-	# in GLSL
-	
-	def vec4 vertex(vec3 vtx, vec2 uv)
+	def: vec4 vertex(vec3 vtx, vec2 uv)
 	{
 		fragUV = uv;
 		# Append operator; this creates a vec4
-		# Other operators are pretty standard, but there is one for POW.
-		# XOR is $, for excluSive + |. I think it's both clever and stupid. I blame my need for a pow operator.
 		return vtx ++ 1f;
 	};
 	
-	def vec4 frag()
+	def: vec4 frag()
 	{
 		return tex.sample(fragUV);
 	};
