@@ -14,39 +14,29 @@ uint32_t Assembler::addString(std::string str)
 
 SSA Assembler::createSSA(Opcode op)
 {
-	return 0;
+	ssas.push_back(nextSSA);
+
+	auto i = ssas[nextSSA];
+
+	++nextSSA;
+
+	return i;
 }
 
-SSA Assembler::push(Opcode op, std::initializer_list<uint32_t> operands, bool genSSA)
+SSA Assembler::push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, bool genSSA)
 {
-	if (operands.size() > 3)
+	if (ssa == 0 && !genSSA)
 	{
 		//TODO complain
+		return 0;
 	}
-
-	Instruction i;
-
-	i.op = op;
 
 	if (genSSA)
 	{
-		ssas.push_back(nextSSA);
-
-		i.index = &ssas[nextSSA];
-
-		++nextSSA;
-
+		ssa = createSSA(op);
 	}
 
-	uint32_t argIndex = 0;
+	code.push_back(Instruction{ssa, op, operands});
 
-	for (auto arg = operands.begin(); arg != operands.end(); ++arg)
-	{
-		i.operands[argIndex] = *arg;
-
-	}
-
-	code.push_back(i);
-
-	return 0;
+	return ssa;
 }

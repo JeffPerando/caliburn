@@ -136,6 +136,8 @@ namespace caliburn
 
             SSA addGlobalVar(SSA type, StorageClass stClass, SSA init = 0);
 
+            void addEntryPoint(SSA fn, ExecutionModel type, std::initializer_list<uint32_t> ios);
+
         };
 
 	}

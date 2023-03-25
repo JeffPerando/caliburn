@@ -32,6 +32,8 @@ namespace caliburn
 
 			CLLR_SPIRV_IMPL(OpTypeStruct);
 
+			CLLR_SPIRV_IMPL(OpEntryPoint);
+
 		}
 		
 		class CllrTranslator

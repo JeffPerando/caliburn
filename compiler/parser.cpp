@@ -185,7 +185,7 @@ bool Parser::parseSemicolon()
 	return false;
 }
 
-bool Parser::parseScopeEnd(Statement* stmt)
+bool Parser::parseScopeEnd(ScopeStatement* stmt)
 {
 	auto tkn = tokens->current();
 	auto tknIndex = tokens->currentIndex();
@@ -195,56 +195,49 @@ bool Parser::parseScopeEnd(Statement* stmt)
 		return false;
 	}
 
-	bool valid = false;
+	bool valid = true;
 
 	tokens->consume();
 
 	if (tkn->str == "return")
 	{
 		stmt->retMode = ReturnMode::RETURN;
+		tokens->consume();
 		stmt->retValue = parseValue();
 
-		valid = true;
-
 	}
-
-	if (tkn->str == "break")
+	else if (tkn->str == "break")
 	{
 		stmt->retMode = ReturnMode::BREAK;
 
-		valid = true;
-
 	}
-
-	if (tkn->str == "continue")
+	else if (tkn->str == "continue")
 	{
 		stmt->retMode = ReturnMode::CONTINUE;
 
-		valid = true;
-
 	}
-
-	if (tkn->str == "pass")
+	else if (tkn->str == "pass")
 	{
 		stmt->retMode = ReturnMode::PASS;
 
-		valid = true;
-
 	}
-
-	if (tkn->str == "unreachable")
+	else if (tkn->str == "unreachable")
 	{
 		stmt->retMode = ReturnMode::UNREACHABLE;
 
-		valid = true;
-
+	}
+	else
+	{
+		valid = false;
 	}
 
 	if (valid)
 	{
+		tokens->consume();
 		if (!parseSemicolon())
 		{
 			//TODO complain
+			return false;
 		}
 
 		return true;
@@ -634,7 +627,7 @@ Statement* Parser::parseScope(Statement* parent)
 		return nullptr;
 	}
 
-	auto stmt = new ScopeStatement(parent);
+	auto scope = new ScopeStatement(parent);
 
 	tokens->consume();
 
@@ -648,7 +641,7 @@ Statement* Parser::parseScope(Statement* parent)
 			break;
 		}
 
-		auto logic = parseLogic(stmt);
+		auto logic = parseLogic(scope);
 
 		if (logic == nullptr)
 		{
@@ -656,11 +649,11 @@ Statement* Parser::parseScope(Statement* parent)
 			break;
 		}
 
-		stmt->innerCode.push_back(logic);
+		scope->stmts.push_back(logic);
 
 	}
 
-	return stmt;
+	return scope;
 }
 
 Statement* Parser::parseControl(Statement* parent)
@@ -859,7 +852,7 @@ Statement* Parser::parseDoWhile(Statement* parent)
 	return ret;*/
 	return nullptr;
 }
-
+/*
 Statement* Parser::parseSwitch(Statement* parent)
 {
 	Token* tkn = tokens->current();
@@ -931,9 +924,9 @@ Statement* Parser::parseSwitch(Statement* parent)
 		return nullptr;
 	}
 
-	return stmnt;*/
-	return nullptr;
+	return stmnt;
 }
+*/
 /*
 Statement* Parser::parseCase(Statement* parent)
 {

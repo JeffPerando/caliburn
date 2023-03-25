@@ -2,49 +2,59 @@
 #include "type.h"
 
 using namespace caliburn;
-/*
-ConcreteType* ParsedType::resolve(CaliburnAssembler* codeAsm, SymbolTable* syms)
+
+ConcreteType* ParsedType::resolve(const SymbolTable& table)
 {
-	if (mod != nullptr && this->mod->str.length() > 0)
-	{
-		auto modSym = syms->resolve(this->mod->str);
+	auto sym = table.find(name->str);
 
-		if (modSym == nullptr || modSym->symbolType != SymbolType::MODULE)
-		{
-			//TODO complain
-			return nullptr;
-		}
-
-		syms = ((ModuleSymbol*)modSym)->table;
-
-	}
-
-	auto typeSym = syms->resolve(name->str);
-
-	if (typeSym->symbolType != SymbolType::TYPE)
+	if (sym->type != SymbolType::TYPE)
 	{
 		//TODO complain
 		return nullptr;
 	}
 
-	auto type = ((TypeSymbol*)typeSym)->type;
+	auto cType = ((ConcreteType*)sym->data);
 
-	if (!type)
+	if (cType->maxGenerics == 0 && this->generics.size() == 0)
+	{
+		return cType;
+	}
+
+	if (cType->maxGenerics > this->generics.size())
 	{
 		//TODO complain
 		return nullptr;
 	}
 
-	if (generics.size() == 0 && type->maxGenerics == 0)
-	{
-		return type;
-	}
-
-	if (generics.size() > type->maxGenerics)
+	if (cType->minGenerics < this->generics.size())
 	{
 		//TODO complain
 		return nullptr;
 	}
 
 }
-*/
+
+void Variable::getSSAs(cllr::Assembler& codeAsm)
+{
+	id = codeAsm.createSSA(cllr::Opcode::VAR_LOCAL);
+
+}
+
+void Variable::emitDeclCLLR(cllr::Assembler& codeAsm)
+{
+	ConcreteType* type = realType;
+	Value* value = initValue;
+
+	if (type == nullptr)
+	{
+		type = initValue->type;
+	}
+	else if (value == nullptr)
+	{
+		value = type->defaultInitValue();
+		value->emitDeclCLLR(codeAsm);
+	}
+
+	codeAsm.push(id, cllr::Opcode::VAR_LOCAL, { type->id, value->id, 0 });
+
+}

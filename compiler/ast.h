@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "langcore.h"
+#include "symbols.h"
 #include "type.h"
 
 namespace caliburn
@@ -34,19 +35,13 @@ namespace caliburn
 		DOWHILE,
 		SWITCH,
 		CASE,
+
+		VARIABLE,
 		
 		SCOPE,
 		SETTER,
 		FUNC_CALL,
 
-	};
-
-	enum class ValueType
-	{
-		LITERAL,
-		EXPRESSION,
-		VARIABLE,
-		FUNCTION_CALL
 	};
 
 	enum class ReturnMode : uint64_t
@@ -56,23 +51,8 @@ namespace caliburn
 		CONTINUE,
 		BREAK,
 		PASS,
-		UNREACHABLE
-	};
-
-	struct Value : public ParsedObject, public cllr::Emitter
-	{
-		const ValueType type;
-
-		Value(ValueType vt) : type(vt) {}
-		virtual ~Value() {}
-
-		virtual bool isLValue() = 0;
-
-		virtual ConcreteType* getType() = 0;
-
-	private:
-		virtual void deduceType() = 0;
-
+		UNREACHABLE,
+		DISCARD
 	};
 
 	/*
@@ -81,18 +61,16 @@ namespace caliburn
 	* More specifically, a statement also acts as a scope. All scopes contain
 	* variables, a return, type aliases, and inner code
 	*/
-	struct Statement : public ParsedObject, public cllr::Emitter
+	struct Statement : public cllr::Emitter, public ParsedObject
 	{
-		const StatementType type;
-		const Statement* parent;
+		StatementType const type;
+		Statement* const parent;
 
 		StorageModifiers mods = {};
 		std::map<std::string, ConcreteType*> typeAliases;
-		std::vector<Statement*> innerCode;
-		ReturnMode retMode = ReturnMode::NONE;
-		Value* retValue = nullptr;
 
 		Statement(StatementType stmtType, Statement* p) : type(stmtType), parent(p) {}
+		Statement(StatementType stmtType) : type(stmtType), parent(nullptr) {}
 		virtual ~Statement() {}
 
 		virtual bool isCompileTimeConst() const
@@ -100,13 +78,76 @@ namespace caliburn
 			return false;
 		}
 
-		/*
-		virtual void registerSymbols(CaliburnAssembler* codeAsm, SymbolTable* syms) {}
+		virtual void declSymbols(SymbolTable& table) = 0;
 
-		virtual void typeEval(CaliburnAssembler* codeAsm, SymbolTable* syms) {}
+		virtual void resolveSymbols(const SymbolTable& table) = 0;
 
-		virtual uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms) = 0;
-		*/
+	};
+
+	struct ScopeStatement : public Statement
+	{
+		Token* first = nullptr;
+		Token* last = nullptr;
+
+		std::vector<Statement*> stmts;
+		std::vector<Variable*> vars;
+
+		ReturnMode retMode = ReturnMode::NONE;
+		Value* retValue = nullptr;
+
+		ScopeStatement(StatementType stmtType, Statement* p) : Statement(stmtType, p) {}
+		ScopeStatement(StatementType stmtType) : Statement(stmtType, nullptr) {}
+		ScopeStatement(Statement* parent) : Statement(StatementType::SCOPE, parent) {}
+		virtual ~ScopeStatement() {}
+
+		virtual Token* firstTkn() const override
+		{
+			return first;
+		}
+
+		virtual Token* lastTkn() const override
+		{
+			return last;
+		}
+
+		virtual void getSSAs(cllr::Assembler& codeAsm) override
+		{
+			for (auto stmt : stmts)
+			{
+				stmt->getSSAs(codeAsm);
+
+			}
+
+		}
+
+		virtual void declSymbols(SymbolTable& table) override
+		{
+			for (auto stmt : stmts)
+			{
+				stmt->declSymbols(table);
+
+			}
+
+		}
+
+		virtual void resolveSymbols(const SymbolTable& table) override
+		{
+			for (auto stmt : stmts)
+			{
+				stmt->resolveSymbols(table);
+
+			}
+
+		}
+
+		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override
+		{
+			for (auto inner : stmts)
+			{
+				inner->emitDeclCLLR(codeAsm);
+			}
+
+		}
 
 	};
 

@@ -11,11 +11,70 @@
 
 #include "cllrasm.h"
 #include "langcore.h"
+#include "symbols.h"
 
 namespace caliburn
 {
-	class ParsedType;
-	class ConcreteType;
+	struct ParsedType;
+	struct ConcreteType;
+	struct Statement;
+
+	enum class ValueType
+	{
+		LITERAL,
+		EXPRESSION,
+		VARIABLE,
+		FUNCTION_CALL
+	};
+
+	struct Value : public ParsedObject, public cllr::Emitter
+	{
+		ValueType const vType;
+		ConcreteType* type = nullptr;
+
+		cllr::SSA id = 0;
+
+		Value(ValueType vt) : vType(vt) {}
+		virtual ~Value() {}
+
+		virtual bool isLValue() const = 0;
+
+		virtual void resolveSymbols(SymbolTable& const table) = 0;
+
+	};
+
+	struct Variable : public cllr::Emitter
+	{
+		Statement* const owner;
+
+		cllr::SSA id = 0;
+		Token* name = nullptr;
+		ParsedType* typeHint = nullptr;
+		ConcreteType* realType = nullptr;
+		Value* initValue = nullptr;
+		
+		Variable() = default;
+		Variable(Statement* parent, Token* varName, ParsedType* hint, Value* init) : owner(parent), name(varName), typeHint(hint), initValue(init) {}
+		Variable(const Variable& rhs) : owner(rhs.owner)
+		{
+			id = rhs.id;
+			name = rhs.name;
+			typeHint = rhs.typeHint;
+			realType = rhs.realType;
+			initValue = rhs.initValue;
+
+		}
+		virtual ~Variable() {}
+
+		virtual void getSSAs(cllr::Assembler& codeAsm) override;
+
+		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override;
+
+		virtual cllr::SSA emitLoadCLLR(cllr::Assembler& codeAsm) = 0;
+
+		virtual void emitStoreCLLR(cllr::Assembler& codeAsm, cllr::SSA value) = 0;
+
+	};
 
 	enum class TypeCategory
 	{
@@ -47,6 +106,10 @@ namespace caliburn
 		std::vector<ParsedType*> generics;
 		
 		ParsedType() : ParsedType(nullptr) {}
+		ParsedType(std::string name) : ParsedType(nullptr)
+		{
+			fullName = name;
+		}
 		ParsedType(Token* n) : ParsedType(nullptr, n) {}
 		ParsedType(Token* m, Token* n) : mod(m), name(n) {}
 
@@ -135,22 +198,35 @@ namespace caliburn
 			return name;
 		}
 		
+		/*
+		TODO check for memory leaks; this part involves cloning. For instance:
+		Vec<Vec<NotAType>>
+		Vec resolves, creates clone
+			Vec resolves, creates clone
+				NotAType doesn't resolve, 
+		*/
+		ConcreteType* resolve(const SymbolTable& table);
+
 	};
 
 	struct ConcreteType : public cllr::Emitter
 	{
+		cllr::SSA id = 0;
 		const TypeCategory category;
 		const std::string canonName;
 		const size_t maxGenerics;
+		const size_t minGenerics;
 	protected:
 		ConcreteType* superType = nullptr;
 		std::vector<ConcreteType*> generics;
+		std::vector<Variable*> vars;
 
 		//TODO add dirty flag to trigger a refresh. that or just control when aspects can be edited
 		std::string fullName = "";
 	public:
-		ConcreteType(TypeCategory c, std::string n, size_t genMax = 0) :
-			category(c), canonName(n), maxGenerics(genMax)
+		ConcreteType(TypeCategory c, std::string n) : ConcreteType(c, n, 0, 0) {}
+		ConcreteType(TypeCategory c, std::string n, size_t genMax = 0, size_t genMin = 0) :
+			category(c), canonName(n), maxGenerics(genMax), minGenerics(genMin)
 		{
 			if (maxGenerics > 0)
 			{
@@ -159,6 +235,7 @@ namespace caliburn
 			}
 			
 		}
+		virtual ~ConcreteType() {}
 
 		//annoyed that != doesn't have a default implementation that does this
 		bool operator!=(const ConcreteType& rhs) const
@@ -248,6 +325,7 @@ namespace caliburn
 		{
 			if (index >= maxGenerics)
 			{
+				//TODO compiler error
 				throw std::exception("cannot add a generic to this type!");
 			}
 
@@ -255,18 +333,23 @@ namespace caliburn
 
 		}
 
-		//ONLY exists for making a new generic type. so if you don't use generics, there's ZERO point in
-		//properly implementing this.
-		virtual ConcreteType* clone() const
+		virtual Value* defaultInitValue()
 		{
-			return (ConcreteType*)this;
+			return nullptr;
 		}
+
+		//ONLY exists for making a new generic type. so if you don't use generics, there's ZERO point in
+		//properly implementing this. So just return this and be done with it.
+		virtual ConcreteType* clone() const = 0;
 
 		//NOTE: because the size can depend on things like generics, members, etc., this HAS to be a method
 		virtual uint32_t getSizeBytes() const = 0;
 
 		//Conveniently, for most all primitives, alignment == size
-		virtual uint32_t getAlignBytes() const = 0;
+		virtual uint32_t getAlignBytes() const
+		{
+			return getSizeBytes();
+		}
 
 		virtual TypeCompat isCompatible(Operator op, ConcreteType* rType) const = 0;
 

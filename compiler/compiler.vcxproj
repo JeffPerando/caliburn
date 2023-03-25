@@ -184,7 +184,6 @@
     <ClInclude Include="langcore.h" />
     <ClInclude Include="linq.h" />
     <ClInclude Include="parser.h" />
-    <ClInclude Include="scopestmt.h" />
     <ClInclude Include="shaderstmt.h" />
     <ClInclude Include="spirv.h" />
     <ClInclude Include="spirvasm.h" />
@@ -202,6 +201,8 @@
     <ClInclude Include="typevector.h" />
     <ClInclude Include="typevoid.h" />
     <ClInclude Include="value.h" />
+    <ClInclude Include="var.h" />
+    <ClInclude Include="varstmt.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

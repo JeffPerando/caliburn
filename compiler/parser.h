@@ -7,7 +7,6 @@
 #include "type.h"
 
 #include "ast.h"
-#include "scopestmt.h"
 //#include "ctrlstmnt.h"
 
 namespace caliburn
@@ -40,7 +39,7 @@ namespace caliburn
 
 		bool parseSemicolon();
 
-		bool parseScopeEnd(Statement* stmt);
+		bool parseScopeEnd(ScopeStatement* stmt);
 
 		Token* parseNamespace();
 
@@ -56,7 +55,7 @@ namespace caliburn
 
 		//Statement* parseTypedef(Statement* parent);
 		
-		//Statement* parseNamespaceDef(Statement* parent);
+		//Statement* parseModuleDef(Statement* parent);
 
 		//Statement* parseShader(Statement* parent);
 
@@ -84,12 +83,6 @@ namespace caliburn
 		
 		Statement* parseDoWhile(Statement* parent);
 
-		Statement* parseSwitch(Statement* parent);
-		
-		Statement* parseCase(Statement* parent);
-		
-		//Statement* parseStmtInParentheses(ParseMethod pm);
-		
 		Value* parseValue(bool doPostfix = true);
 
 		//Value* parseLiteral();

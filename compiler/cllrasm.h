@@ -30,7 +30,7 @@ namespace caliburn
 
 			SSA createSSA(Opcode op);
 
-			SSA push(Opcode op, std::initializer_list<uint32_t> operands, bool genSSA = true);
+			SSA push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, bool genSSA = false);
 
 			//void toSPIRV(spirv::Assembler* out);
 
@@ -46,7 +46,9 @@ namespace caliburn
 		class Emitter
 		{
 		public:
-			virtual SSA toCLLR(cllr::Assembler& codeAsm) = 0;
+			virtual void getSSAs(cllr::Assembler& codeAsm) = 0;
+
+			virtual void emitDeclCLLR(cllr::Assembler& codeAsm) = 0;
 
 		};
 

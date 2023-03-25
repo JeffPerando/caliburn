@@ -86,6 +86,9 @@
     <ClCompile Include="cllrspirv.cpp">
       <Filter>Source Files\spirv</Filter>
     </ClCompile>
+    <ClCompile Include="type.cpp">
+      <Filter>Source Files\ast</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="buffer.h">
@@ -178,13 +181,16 @@
     <ClInclude Include="rootstmt.h">
       <Filter>Header Files\ast</Filter>
     </ClInclude>
-    <ClInclude Include="scopestmt.h">
-      <Filter>Header Files\ast</Filter>
-    </ClInclude>
     <ClInclude Include="shaderstmt.h">
       <Filter>Header Files\ast</Filter>
     </ClInclude>
     <ClInclude Include="funcstmt.h">
+      <Filter>Header Files\ast</Filter>
+    </ClInclude>
+    <ClInclude Include="varstmt.h">
+      <Filter>Header Files\ast</Filter>
+    </ClInclude>
+    <ClInclude Include="var.h">
       <Filter>Header Files\ast</Filter>
     </ClInclude>
   </ItemGroup>

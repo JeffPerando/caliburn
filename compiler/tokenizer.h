@@ -42,19 +42,15 @@ namespace caliburn
 				asciiTypes[i] = CharType::WHITESPACE;
 			}
 
-			for (auto i = 0; i < 10; ++i)
+			for (auto c = '0'; c <= '9'; ++c)
 			{
-				asciiTypes['0' + i] = CharType::INT;
+				asciiTypes[c] = CharType::INT;
 			}
 
-			for (auto i = 0; i < 26; ++i)
+			for (auto l = 'A'; l <= 'Z'; ++l)
 			{
-				asciiTypes['A' + i] = CharType::IDENTIFIER;
-			}
-
-			for (auto i = 0; i < 26; ++i)
-			{
-				asciiTypes['a' + i] = CharType::IDENTIFIER;
+				asciiTypes[l] = CharType::IDENTIFIER;
+				asciiTypes[l + 32] = CharType::IDENTIFIER;
 			}
 
 			for (auto i = 0; i < OPERATORS.length(); ++i)
@@ -74,7 +70,7 @@ namespace caliburn
 			asciiTypes['\''] = CharType::STRING_DELIM;
 			asciiTypes['\"'] = CharType::STRING_DELIM;
 
-			//character 127 (delete) is a reserved UNKNOWN
+			//character 127 (DEL) is a reserved UNKNOWN
 			for (auto i = 0; i < 127; ++i)
 			{
 				if (asciiTypes[i] == CharType::UNKNOWN)

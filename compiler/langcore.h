@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "syntax.h"
+#include "cllr.h"
 
 /*
 Contains necessary constants, data types, and functions necessary for parsing, interpreting,

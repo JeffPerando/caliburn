@@ -11,20 +11,24 @@
 namespace caliburn
 {
 	/*
-	Determines optimization level for compiler.
+	Enum denoting how much to optimize emitted shader code.
 
-	Each level performs worse than the last, but in exchange gives the result
-	better on-paper performance.
+	Each level should emit more optimal code, obviously.
+
+	Regarding whether to add a given algorithm to a given level: Consider how much extra performance is given vs. the time it takes to run.
+	If the algorithm takes ages to run and doesn't make the code much faster, add it to O3.
+	If it's near instant and makes the code much much faster, add it to O1.
+	O0 always disables every optimization, even the obvious ones. This ensures clarity between the compiler and programmer. As in, the programmer can tell what the compiler is doing, based on the changes to code in O0 vs. others.
 	*/
 	enum class OptimizeLevel
 	{
-		//Equivalent to O0; no optimizations.
+		//equivalent to O0; debug (none) level
 		NONE,
-		//Equivalent to O1; only quick to perform optimizations.
+		//equivalent to O1; just do low-hanging fruit
 		BASIC,
-		//Equivalent to O2; gets you 95% of the performance.
+		//equivalent to O2; does more optimizations
 		BALANCED,
-		//Equivalent to O3; longest compile time and maximum performance.
+		//equivalent to O3; does EVERY optimization
 		PERFORMANCE
 	};
 

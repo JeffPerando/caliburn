@@ -70,3 +70,10 @@ CLLR_SPIRV_IMPL(spirv::cllr_impl::OpTypeStruct)
 
 	return 0;
 }
+
+CLLR_SPIRV_IMPL(spirv::cllr_impl::OpEntryPoint)
+{
+	
+
+	return 0;
+}

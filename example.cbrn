@@ -12,6 +12,8 @@ shader BasicShader uses BasicDesc, OtherDescriptor
 	# This will be treated as an input/output for other stages.
 	vec2 fragUV;
 	
+	# This is the vertex shader in the shader pipeline.
+	# What would normally be a separate file, is condensed down to a brief function definition.
 	# The arguments for a function like this are the inputs; equivalent to this GLSL:
 	# layout(location = 0) in vec3 vtx;
 	# layout(location = 1) in vec2 uv;

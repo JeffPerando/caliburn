@@ -6,24 +6,24 @@
 
 namespace caliburn
 {
-	static const std::vector<std::string> KEYWORDS = {
+	static const std::vector<std::string_view> KEYWORDS = {
 		"as",
 		"break",
-		"case", "class", "const" "construct", "continue",
-		"def", "default", "descriptor", "destruct", "do", "dynamic",
+		"case", "class", "const", "construct", "continue",
+		"def", "default", "delete", "descriptor", "destruct", "discard", "do", "dynamic",
 		"enum", "extends",
-		"false", "for", "from",
-		"if", "import", "in", "inputs",
+		"false", "for",
+		"if", "import", "in", "is",
 		"make", "module",
 		"new",
-		"op", "out", "override",
+		"op", "override",
 		"pass", "private", "protected", "public",
-		"return",
-		"shader", "shared", "strong", "struct", "switch",
-		"to", "true", "type",
-		"unreachable", "uses",
+		"record", "return",
+		"shader", "shared", "sign", "strong", "struct", "switch",
+		"this", "true", "type",
+		"unreachable", "unsign", "uses",
 		"var",
-		"while"
+		"while", "where", "wrapped"
 	};
 
 	static constexpr std::string_view OPERATORS = "!$%&*+-/<=>^|~";
@@ -68,6 +68,7 @@ namespace caliburn
 
 	enum class Operator : uint32_t
 	{
+		UNKNOWN,
 		COMP_EQ, COMP_NEQ,
 		COMP_GT, COMP_LT,
 		COMP_GTE, COMP_LTE,
