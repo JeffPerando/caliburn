@@ -20,6 +20,7 @@ namespace caliburn
 		IMPORT,
 		FUNCTION,
 		SHADER,
+		SHADER_STAGE,
 		DESCRIPTOR,
 		STRUCT,
 		CLASS,
@@ -73,10 +74,9 @@ namespace caliburn
 		Statement(StatementType stmtType) : type(stmtType), parent(nullptr) {}
 		virtual ~Statement() {}
 
-		virtual bool isCompileTimeConst() const
-		{
-			return false;
-		}
+		virtual Token* firstTkn() const override = 0;
+
+		virtual Token* lastTkn() const override = 0;
 
 		virtual void declSymbols(SymbolTable& table) = 0;
 
@@ -88,6 +88,8 @@ namespace caliburn
 	{
 		Token* first = nullptr;
 		Token* last = nullptr;
+
+		cllr::SSA id = 0;
 
 		std::vector<Statement*> stmts;
 		std::vector<Variable*> vars;
@@ -112,6 +114,8 @@ namespace caliburn
 
 		virtual void getSSAs(cllr::Assembler& codeAsm) override
 		{
+			id = codeAsm.createSSA(cllr::Opcode::LABEL);
+
 			for (auto stmt : stmts)
 			{
 				stmt->getSSAs(codeAsm);
@@ -142,9 +146,41 @@ namespace caliburn
 
 		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override
 		{
+			codeAsm.push(id, cllr::Opcode::LABEL, {});
+
 			for (auto inner : stmts)
 			{
 				inner->emitDeclCLLR(codeAsm);
+			}
+
+			switch (retMode)
+			{
+			case ReturnMode::NONE:
+			case ReturnMode::UNREACHABLE: break;
+			case ReturnMode::RETURN: {
+				if (retValue != nullptr)
+				{
+					auto retID = retValue->emitLoadCLLR(codeAsm);
+
+					codeAsm.push(0, cllr::Opcode::RETURN_VALUE, { retID, 0, 0 });
+
+				}
+				else
+				{
+					codeAsm.push(0, cllr::Opcode::RETURN, { 0, 0, 0 });
+
+				}
+				break;
+			};
+			case ReturnMode::CONTINUE:
+				codeAsm.push(0, cllr::Opcode::JUMP, { codeAsm.getLoopStart(), 0, 0 }); break;
+			case ReturnMode::BREAK:
+				codeAsm.push(0, cllr::Opcode::JUMP, { codeAsm.getLoopEnd(), 0, 0 }); break;
+			case ReturnMode::PASS:
+				//TODO implement
+				break;
+			case ReturnMode::DISCARD:
+				codeAsm.push(0, cllr::Opcode::DISCARD, { 0, 0, 0 }); break;
 			}
 
 		}

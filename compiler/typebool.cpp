@@ -1,9 +1,8 @@
-/*
-#include "allasm.h"
+
 #include "typebool.h"
 
 using namespace caliburn;
-
+/*
 void TypeBool::getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssembler* codeAsm)
 {
 	auto its = codeAsm->getAllIntTypes();
@@ -13,6 +12,11 @@ void TypeBool::getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssem
 		types->emplace(it);
 	}
 
+}
+*/
+void TypeBool::getSSAs(cllr::Assembler& codeAsm)
+{
+	id = codeAsm.createSSA(cllr::Opcode::TYPE_BOOL);
 }
 
 TypeCompat TypeBool::isCompatible(Operator op, ConcreteType* rType) const
@@ -29,7 +33,7 @@ TypeCompat TypeBool::isCompatible(Operator op, ConcreteType* rType) const
 	
 	if (op == Operator::ADD || op == Operator::MUL)
 	{
-		if (rType->category == TypeCategory::PRIMITIVE)
+		if (rType->category == TypeCategory::INT)
 		{
 			return TypeCompat::COMPATIBLE;
 		}
@@ -53,18 +57,11 @@ TypeCompat TypeBool::isCompatible(Operator op, ConcreteType* rType) const
 	return TypeCompat::INCOMPATIBLE_OP;
 }
 
-uint32_t TypeBool::typeDeclSpirV(SpirVAssembler* codeAsm)
+void TypeBool::emitDeclCLLR(cllr::Assembler& codeAsm)
 {
-	if (ssa)
-	{
-		return ssa;
-	}
-
-	ssa = codeAsm->newAssign();
-	codeAsm->pushAll({spirv::OpTypeBool(), ssa});
-	return ssa;
+	codeAsm.push(id, cllr::Opcode::TYPE_BOOL, {0, 0, 0});
 }
-
+/*
 uint32_t TypeBool::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, ConcreteType* rType, uint32_t rvalueSSA, ConcreteType*& endType) const
 {
 	uint32_t lhs = lvalueSSA;

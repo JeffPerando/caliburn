@@ -7,69 +7,75 @@ namespace caliburn
 {
 	struct IfStatement : public Statement
 	{
+		cllr::SSA id;
 		Value* condition = nullptr;
-		Statement* ifBranch = nullptr;
-		Statement* elseBranch = nullptr;
+		ScopeStatement* innerIf = nullptr;
+		ScopeStatement* innerElse = nullptr;
+		cllr::SSA postBranchID;
 
 		IfStatement(Statement* parent) : Statement(StatementType::IF, parent) {}
 
-		cllr::SSA toCLLR(cllr::Assembler& codeAsm) override
+		virtual void getSSAs(cllr::Assembler& codeAsm) override
 		{
+			id = codeAsm.createSSA(cllr::Opcode::LABEL);
+
+			innerIf->getSSAs(codeAsm);
+
+			if (innerElse)
+			{
+				innerElse->getSSAs(codeAsm);
+
+			}
+
+			postBranchID = codeAsm.createSSA(cllr::Opcode::LABEL);
 
 		}
 
-		/*
-		uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
+		virtual void declSymbols(SymbolTable& table) override
 		{
-			uint32_t condSSA = condition->SPIRVEmit(codeAsm, syms);
-			uint32_t ifSSA = codeAsm->newAssign();
-			uint32_t endSSA = codeAsm->newAssign();
-			uint32_t elseSSA = endSSA;
+			innerIf->declSymbols(table);
 
-			if (elseBranch)
+			if (innerElse)
 			{
-				elseSSA = codeAsm->newAssign();
+				innerElse->declSymbols(table);
+
 			}
 
-			codeAsm->pushAll({
-				spirv::OpSelectionMerge(), endSSA, 0,
-				spirv::OpBranchConditional(0), condSSA, ifSSA, elseSSA,
-				spirv::OpLabel(), ifSSA
-				});
-
-			codeAsm->startScope();
-			codeAsm->getCurrentScope()->label = ifSSA;
-
-			ifBranch->SPIRVEmit(codeAsm, syms);
-
-			codeAsm->endScope();
-			
-			codeAsm->push(spirv::OpBranch());
-			codeAsm->push(endSSA);
-
-			if (elseBranch)
-			{
-				codeAsm->push(spirv::OpLabel());
-				codeAsm->push(elseSSA);
-
-				codeAsm->startScope();
-				codeAsm->getCurrentScope()->label = elseSSA;
-
-				elseBranch->SPIRVEmit(codeAsm, syms);
-
-				codeAsm->endScope();
-
-				codeAsm->push(spirv::OpBranch());
-				codeAsm->push(endSSA);
-
-			}
-			
-			codeAsm->push(spirv::OpLabel());
-			codeAsm->push(endSSA);
-
-			return 0;
 		}
-		*/
+
+		virtual void resolveSymbols(const SymbolTable& table) override
+		{
+			innerIf->resolveSymbols(table);
+
+			if (innerElse)
+			{
+				innerElse->resolveSymbols(table);
+			}
+
+
+		}
+
+		void emitDeclCLLR(cllr::Assembler& codeAsm) override
+		{
+			condition->emitDeclCLLR(codeAsm);
+
+			auto v = condition->emitLoadCLLR(codeAsm);
+
+			codeAsm.push(id, cllr::Opcode::JUMP_COND, { v, innerIf->id, innerElse ? innerElse->id : 0 });
+
+			innerIf->emitDeclCLLR(codeAsm);
+
+			codeAsm.push(0, cllr::Opcode::JUMP, { postBranchID });
+
+			if (innerElse)
+			{
+				innerElse->emitDeclCLLR(codeAsm);
+
+			}
+
+			codeAsm.push(postBranchID, cllr::Opcode::LABEL, {});
+
+		}
 
 	};
 
@@ -78,11 +84,17 @@ namespace caliburn
 		Statement* preLoop = nullptr;
 		Value* cond = nullptr;
 		Statement* postLoop = nullptr;
-		Statement* loop = nullptr;
+
+		ScopeStatement* loop = nullptr;
 
 		ForStatement(Statement* parent) : Statement(StatementType::FOR, parent) {}
 
-		cllr::SSA toCLLR(cllr::Assembler& codeAsm) override
+		void getSSAs(cllr::Assembler& codeAsm) override
+		{
+
+		}
+
+		void emitDeclCLLR(cllr::Assembler& codeAsm) override
 		{
 
 		}
@@ -155,13 +167,46 @@ namespace caliburn
 
 	struct WhileStatement : public Statement
 	{
-		Value* cond = nullptr;
-		Statement* loop = nullptr;
+		Value* condition = nullptr;
+		ScopeStatement* loop = nullptr;
+
+		cllr::SSA start, exit, cont;
 
 		WhileStatement(Statement* parent) : Statement(StatementType::WHILE, parent) {}
 
-		cllr::SSA toCLLR(cllr::Assembler& codeAsm) override
+		void getSSAs(cllr::Assembler& codeAsm) override
 		{
+			start = codeAsm.createSSA(cllr::Opcode::LABEL);
+			exit = codeAsm.createSSA(cllr::Opcode::LABEL);
+			cont = codeAsm.createSSA(cllr::Opcode::LABEL);
+
+			loop->getSSAs(codeAsm);
+
+		}
+
+		void emitDeclCLLR(cllr::Assembler& codeAsm) override
+		{
+			/*
+			Until CLLR is more fleshed out, we're just going to do the SPIR-V route of putting jumps before labels
+			*/
+			codeAsm.push(0, cllr::Opcode::JUMP, {start, 0, 0});
+			codeAsm.push(start, cllr::Opcode::LABEL, {});
+			codeAsm.push(0, cllr::Opcode::LOOP, {exit, cont, loop->id});
+
+			auto loopVal = condition->emitLoadCLLR(codeAsm);
+
+			codeAsm.push(0, cllr::Opcode::JUMP_COND, {loopVal, loop->id, exit});
+
+			codeAsm.setLoop(cont, exit);
+			loop->emitDeclCLLR(codeAsm);
+			codeAsm.exitLoop();
+
+			codeAsm.push(0, cllr::Opcode::JUMP, { cont, 0, 0 });
+
+			codeAsm.push(cont, cllr::Opcode::LABEL, {});
+			codeAsm.push(0, cllr::Opcode::JUMP, { start, 0, 0 });
+			
+			codeAsm.push(exit, cllr::Opcode::LABEL, {});
 
 		}
 

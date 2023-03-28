@@ -84,8 +84,8 @@ namespace caliburn
 		//that is to say, you won't find them in the tables below
 		//!, ~, -
 		BOOL_NOT, BIT_NOT, NEGATE,
-		//|x|, x[n]
-		ABS, ARRAY_ACCESS
+		//|x|
+		ABS
 	};
 	
 	struct ParsedObject

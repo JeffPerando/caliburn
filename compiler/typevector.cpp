@@ -1,25 +1,24 @@
-/*
-#include "allasm.h"
+
 #include "typevector.h"
 
 using namespace caliburn;
 
 uint32_t TypeVector::getSizeBytes() const
 {
-	return elements * generics[0]->getSizeBytes();
+	return inner->getSizeBytes() * elements;
 }
 
 uint32_t TypeVector::getAlignBytes() const
 {
-	return generics[0]->getAlignBytes();
+	return inner->getAlignBytes();
 }
 
 ConcreteType* TypeVector::clone() const
 {
-	return new TypeVector(elements, generics[0]);
+	return new TypeVector(elements, inner);
 }
-
-void TypeVector::getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssembler* codeAsm)
+/*
+void TypeVector::getConvertibleTypes(std::set<ConcreteType*>& types)
 {
 	auto vecs = codeAsm->getAllVecTypes();
 
@@ -32,9 +31,9 @@ void TypeVector::getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAss
 		}
 
 	}
-
+	
 }
-
+*/
 TypeCompat TypeVector::isCompatible(Operator op, ConcreteType* rType) const
 {
 	if (rType == nullptr)
@@ -42,7 +41,7 @@ TypeCompat TypeVector::isCompatible(Operator op, ConcreteType* rType) const
 		return generics[0]->isCompatible(op, nullptr);
 	}
 
-	if (rType->category == TypeCategory::VECTOR || rType->category == TypeCategory::PRIMITIVE)
+	if (rType->category == TypeCategory::VECTOR || rType->category == inner->category)
 	{
 		switch (op)
 		{
@@ -58,31 +57,14 @@ TypeCompat TypeVector::isCompatible(Operator op, ConcreteType* rType) const
 	return TypeCompat::INCOMPATIBLE_TYPE;
 }
 
-uint32_t TypeVector::typeDeclSpirV(SpirVAssembler* codeAsm)
+void TypeVector::getSSAs(cllr::Assembler& codeAsm)
 {
-	if (ssa != 0)
-	{
-		return ssa;
-	}
+	inner->getSSAs(codeAsm);
 
-	uint32_t subSSA = generics[0]->typeDeclSpirV(codeAsm);
-
-	ssa = codeAsm->newAssign();
-
-	codeAsm->pushAll({spirv::OpTypeVector(), ssa, subSSA, elements});
-
-	return ssa;
 }
 
-uint32_t TypeVector::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, ConcreteType* rType, uint32_t rvalueSSA, ConcreteType*& endType) const
+void TypeVector::emitDeclCLLR(cllr::Assembler& codeAsm)
 {
-	//TODO implement
-	return 0;
-}
+	codeAsm.push(id, cllr::Opcode::TYPE_VECTOR, {elements, generics[0]->id, 0});
 
-uint32_t TypeVector::mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, ConcreteType*& endType) const
-{
-	//TODO implement
-	return 0;
 }
-*/

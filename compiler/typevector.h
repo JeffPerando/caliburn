@@ -1,21 +1,18 @@
 
 #pragma once
 
-#include "spirv.h"
 #include "type.h"
 
 namespace caliburn
 {
-	class SpirVAssembler;
-
 	struct TypeVector : public ConcreteType
 	{
 		uint32_t const elements;
+		ConcreteType* const inner;
 
 		TypeVector(uint32_t vecElements, ConcreteType* innerType) :
-			ConcreteType(TypeCategory::VECTOR,
-				"vec" + vecElements, { TypeAttrib::COMPOSITE, TypeAttrib::GENERIC }, 1),
-			elements(vecElements)
+			ConcreteType(TypeCategory::VECTOR, "vec" + vecElements, 1),
+			elements(vecElements), inner(innerType)
 		{
 			setGeneric(0, innerType);
 
@@ -27,15 +24,13 @@ namespace caliburn
 
 		ConcreteType* clone() const override;
 
-		void getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssembler* codeAsm) override;
+		//virtual void getConvertibleTypes(std::set<ConcreteType*>* types) override;
 
 		TypeCompat isCompatible(Operator op, ConcreteType* rType) const override;
 
-		uint32_t typeDeclSpirV(SpirVAssembler* codeAsm) override;
+		virtual void getSSAs(cllr::Assembler& codeAsm) override;
 
-		uint32_t mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, ConcreteType* rType, uint32_t rvalueSSA, ConcreteType*& endType) const override;
-
-		uint32_t mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, ConcreteType*& endType) const override;
+		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override;
 
 	};
 

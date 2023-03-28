@@ -39,36 +39,9 @@ namespace caliburn
 
 		virtual bool isLValue() const = 0;
 
-		virtual void resolveSymbols(SymbolTable& const table) = 0;
+		virtual bool isCompileTimeConst() const = 0;
 
-	};
-
-	struct Variable : public cllr::Emitter
-	{
-		Statement* const owner;
-
-		cllr::SSA id = 0;
-		Token* name = nullptr;
-		ParsedType* typeHint = nullptr;
-		ConcreteType* realType = nullptr;
-		Value* initValue = nullptr;
-		
-		Variable() = default;
-		Variable(Statement* parent, Token* varName, ParsedType* hint, Value* init) : owner(parent), name(varName), typeHint(hint), initValue(init) {}
-		Variable(const Variable& rhs) : owner(rhs.owner)
-		{
-			id = rhs.id;
-			name = rhs.name;
-			typeHint = rhs.typeHint;
-			realType = rhs.realType;
-			initValue = rhs.initValue;
-
-		}
-		virtual ~Variable() {}
-
-		virtual void getSSAs(cllr::Assembler& codeAsm) override;
-
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override;
+		virtual void resolveSymbols(const SymbolTable& table) = 0;
 
 		virtual cllr::SSA emitLoadCLLR(cllr::Assembler& codeAsm) = 0;
 
@@ -76,9 +49,54 @@ namespace caliburn
 
 	};
 
+	struct Variable : public Value
+	{
+		Statement* const owner;
+
+		cllr::SSA id = 0;
+		bool isConst = false;
+		Token* name = nullptr;
+		ParsedType* typeHint = nullptr;
+		Value* initValue = nullptr;
+		
+		Variable() : Value(ValueType::VARIABLE), owner(nullptr) {};
+		Variable(Statement* parent, Token* varName, ParsedType* hint, Value* init, bool isImmut) :
+			Value(ValueType::VARIABLE),
+			owner(parent),
+			name(varName),
+			typeHint(hint),
+			initValue(init),
+			isConst(isImmut) {}
+		Variable(const Variable& rhs) : Value(ValueType::VARIABLE), owner(rhs.owner)
+		{
+			id = rhs.id;
+			name = rhs.name;
+			typeHint = rhs.typeHint;
+			type = rhs.type;
+			initValue = rhs.initValue;
+			isConst = rhs.isConst;
+
+		}
+		virtual ~Variable() {}
+
+		virtual bool isCompileTimeConst() const
+		{
+			return false;
+		}
+
+		virtual void getSSAs(cllr::Assembler& codeAsm) override;
+
+		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override;
+
+		virtual cllr::SSA emitLoadCLLR(cllr::Assembler& codeAsm) override = 0;
+
+		virtual void emitStoreCLLR(cllr::Assembler& codeAsm, cllr::SSA value) override = 0;
+
+	};
+
 	enum class TypeCategory
 	{
-		VOID, BOOLEAN, PRIMITIVE, VECTOR, MATRIX, ARRAY, POINTER, STRUCT
+		VOID, FLOAT, INT, VECTOR, MATRIX, ARRAY, STRUCT, BOOLEAN, POINTER, TUPLE
 	};
 	
 	enum class TypeCompat
@@ -100,6 +118,7 @@ namespace caliburn
 	{
 	private:
 		std::string fullName = "";
+		ConcreteType* resultType = nullptr;
 	public:
 		Token* const mod;
 		Token* const name;
@@ -199,11 +218,7 @@ namespace caliburn
 		}
 		
 		/*
-		TODO check for memory leaks; this part involves cloning. For instance:
-		Vec<Vec<NotAType>>
-		Vec resolves, creates clone
-			Vec resolves, creates clone
-				NotAType doesn't resolve, 
+		TODO check for memory leaks; this part involves cloning.
 		*/
 		ConcreteType* resolve(const SymbolTable& table);
 
@@ -224,7 +239,6 @@ namespace caliburn
 		//TODO add dirty flag to trigger a refresh. that or just control when aspects can be edited
 		std::string fullName = "";
 	public:
-		ConcreteType(TypeCategory c, std::string n) : ConcreteType(c, n, 0, 0) {}
 		ConcreteType(TypeCategory c, std::string n, size_t genMax = 0, size_t genMin = 0) :
 			category(c), canonName(n), maxGenerics(genMax), minGenerics(genMin)
 		{
@@ -350,10 +364,10 @@ namespace caliburn
 		{
 			return getSizeBytes();
 		}
+		
+		//virtual void getConvertibleTypes(std::set<ConcreteType*>& types) = 0;
 
 		virtual TypeCompat isCompatible(Operator op, ConcreteType* rType) const = 0;
-
-		virtual void getConvertibleTypes(std::set<ConcreteType*>& types) = 0;
 
 	};
 

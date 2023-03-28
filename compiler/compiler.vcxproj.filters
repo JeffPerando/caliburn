@@ -193,5 +193,14 @@
     <ClInclude Include="var.h">
       <Filter>Header Files\ast</Filter>
     </ClInclude>
+    <ClInclude Include="cbrn_std.h">
+      <Filter>Header Files\types</Filter>
+    </ClInclude>
+    <ClInclude Include="miscstmt.h">
+      <Filter>Header Files\ast</Filter>
+    </ClInclude>
+    <ClInclude Include="structstmt.h">
+      <Filter>Header Files\ast</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

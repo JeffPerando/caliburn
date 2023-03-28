@@ -1,13 +1,10 @@
 
 #pragma once
 
-#include "spirv.h"
 #include "type.h"
 
 namespace caliburn
 {
-	class SpirVAssembler;
-
 	struct TypeBool : public ConcreteType
 	{
 		TypeBool() : ConcreteType(TypeCategory::BOOLEAN, "bool"){}
@@ -22,15 +19,19 @@ namespace caliburn
 			return 1;
 		}
 
-		void getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssembler* codeAsm) override;
+		virtual ConcreteType* clone() const override
+		{
+			//To future me: This cast is necessary; it complains otherwise. Yes it looks goofy. TypeBool* != ConcreteType*. smh
+			return (ConcreteType*)this;
+		}
+
+		//void getConvertibleTypes(std::set<ConcreteType*>* types) override;
 
 		TypeCompat isCompatible(Operator op, ConcreteType* rType) const override;
 
-		uint32_t typeDeclSpirV(SpirVAssembler* codeAsm) override;
+		virtual void getSSAs(cllr::Assembler& codeAsm) override;
 
-		uint32_t mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, ConcreteType* rType, uint32_t rvalueSSA, ConcreteType*& endType) const override;
-
-		uint32_t mathOpSoloSpirV(SpirVAssembler* codeAsm, Operator op, uint32_t ssa, ConcreteType*& endType) const override;
+		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override;
 
 	};
 

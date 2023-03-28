@@ -1,9 +1,8 @@
-/*
-#include "allasm.h"
+
 #include "typeint.h"
 
 using namespace caliburn;
-
+/*
 uint32_t TypeInt::getSizeBytes() const
 {
 	return intBits / 8 + ((intBits & 0b111) != 0);
@@ -14,7 +13,7 @@ uint32_t TypeInt::getAlignBytes() const
 	return getSizeBytes();
 }
 
-void TypeInt::getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssembler* codeAsm)
+void TypeInt::getConvertibleTypes(std::set<ConcreteType*>& types)
 {
 	auto its = codeAsm->getAllIntTypes();
 	auto fts = codeAsm->getAllFloatTypes();
@@ -32,13 +31,13 @@ void TypeInt::getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssemb
 	}
 
 }
-
+*/
 TypeCompat TypeInt::isCompatible(Operator op, ConcreteType* rType) const
 {
 	if (rType == nullptr)
 	{
 		if ((op == Operator::NEGATE || op == Operator::ABS)
-			&& !hasA(TypeAttrib::SIGNED))
+			&& !isSigned)
 		{
 			return TypeCompat::INCOMPATIBLE_OP;
 		}
@@ -46,12 +45,12 @@ TypeCompat TypeInt::isCompatible(Operator op, ConcreteType* rType) const
 		return TypeCompat::COMPATIBLE;
 	}
 
-	if (rType->category != TypeCategory::PRIMITIVE)
+	if (rType->category != TypeCategory::INT && rType->category != TypeCategory::FLOAT)
 	{
 		return TypeCompat::INCOMPATIBLE_TYPE;
 	}
 
-	if (rType->hasA(TypeAttrib::FLOAT))
+	if (rType->category == TypeCategory::FLOAT)
 	{
 		if (this->getSizeBytes() > (MAX_FLOAT_BITS / 8))
 		{
@@ -97,18 +96,17 @@ TypeCompat TypeInt::isCompatible(Operator op, ConcreteType* rType) const
 	return TypeCompat::INCOMPATIBLE_OP;
 }
 
-uint32_t TypeInt::typeDeclSpirV(SpirVAssembler* codeAsm)
+void TypeInt::getSSAs(cllr::Assembler& codeAsm)
 {
-	if (ssa != 0)
-	{
-		return ssa;
-	}
-
-	ssa = codeAsm->newAssign();
-	codeAsm->pushAll({ spirv::OpTypeInt(), ssa, intBits, (uint32_t)hasA(TypeAttrib::SIGNED) });
-	return ssa;
+	id = codeAsm.createSSA(cllr::Opcode::TYPE_INT);
 }
 
+void TypeInt::emitDeclCLLR(cllr::Assembler& codeAsm)
+{
+	codeAsm.push(id, cllr::Opcode::TYPE_INT, { intBits, isSigned });
+}
+
+/*
 uint32_t TypeInt::mathOpSpirV(SpirVAssembler* codeAsm,
 	uint32_t lhs, Operator op,
 	ConcreteType* rType, uint32_t rhs,

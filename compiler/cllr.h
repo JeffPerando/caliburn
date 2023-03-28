@@ -41,7 +41,7 @@ namespace caliburn
 			SHADER_END,
 
 			FUNCTION,
-			FUNCTION_KERNEL,
+			//FUNCTION_KERNEL,
 			FUNCTION_END,
 
 			VAR_LOCAL,
@@ -56,10 +56,10 @@ namespace caliburn
 
 			TYPE_FLOAT,
 			TYPE_INT,
-			TYPE_STRUCT,
 			TYPE_ARRAY,
 			TYPE_VECTOR,
 			TYPE_MATRIX,
+			TYPE_STRUCT,
 
 			TYPE_BOOL,
 			TYPE_PTR,
@@ -76,14 +76,16 @@ namespace caliburn
 
 			ASSIGN,
 			ASSIGN_ARRAY,
-			BINOP,
 			COMPARE,
 
 			VALUE_ARRAY_LIT,
 			VALUE_CAST,
 			VALUE_DEREF,
 			VALUE_DESCRIPTOR,
+			VALUE_EXPR,
 			VALUE_INIT,
+			VALUE_INVOKE_POS,
+			VALUE_INVOKE_SIZE,
 			VALUE_LITERAL,
 			VALUE_MEMBER,
 			VALUE_NULL,
@@ -92,6 +94,7 @@ namespace caliburn
 			
 			RETURN,
 			RETURN_VALUE,
+			DISCARD,
 
 			OP_COUNT
 
