@@ -289,17 +289,49 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 	{
 		char current = buf->currentVal();
 
-		if (current == '\n')
+		CharType type = getType(current);
+
+		/*
+		See https://en.wikipedia.org/w/index.php?title=Newline
+
+		So there's 2 major line endings we care about:
+		Windows \n
+		Linux/MacOS \r\n
+		Result: We don't care about \r. We just don't. We see it, we skip it. That way line counts are kept sane.
+		*/
+		if (type == CharType::WHITESPACE)
 		{
+			if (current == '\r')
+			{
+				//don't increment col, just pretend we didn't see it
+				buf->consume();
+				continue;
+			}
+
+			if (significantWhitespace)
+			{
+				tokens.push_back(Token(std::string(1, current), TokenType::UNKNOWN, line, col));
+			}
+
 			buf->consume();
 
-			++line;
-			col = 1;
+			if (current == '\n')
+			{
+				++line;
+				col = 1;
+			}
+			else if (current == '\t')
+			{
+				//Yes, we're assuming tabs are 4-wide.
+				col += 4;
+			}
+			else
+			{
+				++col;
+			}
 
 			continue;
 		}
-
-		CharType type = getType(current);
 
 		if (type == CharType::IDENTIFIER || type == CharType::INT)
 		{

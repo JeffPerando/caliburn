@@ -26,12 +26,16 @@ namespace caliburn
 		uint64_t line = 1;
 		uint64_t col = 1;
 
+		bool significantWhitespace = false;
+
 		CharType asciiTypes[128]{};
 
 	public:
 		Tokenizer()
 		{
 			//I'm so sorry for this.
+
+			//Initialize array; Can't find an idiomatic C/C++ way to do this without memset.
 			for (auto i = 0; i < 128; ++i)
 			{
 				asciiTypes[i] = CharType::UNKNOWN;
@@ -85,6 +89,12 @@ namespace caliburn
 		virtual ~Tokenizer() {}
 
 		void tokenize(std::string& text, std::vector<Token>& tokens);
+
+		Tokenizer* enableSignificantWhitespace()
+		{
+			significantWhitespace = true;
+			return this;
+		}
 
 	private:
 		CharType getType(char chr);
