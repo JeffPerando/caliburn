@@ -13,6 +13,7 @@ namespace caliburn
 		MODULE,
 		FUNCTION,
 		VALUE,
+		VARIABLE,
 		TYPE
 	};
 
@@ -25,23 +26,21 @@ namespace caliburn
 
 	class SymbolTable
 	{
-		const SymbolTable* parent;
 		std::map<std::string, Symbol*> symbols;
-		std::map<std::string, SymbolTable*> children;
-
+		
 	public:
-		const std::string name;
+		const ptr<const SymbolTable> parent;
 
-		SymbolTable(std::string name = "") : parent(nullptr), name(name) {}
-		SymbolTable(SymbolTable* p, std::string name = "") : parent(p), name(name) {}
+		SymbolTable() : parent(nullptr) {}
+		SymbolTable(SymbolTable* p) : parent(p) {}
 		virtual ~SymbolTable()
 		{
-			for (auto& table : children)
+			for (auto& table : symbols)
 			{
 				delete table.second;
 			}
 
-			children.clear();
+			symbols.clear();
 
 		}
 
@@ -74,40 +73,6 @@ namespace caliburn
 			}
 
 			return nullptr;
-		}
-
-		SymbolTable* makeChild(std::string name = "", bool appendNum = false)
-		{
-			auto tbl = children.find(name);
-
-			if (tbl != children.end())
-			{
-				if (!appendNum)
-				{
-					return tbl->second;
-				}
-
-				for (auto i = 1; i <= 1024; ++i)
-				{
-					auto newName = (std::stringstream() << name << '_' << i).str();
-
-					tbl = children.find(newName);
-
-					if (tbl == children.end())
-					{
-						name = newName;
-						break;
-					}
-
-				}
-
-			}
-
-			auto table = new SymbolTable(this, name);
-
-			children.emplace(name, table);
-
-			return table;
 		}
 
 	};

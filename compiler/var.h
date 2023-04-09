@@ -1,19 +1,15 @@
 
 #pragma once
 
-#include "value.h"
+#include "values.h"
 
 namespace caliburn
 {
 	struct LocalVariable : public Variable
 	{
-		LocalVariable(Statement* parent, Token* varName, ParsedType* hint, Value* init, bool isImmut) : Variable(parent, varName, hint, init, isImmut) {}
+		LocalVariable(Token* varName, ParsedType* hint, Value* init, bool isImmut) : Variable(varName, hint, init, isImmut) {}
 		LocalVariable(const LocalVariable& rhs) : Variable(rhs) {}
-
-		bool isLValue() const override
-		{
-			return true;
-		}
+		virtual ~LocalVariable() {}
 
 		Token* firstTkn() const override
 		{
@@ -25,7 +21,12 @@ namespace caliburn
 			return name;
 		}
 
-		void resolveSymbols(const SymbolTable& table) override
+		void resolveSymbols(ref<const SymbolTable> mod) override
+		{
+
+		}
+
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
 		{
 
 		}

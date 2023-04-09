@@ -96,14 +96,9 @@ TypeCompat TypeInt::isCompatible(Operator op, ConcreteType* rType) const
 	return TypeCompat::INCOMPATIBLE_OP;
 }
 
-void TypeInt::getSSAs(cllr::Assembler& codeAsm)
-{
-	id = codeAsm.createSSA(cllr::Opcode::TYPE_INT);
-}
-
 void TypeInt::emitDeclCLLR(cllr::Assembler& codeAsm)
 {
-	codeAsm.push(id, cllr::Opcode::TYPE_INT, { intBits, isSigned });
+	id = codeAsm.push(id, cllr::Opcode::TYPE_INT, { intBits, isSigned }, {}, true);
 }
 
 /*

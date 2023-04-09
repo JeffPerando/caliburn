@@ -17,21 +17,16 @@ namespace caliburn
 
 		ScopeStatement* code = nullptr;
 
-		ShaderStageStatement(Statement* parent) : Statement(StatementType::SHADER, parent) {}
+		ShaderStageStatement() : Statement(StatementType::SHADER_STAGE) {}
 
-		cllr::CompilationUnit* compile()
+		cllr::CompilationUnit* compile(ref<SymbolTable> symbols)
 		{
 			auto codeAsm = cllr::Assembler();
-
-			auto stdlib = new DefaultLib();
-			auto symbols = stdlib->makeChild("code");
-
-			code->declSymbols(*symbols);
-			code->resolveSymbols(*symbols);
+			
+			code->declareSymbols(symbols, codeAsm);
+			code->resolveSymbols(symbols, codeAsm);
 
 			code->emitDeclCLLR(codeAsm);
-
-			delete stdlib;
 
 			return new cllr::CompilationUnit{ cllr::Target::GPU, std::move(*codeAsm.getCode())};
 		}
@@ -42,14 +37,14 @@ namespace caliburn
 	{
 		std::vector<ShaderStageStatement*> stages;
 
-		ShaderStatement(Statement* parent) : Statement(StatementType::SHADER, parent) {}
+		ShaderStatement() : Statement(StatementType::SHADER) {}
 		virtual ~ShaderStatement() {}
 
-		void compile(std::vector<cllr::CompilationUnit*>& codeDest, std::vector<uint32_t>* cbir)
+		void compile(ref<SymbolTable> table, std::vector<cllr::CompilationUnit*>& codeDest, std::vector<uint32_t>* cbir)
 		{
 			for (auto stage : stages)
 			{
-				auto result = stage->compile();
+				auto result = stage->compile(table);
 
 				codeDest.push_back(result);
 

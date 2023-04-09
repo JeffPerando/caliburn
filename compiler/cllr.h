@@ -3,6 +3,7 @@
 
 #include <array>
 #include <stdint.h>
+#include <vector>
 
 /*
 Caliburn Low-Level Representation (CLLR [pronounced Caller]):
@@ -33,8 +34,6 @@ namespace caliburn
 		{
 			UNKNOWN,
 
-			ENTRY_POINT,
-			
 			SHADER,
 			SHADER_STAGE,
 			DESCRIPTOR,
@@ -75,7 +74,6 @@ namespace caliburn
 			LOOP,
 
 			ASSIGN,
-			ASSIGN_ARRAY,
 			COMPARE,
 
 			VALUE_ARRAY_LIT,
@@ -83,6 +81,7 @@ namespace caliburn
 			VALUE_DEREF,
 			VALUE_DESCRIPTOR,
 			VALUE_EXPR,
+			//VALUE_FN_CALL,
 			VALUE_INIT,
 			VALUE_INVOKE_POS,
 			VALUE_INVOKE_SIZE,
@@ -91,20 +90,21 @@ namespace caliburn
 			VALUE_NULL,
 			VALUE_SUBARRAY,
 			VALUE_VARIABLE,
-			
+
 			RETURN,
 			RETURN_VALUE,
 			DISCARD,
 
-			OP_COUNT
+			CLLR_OP_COUNT
 
 		};
-
+		
 		struct Instruction
 		{
 			SSA index = 0;
 			Opcode op = Opcode::UNKNOWN;
-			std::array<uint32_t, 3> operands {0, 0, 0};
+			std::array<uint32_t, 3> operands = {};
+			std::array<SSA, 3> refs = {};
 
 		};
 

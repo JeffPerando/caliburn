@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "basic.h"
 #include "tokenizer.h"
 
 using namespace caliburn;
@@ -228,7 +229,7 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 
 		switch (suffix)
 		{
-		case 'D': width = 64;
+		case 'D': width = 64; pass;
 		case 'F': isFloat = true; break;
 		case 'L': width = 64; break;
 		default: buf->rewind();
@@ -310,7 +311,7 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 
 			if (significantWhitespace)
 			{
-				tokens.push_back(Token(std::string(1, current), TokenType::UNKNOWN, line, col));
+				tokens.push_back(Token(std::string(1, current), TokenType::UNKNOWN, line, col, buf->currentIndex(), buf->currentIndex() + 1L));
 			}
 
 			buf->consume();
@@ -333,6 +334,9 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 			continue;
 		}
 
+		/*
+		Identifiers can start with a number
+		*/
 		if (type == CharType::IDENTIFIER || type == CharType::INT)
 		{
 			std::string intLit = "";
@@ -347,6 +351,12 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 
 			size_t idOffset = findIdentifierLen();
 
+			/*
+			So the idea is simple: We try to make an identifier token, and we try
+			to make an integer token. Whichever is longer is the one we go with. BUT
+			if they're the same length, we go with the integer literal. That way,
+			literals like 0f or 0xDEADBEEF are correctly identified.
+			*/
 			if (idOffset > intOffset)
 			{
 				auto idStr = text.substr(buf->currentIndex(), idOffset);
@@ -367,7 +377,7 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 
 				}
 
-				tokens.push_back(Token(idStr, idType, line, col));
+				tokens.push_back(Token(idStr, idType, line, col, buf->currentIndex(), idOffset));
 
 				buf->consume(idOffset);
 				col += idOffset;
@@ -375,7 +385,7 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 			}
 			else
 			{
-				tokens.push_back(Token(intLit, intType, line, col));
+				tokens.push_back(Token(intLit, intType, line, col, buf->currentIndex(), intOffset));
 
 				buf->consume(intOffset);
 				col += intOffset;
@@ -401,9 +411,11 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 
 		if (type == CharType::STRING_DELIM)
 		{
+			auto start = buf->currentIndex();
 			auto str = findStr(current);
 
-			tokens.push_back(Token(str, TokenType::LITERAL_STR, line, col));
+			//findStr should offset col and line
+			tokens.push_back(Token(str, TokenType::LITERAL_STR, line, col, start, start - buf->currentIndex()));
 			continue;
 		}
 
@@ -413,8 +425,9 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 
 			if (specialType != charTokenTypes.end())
 			{
-				tokens.push_back(Token(std::string(1, current), specialType->second, line, col));
+				tokens.push_back(Token(std::string(1, current), specialType->second, line, col, buf->currentIndex(), 1L));
 			}
+
 		}
 		else if (type == CharType::OPERATOR)
 		{
@@ -429,15 +442,16 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 			auto fullOp = text.substr(buf->currentIndex(), off);
 			auto meaning = specialOps.find(fullOp);
 
-			if (meaning != specialOps.end())
+			if (meaning == specialOps.end())
 			{
-				tokens.push_back(Token(fullOp, meaning->second, line, col));
+				tokens.push_back(Token(fullOp, meaning->second, line, col, buf->currentIndex(), off));
 				buf->consume(off);
 				col += off;
 				continue;
 			}
 
-			tokens.push_back(Token(std::string(1, current), TokenType::OPERATOR, line, col));
+			tokens.push_back(Token(std::string(1, current), TokenType::OPERATOR, line, col, buf->currentIndex(), 1L));
+
 		}
 		
 		//if all else fails, skip it.

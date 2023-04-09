@@ -7,34 +7,34 @@ namespace caliburn
 {
 	struct SetterStatement : public Statement
 	{
-		Value* lhs = nullptr;
-		Value* rhs = nullptr;
+		Value* lValue = nullptr;
+		Value* rValue = nullptr;
 
-		SetterStatement(Statement* p) : Statement(StatementType::SETTER, p) {}
+		SetterStatement() : Statement(StatementType::SETTER) {}
 
 		Token* firstTkn() const override
 		{
-			return lhs->firstTkn();
+			return lValue->firstTkn();
 		}
 
 		Token* lastTkn() const override
 		{
-			return rhs->lastTkn();
+			return rValue->lastTkn();
 		}
 
-		void declSymbols(SymbolTable& table) override {}
-
-		void resolveSymbols(const SymbolTable& table) override
+		void resolveSymbols(ref<const SymbolTable> table, cllr::Assembler& codeAsm) override
 		{
-			lhs->resolveSymbols(table);
-			rhs->resolveSymbols(table);
+			lValue->resolveSymbols(table);
+			rValue->resolveSymbols(table);
 
 		}
 
-		void emitDeclCLLR(cllr::Assembler& codeAsm) override
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
 		{
-			auto id = rhs->emitLoadCLLR(codeAsm);
-			lhs->emitStoreCLLR(codeAsm, id);
+			auto lhs = lValue->emitValueCLLR(codeAsm);
+			auto rhs = rValue->emitValueCLLR(codeAsm);
+
+			codeAsm.push(0, cllr::Opcode::ASSIGN, {}, {lhs, rhs});
 
 		}
 

@@ -14,10 +14,6 @@ void TypeBool::getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssem
 
 }
 */
-void TypeBool::getSSAs(cllr::Assembler& codeAsm)
-{
-	id = codeAsm.createSSA(cllr::Opcode::TYPE_BOOL);
-}
 
 TypeCompat TypeBool::isCompatible(Operator op, ConcreteType* rType) const
 {
@@ -59,7 +55,7 @@ TypeCompat TypeBool::isCompatible(Operator op, ConcreteType* rType) const
 
 void TypeBool::emitDeclCLLR(cllr::Assembler& codeAsm)
 {
-	codeAsm.push(id, cllr::Opcode::TYPE_BOOL, {0, 0, 0});
+	id = codeAsm.push(0, cllr::Opcode::TYPE_BOOL, {}, {}, true);
 }
 /*
 uint32_t TypeBool::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, ConcreteType* rType, uint32_t rvalueSSA, ConcreteType*& endType) const

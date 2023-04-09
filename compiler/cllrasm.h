@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "basic.h"
 #include "cllr.h"
 
 namespace caliburn
@@ -33,7 +34,7 @@ namespace caliburn
 
 			SSA createSSA(Opcode op);
 
-			SSA push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, bool genSSA = false);
+			SSA push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::array<SSA, 3> refs, bool genSSA = false);
 
 			//void toSPIRV(spirv::Assembler* out);
 
@@ -78,9 +79,7 @@ namespace caliburn
 		class Emitter
 		{
 		public:
-			virtual void getSSAs(cllr::Assembler& codeAsm) = 0;
-
-			virtual void emitDeclCLLR(cllr::Assembler& codeAsm) = 0;
+			virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) = 0;
 
 		};
 

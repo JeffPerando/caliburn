@@ -1,24 +1,26 @@
 
+#include "ast.h"
 #include "type.h"
 
 using namespace caliburn;
 
-ConcreteType* ParsedType::resolve(const SymbolTable& table)
+ConcreteType* ParsedType::resolve(ref<const SymbolTable> table)
 {
-	if (resultType != nullptr)
-	{
-		return resultType;
-	}
+	auto cTypeSym = table.find(name->str);
 
-	auto sym = table.find(name->str);
-
-	if (sym->type != SymbolType::TYPE)
+	if (cTypeSym == nullptr)
 	{
 		//TODO complain
 		return nullptr;
 	}
 
-	auto cType = ((ConcreteType*)sym->data);
+	if (cTypeSym->type != SymbolType::TYPE)
+	{
+		//TODO complain
+		return nullptr;
+	}
+
+	auto cType = (ConcreteType*)cTypeSym->data;
 
 	if (cType->maxGenerics == 0 && this->generics.size() == 0)
 	{
@@ -60,27 +62,27 @@ ConcreteType* ParsedType::resolve(const SymbolTable& table)
 	resultType = clone;
 	return clone;
 }
-
+/*
 void Variable::getSSAs(cllr::Assembler& codeAsm)
 {
 	id = codeAsm.createSSA(cllr::Opcode::VAR_LOCAL);
 
 }
-
-void Variable::emitDeclCLLR(cllr::Assembler& codeAsm)
+*/
+void Variable::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 {
 	Value* value = initValue;
 
 	if (type == nullptr)
 	{
 		type = initValue->type;
-	}
+	}/*
 	else if (value == nullptr)
 	{
 		value = type->defaultInitValue();
-		value->emitDeclCLLR(codeAsm);
+		value->emitValueCLLR(codeAsm);
 	}
-
-	codeAsm.push(id, cllr::Opcode::VAR_LOCAL, { type->id, value->id, 0 });
+	*/
+	codeAsm.push(id, cllr::Opcode::VAR_LOCAL, {}, { type->id, value->id, 0 });
 
 }

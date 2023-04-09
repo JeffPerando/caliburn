@@ -57,14 +57,9 @@ TypeCompat TypeVector::isCompatible(Operator op, ConcreteType* rType) const
 	return TypeCompat::INCOMPATIBLE_TYPE;
 }
 
-void TypeVector::getSSAs(cllr::Assembler& codeAsm)
-{
-	inner->getSSAs(codeAsm);
-
-}
-
 void TypeVector::emitDeclCLLR(cllr::Assembler& codeAsm)
 {
-	codeAsm.push(id, cllr::Opcode::TYPE_VECTOR, {elements, generics[0]->id, 0});
+	inner->emitDeclCLLR(codeAsm);
+	id = codeAsm.push(0, cllr::Opcode::TYPE_VECTOR, { elements }, { inner->id }, true);
 
 }

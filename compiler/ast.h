@@ -1,35 +1,29 @@
 
 #pragma once
 
-//#include <llvm/IR/IRBuilder.h>
 #include <map>
+#include <set>
 #include <stdint.h>
 #include <vector>
 
+#include "basic.h"
 #include "langcore.h"
+#include "module.h"
 #include "symbols.h"
 #include "type.h"
 
 namespace caliburn
 {
+	struct Statement;
+
 	enum class StatementType
 	{
 		UNKNOWN,
 
-		ROOT,
-		IMPORT,
-		FUNCTION,
-		SHADER,
-		SHADER_STAGE,
-		DESCRIPTOR,
-		STRUCT,
-		CLASS,
-		CONSTRUCTOR,
-		DESTRUCTOR,
-		
+		VARIABLE,
+
 		//Flow control
 		IF,
-		ELSE,
 		FOR,
 		FORALL,
 		WHILE,
@@ -37,8 +31,27 @@ namespace caliburn
 		SWITCH,
 		CASE,
 
-		VARIABLE,
+		MODULE,
+		IMPORT,
+
+		TYPEDEF,
+
+		SHADER,
+		SHADER_STAGE,
+
+		FUNCTION,
 		
+		STRUCT,
+		RECORD,
+
+		CLASS,
+		METHOD,
+		CONSTRUCTOR,
+		DESTRUCTOR,
+		
+		ENUM,
+		ENUM_WRAPPED,
+
 		SCOPE,
 		SETTER,
 		FUNC_CALL,
@@ -56,31 +69,95 @@ namespace caliburn
 		DISCARD
 	};
 
-	/*
-	* A statement is the base class for the abstract syntax tree.
-	* 
-	* More specifically, a statement also acts as a scope. All scopes contain
-	* variables, a return, type aliases, and inner code
-	*/
-	struct Statement : public cllr::Emitter, public ParsedObject
+	enum class ValidationStatus
 	{
-		StatementType const type;
-		Statement* const parent;
+		VALID,
+		INVALID_STATEMENT,
+		INVALID_RET_MODE
+	};
+
+	struct ValidationData
+	{
+		ValidationStatus status;
+		//ptr<const Statement> stmt;
+		ReturnMode retMode;
+		/*
+		static ValidationData valid()
+		{
+			return ValidationData{ ValidationStatus::VALID, nullptr, ReturnMode::NONE };
+		}
+
+		static ValidationData badStmt(ptr<const Statement> stmt)
+		{
+			return ValidationData{ ValidationStatus::INVALID_STATEMENT, stmt, ReturnMode::NONE };
+		}
+
+		static ValidationData badRetMode(ptr<const Statement> stmt, ReturnMode mode)
+		{
+			return ValidationData{ ValidationStatus::INVALID_RET_MODE, stmt, mode };
+		}
+		*/
+	};
+
+	constexpr auto TOP_STMT_TYPES = {
+		StatementType::VARIABLE,
+		StatementType::IF, //conditional compilation
+		StatementType::MODULE, StatementType::IMPORT,
+		StatementType::FUNCTION,
+		StatementType::SHADER,
+		StatementType::STRUCT, StatementType::RECORD, StatementType::CLASS,
+		StatementType::ENUM,
+	};
+
+	constexpr auto LOGIC_STMT_TYPES = {
+		StatementType::VARIABLE,
+		StatementType::IF,
+		StatementType::FOR, StatementType::FORALL,
+		StatementType::WHILE, StatementType::DOWHILE,
+		//Switch is not supported yet in any way; must revisit the concept
+		StatementType::SETTER, StatementType::FUNC_CALL,
+	};
+
+	constexpr auto CLASS_STMT_TYPES = {
+		StatementType::VARIABLE,
+		StatementType::IF, //conditional compilation
+		StatementType::METHOD,
+		StatementType::CONSTRUCTOR, StatementType::DESTRUCTOR,
+	};
+
+	constexpr auto STRUCT_STMT_TYPES = {
+		StatementType::VARIABLE,
+		StatementType::IF, //conditional compilation
+		StatementType::CONSTRUCTOR, StatementType::DESTRUCTOR,
+	};
+
+	struct Statement : public Module, public ParsedObject
+	{
+		const StatementType type;
 
 		StorageModifiers mods = {};
-		std::map<std::string, ConcreteType*> typeAliases;
+		std::map<std::string, ParsedType*> typeAliases;
 
-		Statement(StatementType stmtType, Statement* p) : type(stmtType), parent(p) {}
-		Statement(StatementType stmtType) : type(stmtType), parent(nullptr) {}
+		Statement(StatementType stmtType) : type(stmtType) {}
 		virtual ~Statement() {}
+
+		virtual bool validateModule() const override
+		{
+			return false;
+		}
 
 		virtual Token* firstTkn() const override = 0;
 
 		virtual Token* lastTkn() const override = 0;
 
-		virtual void declSymbols(SymbolTable& table) = 0;
+		//Only used by top-level statements which declare symbols. The rest, like local variables, should use declareSymbols() instead
+		virtual void declareHeader(ref<SymbolTable> table, cllr::Assembler& codeAsm) {}
 
-		virtual void resolveSymbols(const SymbolTable& table) = 0;
+		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override = 0;
+
+		virtual void resolveSymbols(ref<const SymbolTable> table, cllr::Assembler& codeAsm) override = 0;
+
+		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) = 0;
 
 	};
 
@@ -92,15 +169,17 @@ namespace caliburn
 		cllr::SSA id = 0;
 
 		std::vector<Statement*> stmts;
-		std::vector<Variable*> vars;
+		
+		ptr<SymbolTable> scopeTable = nullptr;
 
 		ReturnMode retMode = ReturnMode::NONE;
 		Value* retValue = nullptr;
 
-		ScopeStatement(StatementType stmtType, Statement* p) : Statement(stmtType, p) {}
-		ScopeStatement(StatementType stmtType) : Statement(stmtType, nullptr) {}
-		ScopeStatement(Statement* parent) : Statement(StatementType::SCOPE, parent) {}
-		virtual ~ScopeStatement() {}
+		ScopeStatement(StatementType stmtType = StatementType::SCOPE) : Statement(stmtType) {}
+		virtual ~ScopeStatement()
+		{
+			delete scopeTable;
+		}
 
 		virtual Token* firstTkn() const override
 		{
@@ -112,33 +191,28 @@ namespace caliburn
 			return last;
 		}
 
-		virtual void getSSAs(cllr::Assembler& codeAsm) override
+		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override
 		{
-			id = codeAsm.createSSA(cllr::Opcode::LABEL);
+			if (scopeTable != nullptr)
+			{
+				return;
+			}
+
+			scopeTable = new SymbolTable(table);
 
 			for (auto stmt : stmts)
 			{
-				stmt->getSSAs(codeAsm);
+				stmt->declareSymbols(*scopeTable, codeAsm);
 
 			}
 
 		}
 
-		virtual void declSymbols(SymbolTable& table) override
+		virtual void resolveSymbols(ref<const SymbolTable> table, cllr::Assembler& codeAsm) override
 		{
 			for (auto stmt : stmts)
 			{
-				stmt->declSymbols(table);
-
-			}
-
-		}
-
-		virtual void resolveSymbols(const SymbolTable& table) override
-		{
-			for (auto stmt : stmts)
-			{
-				stmt->resolveSymbols(table);
+				stmt->resolveSymbols(*scopeTable, codeAsm);
 
 			}
 
@@ -146,7 +220,7 @@ namespace caliburn
 
 		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override
 		{
-			codeAsm.push(id, cllr::Opcode::LABEL, {});
+			codeAsm.push(id, cllr::Opcode::LABEL, {}, {});
 
 			for (auto inner : stmts)
 			{
@@ -160,30 +234,42 @@ namespace caliburn
 			case ReturnMode::RETURN: {
 				if (retValue != nullptr)
 				{
-					auto retID = retValue->emitLoadCLLR(codeAsm);
+					retValue->emitValueCLLR(codeAsm);
+					auto retID = retValue->id;
 
-					codeAsm.push(0, cllr::Opcode::RETURN_VALUE, { retID, 0, 0 });
+					codeAsm.push(0, cllr::Opcode::RETURN_VALUE, {}, { retID });
 
 				}
 				else
 				{
-					codeAsm.push(0, cllr::Opcode::RETURN, { 0, 0, 0 });
+					codeAsm.push(0, cllr::Opcode::RETURN, {}, {});
 
 				}
 				break;
 			};
 			case ReturnMode::CONTINUE:
-				codeAsm.push(0, cllr::Opcode::JUMP, { codeAsm.getLoopStart(), 0, 0 }); break;
+				codeAsm.push(0, cllr::Opcode::JUMP, {}, { codeAsm.getLoopStart() }); break;
 			case ReturnMode::BREAK:
-				codeAsm.push(0, cllr::Opcode::JUMP, { codeAsm.getLoopEnd(), 0, 0 }); break;
+				codeAsm.push(0, cllr::Opcode::JUMP, {}, { codeAsm.getLoopEnd() }); break;
 			case ReturnMode::PASS:
 				//TODO implement
 				break;
 			case ReturnMode::DISCARD:
-				codeAsm.push(0, cllr::Opcode::DISCARD, { 0, 0, 0 }); break;
+				codeAsm.push(0, cllr::Opcode::DISCARD, {}, {}); break;
 			}
 
 		}
+
+	};
+
+	struct GenericStatement : public Statement
+	{
+		//std::vector<std::pair<std::string, ParsedType*>> 
+		std::map<std::string, ConcreteType*> tNames;
+		std::map<std::string, Value*> cNames;
+
+		GenericStatement(StatementType stmtType) : Statement(stmtType) {}
+		virtual ~GenericStatement() {}
 
 	};
 

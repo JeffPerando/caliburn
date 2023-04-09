@@ -17,17 +17,22 @@ namespace caliburn
 {
 	struct ParsedType;
 	struct ConcreteType;
-	struct Statement;
 
 	enum class ValueType
 	{
+		UNKNOWN,
+
 		LITERAL,
+		STR_LITERAL,
 		EXPRESSION,
-		VARIABLE,
-		FUNCTION_CALL
+		VAR_READ,
+		SUB_ARRAY,
+		CAST,
+		FUNCTION_CALL,
+		DEFAULT_INIT
 	};
 
-	struct Value : public ParsedObject, public cllr::Emitter
+	struct Value : public ParsedObject
 	{
 		ValueType const vType;
 		ConcreteType* type = nullptr;
@@ -41,33 +46,28 @@ namespace caliburn
 
 		virtual bool isCompileTimeConst() const = 0;
 
-		virtual void resolveSymbols(const SymbolTable& table) = 0;
+		virtual void resolveSymbols(ref<const SymbolTable> table) = 0;
 
-		virtual cllr::SSA emitLoadCLLR(cllr::Assembler& codeAsm) = 0;
-
-		virtual void emitStoreCLLR(cllr::Assembler& codeAsm, cllr::SSA value) = 0;
+		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) = 0;
 
 	};
 
-	struct Variable : public Value
+	struct Variable : public ParsedObject
 	{
-		Statement* const owner;
-
 		cllr::SSA id = 0;
 		bool isConst = false;
 		Token* name = nullptr;
 		ParsedType* typeHint = nullptr;
+		ConcreteType* type = nullptr;
 		Value* initValue = nullptr;
 		
-		Variable() : Value(ValueType::VARIABLE), owner(nullptr) {};
-		Variable(Statement* parent, Token* varName, ParsedType* hint, Value* init, bool isImmut) :
-			Value(ValueType::VARIABLE),
-			owner(parent),
+		Variable() {}
+		Variable(Token* varName, ParsedType* hint, Value* init, bool isImmut) :
 			name(varName),
 			typeHint(hint),
 			initValue(init),
 			isConst(isImmut) {}
-		Variable(const Variable& rhs) : Value(ValueType::VARIABLE), owner(rhs.owner)
+		Variable(ref<const Variable> rhs)
 		{
 			id = rhs.id;
 			name = rhs.name;
@@ -79,18 +79,13 @@ namespace caliburn
 		}
 		virtual ~Variable() {}
 
-		virtual bool isCompileTimeConst() const
-		{
-			return false;
-		}
+		virtual void resolveSymbols(ref<const SymbolTable> table) = 0;
 
-		virtual void getSSAs(cllr::Assembler& codeAsm) override;
+		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) = 0;
 
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override;
+		virtual cllr::SSA emitLoadCLLR(cllr::Assembler& codeAsm) = 0;
 
-		virtual cllr::SSA emitLoadCLLR(cllr::Assembler& codeAsm) override = 0;
-
-		virtual void emitStoreCLLR(cllr::Assembler& codeAsm, cllr::SSA value) override = 0;
+		virtual void emitStoreCLLR(cllr::Assembler& codeAsm, cllr::SSA value) = 0;
 
 	};
 
@@ -120,8 +115,8 @@ namespace caliburn
 		std::string fullName = "";
 		ConcreteType* resultType = nullptr;
 	public:
-		Token* const mod;
-		Token* const name;
+		const ptr<Token> mod;
+		const ptr<Token> name;
 		std::vector<ParsedType*> generics;
 		
 		ParsedType() : ParsedType(nullptr) {}
@@ -139,6 +134,20 @@ namespace caliburn
 				delete type;
 			}
 
+		}
+
+		Token* firstTkn() const override
+		{
+			if (mod != nullptr)
+				return mod;
+			return name;
+		}
+
+		Token* lastTkn() const override
+		{
+			if (!generics.empty())
+				return generics.back()->lastTkn();
+			return name;
 		}
 
 		std::string getBasicName()
@@ -203,24 +212,10 @@ namespace caliburn
 			return this;
 		}
 
-		Token* firstTkn() const override
-		{
-			if (mod != nullptr)
-				return mod;
-			return name;
-		}
-
-		Token* lastTkn() const override
-		{
-			if (!generics.empty())
-				return generics.back()->lastTkn();
-			return name;
-		}
-		
 		/*
 		TODO check for memory leaks; this part involves cloning.
 		*/
-		ConcreteType* resolve(const SymbolTable& table);
+		ConcreteType* resolve(ref<const SymbolTable> table);
 
 	};
 
@@ -233,7 +228,7 @@ namespace caliburn
 		const size_t minGenerics;
 	protected:
 		ConcreteType* superType = nullptr;
-		std::vector<ConcreteType*> generics;
+		std::vector<ConcreteType*> generics, genericDefaults;
 		std::vector<Variable*> vars;
 
 		//TODO add dirty flag to trigger a refresh. that or just control when aspects can be edited
@@ -242,6 +237,11 @@ namespace caliburn
 		ConcreteType(TypeCategory c, std::string n, size_t genMax = 0, size_t genMin = 0) :
 			category(c), canonName(n), maxGenerics(genMax), minGenerics(genMin)
 		{
+			if (minGenerics > maxGenerics)
+			{
+				throw new std::exception("Invalid concrete type; More generics required than alotted");
+			}
+
 			if (maxGenerics > 0)
 			{
 				generics.reserve(maxGenerics);
@@ -347,10 +347,7 @@ namespace caliburn
 
 		}
 
-		virtual Value* defaultInitValue()
-		{
-			return nullptr;
-		}
+		virtual cllr::SSA emitDefaultInitValue(ref<cllr::Assembler> codeAsm) = 0;
 
 		//ONLY exists for making a new generic type. so if you don't use generics, there's ZERO point in
 		//properly implementing this. So just return this and be done with it.

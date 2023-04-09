@@ -38,7 +38,7 @@ namespace caliburn
 
             bool operator<(const SpvOp& op) const
             {
-                return op < op.op;
+                return this->op < op.op;
             }
 
         };

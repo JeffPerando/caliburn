@@ -10,7 +10,7 @@ namespace caliburn
 		"as",
 		"break",
 		"case", "class", "const", "construct", "continue",
-		"def", "default", "delete", "descriptor", "destruct", "discard", "do", "dynamic",
+		"def", "default", "delete", "destruct", "discard", "do", "dynamic",
 		"enum", "extends",
 		"false", "for",
 		"if", "import", "in", "is",
@@ -53,16 +53,23 @@ namespace caliburn
 
 	struct Token
 	{
-		std::string str;
-		TokenType type = TokenType::UNKNOWN;
-		uint64_t line, column;
+		const std::string str;
+		const TokenType type;
+		const uint64_t line, column;
+		
+		/*
+		These represent the start and end of this token within the file itself.
+		Since a file is just a string, we can index directly into it.
+		ALSO: The end field would be redundant, EXCEPT some tokens can be shortened, e.g. int literals
+		So, since it's not a 1:1 text to token translation, we need to include the start AND end.
+		*/
+		const uint64_t textStart, textEnd;
 
-		Token(std::string t) : Token(t, TokenType::IDENTIFIER) {}
-		Token(std::string t, TokenType id) : Token(t, id, 0, 0) {}
-
-		//the fact that this has to exist is bothersome
-		Token(std::string t, TokenType id, uint64_t l, uint64_t c) :
-			str(t), type(id), line(l), column(c) {}
+		Token(std::string t,
+			TokenType id = TokenType::IDENTIFIER,
+			uint64_t l = 0, uint64_t c = 0,
+			uint64_t s = 0, uint64_t off = 0) :
+			str(t), type(id), line(l), column(c), textStart(s), textEnd(s + off) {}
 
 	};
 

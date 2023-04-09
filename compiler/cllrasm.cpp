@@ -9,7 +9,7 @@ uint32_t Assembler::addString(std::string str)
 
 	strs.push_back(str);
 
-	return index;
+	return (uint32_t)index;
 }
 
 SSA Assembler::createSSA(Opcode op)
@@ -23,7 +23,7 @@ SSA Assembler::createSSA(Opcode op)
 	return i;
 }
 
-SSA Assembler::push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, bool genSSA)
+SSA Assembler::push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::array<uint32_t, 3> refs, bool genSSA)
 {
 	if (ssa == 0 && !genSSA)
 	{
@@ -36,7 +36,7 @@ SSA Assembler::push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, bool g
 		ssa = createSSA(op);
 	}
 
-	code.push_back(Instruction{ssa, op, operands});
+	code.push_back(Instruction{ssa, op, operands, refs});
 
 	return ssa;
 }

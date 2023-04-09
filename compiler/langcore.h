@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "basic.h"
 #include "syntax.h"
 #include "cllr.h"
 
@@ -63,7 +64,7 @@ namespace caliburn
 	{
 		std::string name;
 		ShaderType type;
-		const uint32_t* spirv;
+		ptr<const uint32_t> spirv;
 		size_t spirv_length;
 		std::vector<VertexInputAttribute> inputs;
 		std::vector<DescriptorSet> sets;

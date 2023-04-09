@@ -41,4 +41,5 @@ bool CodeTransform::compare(Transformer* trans, std::vector<uint32_t> codes, uin
 
 	}
 
+	return true;//IDK chief
 }

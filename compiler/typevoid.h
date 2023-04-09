@@ -19,7 +19,7 @@ namespace caliburn
 			return 0;
 		}
 
-		void getConvertibleTypes(std::set<ConcreteType*>* types) override;
+		//void getConvertibleTypes(std::set<ConcreteType*>* types) override;
 
 		TypeCompat isCompatible(Operator op, ConcreteType* rType) const override;
 

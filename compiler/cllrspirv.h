@@ -41,13 +41,17 @@ namespace caliburn
 		private:
 			std::map<cllr::SSA, spirv::SSA> ssaAliases;
 
-			CllrImpl* opImpls[(uint64_t)cllr::Opcode::OP_COUNT] = {};
+			CllrImpl* opImpls[(uint64_t)cllr::Opcode::CLLR_OP_COUNT] = {};
 
 		public:
 			cllr::Assembler* const in;
 			spirv::Assembler* const out;
 
-			CllrTranslator(cllr::Assembler* inAsm, spirv::Assembler* outAsm) : in(inAsm), out(outAsm) {}
+			CllrTranslator(cllr::Assembler* inAsm, spirv::Assembler* outAsm) : in(inAsm), out(outAsm)
+			{
+				//here we go...
+
+			}
 
 			virtual ~CllrTranslator() {}
 

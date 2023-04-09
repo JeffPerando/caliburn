@@ -19,7 +19,7 @@ namespace caliburn
 
 		ScopeStatement* body = nullptr;
 		
-		FunctionStatement(Statement* parent) : Statement(StatementType::FUNCTION, parent) {}
+		FunctionStatement() : Statement(StatementType::FUNCTION) {}
 
 		virtual Token* firstTkn() const override
 		{
@@ -30,6 +30,25 @@ namespace caliburn
 		{
 			return body ? body->last : nullptr;
 		}
+		/*
+		virtual void resolveSymbols() override
+		{
+			body->resolveSymbols();
+
+			retPType->resolve(*this);
+
+		}
+
+		virtual ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
+		{
+			std::set<StatementType> bodyTypes = LOGIC_STMT_TYPES;
+			std::set<ReturnMode> bodyModes = { ReturnMode::RETURN };
+
+			bodyTypes.insert(types.begin(), types.end());
+			bodyModes.insert(retModes.begin(), retModes.end());
+
+			return body->validate(bodyTypes, bodyModes);
+		}
 
 		virtual void getSSAs(cllr::Assembler& codeAsm) override
 		{
@@ -38,64 +57,16 @@ namespace caliburn
 			body->getSSAs(codeAsm);
 
 		}
-
-		virtual void declSymbols(SymbolTable& table) override
-		{
-			table.add(name->str, SymbolType::FUNCTION, this);
-
-			body->declSymbols(table);
-
-		}
-
-		virtual void resolveSymbols(const SymbolTable& table) override
-		{
-			body->resolveSymbols(table);
-
-			retPType->resolve(table);
-
-		}
-
+		*/
 		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override
 		{
 			retType->emitDeclCLLR(codeAsm);
 
-			codeAsm.push(funcID, cllr::Opcode::FUNCTION, { (uint32_t)args.size(), retType->id, 0 });
+			codeAsm.push(funcID, cllr::Opcode::FUNCTION, { (uint32_t)args.size() }, { retType->id });
 
 			body->emitDeclCLLR(codeAsm);
 
-			codeAsm.push(0, cllr::Opcode::FUNCTION_END, {funcID, 0, 0});
-
-		}
-
-	};
-
-	struct MemberFunctionStatement : public FunctionStatement
-	{
-	private:
-		SymbolTable* memberTable = nullptr;
-
-	public:
-		MemberFunctionStatement(Statement* parent) : FunctionStatement(parent) {}
-
-		virtual void declSymbols(SymbolTable& table) override
-		{
-			memberTable = table.makeChild("members");
-
-			auto& members = ((StructStatement*)parent)->members;
-
-			for (auto mem : members)
-			{
-				memberTable->add(mem->name->str, SymbolType::VALUE, mem);
-
-			}
-
-			FunctionStatement::declSymbols(*memberTable);
-
-		}
-
-		virtual void resolveSymbols(const SymbolTable& table) override
-		{
-			FunctionStatement::resolveSymbols(*memberTable);
+			codeAsm.push(0, cllr::Opcode::FUNCTION_END, {}, { funcID });
 
 		}
 

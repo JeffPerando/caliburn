@@ -36,6 +36,9 @@
     <Filter Include="Header Files\types">
       <UniqueIdentifier>{6b120935-c910-49e9-b4be-c5f71504f003}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\types">
+      <UniqueIdentifier>{b9f4e77c-0c8b-4a72-a98c-7d5efeb7e988}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -45,21 +48,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="parser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="typevector.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="typefloat.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="typeint.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="typevoid.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="typebool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="langcore.cpp">
@@ -88,6 +76,24 @@
     </ClCompile>
     <ClCompile Include="type.cpp">
       <Filter>Source Files\ast</Filter>
+    </ClCompile>
+    <ClCompile Include="ctrlstmt.cpp">
+      <Filter>Source Files\ast</Filter>
+    </ClCompile>
+    <ClCompile Include="typebool.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="typefloat.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="typeint.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="typevector.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="typevoid.cpp">
+      <Filter>Source Files\types</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -124,7 +130,7 @@
     <ClInclude Include="ctrlstmt.h">
       <Filter>Header Files\ast</Filter>
     </ClInclude>
-    <ClInclude Include="value.h">
+    <ClInclude Include="values.h">
       <Filter>Header Files\ast</Filter>
     </ClInclude>
     <ClInclude Include="cbir.h">
@@ -178,7 +184,7 @@
     <ClInclude Include="typevoid.h">
       <Filter>Header Files\types</Filter>
     </ClInclude>
-    <ClInclude Include="rootstmt.h">
+    <ClInclude Include="rootmod.h">
       <Filter>Header Files\ast</Filter>
     </ClInclude>
     <ClInclude Include="shaderstmt.h">
@@ -200,6 +206,21 @@
       <Filter>Header Files\ast</Filter>
     </ClInclude>
     <ClInclude Include="structstmt.h">
+      <Filter>Header Files\ast</Filter>
+    </ClInclude>
+    <ClInclude Include="module.h">
+      <Filter>Header Files\ast</Filter>
+    </ClInclude>
+    <ClInclude Include="basic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="classstmt.h">
+      <Filter>Header Files\ast</Filter>
+    </ClInclude>
+    <ClInclude Include="modstmts.h">
+      <Filter>Header Files\ast</Filter>
+    </ClInclude>
+    <ClInclude Include="typestmt.h">
       <Filter>Header Files\ast</Filter>
     </ClInclude>
   </ItemGroup>

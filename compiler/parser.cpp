@@ -627,7 +627,7 @@ Statement* Parser::parseScope(Statement* parent)
 		return nullptr;
 	}
 
-	auto scope = new ScopeStatement(parent);
+	auto scope = new ScopeStatement();
 
 	tokens->consume();
 

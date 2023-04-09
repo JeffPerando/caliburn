@@ -30,22 +30,22 @@ namespace caliburn
 
 		}
 
-		void declSymbols(SymbolTable& table) override
+		void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm, bool declChildren) override
 		{
 			for (auto name : names)
 			{
-				vars.push_back(new LocalVariable(this->parent, name, typeHint, initialValue, isConst));
+				vars.push_back(new LocalVariable(name, typeHint, initialValue, isConst));
 
 			}
 
 			for (auto v : vars)
 			{
-				table.add(v->name->str, SymbolType::VALUE, v);
+				table.add(v->name->str, SymbolType::VARIABLE, v);
 			}
 
 		}
 
-		void resolveSymbols(const SymbolTable& table) override {}
+		void resolveSymbols(ref<const SymbolTable> table, cllr::Assembler& codeAsm) override {}
 
 	};
 

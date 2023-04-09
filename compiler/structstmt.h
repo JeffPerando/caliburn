@@ -11,8 +11,27 @@ namespace caliburn
 	{
 		std::vector<Variable*> members;
 
-		StructStatement(Statement* parent) : Statement(StatementType::STRUCT, parent) {}
-		StructStatement(StatementType type, Statement* parent) : Statement(type, parent) {}
+		StructStatement(StatementType type = StatementType::STRUCT) : Statement(type) {}
+		virtual ~StructStatement() {}
+
+		virtual Token* firstTkn() const override
+		{
+			return nullptr;
+		}
+
+		virtual Token* lastTkn() const override
+		{
+			return nullptr;
+		}
+
+		//Only used by top-level statements which declare symbols. The rest, like local variables, should use declareSymbols() instead
+		virtual void declareHeader(ref<SymbolTable> table, cllr::Assembler& codeAsm) {}
+
+		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override = 0;
+
+		virtual void resolveSymbols(ref<const SymbolTable> table, cllr::Assembler& codeAsm) override = 0;
+
+		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) = 0;
 
 
 
