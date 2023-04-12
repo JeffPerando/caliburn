@@ -9,33 +9,21 @@
 
 using namespace caliburn;
 
-Compiler* Compiler::o(OptimizeLevel lvl)
-{
-	optimizeLvl = lvl;
-	return this;
-}
-
-Compiler* Compiler::setDynamicType(std::string inner, std::string concrete)
-{
-	dynTypes[inner] = concrete;
-	return this;
-}
-
-std::vector<uint32_t>* Compiler::parseSrc(std::string text)
+std::vector<Statement*>* parseSrc(std::string text)
 {
 	std::vector<Token> tokens;
-	std::vector<Statement*> ast;
-	
+	auto ast = new std::vector<Statement*>();
+
 	//Parse the text into tokens (duh)
 	Tokenizer t;
 	t.tokenize(text, tokens);
 
 	//Build the initial AST (ok)
 	Parser p;
-	p.parse(&tokens, &ast);
+	p.parse(&tokens, ast);
 
 	//Validate AST
-	for (auto stmt : ast)
+	for (auto stmt : *ast)
 	{
 		std::set<StatementType> topStmts = TOP_STMT_TYPES;
 
@@ -52,17 +40,28 @@ std::vector<uint32_t>* Compiler::parseSrc(std::string text)
 		*/
 	}
 
+	return ast;
+}
+
+std::vector<Statement*>* parseCBIR(std::vector<uint32_t>* cbir)
+{
+	return nullptr;
+}
+
+bool compileShaders(std::vector<Statement*>* ast, std::string shaderName, std::vector<Shader>& shaderDest)
+{
 	/*
 	OK so I'll admit the code below looks utterly goofy, and is probably a form of lambda abuse.
 
-	The next step is to conditionally compile the AST. We do this by looking for top-level if statements.
+	The next step is to conditionally compile the ast-> We do this by looking for top-level if statements.
 	Then, we check its condition and evaluate, which means inserting the entirety of the branch's contents
-	into the AST. Then we sort the AST, go back to the beginning, and do it all over again. This repeats
+	into the ast-> Then we sort the AST, go back to the beginning, and do it all over again. This repeats
 	until there's no more if statements. Once that's done, the real compilation begins.
 	*/
 
+	/* Conditional compilation
 	auto sortAST = [&ast]() -> void {
-		std::sort(ast.begin(), ast.end(), [ast](const Statement* a, const Statement* b) -> bool
+		std::sort(ast->begin(), ast->end(), [ast](const Statement* a, const Statement* b) -> bool
 			{
 				return a->type > b->type;
 			});
@@ -70,18 +69,17 @@ std::vector<uint32_t>* Compiler::parseSrc(std::string text)
 
 	auto insertCode = [&ast, sortAST](ScopeStatement* stmt) -> void {
 		auto inner = &stmt->stmts;
-		ast.insert(ast.end(), inner->begin(), inner->end());
+		ast->insert(ast->end(), inner->begin(), inner->end());
 		sortAST();
 	};
 
 	sortAST();
 
-	//Conditional compilation
-	for (auto i = 0; i < ast.size(); ++i)
+	for (auto i = 0; i < ast->size(); ++i)
 	{
-		auto stmt = ast.at(i);
+		auto stmt = ast->at(i);
 
-		/* TODO compile-time evalation
+		TODO compile-time evalation
 		if (stmt->type == StatementType::VARIABLE)
 		{
 			continue;
@@ -117,16 +115,13 @@ std::vector<uint32_t>* Compiler::parseSrc(std::string text)
 			//TODO compiler error
 		}
 
-		}
-		*/
-		
 	}
-
+	*/
 	auto root = new RootModule();
 	auto mod = new CompiledModule();
 
 	//COMPILE
-	for (auto stmt : ast)
+	for (auto stmt : *ast)
 	{
 		if (stmt->type == StatementType::IMPORT)
 		{
@@ -149,10 +144,29 @@ std::vector<uint32_t>* Compiler::parseSrc(std::string text)
 	delete mod;
 	delete root;
 
-	return nullptr;
+	delete ast;
+
+	return false;
 }
 
-bool Compiler::compileShaders(std::vector<uint32_t>* cbir, std::string shaderName, std::vector<Shader>& shaderDest)
+bool Compiler::compileShadersSrc(std::string text, std::string shaderName, std::vector<Shader>& shaderDest)
 {
-	return false;
+	return compileShaders(parseSrc(text), shaderName, shaderDest);
+}
+
+bool Compiler::compileShadersCBIR(std::vector<uint32_t>* cbir, std::string shaderName, std::vector<Shader>& shaderDest)
+{
+	return compileShaders(parseCBIR(cbir), shaderName, shaderDest);
+}
+
+Compiler* Compiler::o(OptimizeLevel lvl)
+{
+	optimizeLvl = lvl;
+	return this;
+}
+
+Compiler* Compiler::setDynamicType(std::string inner, std::string concrete)
+{
+	dynTypes.emplace(inner, concrete);
+	return this;
 }

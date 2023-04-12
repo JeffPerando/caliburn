@@ -65,7 +65,8 @@ namespace caliburn
 		This method does NOT imply endorsement of the redistribution of shader
 		source code. Please package your shaders as CBIR for redistribution.
 		*/
-		std::vector<uint32_t>* parseSrc(std::string text);
+		bool compileShadersSrc(std::string text, std::string shaderName,
+			std::vector<Shader>& shaderDest);
 
 		/*
 		Compiles CBIR into a final set of shaders. Each shader is in SPIR-V
@@ -80,7 +81,7 @@ namespace caliburn
 
 		An empty shaderName will result in a failed compilation.
 		*/
-		bool compileShaders(std::vector<uint32_t>* cbir, std::string shaderName,
+		bool compileShadersCBIR(std::vector<uint32_t>* cbir, std::string shaderName,
 			std::vector<Shader>& shaderDest);
 
 	};
