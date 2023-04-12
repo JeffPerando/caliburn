@@ -34,7 +34,12 @@ namespace caliburn
 
 			SSA createSSA(Opcode op);
 
-			SSA push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::array<SSA, 3> refs, bool genSSA = false);
+			SSA push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::array<SSA, 3> refs);
+
+			SSA pushNew(Opcode op, std::array<uint32_t, 3> operands, std::array<SSA, 3> refs)
+			{
+				return push(createSSA(op), op, operands, refs);
+			}
 
 			//void toSPIRV(spirv::Assembler* out);
 
@@ -73,6 +78,8 @@ namespace caliburn
 				}
 
 			}
+
+			void findRefs(SSA id, std::vector<Instruction*>& result);
 
 		};
 
