@@ -1,34 +1,35 @@
 
 #pragma once
 
+#include "basic.h"
+
 #include <vector>
 
 namespace caliburn
 {
 	//A buffer in this case is a read-only container used to maintain a current index to a vector
-	//might implement the ability to add, but imo that wouldn't be too useful
+	//might implement the ability to add new elements, but imo that wouldn't be too useful
 	template<typename T>
 	class buffer
 	{
 	private:
-		std::vector<T>* const vec;
+		const ptr<std::vector<T>> vec;
 		size_t index = 0;
 	public:
-		buffer() : buffer(nullptr) {}
-		buffer(std::vector<T>* backend) : vec(backend) {}
+		buffer(ptr<std::vector<T>> backend) : vec(backend) {}
 
-		bool hasNext()
+		bool hasNext() const
 		{
 			return vec->size() > index;
 		}
 
 		//fetch current
-		T* current()
+		T* current() const
 		{
 			return &vec->at(index);
 		}
 
-		T currentVal()
+		T currentVal() const
 		{
 			return vec->at(index);
 		}
@@ -47,12 +48,12 @@ namespace caliburn
 		}
 
 		//fetch upcoming
-		T* peek(size_t offset = 1)
+		T* peek(size_t offset = 1) const
 		{
 			return &vec->at(index + offset);
 		}
 
-		T peekVal(size_t offset = 1)
+		T peekVal(size_t offset = 1) const
 		{
 			return vec->at(index + offset);
 		}
@@ -64,22 +65,22 @@ namespace caliburn
 
 		}
 
-		size_t currentIndex()
+		size_t currentIndex() const
 		{
 			return index;
 		}
 
-		size_t length()
+		size_t length() const
 		{
 			return vec->size();
 		}
 
-		size_t remaining()
+		size_t remaining() const
 		{
 			return length() - index;
 		}
 
-		bool inRange(size_t offset)
+		bool inRange(size_t offset) const
 		{
 			return (index + offset) < length();
 		}
