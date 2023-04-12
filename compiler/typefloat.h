@@ -5,14 +5,14 @@
 
 namespace caliburn
 {
-	struct TypeFloat : public ConcreteType
+	struct TypeFloat : public Type
 	{
 	protected:
 		uint32_t const floatBits;
 	public:
 		TypeFloat() : TypeFloat(32) {}
 		TypeFloat(uint32_t s) :
-			ConcreteType(TypeCategory::FLOAT, std::string("float" + s)),
+			Type(TypeCategory::FLOAT, std::string("float" + s)),
 			floatBits(s)
 		{}
 
@@ -28,17 +28,17 @@ namespace caliburn
 
 		virtual cllr::SSA emitDefaultInitValue(ref<cllr::Assembler> codeAsm)
 		{
-			return codeAsm.push(0, cllr::Opcode::VALUE_LITERAL, { 0 }, { this->id }, true);
+			return codeAsm.pushNew(cllr::Opcode::VALUE_LITERAL, { 0 }, { this->id });
 		}
 
-		ConcreteType* clone() const override
+		Type* clone() const override
 		{
-			return (ConcreteType*)this;
+			return (Type*)this;
 		}
 
 		//void getConvertibleTypes(std::set<ConcreteType*>& types) override;
 
-		TypeCompat isCompatible(Operator op, ConcreteType* rType) const override;
+		TypeCompat isCompatible(Operator op, Type* rType) const override;
 		/*
 		virtual void getSSAs(cllr::Assembler& codeAsm) override
 		{

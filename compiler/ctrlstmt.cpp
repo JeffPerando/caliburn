@@ -5,9 +5,9 @@ using namespace caliburn;
 
 void IfStatement::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 {
-	condition->emitValueCLLR(codeAsm);
+	auto cID = condition->emitValueCLLR(codeAsm);
 
-	codeAsm.push(id, cllr::Opcode::JUMP_COND, {}, { condition->id, innerIf->id, innerElse ? innerElse->id : 0 });
+	codeAsm.push(id, cllr::Opcode::JUMP_COND, {}, { cID, innerIf->id, innerElse ? innerElse->id : 0 });
 
 	innerIf->emitDeclCLLR(codeAsm);
 
@@ -99,9 +99,9 @@ void WhileStatement::emitDeclCLLR(cllr::Assembler& codeAsm)
 	codeAsm.push(start, cllr::Opcode::LABEL, {}, {});
 	codeAsm.push(0, cllr::Opcode::LOOP, {}, { exit, cont, loop->id });
 
-	condition->emitValueCLLR(codeAsm);
+	auto cID = condition->emitValueCLLR(codeAsm);
 
-	codeAsm.push(0, cllr::Opcode::JUMP_COND, {}, { condition->id, loop->id, exit });
+	codeAsm.push(0, cllr::Opcode::JUMP_COND, {}, { cID, loop->id, exit });
 
 	codeAsm.setLoop(cont, exit);
 	loop->emitDeclCLLR(codeAsm);

@@ -5,13 +5,13 @@
 
 namespace caliburn
 {
-	struct TypeVector : public ConcreteType
+	struct TypeVector : public Type
 	{
 		uint32_t const elements;
-		ConcreteType* const inner;
+		Type* const inner;
 
-		TypeVector(uint32_t vecElements, ConcreteType* innerType) :
-			ConcreteType(TypeCategory::VECTOR, "vec" + vecElements, 1),
+		TypeVector(uint32_t vecElements, Type* innerType) :
+			Type(TypeCategory::VECTOR, "vec" + vecElements, 1),
 			elements(vecElements), inner(innerType)
 		{
 			setGeneric(0, innerType);
@@ -29,11 +29,11 @@ namespace caliburn
 			//return codeAsm.push(0, cllr::Opcode::VALUE_LITERAL, { 0, 0, 0 }, { this->id }, true);
 		}
 
-		ConcreteType* clone() const override;
+		Type* clone() const override;
 
-		//virtual void getConvertibleTypes(std::set<ConcreteType*>* types) override;
+		//virtual void getConvertibleTypes(std::set<Type*>* types) override;
 
-		TypeCompat isCompatible(Operator op, ConcreteType* rType) const override;
+		TypeCompat isCompatible(Operator op, Type* rType) const override;
 		/*
 		virtual void getSSAs(cllr::Assembler& codeAsm) override
 		{
@@ -41,11 +41,7 @@ namespace caliburn
 			id = codeAsm.createSSA(cllr::Opcode::TYPE_VECTOR);
 		}
 		*/
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override
-		{
-			inner->emitDeclCLLR(codeAsm);
-			codeAsm.push(id, cllr::Opcode::TYPE_VECTOR, { elements, 0, 0 }, { inner->id });
-		}
+		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override;
 
 	};
 

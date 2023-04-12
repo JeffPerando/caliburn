@@ -13,7 +13,7 @@ uint32_t TypeVector::getAlignBytes() const
 	return inner->getAlignBytes();
 }
 
-ConcreteType* TypeVector::clone() const
+Type* TypeVector::clone() const
 {
 	return new TypeVector(elements, inner);
 }
@@ -34,11 +34,11 @@ void TypeVector::getConvertibleTypes(std::set<ConcreteType*>& types)
 	
 }
 */
-TypeCompat TypeVector::isCompatible(Operator op, ConcreteType* rType) const
+TypeCompat TypeVector::isCompatible(Operator op, Type* rType) const
 {
 	if (rType == nullptr)
 	{
-		return generics[0]->isCompatible(op, nullptr);
+		return inner->isCompatible(op, nullptr);
 	}
 
 	if (rType->category == TypeCategory::VECTOR || rType->category == inner->category)
@@ -60,6 +60,6 @@ TypeCompat TypeVector::isCompatible(Operator op, ConcreteType* rType) const
 void TypeVector::emitDeclCLLR(cllr::Assembler& codeAsm)
 {
 	inner->emitDeclCLLR(codeAsm);
-	id = codeAsm.push(0, cllr::Opcode::TYPE_VECTOR, { elements }, { inner->id }, true);
+	id = codeAsm.pushNew(cllr::Opcode::TYPE_VECTOR, { elements }, { inner->id });
 
 }

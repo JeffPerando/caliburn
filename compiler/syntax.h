@@ -26,7 +26,7 @@ namespace caliburn
 		"while", "where", "wrapped"
 	};
 
-	static constexpr std::string_view OPERATORS = "!$%&*+-/<=>^|~";
+	static constexpr std::string_view OPERATOR_CHARS = "!$%&*+-/<=>^|~";
 
 	enum class TokenType : uint64_t
 	{
@@ -76,23 +76,27 @@ namespace caliburn
 	enum class Operator : uint32_t
 	{
 		UNKNOWN,
+
+		ADD, SUB, MUL, DIV, INTDIV,
+		MOD, POW, ABS, NEGATE,
+
+		BIT_NOT, BIT_AND, BIT_OR, BIT_XOR,
+		SHIFT_LEFT, SHIFT_RIGHT,
+
 		COMP_EQ, COMP_NEQ,
 		COMP_GT, COMP_LT,
 		COMP_GTE, COMP_LTE,
-		COND_AND, COND_OR,
+		BOOL_NOT, AND, OR,
 
-		ADD, SUB, MUL, DIV,
-		MOD, POW,
-		BIT_AND, BIT_OR, BIT_XOR,
-		SHIFT_LEFT, SHIFT_RIGHT,
-		APPEND, INTDIV,
+		APPEND,
+	};
 
-		//the following all need to be parsed manually
-		//that is to say, you won't find them in the tables below
-		//!, ~, -
-		BOOL_NOT, BIT_NOT, NEGATE,
-		//|x|
-		ABS
+	enum class OpCategory : uint32_t
+	{
+		ARITHMETIC,
+		BITWISE,
+		LOGICAL,
+		MISC
 	};
 	
 	struct ParsedObject
@@ -126,35 +130,66 @@ namespace caliburn
 		{"=>",	TokenType::ARROW}
 	};
 
-	//So here's why math ops are separate from logic ops:
-	//Math ops can use (op)= to set something, e.g. +=.
-	//Logic ops can't, mostly because I don't want to deal with parsing that.
-
-	static const std::map<std::string, Operator> mathOps = {
+	static const std::map<std::string, Operator> infixOps = {
 		{"+",	Operator::ADD},
-		{"++",	Operator::APPEND},
 		{"-",	Operator::SUB},
 		{"*",	Operator::MUL},
 		{"/",	Operator::DIV},
 		{"//",	Operator::INTDIV},
 		{"%",	Operator::MOD},
 		{"^",	Operator::POW},
+
 		{"&",	Operator::BIT_AND},
 		{"|",	Operator::BIT_OR},
 		{"$",	Operator::BIT_XOR},
 		{"<<",	Operator::SHIFT_LEFT},
-		{">>",	Operator::SHIFT_RIGHT}
-	};
-	
-	static const std::map<std::string, Operator> logicOps = {
-		{"&&",	Operator::COND_AND},
-		{"||",	Operator::COND_OR},
+		{">>",	Operator::SHIFT_RIGHT},
+
+		{"&&",	Operator::AND},
+		{"||",	Operator::OR},
 		{"==",	Operator::COMP_EQ},
 		{"!=",	Operator::COMP_NEQ},
 		{">",	Operator::COMP_GT},
 		{"<",	Operator::COMP_LT},
 		{">=",	Operator::COMP_GTE},
-		{"<=",	Operator::COMP_LTE}
+		{"<=",	Operator::COMP_LTE},
+
+		{"++",	Operator::APPEND}
+	};
+
+	//So here's why math ops are separate from logic ops:
+	//Math ops can use (op)= to set something, e.g. +=.
+	//Logic ops can't, mostly because I don't want to deal with parsing that.
+
+	static const std::map<Operator, OpCategory> opCategories = {
+		{Operator::ADD,			OpCategory::ARITHMETIC},
+		{Operator::SUB,			OpCategory::ARITHMETIC},
+		{Operator::MUL,			OpCategory::ARITHMETIC},
+		{Operator::DIV,			OpCategory::ARITHMETIC},
+		{Operator::INTDIV,		OpCategory::ARITHMETIC},
+		{Operator::MOD,			OpCategory::ARITHMETIC},
+		{Operator::POW,			OpCategory::ARITHMETIC},
+		{Operator::ABS,			OpCategory::ARITHMETIC},
+		{Operator::NEGATE,		OpCategory::ARITHMETIC},
+
+		{Operator::BIT_NOT,		OpCategory::BITWISE},
+		{Operator::BIT_AND,		OpCategory::BITWISE},
+		{Operator::BIT_OR,		OpCategory::BITWISE},
+		{Operator::BIT_XOR,		OpCategory::BITWISE},
+		{Operator::SHIFT_LEFT,	OpCategory::BITWISE},
+		{Operator::SHIFT_RIGHT,	OpCategory::BITWISE},
+
+		{Operator::AND,			OpCategory::LOGICAL},
+		{Operator::OR,			OpCategory::LOGICAL},
+		{Operator::BOOL_NOT,	OpCategory::LOGICAL},
+		{Operator::COMP_EQ,		OpCategory::LOGICAL},
+		{Operator::COMP_NEQ,	OpCategory::LOGICAL},
+		{Operator::COMP_GT,		OpCategory::LOGICAL},
+		{Operator::COMP_LT,		OpCategory::LOGICAL},
+		{Operator::COMP_GTE,	OpCategory::LOGICAL},
+		{Operator::COMP_LTE,	OpCategory::LOGICAL},
+
+		{Operator::APPEND,		OpCategory::MISC},
 	};
 
 	static constexpr std::string_view GENERIC_START = "<";

@@ -16,7 +16,7 @@
 namespace caliburn
 {
 	struct ParsedType;
-	struct ConcreteType;
+	struct Type;
 
 	enum class ValueType
 	{
@@ -35,9 +35,7 @@ namespace caliburn
 	struct Value : public ParsedObject
 	{
 		ValueType const vType;
-		ConcreteType* type = nullptr;
-
-		cllr::SSA id = 0;
+		Type* type = nullptr;
 
 		Value(ValueType vt) : vType(vt) {}
 		virtual ~Value() {}
@@ -48,7 +46,7 @@ namespace caliburn
 
 		virtual void resolveSymbols(ref<const SymbolTable> table) = 0;
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) = 0;
+		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const = 0;
 
 	};
 
@@ -58,7 +56,7 @@ namespace caliburn
 		bool isConst = false;
 		Token* name = nullptr;
 		ParsedType* typeHint = nullptr;
-		ConcreteType* type = nullptr;
+		Type* type = nullptr;
 		Value* initValue = nullptr;
 		
 		Variable() {}
@@ -91,7 +89,7 @@ namespace caliburn
 
 	enum class TypeCategory
 	{
-		VOID, FLOAT, INT, VECTOR, MATRIX, ARRAY, STRUCT, BOOLEAN, POINTER, TUPLE
+		VOID, FLOAT, INT, VECTOR, MATRIX, ARRAY, STRUCT, BOOLEAN, POINTER, TUPLE, STRING
 	};
 	
 	enum class TypeCompat
@@ -102,18 +100,11 @@ namespace caliburn
 		INCOMPATIBLE_OP
 	};
 
-	struct TypeConvertResult
-	{
-		TypeCompat compat;
-		ConcreteType* commonType;
-
-	};
-	
 	struct ParsedType : public ParsedObject
 	{
 	private:
 		std::string fullName = "";
-		ConcreteType* resultType = nullptr;
+		Type* resultType = nullptr;
 	public:
 		const ptr<Token> mod;
 		const ptr<Token> name;
@@ -215,26 +206,27 @@ namespace caliburn
 		/*
 		TODO check for memory leaks; this part involves cloning.
 		*/
-		ConcreteType* resolve(ref<const SymbolTable> table);
+		Type* resolve(ref<const SymbolTable> table);
 
 	};
 
-	struct ConcreteType : public cllr::Emitter
+	struct Type : public cllr::Emitter
 	{
 		cllr::SSA id = 0;
 		const TypeCategory category;
 		const std::string canonName;
 		const size_t maxGenerics;
 		const size_t minGenerics;
+		const ptr<SymbolTable> members = new SymbolTable();
 	protected:
-		ConcreteType* superType = nullptr;
-		std::vector<ConcreteType*> generics, genericDefaults;
+		Type* superType = nullptr;
+		std::vector<Type*> generics, genericDefaults;
 		std::vector<Variable*> vars;
 
 		//TODO add dirty flag to trigger a refresh. that or just control when aspects can be edited
 		std::string fullName = "";
 	public:
-		ConcreteType(TypeCategory c, std::string n, size_t genMax = 0, size_t genMin = 0) :
+		Type(TypeCategory c, std::string n, size_t genMax = 0, size_t genMin = 0) :
 			category(c), canonName(n), maxGenerics(genMax), minGenerics(genMin)
 		{
 			if (minGenerics > maxGenerics)
@@ -249,15 +241,18 @@ namespace caliburn
 			}
 			
 		}
-		virtual ~ConcreteType() {}
+		virtual ~Type()
+		{
+			delete members;
+		}
 
 		//annoyed that != doesn't have a default implementation that does this
-		bool operator!=(const ConcreteType& rhs) const
+		bool operator!=(const Type& rhs) const
 		{
 			return !(*this == rhs);
 		}
 
-		bool operator==(const ConcreteType& rhs) const
+		bool operator==(const Type& rhs) const
 		{
 			if (canonName != rhs.canonName)
 			{
@@ -271,8 +266,8 @@ namespace caliburn
 
 			for (size_t i = 0; i < generics.size(); ++i)
 			{
-				ConcreteType* lhsGeneric = generics[i];
-				ConcreteType* rhsGeneric = rhs.generics[i];
+				Type* lhsGeneric = generics[i];
+				Type* rhsGeneric = rhs.generics[i];
 
 				if (*lhsGeneric == *rhsGeneric)
 				{
@@ -312,14 +307,14 @@ namespace caliburn
 			return fullName;
 		}
 
-		ConcreteType* getSuper()
+		Type* getSuper()
 		{
 			return superType;
 		}
 
-		bool isSuperOf(ConcreteType* type)
+		bool isSuperOf(Type* type)
 		{
-			ConcreteType* head = this;
+			Type* head = this;
 
 			while (head)
 			{
@@ -335,7 +330,7 @@ namespace caliburn
 			return false;
 		}
 
-		virtual void setGeneric(size_t index, ConcreteType* type)
+		virtual void setGeneric(size_t index, Type* type)
 		{
 			if (index >= maxGenerics)
 			{
@@ -351,7 +346,7 @@ namespace caliburn
 
 		//ONLY exists for making a new generic type. so if you don't use generics, there's ZERO point in
 		//properly implementing this. So just return this and be done with it.
-		virtual ConcreteType* clone() const = 0;
+		virtual Type* clone() const = 0;
 
 		//NOTE: because the size can depend on things like generics, members, etc., this HAS to be a method
 		virtual uint32_t getSizeBytes() const = 0;
@@ -364,7 +359,7 @@ namespace caliburn
 		
 		//virtual void getConvertibleTypes(std::set<ConcreteType*>& types) = 0;
 
-		virtual TypeCompat isCompatible(Operator op, ConcreteType* rType) const = 0;
+		virtual TypeCompat isCompatible(Operator op, Type* rType) const = 0;
 
 	};
 

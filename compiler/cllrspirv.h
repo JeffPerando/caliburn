@@ -4,10 +4,9 @@
 #include <map>
 #include <vector>
 
+#include "basic.h"
 #include "cllr.h"
 #include "spirvasm.h"
-
-#define CLLR_SPIRV_IMPL(Name) spirv::SSA Name(cllr::Instruction i, spirv::CllrTranslator* t)
 
 namespace caliburn
 {
@@ -15,8 +14,11 @@ namespace caliburn
 	{
 		class CllrTranslator;
 
-		//function pointer type for easier usage later
+		//Function pointer type for easier usage later
 		using CllrImpl = spirv::SSA(cllr::Instruction i, spirv::CllrTranslator* t);
+
+		//Macro shorthand for implementation signature
+		#define CLLR_SPIRV_IMPL(Name) spirv::SSA Name(cllr::Instruction i, spirv::CllrTranslator* t)
 
 		namespace cllr_impl
 		{
@@ -41,11 +43,11 @@ namespace caliburn
 		private:
 			std::map<cllr::SSA, spirv::SSA> ssaAliases;
 
-			CllrImpl* opImpls[(uint64_t)cllr::Opcode::CLLR_OP_COUNT] = {};
+			std::array<ptr<CllrImpl>, (uint64_t)cllr::Opcode::CLLR_OP_COUNT> opImpls = {};
 
 		public:
-			cllr::Assembler* const in;
-			spirv::Assembler* const out;
+			const ptr<cllr::Assembler> in;
+			const ptr<spirv::Assembler> out;
 
 			CllrTranslator(cllr::Assembler* inAsm, spirv::Assembler* outAsm) : in(inAsm), out(outAsm)
 			{

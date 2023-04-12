@@ -57,9 +57,9 @@ namespace caliburn
 				asciiTypes[l + 32] = CharType::IDENTIFIER;
 			}
 
-			for (auto i = 0; i < OPERATORS.length(); ++i)
+			for (auto i = 0; i < OPERATOR_CHARS.length(); ++i)
 			{
-				asciiTypes[OPERATORS[i]] = CharType::OPERATOR;
+				asciiTypes[OPERATOR_CHARS[i]] = CharType::OPERATOR;
 
 			}
 

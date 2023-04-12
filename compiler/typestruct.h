@@ -5,10 +5,10 @@
 
 namespace caliburn
 {
-	struct TypeStruct : public ConcreteType
+	struct TypeStruct : public Type
 	{
 		TypeStruct(Token* name, size_t genMax) :
-			ConcreteType(TypeCategory::STRUCT, name->str, 0, genMax) {}
+			Type(TypeCategory::STRUCT, name->str, 0, genMax) {}
 
 	};
 

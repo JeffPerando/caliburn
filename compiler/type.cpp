@@ -4,9 +4,27 @@
 
 using namespace caliburn;
 
-ConcreteType* ParsedType::resolve(ref<const SymbolTable> table)
+Type* ParsedType::resolve(ref<const SymbolTable> table)
 {
-	auto cTypeSym = table.find(name->str);
+	auto lookup = &table;
+
+	if (mod != nullptr)
+	{
+		auto modSym = table.find(mod->str);
+
+		if (modSym->type == SymbolType::MODULE)
+		{
+			lookup = (ptr<const SymbolTable>)modSym->data;
+		}
+		else
+		{
+			//TODO complain
+			return nullptr;
+		}
+
+	}
+
+	auto cTypeSym = lookup->find(name->str);
 
 	if (cTypeSym == nullptr)
 	{
@@ -20,7 +38,7 @@ ConcreteType* ParsedType::resolve(ref<const SymbolTable> table)
 		return nullptr;
 	}
 
-	auto cType = (ConcreteType*)cTypeSym->data;
+	auto cType = (Type*)cTypeSym->data;
 
 	if (cType->maxGenerics == 0 && this->generics.size() == 0)
 	{
@@ -62,13 +80,7 @@ ConcreteType* ParsedType::resolve(ref<const SymbolTable> table)
 	resultType = clone;
 	return clone;
 }
-/*
-void Variable::getSSAs(cllr::Assembler& codeAsm)
-{
-	id = codeAsm.createSSA(cllr::Opcode::VAR_LOCAL);
 
-}
-*/
 void Variable::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 {
 	Value* value = initValue;
@@ -83,6 +95,8 @@ void Variable::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 		value->emitValueCLLR(codeAsm);
 	}
 	*/
-	codeAsm.push(id, cllr::Opcode::VAR_LOCAL, {}, { type->id, value->id, 0 });
+	auto vID = value->emitValueCLLR(codeAsm);
+
+	id = codeAsm.pushNew(cllr::Opcode::VAR_LOCAL, {}, { type->id, vID, 0 });
 
 }

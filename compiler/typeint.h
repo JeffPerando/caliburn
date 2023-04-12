@@ -5,7 +5,7 @@
 
 namespace caliburn
 {
-	struct TypeInt : public ConcreteType
+	struct TypeInt : public Type
 	{
 	protected:
 		const uint32_t intBits;
@@ -13,7 +13,7 @@ namespace caliburn
 	public:
 		TypeInt() : TypeInt(32, true) {}
 		TypeInt(uint32_t b, bool s) :
-			ConcreteType(TypeCategory::INT, std::string((s ? "int" : "uint") + b)),
+			Type(TypeCategory::INT, std::string((s ? "int" : "uint") + b)),
 			intBits(b),
 			isSigned(s)
 		{}
@@ -30,27 +30,24 @@ namespace caliburn
 
 		virtual cllr::SSA emitDefaultInitValue(ref<cllr::Assembler> codeAsm)
 		{
-			return codeAsm.push(0, cllr::Opcode::VALUE_LITERAL, { 0 }, { this->id }, true);
+			return codeAsm.pushNew(cllr::Opcode::VALUE_LITERAL, { 0 }, { this->id });
 		}
 
-		ConcreteType* clone() const override
+		Type* clone() const override
 		{
-			return (ConcreteType*)this;
+			return (Type*)this;
 		}
 
 		//void getConvertibleTypes(std::set<ConcreteType*>& types) override;
 
-		TypeCompat isCompatible(Operator op, ConcreteType* rType) const override;
+		TypeCompat isCompatible(Operator op, Type* rType) const override;
 		/*
 		virtual void getSSAs(cllr::Assembler& codeAsm) override
 		{
 			id = codeAsm.createSSA(cllr::Opcode::TYPE_INT);
 		}
 		*/
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override
-		{
-			codeAsm.push(id, cllr::Opcode::TYPE_INT, { intBits, isSigned, 0 }, {});
-		}
+		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override;
 
 	};
 

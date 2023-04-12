@@ -15,7 +15,7 @@ namespace caliburn
 
 		std::vector<Variable*> args;
 		ParsedType* retPType = nullptr;
-		ConcreteType* retType = nullptr;
+		Type* retType = nullptr;
 
 		ScopeStatement* body = nullptr;
 		

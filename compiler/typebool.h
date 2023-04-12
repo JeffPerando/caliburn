@@ -5,9 +5,9 @@
 
 namespace caliburn
 {
-	struct TypeBool : public ConcreteType
+	struct TypeBool : public Type
 	{
-		TypeBool() : ConcreteType(TypeCategory::BOOLEAN, "bool"){}
+		TypeBool() : Type(TypeCategory::BOOLEAN, "bool"){}
 
 		uint32_t getSizeBytes() const override
 		{
@@ -21,28 +21,20 @@ namespace caliburn
 
 		virtual cllr::SSA emitDefaultInitValue(ref<cllr::Assembler> codeAsm)
 		{
-			return codeAsm.push(0, cllr::Opcode::VALUE_LITERAL, { false }, { this->id }, true);
+			return codeAsm.pushNew(cllr::Opcode::VALUE_LITERAL, { false }, { this->id });
 		}
 
-		virtual ConcreteType* clone() const override
+		virtual Type* clone() const override
 		{
 			//To future me: This cast is necessary; it complains otherwise. Yes it looks goofy. TypeBool* != ConcreteType*. smh
-			return (ConcreteType*)this;
+			return (Type*)this;
 		}
 
 		//void getConvertibleTypes(std::set<ConcreteType*>* types) override;
 
-		TypeCompat isCompatible(Operator op, ConcreteType* rType) const override;
-		/*
-		virtual void getSSAs(cllr::Assembler& codeAsm) override
-		{
-			id = codeAsm.createSSA(cllr::Opcode::TYPE_BOOL);
-		}
-		*/
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override
-		{
-			codeAsm.push(id, cllr::Opcode::TYPE_BOOL, {}, {});
-		}
+		TypeCompat isCompatible(Operator op, Type* rType) const override;
+
+		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override;
 
 	};
 

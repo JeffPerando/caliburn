@@ -234,8 +234,7 @@ namespace caliburn
 			case ReturnMode::RETURN: {
 				if (retValue != nullptr)
 				{
-					retValue->emitValueCLLR(codeAsm);
-					auto retID = retValue->id;
+					auto retID = retValue->emitValueCLLR(codeAsm);
 
 					codeAsm.push(0, cllr::Opcode::RETURN_VALUE, {}, { retID });
 
@@ -265,7 +264,7 @@ namespace caliburn
 	struct GenericStatement : public Statement
 	{
 		//std::vector<std::pair<std::string, ParsedType*>> 
-		std::map<std::string, ConcreteType*> tNames;
+		std::map<std::string, Type*> tNames;
 		std::map<std::string, Value*> cNames;
 
 		GenericStatement(StatementType stmtType) : Statement(stmtType) {}

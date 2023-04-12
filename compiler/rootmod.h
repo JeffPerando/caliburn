@@ -53,7 +53,7 @@ namespace caliburn
 		std::string name;
 
 		std::map<std::string, Variable*> vars;
-		std::map<std::string, ConcreteType*> types;
+		std::map<std::string, Type*> types;
 		std::map<std::string, FunctionStatement*> fns;
 		std::map<std::string, ShaderStatement*> shaders;
 
