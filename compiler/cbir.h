@@ -7,11 +7,9 @@
 Caliburn Intermediate Representation (CBIR [pronounced Cyber]):
 
 - High-level bytecode for Caliburn code.
-- Format: Instructions with a stated, total number of 'nested' or child
-  instructions.
+- Format: Instructions with a stated, total number of 'nested' or child instructions.
   - Effectively, variable-width instructions.
-  - TOTAL NUMBER. this allows for skipping instructions that aren't needed.
-  - Other instructions scan until an end statement is found, like functions.
+  - Having a total length allows for skipping instructions that aren't needed.
   - Example: an ADD function will always have 2 nested instructions, both
     being values to add.
   - Text example: function(return(add(1f, 2f)));
