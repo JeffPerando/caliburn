@@ -53,6 +53,16 @@ namespace caliburn
 			DISPATCH,
 			CALL_ARG,
 
+			//These should match the TypeCategory in type.h
+			/*
+			
+			enum class TypeCategory
+			{
+				VOID, FLOAT, INT, VECTOR, MATRIX, ARRAY, STRUCT, BOOLEAN, POINTER, TUPLE, STRING
+			};
+			
+			*/
+			TYPE_VOID,
 			TYPE_FLOAT,
 			TYPE_INT,
 			TYPE_ARRAY,
@@ -77,17 +87,22 @@ namespace caliburn
 			COMPARE,
 
 			VALUE_ARRAY_LIT,
+			VALUE_BOOL_LIT,
 			VALUE_CAST,
 			VALUE_DEREF,
 			VALUE_DESCRIPTOR,
 			VALUE_EXPR,
+			VALUE_EXPR_UNARY,
+			VALUE_FP_LIT,
 			//VALUE_FN_CALL,
 			VALUE_INIT,
+			VALUE_INSTANCEOF,
+			VALUE_INT_LIT,
 			VALUE_INVOKE_POS,
 			VALUE_INVOKE_SIZE,
-			VALUE_LITERAL,
 			VALUE_MEMBER,
 			VALUE_NULL,
+			VALUE_STR_LIT,
 			VALUE_SUBARRAY,
 			VALUE_VARIABLE,
 
@@ -111,7 +126,7 @@ namespace caliburn
 		struct CompilationUnit
 		{
 			Target target = Target::GPU;
-			std::vector<Instruction> code;
+			std::vector<ptr<Instruction>> code;
 
 		};
 

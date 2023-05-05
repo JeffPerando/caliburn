@@ -209,6 +209,7 @@
     <ClInclude Include="typestruct.h" />
     <ClInclude Include="typevector.h" />
     <ClInclude Include="typevoid.h" />
+    <ClInclude Include="valstmt.h" />
     <ClInclude Include="values.h" />
     <ClInclude Include="var.h" />
     <ClInclude Include="varstmt.h" />

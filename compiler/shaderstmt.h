@@ -9,17 +9,17 @@ namespace caliburn
 {
 	struct ShaderStageStatement : public Statement
 	{
-		Token* first = nullptr;
-		Token* name = nullptr;
+		ptr<Token> first = nullptr;
+		ptr<Token> name = nullptr;
 
 		std::set<std::pair<Token*, ParsedType*>> inputs;
-		ParsedType* output = nullptr;
+		ptr<ParsedType> output = nullptr;
 
-		ScopeStatement* code = nullptr;
+		ptr<ScopeStatement> code = nullptr;
 
 		ShaderStageStatement() : Statement(StatementType::SHADER_STAGE) {}
 
-		cllr::CompilationUnit* compile(ref<SymbolTable> symbols)
+		ptr<cllr::CompilationUnit> compile(ref<SymbolTable> symbols)
 		{
 			auto codeAsm = cllr::Assembler();
 			
@@ -35,7 +35,10 @@ namespace caliburn
 
 	struct ShaderStatement : public Statement
 	{
-		std::vector<ShaderStageStatement*> stages;
+		ptr<Token> first = nullptr;
+		ptr<Token> last = nullptr;
+
+		std::vector<ptr<ShaderStageStatement>> stages;
 
 		ShaderStatement() : Statement(StatementType::SHADER) {}
 		virtual ~ShaderStatement() {}

@@ -1,92 +1,120 @@
 
 #pragma once
 
+#include <functional>
+
 #include "buffer.h"
 #include "compilererr.h"
 #include "syntax.h"
 #include "type.h"
 
 #include "ast.h"
-//#include "ctrlstmnt.h"
 
 namespace caliburn
 {
 	class Parser;
 
-	using ParseMethod = Statement* (Parser::*)(Statement*);
+	template<typename T>
+	using ParseMethod = T* (Parser::*)();
 
 	class Parser
 	{
 	public:
 		Parser() {}
-		~Parser() {}
+		virtual ~Parser() {}
 
-		void parse(std::vector<Token>* tokenList, std::vector<Statement*>* ast);
+		void parse(ptr<std::vector<Token>> tokenList, ptr<std::vector<ptr<Statement>>> ast);
 
 	private:
-		buffer<Token>* tokens = nullptr;
-		std::vector<CaliburnException*> errors;
+		ptr<buffer<Token>> tokens = nullptr;
+		std::vector<ptr<CaliburnException>> errors;
+
+		template<typename T>
+		ptr<T> parseAny(std::initializer_list<ParseMethod<T>> fns);
+
+		template<typename T>
+		ptr<T> parseBetween(std::string start, ParseMethod<T> fn, std::string end);
+
+		void parseAnyBetween(std::string start, std::function<void()> fn, std::string end);
 
 		void postParseException(CaliburnException* ex);
 
-		void parseIdentifierList(std::vector<std::string>& ids);
+		void parseIdentifierList(ref<std::vector<ptr<Token>>> ids);
 
-		void parseValueList(std::vector<Value*>& xs);
-		
-		bool parseGenerics(std::vector<ParsedType*>& generics);
+		bool parseGenerics(ref<std::vector<ptr<ParsedType>>> generics);
 
-		bool parseArrayList(std::vector<Value*>& xs);
+		bool parseValueList(ref<std::vector<ptr<Value>>> values, bool commaOptional);
 
 		bool parseSemicolon();
 
-		bool parseScopeEnd(ScopeStatement* stmt);
+		bool parseScopeEnd(ptr<ScopeStatement> stmt);
 
-		Token* parseNamespace();
-
-		ParsedType* parseTypeName();
+		ptr<ParsedType> parseTypeName();
 
 		StorageModifiers parseStorageMods();
 
-		Statement* parseAny(Statement* parent, std::initializer_list<ParseMethod> fns);
+		ptr<ScopeStatement> parseScope(std::initializer_list<ParseMethod<Statement>> pms);
 
-		Statement* parseDecl(Statement* parent);
+		ptr<Statement> parseDecl();
 		
-		//Statement* parseImport(Statement* parent);
+		ptr<Statement> parseImport();
 
-		//Statement* parseTypedef(Statement* parent);
+		ptr<Statement> parseModuleDef();
+
+		ptr<Statement> parseTypedef();
+
+		//ptr<Statement> parseShader();
+
+		ptr<Statement> parseStruct();
+
+		//ptr<Statement> parseClass();
 		
-		//Statement* parseModuleDef(Statement* parent);
+		ptr<Statement> parseFunction();
 
-		//Statement* parseShader(Statement* parent);
+		ptr<Statement> parseMethod();
 
-		//Statement* parseStruct(Statement* parent);
+		ptr<Statement> parseConstructor();
 
-		//Statement* parseClass(Statement* parent);
+		ptr<Statement> parseDestructor();
+
+		//ptr<Statement> parseOp();
+
+		ptr<Statement> parseLogic();
+
+		//ptr<Statement> parseSetter();
+
+		ptr<Statement> parseControl();
+
+		ptr<Statement> parseIf();
+
+		ptr<Statement> parseFor();
 		
-		Statement* parseFunction(Statement* parent);
-
-		//Statement* parseMethod(Statement* parent);
-
-		Statement* parseLogic(Statement* parent);
-
-		//Statement* parseSetter(Statement* parent);
-
-		Statement* parseScope(Statement* parent);
-
-		Statement* parseControl(Statement* parent);
-
-		Statement* parseIf(Statement* parent);
-
-		Statement* parseFor(Statement* parent);
+		ptr<Statement> parseWhile();
 		
-		Statement* parseWhile(Statement* parent);
-		
-		Statement* parseDoWhile(Statement* parent);
+		ptr<Statement> parseDoWhile();
 
-		Value* parseValue(bool doPostfix = true);
+		ptr<Statement> parseValueStmt();
 
-		//Value* parseLiteral();
-		
+		ptr<Statement> parseMemberVarStmt();
+
+		ptr<Value> parseAnyValue();
+
+		ptr<Value> parseNonExpr();
+
+		ptr<Value> parseLiteral();
+
+		ptr<Value> parseAnyExpr();
+
+		ptr<Value> parseExpr(uint32_t precedence);
+
+		ptr<Value> parseAnyFnCall();
+
+		ptr<Value> parseFnCall(ptr<Value> start);
+
+		ptr<Variable> parseLocalVar();
+
+		ptr<Variable> parseMemberVar();
+
 	};
 
 }

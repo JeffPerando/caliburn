@@ -46,8 +46,8 @@ TypeCompat TypeBool::isCompatible(Operator op, Type* rType) const
 	{
 	case Operator::COMP_EQ:
 	case Operator::COMP_NEQ:
-	case Operator::COND_AND:
-	case Operator::COND_OR: return TypeCompat::COMPATIBLE;
+	case Operator::AND:
+	case Operator::OR: return TypeCompat::COMPATIBLE;
 	}
 
 	return TypeCompat::INCOMPATIBLE_OP;

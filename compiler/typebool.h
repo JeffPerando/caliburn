@@ -21,13 +21,7 @@ namespace caliburn
 
 		virtual cllr::SSA emitDefaultInitValue(ref<cllr::Assembler> codeAsm)
 		{
-			return codeAsm.pushNew(cllr::Opcode::VALUE_LITERAL, { false }, { this->id });
-		}
-
-		virtual Type* clone() const override
-		{
-			//To future me: This cast is necessary; it complains otherwise. Yes it looks goofy. TypeBool* != ConcreteType*. smh
-			return (Type*)this;
+			return codeAsm.pushNew(cllr::Opcode::VALUE_BOOL_LIT, { false }, { this->id });
 		}
 
 		//void getConvertibleTypes(std::set<ConcreteType*>* types) override;

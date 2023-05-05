@@ -10,12 +10,10 @@ namespace caliburn
 	{
 		ptr<Token> first = nullptr;
 
-		cllr::SSA id = 0;
-		Value* condition = nullptr;
-		ScopeStatement* innerIf = nullptr;
-		ScopeStatement* innerElse = nullptr;
-		cllr::SSA postBranchID = 0;
-
+		ptr<Value> condition = nullptr;
+		ptr<ScopeStatement> innerIf = nullptr;
+		ptr<ScopeStatement> innerElse = nullptr;
+		
 		IfStatement() : Statement(StatementType::IF) {}
 
 		virtual Token* firstTkn() const override
@@ -57,6 +55,7 @@ namespace caliburn
 		}
 
 		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override; //see ctrlstmt.cpp
+
 		/*
 		virtual ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
 		{
@@ -80,16 +79,17 @@ namespace caliburn
 			
 		}
 		*/
+
 	};
 
 	struct ForRangeStatement : public Statement
 	{
 		ptr<Token> first = nullptr;
-		Token* index = nullptr;
-		LocalVariable* indexVar = nullptr;
-		Value* from = nullptr;
-		Value* to = nullptr;
-		ScopeStatement* loop = nullptr;
+		ptr<Token> index = nullptr;
+		ptr<LocalVariable> indexVar = nullptr;
+		ptr<Value> from = nullptr;
+		ptr<Value> to = nullptr;
+		ptr<ScopeStatement> loop = nullptr;
 
 		ForRangeStatement() : Statement(StatementType::FOR) {}
 
@@ -115,7 +115,6 @@ namespace caliburn
 		}
 		*/
 
-
 	};
 
 	struct WhileStatement : public Statement
@@ -125,10 +124,6 @@ namespace caliburn
 		Value* condition = nullptr;
 		ScopeStatement* loop = nullptr;
 		bool doWhile = false;
-
-		cllr::SSA start = 0;
-		cllr::SSA exit = 0;
-		cllr::SSA cont = 0;
 
 		WhileStatement() : Statement(StatementType::WHILE) {}
 

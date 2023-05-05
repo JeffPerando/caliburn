@@ -10,6 +10,7 @@
 #include "langcore.h"
 #include "module.h"
 #include "symbols.h"
+#include "syntax.h"
 #include "type.h"
 
 namespace caliburn
@@ -150,30 +151,28 @@ namespace caliburn
 
 		virtual Token* lastTkn() const override = 0;
 
-		//Only used by top-level statements which declare symbols. The rest, like local variables, should use declareSymbols() instead
+		//Only used by top-level statements which declare symbols. The rest, like variables, should use declareSymbols() instead
 		virtual void declareHeader(ref<SymbolTable> table, cllr::Assembler& codeAsm) {}
+
+		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) = 0;
 
 		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override = 0;
 
 		virtual void resolveSymbols(ref<const SymbolTable> table, cllr::Assembler& codeAsm) override = 0;
 
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) = 0;
-
 	};
 
 	struct ScopeStatement : public Statement
 	{
-		Token* first = nullptr;
-		Token* last = nullptr;
+		ptr<Token> first = nullptr;
+		ptr<Token> last = nullptr;
 
-		cllr::SSA id = 0;
-
-		std::vector<Statement*> stmts;
+		std::vector<ptr<Statement>> stmts;
 		
 		ptr<SymbolTable> scopeTable = nullptr;
 
 		ReturnMode retMode = ReturnMode::NONE;
-		Value* retValue = nullptr;
+		ptr<Value> retValue = nullptr;
 
 		ScopeStatement(StatementType stmtType = StatementType::SCOPE) : Statement(stmtType) {}
 		virtual ~ScopeStatement()
@@ -220,8 +219,6 @@ namespace caliburn
 
 		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override
 		{
-			codeAsm.push(id, cllr::Opcode::LABEL, {}, {});
-
 			for (auto inner : stmts)
 			{
 				inner->emitDeclCLLR(codeAsm);
@@ -264,8 +261,8 @@ namespace caliburn
 	struct GenericStatement : public Statement
 	{
 		//std::vector<std::pair<std::string, ParsedType*>> 
-		std::map<std::string, Type*> tNames;
-		std::map<std::string, Value*> cNames;
+		std::map<std::string, ptr<Type>> cNames;
+		std::map<std::string, ptr<Value>> tNames;
 
 		GenericStatement(StatementType stmtType) : Statement(stmtType) {}
 		virtual ~GenericStatement() {}

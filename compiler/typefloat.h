@@ -28,24 +28,14 @@ namespace caliburn
 
 		virtual cllr::SSA emitDefaultInitValue(ref<cllr::Assembler> codeAsm)
 		{
-			return codeAsm.pushNew(cllr::Opcode::VALUE_LITERAL, { 0 }, { this->id });
+			auto sID = codeAsm.addString("0f");
+
+			return codeAsm.pushNew(cllr::Opcode::VALUE_FP_LIT, { }, { sID, this->id });
 		}
 
-		Type* clone() const override
-		{
-			return (Type*)this;
-		}
-
-		//void getConvertibleTypes(std::set<ConcreteType*>& types) override;
-
-		TypeCompat isCompatible(Operator op, Type* rType) const override;
-		/*
-		virtual void getSSAs(cllr::Assembler& codeAsm) override
-		{
-			id = codeAsm.createSSA(cllr::Opcode::TYPE_FLOAT);
-		}
-		*/
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override
+		TypeCompat isCompatible(Operator op, ptr<Type> rType) const override;
+		
+		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
 		{
 			codeAsm.push(id, cllr::Opcode::TYPE_FLOAT, { floatBits }, {});
 		}

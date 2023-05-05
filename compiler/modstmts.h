@@ -11,7 +11,7 @@ namespace caliburn
 		Token* name = nullptr;
 		Token* alias = nullptr;
 
-		ImportStatement(Token* f) : Statement(StatementType::IMPORT), first(f) {}
+		ImportStatement(ptr<Token> f) : Statement(StatementType::IMPORT), first(f) {}
 		virtual ~ImportStatement() {}
 
 		virtual Token* firstTkn() const override
@@ -29,13 +29,19 @@ namespace caliburn
 			return alias;
 		}
 
+		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override {}
+
+		virtual void resolveSymbols(ref<const SymbolTable> table, cllr::Assembler& codeAsm) override {}
+
+		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) {}
+
 	};
 
 	struct ModuleStatement : public Statement
 	{
 		const ptr<Token> first, name;
 
-		ModuleStatement(Token* s, Token* n) : Statement(StatementType::MODULE), first(s), name(n) {}
+		ModuleStatement(ptr<Token> s, ptr<Token> n) : Statement(StatementType::MODULE), first(s), name(n) {}
 		virtual ~ModuleStatement() {}
 
 		virtual Token* firstTkn() const override
@@ -47,6 +53,12 @@ namespace caliburn
 		{
 			return name;
 		}
+
+		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override {}
+
+		virtual void resolveSymbols(ref<const SymbolTable> table, cllr::Assembler& codeAsm) override {}
+
+		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) {}
 
 	};
 

@@ -78,17 +78,21 @@ namespace caliburn
 		UNKNOWN,
 
 		ADD, SUB, MUL, DIV, INTDIV,
-		MOD, POW, ABS, NEGATE,
+		MOD, POW,
 
-		BIT_NOT, BIT_AND, BIT_OR, BIT_XOR,
+		BIT_AND, BIT_OR, BIT_XOR,
 		SHIFT_LEFT, SHIFT_RIGHT,
 
 		COMP_EQ, COMP_NEQ,
 		COMP_GT, COMP_LT,
 		COMP_GTE, COMP_LTE,
-		BOOL_NOT, AND, OR,
+		AND, OR,
 
 		APPEND,
+
+		//Unary ops
+		ABS, NEG, BIT_NEG, BOOL_NOT, SIGN, UNSIGN
+
 	};
 
 	enum class OpCategory : uint32_t
@@ -96,6 +100,7 @@ namespace caliburn
 		ARITHMETIC,
 		BITWISE,
 		LOGICAL,
+		UNARY,
 		MISC
 	};
 	
@@ -169,10 +174,7 @@ namespace caliburn
 		{Operator::INTDIV,		OpCategory::ARITHMETIC},
 		{Operator::MOD,			OpCategory::ARITHMETIC},
 		{Operator::POW,			OpCategory::ARITHMETIC},
-		{Operator::ABS,			OpCategory::ARITHMETIC},
-		{Operator::NEGATE,		OpCategory::ARITHMETIC},
 
-		{Operator::BIT_NOT,		OpCategory::BITWISE},
 		{Operator::BIT_AND,		OpCategory::BITWISE},
 		{Operator::BIT_OR,		OpCategory::BITWISE},
 		{Operator::BIT_XOR,		OpCategory::BITWISE},
@@ -181,7 +183,6 @@ namespace caliburn
 
 		{Operator::AND,			OpCategory::LOGICAL},
 		{Operator::OR,			OpCategory::LOGICAL},
-		{Operator::BOOL_NOT,	OpCategory::LOGICAL},
 		{Operator::COMP_EQ,		OpCategory::LOGICAL},
 		{Operator::COMP_NEQ,	OpCategory::LOGICAL},
 		{Operator::COMP_GT,		OpCategory::LOGICAL},
@@ -189,7 +190,40 @@ namespace caliburn
 		{Operator::COMP_GTE,	OpCategory::LOGICAL},
 		{Operator::COMP_LTE,	OpCategory::LOGICAL},
 
+		{Operator::ABS,			OpCategory::UNARY},
+		{Operator::NEG,			OpCategory::UNARY},
+		{Operator::BIT_NEG,		OpCategory::UNARY},
+		{Operator::BOOL_NOT,	OpCategory::UNARY},
+
 		{Operator::APPEND,		OpCategory::MISC},
+	};
+
+	static constexpr uint32_t OP_PRECEDENCE_MAX = 10;
+
+	static const std::map<Operator, uint32_t> opPrecedence = {
+		{Operator::POW,			10},
+		{Operator::MUL,			9},
+		{Operator::DIV,			8},
+		{Operator::INTDIV,		8},
+		{Operator::MOD,			8},
+		{Operator::ADD,			7},
+		{Operator::SUB,			7},
+
+		{Operator::SHIFT_LEFT,	6},
+		{Operator::SHIFT_RIGHT, 6},
+		{Operator::BIT_AND,		5},
+		{Operator::BIT_OR,		4},
+		{Operator::BIT_XOR,		4},
+		
+		{Operator::COMP_EQ,		3},
+		{Operator::COMP_NEQ,	3},
+		{Operator::COMP_GT,		3},
+		{Operator::COMP_LT,		3},
+		{Operator::COMP_GTE,	3},
+		{Operator::COMP_LTE,	3},
+		{Operator::APPEND,		2},
+		{Operator::AND,			1},
+		{Operator::OR,			1},
 	};
 
 	static constexpr std::string_view GENERIC_START = "<";

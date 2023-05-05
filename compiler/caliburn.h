@@ -10,6 +10,8 @@
 
 namespace caliburn
 {
+	struct Statement;
+
 	/*
 	Enum denoting how much to optimize emitted shader code.
 
@@ -37,8 +39,10 @@ namespace caliburn
 	private:
 		OptimizeLevel optimizeLvl = OptimizeLevel::BALANCED;
 		std::map<std::string, std::string> dynTypes;
+		std::vector<Statement*> ast;
 	public:
-		Compiler() {}
+		Compiler() = default;
+		virtual ~Compiler();
 
 		/*
 		Sets the optimization level for the compiler. See OptimizeLevel enum.
@@ -53,26 +57,30 @@ namespace caliburn
 
 		- inner must correlate to a dynamic type within a shader being compiled.
 		- concrete must correlate to an existing type within a compiled shader,
-		  and ideally be a standard type.
+		  and ideally be a built-in type.
 		*/
 		Compiler* setDynamicType(std::string inner, std::string concrete);
 
 		/*
-		Parses source code text to CBIR. CBIR is merely the binary
-		representation of a Caliburn source file, and is the format recommended
-		for redistribution.
+		Uses existing CBIR code to create an internal AST which can then be compiled.
+
+		CBIR is merely the binary representation of a Caliburn source file, and is
+		the format recommended for redistribution.
+		*/
+		void parseCBIR(std::vector<uint32_t>* cbir);
+
+		/*
+		Parses source code text into an internal AST.
 
 		This method does NOT imply endorsement of the redistribution of shader
 		source code. Please package your shaders as CBIR for redistribution.
 		*/
-		bool compileShadersSrc(std::string text, std::string shaderName,
-			std::vector<Shader>& shaderDest);
+		void parseText(std::string text);
 
 		/*
-		Compiles CBIR into a final set of shaders. Each shader is in SPIR-V
-		format, and contains all the metadata needed to interface with Vulkan.
+		Compiles the parsed code into a final set of shaders. Each shader is in
+		SPIR-V format, and contains all the metadata needed to interface with Vulkan.
 
-		cbir: Contains the bytecode used to construct the shader.
 		shaderName: The name of the shader object to compile.
 		shaderDest: The final vector for the final Vulkan shaders.
 
@@ -81,8 +89,7 @@ namespace caliburn
 
 		An empty shaderName will result in a failed compilation.
 		*/
-		bool compileShadersCBIR(std::vector<uint32_t>* cbir, std::string shaderName,
-			std::vector<Shader>& shaderDest);
+		bool compileShaders(std::string shaderName, std::vector<Shader>& shaderDest);
 
 	};
 

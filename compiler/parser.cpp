@@ -1,6 +1,12 @@
 
 #include "parser.h"
 
+#include "ctrlstmt.h"
+#include "modstmts.h"
+#include "structstmt.h"
+#include "typestmt.h"
+#include "valstmt.h"
+
 using namespace caliburn;
 
 void Parser::postParseException(CaliburnException* e)
@@ -9,7 +15,7 @@ void Parser::postParseException(CaliburnException* e)
 
 }
 
-void Parser::parse(std::vector<Token>* tokenList, std::vector<Statement*>* ast)
+void Parser::parse(ptr<std::vector<Token>> tokenList, ptr<std::vector<ptr<Statement>>> ast)
 {
 	//don't want to pollute the heap
 	auto bufferTmp = buffer<Token>(tokenList);
@@ -17,8 +23,8 @@ void Parser::parse(std::vector<Token>* tokenList, std::vector<Statement*>* ast)
 
 	while (tokens->hasNext())
 	{
-		Token* start = tokens->current();
-		Statement* finished = parseDecl(nullptr);
+		auto start = tokens->current();
+		ptr<Statement> finished = parseDecl();
 
 		if (finished)
 		{
@@ -34,18 +40,96 @@ void Parser::parse(std::vector<Token>* tokenList, std::vector<Statement*>* ast)
 
 }
 
-void Parser::parseIdentifierList(std::vector<std::string>& ids)
+template<typename T>
+ptr<T> Parser::parseAny(std::initializer_list<ParseMethod<T>> fns)
+{
+	/*
+	this code is really smart, and stupid. at the same time.
+	it takes a bunch of method/function pointers, puts them into a list,
+	then calls them all. if it finds one that doesn't return nullptr,
+	it returns that result.
+	The alternative was very repetitive code.
+	*/
+	auto current = tokens->currentIndex();
+
+	for (auto fn : fns)
+	{
+		T* parsed = (this->*fn)();
+
+		if (parsed)
+		{
+			return parsed;
+		}
+		else
+		{
+			//undo any funny business the parse function may have done
+			tokens->revertTo(current);
+
+		}
+
+	}
+
+	return nullptr;
+}
+
+template<typename T>
+ptr<T> Parser::parseBetween(std::string start, ParseMethod<T> fn, std::string end)
+{
+	if (tokens->current()->str != start)
+	{
+		//TODO complain
+		return nullptr;
+	}
+
+	tokens->consume();
+
+	T* ret = (this->*fn)();
+
+	if (tokens->current()->str != end)
+	{
+		//TODO complain
+		return ret;
+	}
+
+	tokens->consume();
+
+	return ret;
+}
+
+void Parser::parseAnyBetween(std::string start, std::function<void()> fn, std::string end)
+{
+	if (tokens->current()->str != start)
+	{
+		//TODO complain
+		return;
+	}
+
+	tokens->consume();
+
+	fn();
+
+	if (tokens->current()->str != end)
+	{
+		//TODO complain
+		return;
+	}
+
+	tokens->consume();
+
+}
+
+void Parser::parseIdentifierList(ref<std::vector<ptr<Token>>> ids)
 {
 	while (tokens->hasNext())
 	{
-		Token* tkn = tokens->current();
+		auto tkn = tokens->current();
 
 		if (tkn->type != TokenType::IDENTIFIER)
 		{
 			break;
 		}
 
-		ids.push_back(tkn->str);
+		ids.push_back(tkn);
 		tkn = tokens->next();
 
 		if (tkn->type != TokenType::COMMA)
@@ -59,59 +143,7 @@ void Parser::parseIdentifierList(std::vector<std::string>& ids)
 
 }
 
-void Parser::parseValueList(std::vector<Value*>& xs)
-{
-	while (true)
-	{
-		if (tokens->current()->type == TokenType::COMMA)
-		{
-			continue;
-		}
-
-		Value* val = parseValue();
-
-		if (!val)
-		{
-			break;
-		}
-
-		xs.push_back(val);
-		
-		tokens->consume();
-
-	}
-
-}
-
-bool Parser::parseArrayList(std::vector<Value*>& xs)
-{
-	if (tokens->current()->type != TokenType::START_BRACKET)
-	{
-		return false;
-	}
-
-	tokens->consume();
-
-	parseValueList(xs);
-
-	if (tokens->current()->type != TokenType::END_BRACKET)
-	{
-		for (auto x : xs)
-		{
-			delete x;
-		}
-
-		xs.clear();
-
-		postParseException(new UnexpectedTokenException(tokens->current(), ']'));
-
-		return false;
-	}
-
-	return true;
-}
-
-bool Parser::parseGenerics(std::vector<ParsedType*>& generics)
+bool Parser::parseGenerics(ref<std::vector<ptr<ParsedType>>> generics)
 {
 	bool valid = false;
 	auto oldIndex = tokens->currentIndex();
@@ -171,9 +203,30 @@ bool Parser::parseGenerics(std::vector<ParsedType*>& generics)
 	return valid;
 }
 
+bool Parser::parseValueList(ref<std::vector<ptr<Value>>> values, bool commaOptional)
+{
+	while (tokens->hasNext())
+	{
+		values.push_back(parseAnyValue());
+
+		if (tokens->current()->str == ",")
+		{
+			tokens->consume();
+			continue;
+		}
+		else if (!commaOptional)
+		{
+			break;
+		}
+
+	}
+
+	return true;
+}
+
 bool Parser::parseSemicolon()
 {
-	Token* tkn = tokens->current();
+	auto tkn = tokens->current();
 
 	if (tkn->type == TokenType::END)
 	{
@@ -185,7 +238,7 @@ bool Parser::parseSemicolon()
 	return false;
 }
 
-bool Parser::parseScopeEnd(ScopeStatement* stmt)
+bool Parser::parseScopeEnd(ptr<ScopeStatement> stmt)
 {
 	auto tkn = tokens->current();
 	auto tknIndex = tokens->currentIndex();
@@ -203,7 +256,7 @@ bool Parser::parseScopeEnd(ScopeStatement* stmt)
 	{
 		stmt->retMode = ReturnMode::RETURN;
 		tokens->consume();
-		stmt->retValue = parseValue();
+		stmt->retValue = parseAnyValue();
 
 	}
 	else if (tkn->str == "break")
@@ -248,26 +301,13 @@ bool Parser::parseScopeEnd(ScopeStatement* stmt)
 	return false;
 }
 
-Token* Parser::parseNamespace()
-{
-	if (tokens->current()->type == TokenType::IDENTIFIER &&
-		tokens->peek()->type == TokenType::COLON)
-	{
-		Token* tkn = tokens->current();
-		tokens->consume(2);
-		return tkn;
-	}
-
-	return nullptr;
-}
-
 StorageModifiers Parser::parseStorageMods()
 {
 	StorageModifiers mods = {};
 
 	while (tokens->hasNext())
 	{
-		Token* tkn = tokens->current();
+		auto tkn = tokens->current();
 
 		if (tkn->str == "public")
 			mods.PUBLIC = 1;
@@ -279,8 +319,6 @@ StorageModifiers Parser::parseStorageMods()
 			mods.SHARED = 1;
 		else if (tkn->str == "static")
 			mods.STATIC = 1;
-		else if (tkn->str == "strong")
-			mods.STRONG = 1;
 		else
 			break;
 
@@ -291,10 +329,65 @@ StorageModifiers Parser::parseStorageMods()
 	return mods;
 }
 
-ParsedType* Parser::parseTypeName()
+ptr<ScopeStatement> Parser::parseScope(std::initializer_list<ParseMethod<Statement>> pms)
 {
-	Token* moduleName = parseNamespace();
-	Token* tkn = tokens->current();
+	auto mods = parseStorageMods();
+
+	auto tkn = tokens->current();
+
+	if (tkn->type != TokenType::START_SCOPE)
+	{
+		return nullptr;
+	}
+
+	auto scope = new ScopeStatement();
+
+	tokens->consume();
+
+	while (tokens->hasNext())
+	{
+		tkn = tokens->current();
+
+		if (tkn->type == TokenType::END_SCOPE)
+		{
+			tokens->consume();
+			break;
+		}
+
+		ptr<Statement> stmt = nullptr;
+
+		for (auto pm : pms)
+		{
+			stmt = (this->*pm)();
+
+			if (stmt != nullptr)
+			{
+				break;
+			}
+
+		}
+
+		if (stmt == nullptr)
+		{
+			//TODO complain
+			break;
+		}
+
+		if (!parseSemicolon())
+		{
+			//TODO complain but continue parsing
+		}
+
+		scope->stmts.push_back(stmt);
+
+	}
+
+	return scope;
+}
+
+ptr<ParsedType> Parser::parseTypeName()
+{
+	auto tkn = tokens->current();
 
 	if (tkn->type != TokenType::IDENTIFIER)
 	{
@@ -304,58 +397,57 @@ ParsedType* Parser::parseTypeName()
 
 	tokens->consume();
 
-	ParsedType* type = new ParsedType(moduleName, tkn);
+	ptr<ParsedType> type = new ParsedType(tkn);
 
 	parseGenerics(type->generics);
+
+	tkn = tokens->current();
+
+	while (tokens->hasNext() && tkn->type == TokenType::START_BRACKET)
+	{
+		tkn = tokens->next();
+
+		ptr<Value> len = nullptr;
+
+		if (tkn->type != TokenType::END_BRACKET)
+		{
+			len = parseAnyValue();
+
+			tkn = tokens->current();
+
+		}
+
+		if (tkn->type != TokenType::END_BRACKET)
+		{
+			//TODO complain
+		}
+
+		type->arrayDims.push_back(len);
+		type->lastToken = tkn;
+
+		tkn = tokens->next();
+
+	}
 
 	return type;
 }
 
-Statement* Parser::parseAny(Statement* parent, std::initializer_list<ParseMethod> fns)
+ptr<Statement> Parser::parseDecl()
 {
-	/*
-	this code is really smart, and stupid. at the same time.
-	it takes a bunch of method/function pointers, puts them into a list,
-	then calls them all. if it finds one that doesn't return nullptr,
-	it returns that result.
-	The alternative was very repetitive code.
-	*/
-	auto current = tokens->currentIndex();
+	auto mods = parseStorageMods();
 
-	for (auto fn : fns)
-	{
-		Statement* parsed = (this->*fn)(parent);
-
-		if (parsed)
-		{
-			return parsed;
-		}
-		else
-		{
-			//undo any funny business the parse function may have done
-			tokens->revertTo(current);
-
-		}
-
-	}
-
-	return nullptr;
-}
-
-Statement* Parser::parseDecl(Statement* parent)
-{
-	StorageModifiers mods = parseStorageMods();
-
-	Statement* stmt = parseAny(parent, {
+	auto stmt = parseAny({
+		&Parser::parseImport,
+		&Parser::parseModuleDef,
+		&Parser::parseTypedef,
 		&Parser::parseFunction,
-		//&Parser::parseShader,
-		//&Parser::parseClass,
-		//&Parser::parseDescriptor,
-		//&Parser::parseStruct,
+		/*&Parser::parseShader,
+		&Parser::parseClass,*/
+		&Parser::parseStruct,
 		&Parser::parseLogic
 		});
 
-	if (!stmt)
+	if (stmt == nullptr)
 	{
 		postParseException(new ParseException("Invalid start to declaration:", tokens->current()));
 		return stmt;
@@ -370,36 +462,74 @@ Statement* Parser::parseDecl(Statement* parent)
 
 	return stmt;
 }
-/*
-Statement* Parser::parseImport(Statement* parent)
+
+ptr<Statement> Parser::parseImport()
 {
-	Token* tkn = tokens->current();
+	auto tkn = tokens->current();
 
 	if (tkn->type != TokenType::KEYWORD || tkn->str != "import")
 	{
 		return nullptr;
 	}
 
-	Token* modName = tokens->next();
-	Token* alias = nullptr;
+	auto modName = tokens->next();
+	
+	ptr<Token> alias = nullptr;
+
 	tkn = tokens->next();
 
 	if (tkn->type == TokenType::KEYWORD &&
 		tkn->str == "as")
 	{
+		if (tokens->peek()->type != TokenType::IDENTIFIER)
+		{
+			//TODO complain
+		}
+
 		alias = tokens->next();
+
+		tokens->consume();
 
 	}
 
-	return new ImportStatement(modName, alias);
-}
-*/
-/*
-Statement* Parser::parseTypedef(Statement* parent)
-{
-	Token* tkn = tokens->current();
+	auto ret = new ImportStatement(tkn);
 
-	if (tkn->type != TokenType::KEYWORD || tkn->str != "type")
+	ret->name = modName;
+	ret->alias = alias;
+
+	return ret;
+}
+
+ptr<Statement> Parser::parseModuleDef()
+{
+	auto start = tokens->current();
+
+	if (start->type != TokenType::KEYWORD || start->str != "module")
+	{
+		return nullptr;
+	}
+
+	auto name = tokens->next();
+
+	return new ModuleStatement(start, name);
+}
+
+ptr<Statement> Parser::parseTypedef()
+{
+	auto start = tokens->current();
+
+	if (start->type != TokenType::KEYWORD)
+	{
+		return nullptr;
+	}
+
+	if (start->str == "strong")
+	{
+		tokens->consume();
+		
+	}
+
+	if (tokens->current()->str != "type")
 	{
 		return nullptr;
 	}
@@ -409,7 +539,7 @@ Statement* Parser::parseTypedef(Statement* parent)
 		return nullptr;
 	}
 
-	std::string name = tokens->current()->str;
+	auto name = tokens->current();
 
 	if (tokens->next()->str != "=")
 	{
@@ -418,29 +548,93 @@ Statement* Parser::parseTypedef(Statement* parent)
 
 	tokens->consume();
 
-	ParsedType* aliasedType = parseTypeName();
+	ptr<ParsedType> aliasedType = parseTypeName();
 
-	auto stmt = new TypedefStatement();
+	auto stmt = new TypedefStatement(start, name, aliasedType);
 	
-	stmt->name = name;
-	stmt->actualType = aliasedType;
-
 	return stmt;
 }
-*/
-//TODO more parser methods
 
-//Statement* Parser::parseShader();
+//ptr<Statement> Parser::parseShader();
 
-//Statement* Parser::parseDescriptor();
+//ptr<Statement> Parser::parseDescriptor();
 
-//Statement* Parser::parseStruct();
-
-//Statement* Parser::parseClass();
-
-Statement* Parser::parseFunction(Statement* parent)
+//TODO clean up architecture, make expandable
+ptr<Statement> Parser::parseStruct()
 {
-	Token* tkn = tokens->current();
+	bool isConst = false;
+	auto tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD)
+	{
+		return nullptr;
+	}
+
+	if (tkn->str == "record")
+	{
+		isConst = true;
+	}
+	else if (tkn->str != "struct")
+	{
+		return nullptr;
+	}
+
+	auto name = tokens->next();
+
+	if (name->type != TokenType::IDENTIFIER)
+	{
+		//TODO complain
+	}
+
+	auto ret = new StructStatement(name, isConst ? StatementType::RECORD : StatementType::STRUCT);
+
+	ret->first = tkn;
+
+	tkn = tokens->next();
+
+	if (tkn->str != "{")
+	{
+		//TODO complain
+	}
+
+	while (tokens->hasNext())
+	{
+		tkn = tokens->next();
+
+		if (tkn->str == "}")
+		{
+			ret->last = tkn;
+			tokens->consume();
+			break;
+		}
+
+		auto mem = parseMemberVar();
+
+		if (mem != nullptr)
+		{
+			mem->isConst = isConst;
+			ret->members.push_back(mem);
+
+		}
+
+		if (!parseSemicolon())
+		{
+			//TODO complain
+		}
+
+		//TODO parse constructors(?)
+		//does a struct even have a constructor?
+
+	}
+
+	return ret;
+}
+
+//ptr<Statement> Parser::parseClass();
+
+ptr<Statement> Parser::parseFunction()
+{
+	auto tkn = tokens->current();
 
 	if (tkn->type != TokenType::KEYWORD || tkn->str != "def")
 	{
@@ -449,10 +643,10 @@ Statement* Parser::parseFunction(Statement* parent)
 
 	tkn = tokens->next();
 
-	ParsedType* type = parseTypeName();
+	ptr<ParsedType> type = parseTypeName();
 	std::string name = tokens->current()->str;
-	std::vector<ParsedType*> generics;
-	std::vector<std::string> gpuThreadData;
+	std::vector<ptr<ParsedType>> generics;
+	std::vector<ptr<Token>> gpuThreadData;
 
 	tokens->consume();
 
@@ -493,14 +687,14 @@ Statement* Parser::parseFunction(Statement* parent)
 		return nullptr;
 	}
 
-	Statement* body = parseLogic(parent);
+	ptr<Statement> body = parseLogic();
 
 	if (!body)
 	{
 		return nullptr;
 	}
 	/*
-	FunctionStatement* func = new FunctionStatement();
+	Functionptr<Statement> func = new FunctionStatement();
 
 	func->type = type;
 	func->name = name;
@@ -511,46 +705,539 @@ Statement* Parser::parseFunction(Statement* parent)
 	return nullptr;
 }
 
-//Statement* Parser::parseMethod();
-
-Statement* Parser::parseLogic(Statement* parent)
+ptr<Statement> Parser::parseMethod()
 {
-	auto stmt = parseAny(parent, { &Parser::parseControl//, &Parser::parseScope,
-		/*& Parser::parseAnyVar, &Parser::parseSetter */ });
+	return parseAny({
+		&Parser::parseFunction,
+		&Parser::parseConstructor,
+		&Parser::parseDestructor
+		});
+}
 
-	if (stmt) return stmt;
+ptr<Statement> Parser::parseConstructor()
+{
+	auto tkn = tokens->current();
 
-	//stmt = parseFieldOrFuncValue();
-
-	if (!stmt)
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "construct")
 	{
 		return nullptr;
 	}
 
-	//TODO check stmt and complain
-	/*
-	if (stmt.type == CALIBURN_FIELD_ACCESS)
+	return nullptr;
+}
+
+ptr<Statement> Parser::parseDestructor()
+{
+	auto tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "destruct")
 	{
-		//complain
 		return nullptr;
 	}
-	*/
+
+	return nullptr;
+}
+
+//ptr<Statement> parseOp();
+
+ptr<Statement> Parser::parseLogic()
+{
+	return parseAny({ &Parser::parseControl, &Parser::parseValueStmt });
+}
+
+ptr<Statement> Parser::parseControl()
+{
+	auto tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD)
+	{
+		return nullptr;
+	}
+
+	return parseAny({ &Parser::parseIf, &Parser::parseFor, &Parser::parseWhile,
+		&Parser::parseDoWhile, /* parseSwitch */ });
+}
+
+ptr<Statement> Parser::parseIf()
+{
+	auto tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "if")
+	{
+		return nullptr;
+	}
+
+	tokens->consume();
+
+	auto parsed = new IfStatement();
+
+	parsed->condition = parseBetween("(", &Parser::parseAnyValue, ")");
+	parsed->innerIf = parseScope({&Parser::parseDecl});
+
+	if (tokens->current()->str == "else")
+	{
+		tokens->consume();
+
+		auto innerElseStmt = parseLogic();
+
+		if (innerElseStmt != nullptr)
+		{
+			parsed->innerElse = new ScopeStatement();
+
+			parsed->innerElse->stmts.push_back(innerElseStmt);
+
+		}
+		else
+		{
+			parsed->innerElse = parseScope({&Parser::parseDecl});
+
+		}
+
+	}
+
+	return parsed;
+}
+
+ptr<Statement> Parser::parseFor()
+{
+	return nullptr;
+}
+
+ptr<Statement> Parser::parseWhile()
+{
+	auto tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "while")
+	{
+		return nullptr;
+	}
+
+	auto cond = parseBetween("(", &Parser::parseAnyValue, ")");
+
+	auto stmt = new WhileStatement();
+	
+	stmt->first = tkn;
+	stmt->condition = cond;
+	stmt->loop = parseScope({ &Parser::parseLogic });
+
 	return stmt;
 }
-/*
-Statement* Parser::parseAnyVar()
+
+ptr<Statement> Parser::parseDoWhile()
 {
-	return parseVariable(true);
+	auto tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD || tkn->str != "do")
+	{
+		return nullptr;
+	}
+
+	tokens->consume();
+
+	auto body = parseScope({&Parser::parseLogic});
+
+	if (tokens->current()->type != TokenType::KEYWORD || tokens->current()->str != "while")
+	{
+		//TODO complain
+		delete body;
+		return nullptr;
+	}
+
+	ptr<Value> cond = parseBetween("(", &Parser::parseAnyValue, ")");
+
+	if (cond == nullptr)
+	{
+		//TODO complain
+		delete body;
+		return nullptr;
+	}
+
+	auto ret = new WhileStatement();
+
+	ret->doWhile = true;
+	ret->loop = body;
+	ret->condition = cond;
+
+	return ret;
 }
 
-Statement* Parser::parseVariable(bool implicitAllowed)
+ptr<Statement> Parser::parseValueStmt()
 {
-	ParsedType* type = nullptr;
-	Token* name;
-	Value* initVal = nullptr;
+	auto val = parseAny({ &Parser::parseAnyFnCall, &Parser::parseAnyExpr });
+
+	if (val == nullptr)
+	{
+		return nullptr;
+	}
+
+	return new ValueStatement(val);
+}
+
+ptr<Value> Parser::parseAnyValue()
+{
+	return parseAny({ &Parser::parseAnyExpr, &Parser::parseLiteral, &Parser::parseAnyFnCall });
+}
+
+ptr<Value> Parser::parseNonExpr()
+{
+	auto tkn = tokens->current();
+
+	ptr<Value> v = parseAny({ &Parser::parseLiteral, &Parser::parseAnyFnCall });
+
+	if (v == nullptr)
+	{
+		if (tkn->type == TokenType::START_PAREN)
+		{
+			v = parseBetween("(", &Parser::parseNonExpr, ")");
+		}
+		else if (tkn->type == TokenType::KEYWORD)
+		{
+			tokens->consume();
+
+			if (tkn->str == "this")
+			{
+				v = new VarReadValue(tkn);
+			}
+			else if (tkn->str == "sign")
+			{
+				v = new UnaryValue(tkn, Operator::SIGN, parseNonExpr());
+			}
+			else if (tkn->str == "unsign")
+			{
+				v = new UnaryValue(tkn, Operator::UNSIGN, parseNonExpr());
+			}
+			else
+			{
+				tokens->rewind();
+				return nullptr;
+			}
+
+		}
+		else if (tkn->type == TokenType::OPERATOR)
+		{
+			Operator uOp = Operator::UNKNOWN;
+			bool isUnary = true;
+
+			switch (tkn->str[0])
+			{
+			case '|': uOp = Operator::ABS; break;
+			case '-': uOp = Operator::NEG; break;
+			case '~': uOp = Operator::BIT_NEG; break;
+			case '!': uOp = Operator::BOOL_NOT; break;
+			default: {
+				isUnary = false;
+				break;
+			};
+			}
+
+			if (!isUnary)
+			{
+				return nullptr;
+			}
+
+			tokens->consume();
+
+			auto unary = new UnaryValue();
+
+			unary->op = uOp;
+			unary->val = parseNonExpr();
+
+			if (uOp == Operator::ABS)
+			{
+				if (tokens->current()->str != "|")
+				{
+					//TODO complain
+					delete unary;
+					return nullptr;
+				}
+
+				tokens->consume();
+
+			}
+
+			v = unary;
+
+		}
+		else
+		{
+			return nullptr;
+		}
+
+	}
+
+	if (v == nullptr)
+	{
+		return nullptr;
+	}
+	
+	while (tokens->hasNext())
+	{
+		tkn = tokens->current();
+
+		if (tkn->type == TokenType::START_BRACKET)
+		{
+			auto i = parseBetween("[", &Parser::parseAnyValue, "]");//enables for expressions inside of array access
+			
+			auto subA = new SubArrayValue();
+
+			subA->array = v;
+			subA->index = i;
+			subA->last = tokens->prev();
+
+			v = subA;
+
+		}
+		else if (tkn->type == TokenType::PERIOD && tokens->peek()->type == TokenType::IDENTIFIER)
+		{
+			tkn = tokens->next();
+			auto pk = tokens->peek();
+
+			if (pk->type == TokenType::START_PAREN || pk->str == GENERIC_START)
+			{
+				v = parseFnCall(v);
+
+			}
+			else
+			{
+				auto memRead = new MemberReadValue();
+
+				memRead->target = v;
+				memRead->memberName = tkn;
+
+				v = memRead;
+
+				tokens->consume();
+
+			}
+
+		}
+		else
+		{
+			break;
+		}
+		
+	}
+	
+	return v;
+}
+
+ptr<Value> Parser::parseLiteral()
+{
+	auto tkn = tokens->current();
+
+	//"this" won't be counted here; it's only a keyword for syntax highlighting purposes
+	//Instead, a MethodStatement will add a "this" argument to its own argument list
+	if (tkn->type == TokenType::KEYWORD)
+	{
+		if (tkn->str == "null")
+		{
+			return new NullValue(tkn);
+		}
+
+	}
+
+	switch (tkn->type)
+	{
+	case TokenType::LITERAL_INT: return new IntLiteralValue(*tkn);
+	case TokenType::LITERAL_FLOAT: return new FloatLiteralValue(*tkn);
+	case TokenType::LITERAL_BOOL: return new BoolLitValue(*tkn);
+	case TokenType::LITERAL_STR: return new StringLitValue(*tkn);
+	}
+
+	if (tkn->str == "[")
+	{
+		auto arrLit = new ArrayLitValue();
+
+		arrLit->start = tkn;
+
+		while (tokens->hasNext())
+		{
+			tkn = tokens->next();
+
+			if (tkn->str == ",")
+			{
+				continue;
+			}
+
+			if (tkn->str == "]")
+			{
+				arrLit->end = tkn;
+				tokens->consume();
+				break;
+			}
+
+			auto val = parseAnyValue();
+
+			arrLit->values.push_back(val);
+
+		}
+
+		return arrLit;
+	}
+
+	return nullptr;
+}
+
+ptr<Value> Parser::parseAnyExpr()
+{
+	return parseExpr(OP_PRECEDENCE_MAX);
+}
+
+ptr<Value> Parser::parseExpr(uint32_t precedence)
+{
+	auto lhs = parseNonExpr();
+
+	while (tokens->hasNext())
+	{
+		auto tkn = tokens->current();
+
+		while (tkn->type == TokenType::KEYWORD)
+		{
+			if (tkn->str == "is")
+			{
+				tokens->consume();
+
+				auto isa = new IsAValue();
+
+				isa->val = lhs;
+				isa->chkPType = parseTypeName();
+
+				lhs = isa;
+
+			}
+			else if (tkn->str == "as")
+			{
+				tokens->consume();
+
+				auto cast = new CastValue();
+
+				cast->lhs = lhs;
+				cast->resultPType = parseTypeName();
+
+				lhs = cast;
+
+			}
+			else
+			{
+				break;
+			}
+
+		}
+
+		if (tkn->type != TokenType::OPERATOR)
+		{
+			break;
+		}
+
+		auto op = infixOps.find(tkn->str);
+
+		if (op == infixOps.end())
+		{
+			return lhs;
+		}
+
+		auto opWeight = opPrecedence.at(op->second);
+
+		if (opWeight > precedence)
+		{
+			break;
+		}
+
+		tkn = tokens->next();
+
+		//Yes, we use *this* code to parse setters.
+		if (tkn->str == "=")
+		{
+			tokens->consume();
+
+			auto set = new SetterValue();
+
+			auto expr = new ExpressionValue();
+
+			expr->lValue = lhs;
+			expr->op = op->second;
+			expr->rValue = parseAnyExpr();
+
+			set->lhs = lhs;
+			set->rhs = expr;
+
+			return set;
+		}
+		
+		auto expr = new ExpressionValue();
+
+		expr->lValue = lhs;
+		expr->op = op->second;
+		expr->rValue = parseExpr(opWeight);
+
+		lhs = expr;
+
+	}
+
+	return lhs;
+}
+
+ptr<Value> Parser::parseAnyFnCall()
+{
+	return parseFnCall(nullptr);
+}
+
+ptr<Value> Parser::parseFnCall(ptr<Value> start)
+{
+	auto tkn = tokens->current();
+
+	if (tkn->type != TokenType::IDENTIFIER)
+	{
+		return nullptr;
+	}
+
+	auto name = tkn;
+	std::vector<ptr<ParsedType>> pGenerics;
+
+	tkn = tokens->next();
+	
+	if (tkn->str == GENERIC_START)
+	{
+		if (!parseGenerics(pGenerics))
+		{
+			return nullptr;
+		}
+
+	}
+
+	tkn = tokens->current();
+
+	if (tkn->type != TokenType::START_PAREN)
+	{
+		return nullptr;
+	}
+
+	tokens->consume();
+
+	auto ret = new FnCallValue();
+
+	ret->name = name;
+	ret->target = start;
+	ret->pGenerics = pGenerics;
+
+	if (!parseValueList(ret->args, false))
+	{
+		//TODO complain
+	}
+
+	ret->end = tokens->current();
+
+	return ret;
+}
+
+ptr<Variable> Parser::parseLocalVar()
+{
+	ptr<ParsedType> type = nullptr;
+	ptr<Token> name = nullptr;
+	ptr<Value> initVal = nullptr;
 	bool constant = false;
 
-	Token* tkn = tokens->current();
+	auto tkn = tokens->current();
 
 	if (tkn->type != TokenType::KEYWORD)
 	{
@@ -559,12 +1246,12 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 
 	if (tkn->str == "var")
 	{
-		tkn = tokens->next();
+		tkn = tokens->current();
 
 	}
 	else if (tkn->str == "const")
 	{
-		tkn = tokens->next();
+		tkn = tokens->current();
 		constant = true;
 	}
 	else
@@ -577,13 +1264,13 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 		tkn = tokens->next();
 		type = parseTypeName();
 
-	}
-	else if (!implicitAllowed)
-	{
-		postParseException(new ParseException("Cannot have an implicit variable here", tkn));
-		return nullptr;
-	}
+		if (type == nullptr)
+		{
+			//TODO complain
+		}
 
+	}
+	
 	name = tokens->next();
 
 	if (name->type != TokenType::IDENTIFIER)
@@ -603,7 +1290,7 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 	if (tkn->str == "=")
 	{
 		tokens->consume();
-		initVal = parseValue();
+		initVal = parseAnyValue();
 		//type = defVal->type;
 
 	}
@@ -613,713 +1300,51 @@ Statement* Parser::parseVariable(bool implicitAllowed)
 		return nullptr;
 	}
 
-	//return new VariableStatement();
-}
-*/
-//Statement* Parser::parseSetter();
-
-Statement* Parser::parseScope(Statement* parent)
-{
-	Token* tkn = tokens->current();
-
-	if (tkn->type != TokenType::START_SCOPE)
+	if (!parseSemicolon())
 	{
-		return nullptr;
+		//TODO complain
 	}
 
-	auto scope = new ScopeStatement();
-
-	tokens->consume();
-
-	while (tokens->hasNext())
-	{
-		tkn = tokens->current();
-
-		if (tkn->type == TokenType::END_SCOPE)
-		{
-			tokens->consume();
-			break;
-		}
-
-		auto logic = parseLogic(scope);
-
-		if (logic == nullptr)
-		{
-			//TODO complain
-			break;
-		}
-
-		scope->stmts.push_back(logic);
-
-	}
-
-	return scope;
+	return new LocalVariable(name, type, initVal, constant);
 }
 
-Statement* Parser::parseControl(Statement* parent)
+ptr<Variable> Parser::parseMemberVar()
 {
-	Token* tkn = tokens->current();
+	bool isConst = false;
+	ptr<Token> start = tokens->current();
 
-	if (tkn->type != TokenType::KEYWORD)
+	if (start->type == TokenType::KEYWORD && start->str == "const")
 	{
-		return nullptr;
-	}
-
-	return parseAny(parent, { &Parser::parseIf, &Parser::parseFor, /*&Parser::parseWhile,
-		&Parser::parseDoWhile, &Parser::parseSwitch */});
-}
-
-Statement* Parser::parseIf(Statement* parent)
-{
-	Token* tkn = tokens->current();
-
-	if (tkn->type != TokenType::KEYWORD || tkn->str != "if")
-	{
-		return nullptr;
-	}
-
-	if (tokens->peek()->type != TokenType::START_PAREN)
-	{
-		postParseException(new UnexpectedTokenException(tokens->current(), '('));
-		return nullptr;
-	}
-
-	tokens->consume();
-
-	Value* condition = parseValue();
-
-	if (tokens->current()->type != TokenType::END_PAREN)
-	{
-		postParseException(new UnexpectedTokenException(tokens->current(), ')'));
-		delete condition;
-		return nullptr;
-	}
-
-	tokens->consume();
-	/*
-	auto parsed = new IfStatement(parent);
-
-	parsed->condition = condition;
-	parsed->ifBranch = parseLogic(parsed);
-
-	if (tokens->current()->str == "else")
-	{
+		isConst = true;
 		tokens->consume();
-		parsed->elseBranch = parseLogic(parsed);
-
 	}
 
-	return parsed;*/
-	return nullptr;
-}
+	auto type = parseTypeName();
 
-Statement* Parser::parseFor(Statement* parent)
-{
-	Token* tkn = tokens->current();
-
-	if (tkn->type != TokenType::KEYWORD || tkn->str != "for")
-	{
-		return nullptr;
-	}
-
-	if (tokens->next()->type != TokenType::START_PAREN)
-	{
-		postParseException(new UnexpectedTokenException(tokens->current(), '('));
-		return nullptr;
-	}
-
-	tokens->consume();
-
-	Statement* pre = parseLogic(parent);
-	parseSemicolon();
-
-	Value* cond = parseValue();
-	parseSemicolon();
-
-	Statement* post = parseLogic(parent);
-
-	if (tokens->current()->type != TokenType::END_PAREN)
-	{
-		postParseException(new UnexpectedTokenException(tokens->current(), ')'));
-		return nullptr;
-	}
-
-	tokens->consume();
-
-	Statement* loop = parseLogic(parent);
-	/*
-	auto stmt = new ForStatement();
-
-	stmt->preLoop = pre;
-	stmt->cond = cond;
-	stmt->postLoop = post;
-	stmt->loop = loop;
-
-	return stmt;*/
-	return nullptr;
-}
-
-Statement* Parser::parseWhile(Statement* parent)
-{
-	Token* tkn = tokens->current();
-
-	if (tkn->type != TokenType::KEYWORD || tkn->str != "while")
-	{
-		return nullptr;
-	}
-
-	if (tokens->next()->type != TokenType::START_PAREN)
-	{
-		postParseException(new UnexpectedTokenException(tokens->current(), '('));
-		return nullptr;
-	}
-
-	tokens->consume();
-
-	Value* cond = parseValue();
-
-	if (tokens->current()->type != TokenType::END_PAREN)
-	{
-		postParseException(new UnexpectedTokenException(tokens->current(), ')'));
-		delete cond;
-		return nullptr;
-	}
-
-	tokens->consume();
-	/*
-	Statement* loop = parseLogic();
-
-	auto stmt = new WhileStatement();
-	
-	stmt->cond = cond;
-	stmt->loop = loop;
-
-	return stmt;*/
-	return nullptr;
-}
-
-Statement* Parser::parseDoWhile(Statement* parent)
-{
-	Token* tkn = tokens->current();
-
-	if (tkn->type != TokenType::KEYWORD || tkn->str != "do")
-	{
-		return nullptr;
-	}
-
-	tokens->consume();
-
-	Statement* body = parseLogic(parent);
-
-	tkn = tokens->current();
-
-	if (tkn->type != TokenType::KEYWORD || tkn->str != "while")
-	{
-		delete body;
-		return nullptr;
-	}
-
-	tkn = tokens->next();
-
-	if (tkn->type != TokenType::START_PAREN)
-	{
-		//TODO complain
-		delete body;
-		return nullptr;
-	}
-
-	tokens->consume();
-
-	Value* cond = parseValue();
-
-	tkn = tokens->current();
-
-	if (tkn->type != TokenType::END_PAREN)
-	{
-		//TODO complain
-		delete body;
-		delete cond;
-		return nullptr;
-	}
-
-	tokens->consume();
-	/*
-	auto ret = new DoWhileStatement();
-
-	ret->loop = body;
-	ret->cond = (Value*)cond;
-
-	return ret;*/
-	return nullptr;
-}
-/*
-Statement* Parser::parseSwitch(Statement* parent)
-{
-	Token* tkn = tokens->current();
-
-	if (tkn->type != TokenType::KEYWORD || tkn->str != "switch")
-	{
-		return nullptr;
-	}
-
-	tkn = tokens->next();
-
-	if (tkn->type != TokenType::START_PAREN)
-	{
-		//TODO complain
-		return nullptr;
-	}
-	/*
-	auto stmnt = new SwitchStatement();
-
-	tokens->consume();
-	Value* swValue = parseValue();
-
-	if (!swValue)
-	{
-		//TODO complain
-		delete stmnt;
-		return nullptr;
-	}
-
-	stmnt->condition = swValue;
-
-	tkn = tokens->current();
-
-	if (tkn->type != TokenType::END_PAREN)
-	{
-		//TODO complain
-		delete stmnt;
-		return nullptr;
-	}
-
-	tkn = tokens->next();
-	
-	if (tkn->type != TokenType::START_SCOPE)
-	{
-		//TODO complain
-		delete stmnt;
-		return nullptr;
-	}
-
-	while (tokens->hasNext())
-	{
-		Statement* swCase = parseCase();
-
-		if (!swCase)
-		{
-			break;
-		}
-
-		stmnt->cases.push_back(swCase);
-
-	}
-
-	tkn = tokens->current();
-
-	if (tkn->type != TokenType::END_SCOPE)
-	{
-		//TODO complain
-		delete stmnt;
-		return nullptr;
-	}
-
-	return stmnt;
-}
-*/
-/*
-Statement* Parser::parseCase(Statement* parent)
-{
-	Token* tkn = tokens->current();
-
-	if (tkn->type != TokenType::KEYWORD || tkn->str != "case")
-	{
-		return nullptr;
-	}
-
-	auto stmnt = new CaseStatement();
-	Value* caseVal = parseValue();
-
-	if (!caseVal)
-	{
-		//TODO complain
-		delete stmnt;
-		return nullptr;
-	}
-
-	stmnt->condition = caseVal;
-
-	tkn = tokens->current();
-
-	if (tkn->type != TokenType::COLON)
-	{
-		//TODO complain
-		delete stmnt;
-		return nullptr;
-	}
-
-	tokens->consume();
-
-	while (tokens->hasNext())
-	{
-		Statement* logic = parseLogic();
-		
-		if (!logic)
-		{
-			break;
-		}
-
-		stmnt->logic.push_back(logic);
-
-		if (!parseSemicolon())
-		{
-			//TODO complain
-			delete stmnt;
-			return nullptr;
-		}
-
-	}
-
-	return stmnt;
-}
-*/
-/*
-Statement* Parser::parseStmtInParentheses(ParseMethod pm)
-{
-	Token* tkn = tokens->current();
-
-	if (tkn->str != "(")
-	{
-		return nullptr;
-	}
-
-	tokens->consume();
-	auto found = (this->*pm)();
-
-	if (tokens->current()->type != TokenType::END_PAREN)
-	{
-		postParseException(new UnexpectedTokenException(tokens->current(), ')'));
-		delete found;
-		return nullptr;
-	}
-
-	tokens->consume();
-
-	return found;
-}
-*/
-//TODO parse using Shunting-yard algorithm (or at least check for compliance)
-//https://en.wikipedia.org/wiki/Shunting-yard_algorithm
-Value* Parser::parseValue(bool doPostfix)
-{
-	Value* foundValue = nullptr;
-	std::vector<Statement*> dispatchParams;
-
-	Token* tkn = tokens->current();
-
-	if (tkn->type == TokenType::KEYWORD)
-	{
-		tokens->consume();
-
-		if (tkn->str == "make")
-		{
-			/*
-			auto type = parseTypeName();
-			tkn = tokens->current();
-
-			if (tkn->type != TokenType::START_PAREN)
-			{
-				//TODO complain
-			}
-
-			tokens->consume();
-
-			std::vector<Value*> cargs;
-
-			parseValueList(cargs);
-
-			tkn = tokens->current();
-			if (tkn->type != TokenType::END_PAREN)
-			{
-				//TODO complain
-			}
-
-			tokens->consume();
-			*/
-			foundValue = nullptr;//new StackAllocStatement(parseType());
-		}
-		if (tkn->str == "this")
-		{
-			foundValue = nullptr;//new ThisStatement();
-		}
-		else if (tkn->str == "super")
-		{
-			foundValue = nullptr;//new SuperStatement();
-		}
-		else
-		{
-			//postParseException(new ParseException("Invalid value keyword:", tkn));
-			return nullptr;
-		}
-		//TODO figure out what to do with "new" keyword
-		//probably use it in CPU-sided memory allocation
-		/*else if (tkn->str == "new")
-		{
-			return new HeapAllocStatement(parseType());
-		}
-		//TODO complain
-		*/
-	}
-	//field, constructor...
-	else if (tkn->type == TokenType::IDENTIFIER)
-	{
-		std::vector<Token*> modChain;
-
-		while (tokens->current()->type == TokenType::IDENTIFIER && tokens->peek()->type == TokenType::COLON)
-		{
-			modChain.push_back(tokens->current());
-			tokens->consume(2);
-			
-		}
-		/*
-		foundValue = (Value*)parseFieldOrFuncValue();
-
-		for (auto mod = modChain.rbegin(); mod != modChain.rend(); ++mod)
-		{
-			foundValue = new ModuleReadStatement(*mod, foundValue);
-
-		}
-		*/
-	}
-	//(x)
-	else if (tkn->type == TokenType::START_PAREN)
-	{
-		//foundValue = parseValueInParentheses();
-
-	}
-	//[xs...] (array list)
-	else if (tkn->type == TokenType::START_BRACKET)
-	{
-		tokens->consume();
-		std::vector<Value*> arrayList;
-
-		parseValueList(arrayList);
-
-		if (tokens->current()->type != TokenType::END_BRACKET)
-		{
-			return nullptr;
-		}
-
-		tokens->consume();
-
-		//foundValue = new ListValue(arrayList);
-
-	}
-	//|x| (abs value)
-	else if (tkn->str == "|")
-	{
-		tokens->consume();
-		foundValue = parseValue();
-
-		if (tokens->current()->str != "|")
-		{
-			postParseException(new ParseException("Absolute values must be surrounded by pipes ('|')", tokens->current()));
-			return nullptr;
-		}
-
-		tokens->consume();
-		//foundValue = new AbsOpStatement(foundValue);
-	}
-	//!x, ~x, -x, etc.
-	else if (tkn->type == TokenType::OPERATOR)
-	{
-		//!x (bool invert)
-		if (tkn->str == "!")
-		{
-			tokens->consume();
-			//foundValue = new BoolInvOpStatement(parseValue());
-
-		}
-		//~x (bitwise invert)
-		else if (tkn->str == "~")
-		{
-			tokens->consume();
-			//foundValue = new BitInvOpStatement(parseValue());
-
-		}
-		//-x (int negate)
-		else if (tkn->str == "-")
-		{
-			tokens->consume();
-			//foundValue = new IntNegOpStatement(parseValue());
-
-		}
-
-		postParseException(new ParseException("Invalid prefix operator; try !, ~, -, or |value|", tokens->current()));
-		return nullptr;
-	}
-	//else foundValue = parseLiteral();
-
-	if (!foundValue)
-	{
-		return nullptr;
-	}
-
-	//*technically* these are postfix, but really postfix is just for math operators.
-
-	while (true)
-	{
-		tkn = tokens->current();
-
-		if (tkn->type == TokenType::START_BRACKET)
-		{
-			std::vector<Value*> indices;
-
-			if (!parseArrayList(indices) || indices.size() == 0)
-			{
-				postParseException(new ParseException("Invalid array-style accessor value starts here:", tkn));
-				delete foundValue;
-				return nullptr;
-			}
-
-			//foundValue = new ArrayAccessStatement(value, index);
-		}
-		//x.y or x.y()
-		else if (tkn->type == TokenType::PERIOD)
-		{
-			tkn = tokens->next();
-			/*Statement* fieldOrFunc = parseFieldOrFuncValue();
-
-			if (!fieldOrFunc)
-			{
-				postParseException(new ParseException("Invalid attempt to access a member:", tkn));
-				delete foundValue;
-				return nullptr;
-			}
-
-			//TODO retarget
-			//fieldOrFunc.setTarget(foundValue);
-			foundValue = (Value*)fieldOrFunc;*/
-		}
-		else break;
-	}
-
-	if (!doPostfix)
-	{
-		return foundValue;
-	}
-
-	while (true)
-	{
-		tkn = tokens->current();
-
-		//x + y
-		if (tkn->type == TokenType::OPERATOR)
-		{
-			/*if (tkn->type == TokenType::MATH_OPERATOR && tkn->str[tkn->str.size() - 1] == '=')
-			{
-				//nvm we just found a setter, which isn't a valid value
-				//so no I don't want stupid things like x = (y = z);
-				break;
-			}
-
-			tkn = tokens->next();
-
-			//fun fact, this is the only reason why the postfix flag is here
-			//it's only so that the order of operations is preserved (left to right)
-			//I'd love to have it be mathematically accurate, but that logic will be a PAIN to implement
-			Statement* rhs = parseValue(false);
-			
-			if (!rhs)
-			{
-				postParseException(new ParseException("Invalid value for RHS of equation starts here", tkn));
-				delete foundValue;
-				return nullptr;
-			}
-			*/
-			//foundValue = new ValueOperatorStatement(foundValue, tkn.str, rhs);
-		}
-		else break;
-	}
-	
-	return foundValue;
-}
-/*
-Value* Parser::parseValueInParentheses()
-{
-	return (Value*)parseStmtInParentheses((ParseMethod)&Parser::parseAnyValue);
-}
-*/
-/*
-Value* Parser::parseFieldOrFuncValue()
-{
-	Token* tkn = tokens->current();
-
-	if (tkn->type != TokenType::IDENTIFIER)
+	if (type == nullptr)
 	{
 		//TODO complain
 		return nullptr;
 	}
 
-	Token* name = tkn;
+	auto name = tokens->current();
+	ptr<Value> initVal = nullptr;
 
-	tkn = tokens->next();
-	std::vector<Value*> accessors;
-
-	if (tkn->type == TokenType::START_BRACKET)
+	if (name->type != TokenType::IDENTIFIER)
 	{
-		//either an array accessor or dispatch
-
-		if (!parseArrayList(accessors) || accessors.size() == 0)
-		{
-			postParseException(new ParseException("Invalid array accessor (or dispatch) value(s) start at:", tkn));
-			return nullptr;
-		}
-
-	}
-
-	if (tokens->current()->type == TokenType::START_PAREN)
-	{
-		std::vector<Value*> args;
-		parseValueList(args);
-
-		tkn = tokens->current();
-		
-		if (tkn->type != TokenType::END_PAREN)
-		{
-			postParseException(new UnexpectedTokenException(tkn, ')'));
-		}
-
-		if (accessors.size() > 0)
-		{
-			//return new GPUDispatch();
-		}
-
-		//return new FuncCall(type, args);
-	}
-	else if (type->generics.size() > 0)
-	{
-		//someone's trying to use a type name as a field
-		//extremely weird but OK
-		postParseException(new ParseException("Valid(ish) type with generic found, but being used as a field and not a constructor", tkn));
+		//TODO complain
 		delete type;
 		return nullptr;
 	}
 
-	//auto found = new MemberReadStatement(type->mod, type->name);
+	tokens->consume();
 
-	if (accessors.size() > 0)
+	if (tokens->current()->str == "=")
 	{
-		found = new ArrayAccess(found, accessors);
+		tokens->consume();
+		initVal = parseAnyValue();
+
 	}
 
-	//return found;
+	return new MemberVariable(name, type, initVal, isConst);
 }
-*/
-
-/*
-Statement* Parser::parseLiteral()
-{
-	
-}
-*/

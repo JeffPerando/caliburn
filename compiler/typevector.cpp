@@ -13,9 +13,9 @@ uint32_t TypeVector::getAlignBytes() const
 	return inner->getAlignBytes();
 }
 
-Type* TypeVector::clone() const
+ptr<Type> TypeVector::makeVariant(ref<std::vector<ptr<Type>>> genArgs) const
 {
-	return new TypeVector(elements, inner);
+	return new TypeVector(elements, genArgs[0]);
 }
 /*
 void TypeVector::getConvertibleTypes(std::set<ConcreteType*>& types)
@@ -46,7 +46,7 @@ TypeCompat TypeVector::isCompatible(Operator op, Type* rType) const
 		switch (op)
 		{
 			case Operator::BIT_AND:
-			case Operator::BIT_NOT:
+			case Operator::BIT_NEG:
 			case Operator::BIT_OR:
 			case Operator::BIT_XOR: return TypeCompat::INCOMPATIBLE_OP;
 		}

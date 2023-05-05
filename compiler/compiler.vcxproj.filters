@@ -53,9 +53,6 @@
     <ClCompile Include="langcore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="type.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="cfg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -93,6 +90,9 @@
       <Filter>Source Files\types</Filter>
     </ClCompile>
     <ClCompile Include="typevoid.cpp">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="type.cpp">
       <Filter>Source Files\types</Filter>
     </ClCompile>
   </ItemGroup>
@@ -221,6 +221,9 @@
       <Filter>Header Files\ast</Filter>
     </ClInclude>
     <ClInclude Include="typestmt.h">
+      <Filter>Header Files\ast</Filter>
+    </ClInclude>
+    <ClInclude Include="valstmt.h">
       <Filter>Header Files\ast</Filter>
     </ClInclude>
   </ItemGroup>

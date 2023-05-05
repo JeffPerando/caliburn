@@ -7,14 +7,10 @@
 #include <vector>
 
 #include "basic.h"
-#include "syntax.h"
-#include "cllr.h"
 
 /*
 Contains necessary constants, data types, and functions necessary for parsing, interpreting,
 and compiling Caliburn code.
-
-Also includes the syntax header in case you need that (I believe this does as well)
 */
 namespace caliburn
 {
@@ -78,8 +74,7 @@ namespace caliburn
 			PROTECTED : 1,
 			PRIVATE : 1,
 			SHARED : 1,
-			STATIC : 1,
-			STRONG : 1;
+			STATIC : 1;
 
 		StorageModifiers()
 		{
@@ -88,8 +83,7 @@ namespace caliburn
 			PRIVATE = 0;
 			SHARED = 0;
 			STATIC = 0;
-			STRONG = 0;
-		}
+		};
 
 	};
 

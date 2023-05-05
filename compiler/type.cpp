@@ -4,7 +4,7 @@
 
 using namespace caliburn;
 
-Type* ParsedType::resolve(ref<const SymbolTable> table)
+ptr<Type> ParsedType::resolve(ref<const SymbolTable> table)
 {
 	auto lookup = &table;
 
@@ -58,27 +58,44 @@ Type* ParsedType::resolve(ref<const SymbolTable> table)
 		return nullptr;
 	}
 
-	auto clone = cType->clone();
-
-	for (size_t i = 0; i < generics.size(); ++i)
+	try
 	{
-		auto gType = generics.at(i);
+		std::vector<ptr<Type>> resolvedGenerics;
 
-		auto gConcrete = gType->resolve(table);
-
-		if (gConcrete == nullptr)
+		for (size_t i = 0; i < generics.size(); ++i)
 		{
-			//Might have the potential to try and delete pointers it shouldn't.
-			delete clone;
-			return nullptr;
+			auto gType = generics.at(i);
+
+			auto gConcrete = gType->resolve(table);
+
+			if (gConcrete == nullptr)
+			{
+				//TODO complain
+			}
+
+			resolvedGenerics.push_back(gConcrete);
+
 		}
 
-		clone->setGeneric(i, gConcrete);
+		resultType = cType->makeVariant(resolvedGenerics);
+
+	}
+	catch (std::exception e)
+	{
+		//TODO complain
+	}
+	
+	return resultType;
+}
+
+void Variable::resolveSymbols(ref<const SymbolTable> table)
+{
+	if (typeHint != nullptr)
+	{
+		type = typeHint->resolve(table);
 
 	}
 
-	resultType = clone;
-	return clone;
 }
 
 void Variable::emitDeclCLLR(ref<cllr::Assembler> codeAsm)

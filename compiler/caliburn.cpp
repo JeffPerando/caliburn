@@ -9,21 +9,36 @@
 
 using namespace caliburn;
 
-std::vector<Statement*>* parseSrc(std::string text)
+Compiler::~Compiler()
 {
-	std::vector<Token> tokens;
-	auto ast = new std::vector<Statement*>();
+	for (auto stmt : ast)
+	{
+		delete stmt;
+	}
 
+	ast.clear();
+
+}
+
+void Compiler::parseText(std::string text)
+{
+	if (!ast.empty())
+	{
+		throw std::exception("Caliburn: parsing method called a second time");
+	}
+
+	std::vector<Token> tokens;
+	
 	//Parse the text into tokens (duh)
 	Tokenizer t;
 	t.tokenize(text, tokens);
 
 	//Build the initial AST (ok)
 	Parser p;
-	p.parse(&tokens, ast);
+	p.parse(&tokens, &ast);
 
 	//Validate AST
-	for (auto stmt : *ast)
+	for (auto stmt : ast)
 	{
 		std::set<StatementType> topStmts = TOP_STMT_TYPES;
 
@@ -40,46 +55,51 @@ std::vector<Statement*>* parseSrc(std::string text)
 		*/
 	}
 
-	return ast;
 }
 
-std::vector<Statement*>* parseCBIR(std::vector<uint32_t>* cbir)
+void Compiler::parseCBIR(std::vector<uint32_t>* cbir)
 {
-	return nullptr;
+
 }
 
-bool compileShaders(std::vector<Statement*>* ast, std::string shaderName, std::vector<Shader>& shaderDest)
+bool Compiler::compileShaders(std::string shaderName, std::vector<Shader>& shaderDest)
 {
+	if (ast.empty())
+	{
+		throw std::exception("Caliburn: parsing method not called!");
+	}
+
 	/*
 	OK so I'll admit the code below looks utterly goofy, and is probably a form of lambda abuse.
 
-	The next step is to conditionally compile the ast-> We do this by looking for top-level if statements.
+	The next step is to conditionally compile the AST. We do this by looking for top-level if statements.
 	Then, we check its condition and evaluate, which means inserting the entirety of the branch's contents
-	into the ast-> Then we sort the AST, go back to the beginning, and do it all over again. This repeats
+	into the AST. Then we sort the AST, go back to the beginning, and do it all over again. This repeats
 	until there's no more if statements. Once that's done, the real compilation begins.
 	*/
 
-	/* Conditional compilation
-	auto sortAST = [&ast]() -> void {
-		std::sort(ast->begin(), ast->end(), [ast](const Statement* a, const Statement* b) -> bool
+	//Conditional compilation
+	/*
+	auto sortAST = lambda_p1(this) {
+		std::sort(ast.begin(), ast.end(), lambda(const ptr<Statement> a, const ptr<Statement> b)
 			{
 				return a->type > b->type;
 			});
 	};
 
-	auto insertCode = [&ast, sortAST](ScopeStatement* stmt) -> void {
+	auto insertCode = lambda_p2(this, sortAST, ptr<ScopeStatement> stmt) {
 		auto inner = &stmt->stmts;
-		ast->insert(ast->end(), inner->begin(), inner->end());
+		ast.insert(ast.end(), inner->begin(), inner->end());
 		sortAST();
 	};
 
 	sortAST();
 
-	for (auto i = 0; i < ast->size(); ++i)
+	for (auto i = 0; i < ast.size(); ++i)
 	{
-		auto stmt = ast->at(i);
+		auto stmt = ast.at(i);
 
-		TODO compile-time evalation
+		//TODO compile-time evalation
 		if (stmt->type == StatementType::VARIABLE)
 		{
 			continue;
@@ -121,7 +141,7 @@ bool compileShaders(std::vector<Statement*>* ast, std::string shaderName, std::v
 	auto mod = new CompiledModule();
 
 	//COMPILE
-	for (auto stmt : *ast)
+	for (auto stmt : ast)
 	{
 		if (stmt->type == StatementType::IMPORT)
 		{
@@ -144,19 +164,7 @@ bool compileShaders(std::vector<Statement*>* ast, std::string shaderName, std::v
 	delete mod;
 	delete root;
 
-	delete ast;
-
 	return false;
-}
-
-bool Compiler::compileShadersSrc(std::string text, std::string shaderName, std::vector<Shader>& shaderDest)
-{
-	return compileShaders(parseSrc(text), shaderName, shaderDest);
-}
-
-bool Compiler::compileShadersCBIR(std::vector<uint32_t>* cbir, std::string shaderName, std::vector<Shader>& shaderDest)
-{
-	return compileShaders(parseCBIR(cbir), shaderName, shaderDest);
 }
 
 Compiler* Compiler::o(OptimizeLevel lvl)

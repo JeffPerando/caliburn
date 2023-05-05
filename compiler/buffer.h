@@ -47,6 +47,16 @@ namespace caliburn
 			return vec->at(index);
 		}
 
+		T* prev(int64_t off = 1)
+		{
+			return &vec->at(index - off);
+		}
+
+		T prevVal(int64_t off = 1)
+		{
+			return vec->at(index - off);
+		}
+
 		//fetch upcoming
 		T* peek(size_t offset = 1) const
 		{

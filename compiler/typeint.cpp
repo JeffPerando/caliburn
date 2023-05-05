@@ -32,11 +32,11 @@ void TypeInt::getConvertibleTypes(std::set<ConcreteType*>& types)
 
 }
 */
-TypeCompat TypeInt::isCompatible(Operator op, Type* rType) const
+TypeCompat TypeInt::isCompatible(Operator op, ptr<Type> rType) const
 {
 	if (rType == nullptr)
 	{
-		if ((op == Operator::NEGATE || op == Operator::ABS)
+		if ((op == Operator::NEG || op == Operator::ABS)
 			&& !isSigned)
 		{
 			return TypeCompat::INCOMPATIBLE_OP;
@@ -96,7 +96,7 @@ TypeCompat TypeInt::isCompatible(Operator op, Type* rType) const
 	return TypeCompat::INCOMPATIBLE_OP;
 }
 
-void TypeInt::emitDeclCLLR(cllr::Assembler& codeAsm)
+void TypeInt::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 {
 	id = codeAsm.pushNew(cllr::Opcode::TYPE_INT, { intBits, isSigned }, {});
 }

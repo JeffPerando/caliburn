@@ -7,21 +7,11 @@
 
 namespace caliburn
 {
-	struct LiteralValue : public Value
+	struct IntLiteralValue : public Value
 	{
 		const ptr<Token> lit;
 
-		//TODO replace with 64-bit
-		uint32_t litBits = 0;
-
-		LiteralValue(ptr<Token> l) : Value(ValueType::LITERAL), lit(l)
-		{
-			if (type == nullptr)
-			{
-				//TODO complain
-			}
-
-		}
+		IntLiteralValue(ref<Token> l) : Value(ValueType::INT_LITERAL), lit(&l) {}
 
 		virtual Token* firstTkn() const override
 		{
@@ -49,7 +39,53 @@ namespace caliburn
 
 			type = pType.resolve(table);
 
-			//TODO parse token
+		}
+
+		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		{
+			type->emitDeclCLLR(codeAsm);
+
+			//Integer literals parse immediately since there's no loss in precision;
+			//Float literals defer parsing since they can lose precision during parsing
+			//Why does it matter? I dunno
+			auto parsedLit = type->parseLiteral(lit->str);
+
+			return codeAsm.pushNew(cllr::Opcode::VALUE_INT_LIT, { (uint32_t)(parsedLit & 0xFFFFFFFF), (uint32_t)((parsedLit >> 32) & 0xFFFFFFFF) }, { type->id });
+		}
+
+	};
+
+	struct FloatLiteralValue : public Value
+	{
+		const ptr<Token> lit;
+
+		FloatLiteralValue(ref<Token> l) : Value(ValueType::FLOAT_LITERAL), lit(&l) {}
+
+		virtual Token* firstTkn() const override
+		{
+			return lit;
+		}
+
+		virtual Token* lastTkn() const override
+		{
+			return lit;
+		}
+
+		virtual bool isLValue() const override
+		{
+			return false;
+		}
+
+		virtual bool isCompileTimeConst() const override
+		{
+			return true;
+		}
+
+		virtual void resolveSymbols(ref<const SymbolTable> table) override
+		{
+			auto pType = ParsedType(lit->str.substr(lit->str.find_first_of('_') + 1));
+
+			type = pType.resolve(table);
 
 		}
 
@@ -57,16 +93,19 @@ namespace caliburn
 		{
 			type->emitDeclCLLR(codeAsm);
 
-			return codeAsm.pushNew(cllr::Opcode::VALUE_LITERAL, { litBits }, { type->id });
+			//We defer parsing further! Great success!
+			auto sID = codeAsm.addString(lit->str.substr(0, lit->str.find_first_of('_')));
+
+			return codeAsm.pushNew(cllr::Opcode::VALUE_FP_LIT, { sID }, { type->id });
 		}
 
 	};
 
 	struct StringLitValue : public Value
 	{
-		ptr<Token> lit = nullptr;
+		const ptr<Token> lit;
 
-		StringLitValue() : Value(ValueType::STR_LITERAL) {}
+		StringLitValue(ref<Token> str) : Value(ValueType::STR_LITERAL), lit(&str) {}
 
 		virtual Token* firstTkn() const override
 		{
@@ -110,7 +149,122 @@ namespace caliburn
 
 			auto sID = codeAsm.addString(lit->str);
 			
-			return codeAsm.pushNew(cllr::Opcode::VALUE_LITERAL, { sID }, { type->id });
+			return codeAsm.pushNew(cllr::Opcode::VALUE_STR_LIT, { sID }, { type->id });
+		}
+
+	};
+
+	struct BoolLitValue : public Value
+	{
+		const ptr<Token> lit;
+		
+		BoolLitValue(ref<Token> v) : Value(ValueType::STR_LITERAL), lit(&v)  {}
+
+		virtual Token* firstTkn() const override
+		{
+			return lit;
+		}
+
+		virtual Token* lastTkn() const override
+		{
+			return lit;
+		}
+
+		virtual bool isLValue() const override
+		{
+			return false;
+		}
+
+		virtual bool isCompileTimeConst() const override
+		{
+			return true;
+		}
+
+		virtual void resolveSymbols(ref<const SymbolTable> table) override
+		{
+			auto sym = table.find("bool");
+
+			if (sym == nullptr)
+			{
+				return;
+			}
+
+			if (sym->type == SymbolType::TYPE)
+			{
+				type = (Type*)sym->data;
+			}
+
+		}
+
+		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		{
+			type->emitDeclCLLR(codeAsm);
+
+			return codeAsm.pushNew(cllr::Opcode::VALUE_BOOL_LIT, { lit->str == "true" }, { type->id });
+		}
+
+	};
+
+	struct ArrayLitValue : public Value
+	{
+		ptr<Token> start = nullptr;
+		std::vector<ptr<Value>> values;
+		ptr<Token> end = nullptr;
+
+		ArrayLitValue() : Value(ValueType::UNKNOWN) {}
+		virtual ~ArrayLitValue() {}
+
+		virtual Token* firstTkn() const override
+		{
+			return start;
+		}
+
+		virtual Token* lastTkn() const override
+		{
+			return end;
+		}
+
+		virtual bool isLValue() const override
+		{
+			return false;
+		}
+
+		virtual bool isCompileTimeConst() const override
+		{
+			return true;
+		}
+
+		virtual void resolveSymbols(ref<const SymbolTable> table) override
+		{
+			for (auto v : values)
+			{
+				if (v != nullptr)
+				{
+					v->resolveSymbols(table);
+
+				}
+
+			}
+
+			//TODO type inference
+		}
+
+		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		{
+			auto id = codeAsm.pushNew(cllr::Opcode::VALUE_ARRAY_LIT, { (uint32_t)values.size() }, {});
+
+			for (auto v : values)
+			{
+				if (v != nullptr)
+				{
+					//TODO figure out VALUE_ARRAY_LIT semantics
+					v->emitValueCLLR(codeAsm);
+
+				}
+
+			}
+
+			return id;
 		}
 
 	};
@@ -150,7 +304,7 @@ namespace caliburn
 			
 			auto compat = lValue->type->isCompatible(op, rValue->type);
 
-			//bla bla bla
+			//TODO check compatibility
 
 			type = lValue->type;
 
@@ -161,7 +315,63 @@ namespace caliburn
 			auto lhs = lValue->emitValueCLLR(codeAsm);
 			auto rhs = rValue->emitValueCLLR(codeAsm);
 
-			return codeAsm.pushNew(cllr::Opcode::VALUE_EXPR, { (uint32_t)op }, { lhs, rhs });
+			auto cllrOp = cllr::Opcode::VALUE_EXPR;
+
+			auto opType = opCategories.at(op);
+
+			if (opType == OpCategory::LOGICAL)
+			{
+				cllrOp = cllr::Opcode::COMPARE;
+			}
+
+			return codeAsm.pushNew(cllrOp, { (uint32_t)op }, { lhs, rhs });
+		}
+
+	};
+
+	struct IsAValue : public Value
+	{
+		ptr<Value> val = nullptr;
+		ptr<ParsedType> chkPType = nullptr;
+		ptr<Type> chkType = nullptr;
+
+		IsAValue() : Value(ValueType::CAST) {}
+		virtual ~IsAValue() {}
+
+		virtual Token* firstTkn() const override
+		{
+			return val->firstTkn();
+		}
+
+		virtual Token* lastTkn() const override
+		{
+			return chkPType->lastTkn();
+		}
+
+		virtual bool isLValue() const override
+		{
+			return false;
+		}
+
+		virtual bool isCompileTimeConst() const override
+		{
+			return val->isCompileTimeConst();
+		}
+
+		virtual void resolveSymbols(ref<const SymbolTable> table) override
+		{
+			val->resolveSymbols(table);
+			chkType = chkPType->resolve(table);
+
+		}
+
+		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		{
+			chkType->emitDeclCLLR(codeAsm);
+			auto vID = val->emitValueCLLR(codeAsm);
+			auto tID = chkType->id;
+
+			return codeAsm.pushNew(cllr::Opcode::VALUE_INSTANCEOF, {}, { vID, tID, 0 });;
 		}
 
 	};
@@ -259,25 +469,183 @@ namespace caliburn
 
 	};
 
-	struct FuncCallValue : public Value
+	struct VarReadValue : public Value
 	{
-		ptr<Token> name = nullptr;
-		std::vector<Value*> args;
-		ptr<Token> last = nullptr;
+		const ptr<Token> var;
 
-		cllr::SSA funcID = 0;
+		ptr<Symbol> varSym = nullptr;
 
-		FuncCallValue() : Value(ValueType::FUNCTION_CALL) {}
-		virtual ~FuncCallValue() {}
+		VarReadValue(ptr<Token> v) : Value(ValueType::UNKNOWN), var(v) {}
+		virtual ~VarReadValue() {}
 
 		virtual Token* firstTkn() const override
 		{
+			return var;
+		}
+
+		virtual Token* lastTkn() const override
+		{
+			return var;
+		}
+
+		virtual bool isLValue() const override
+		{
+			if (varSym == nullptr)
+			{
+				return true;
+			}
+
+			return varSym->type == SymbolType::VARIABLE;
+		}
+
+		virtual bool isCompileTimeConst() const override
+		{
+			return false;
+		}
+
+		virtual void resolveSymbols(ref<const SymbolTable> table) override
+		{
+			varSym = table.find(var->str);
+
+		}
+
+		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		{
+			if (varSym->type == SymbolType::VARIABLE)
+			{
+				return ((ptr<Variable>)varSym->data)->emitLoadCLLR(codeAsm, 0);
+			}
+			else if (varSym->type == SymbolType::VALUE)
+			{
+				return ((ptr<Value>)varSym->data)->emitValueCLLR(codeAsm);
+			}
+
+			return 0;
+		}
+
+	};
+
+	struct MemberReadValue : public Value
+	{
+		ptr<Value> target = nullptr;
+		ptr<Token> memberName = nullptr;
+		ptr<Symbol> member = nullptr;
+
+		MemberReadValue() : Value(ValueType::UNKNOWN) {}
+		virtual ~MemberReadValue() {}
+
+		virtual Token* firstTkn() const override
+		{
+			return target->firstTkn();
+		}
+
+		virtual Token* lastTkn() const override
+		{
+			return memberName;
+		}
+
+		virtual bool isLValue() const override
+		{
+			return false;
+		}
+
+		virtual bool isCompileTimeConst() const override
+		{
+			return false;
+		}
+
+		virtual void resolveSymbols(ref<const SymbolTable> table) override
+		{
+			target->resolveSymbols(table);
+
+			member = target->type->memberTable->find(memberName->str);
+
+			if (member->type != SymbolType::VARIABLE)
+			{
+				//TODO complain
+			}
+
+		}
+
+		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		{
+			auto vID = target->emitValueCLLR(codeAsm);
+
+			return ((Variable*)member->data)->emitLoadCLLR(codeAsm, vID);
+		}
+
+	};
+	
+	struct UnaryValue : public Value
+	{
+		Operator op = Operator::UNKNOWN;
+		ptr<Token> start = nullptr;
+		ptr<Value> val = nullptr;
+		ptr<Token> end = nullptr;
+
+		UnaryValue() : UnaryValue(nullptr, Operator::UNKNOWN, nullptr) {}
+		UnaryValue(ptr<Token> f, Operator o, ptr<Value> v) : Value(ValueType::UNKNOWN), start(f), op(o), val(v) {}
+		virtual ~UnaryValue() {}
+
+		virtual Token* firstTkn() const override
+		{
+			return start;
+		}
+
+		virtual Token* lastTkn() const override
+		{
+			if (end == nullptr)
+				return val->lastTkn();
+			return end;
+		}
+
+		virtual bool isLValue() const override
+		{
+			return false;
+		}
+
+		virtual bool isCompileTimeConst() const override
+		{
+			return val->isCompileTimeConst();
+		}
+
+		virtual void resolveSymbols(ref<const SymbolTable> table) override
+		{
+			val->resolveSymbols(table);
+		}
+
+		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		{
+			auto vID = val->emitValueCLLR(codeAsm);
+;			
+			return codeAsm.pushNew(cllr::Opcode::VALUE_EXPR_UNARY, { (uint32_t)op }, { vID });
+		}
+
+	};
+
+	struct FnCallValue : public Value
+	{
+		ptr<Token> name = nullptr;
+		cllr::SSA funcID = 0;
+		ptr<Value> target = nullptr;
+		std::vector<ptr<ParsedType>> pGenerics;
+		std::vector<ptr<Type>> generics;
+		std::vector<ptr<Value>> args;
+		ptr<Token> end = nullptr;
+
+		FnCallValue() : Value(ValueType::FUNCTION_CALL) {}
+		virtual ~FnCallValue() {}
+
+		virtual Token* firstTkn() const override
+		{
+			if (target != nullptr)
+				return target->firstTkn();
 			return name;
 		}
 
 		virtual Token* lastTkn() const override
 		{
-			return last;
+			return end;
 		}
 
 		virtual bool isLValue() const override
@@ -286,191 +654,143 @@ namespace caliburn
 		}
 
 		virtual bool isCompileTimeConst() const override
-		{
-			return false;
-		}
-
-		virtual void resolveSymbols(ref<const SymbolTable> table) override
-		{
-			//funcID = table.getFunction(name->str);
-
-			for (auto arg : args)
-			{
-				arg->resolveSymbols(table);
-
-			}
-
-		}
-
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
-		{
-			std::vector<cllr::SSA> vals;
-
-			vals.reserve(args.size());
-
-			for (auto arg : args)
-			{
-				vals.push_back(arg->emitValueCLLR(codeAsm));
-			}
-
-			auto vID = codeAsm.pushNew(cllr::Opcode::CALL, { (uint32_t)args.size() }, { funcID });
-
-			for (uint32_t i = 0; i < vals.size(); ++i)
-			{
-				codeAsm.push(0, cllr::Opcode::CALL_ARG, { i }, { vID, vals.at(i) });
-			}
-
-			return vID;
-		}
-
-	};
-
-	struct SymbolLookupValue : public Value
-	{
-		const ptr<Token> varTkn;
-		Symbol* varSym = nullptr;
-
-		SymbolLookupValue(Token* tkn) : varTkn(tkn), Value(ValueType::VAR_READ) {}
-		virtual ~SymbolLookupValue() {}
-
-		virtual Token* firstTkn() const override
-		{
-			return varTkn;
-		}
-
-		virtual Token* lastTkn() const override
-		{
-			return varTkn;
-		}
-
-		virtual bool isLValue() const override
 		{
 			return true;
 		}
 
-		/*
-		TECHNICALLY, if we replace the value of a variable with a constant, then this should
-		reflect that replacement and return true. However, we don't know when this can be
-		called. So, we just return false and play it safe.
-		*/
-		virtual bool isCompileTimeConst() const override
-		{
-			return false;
-		}
-
 		virtual void resolveSymbols(ref<const SymbolTable> table) override
 		{
-			varSym = table.find(varTkn->str);
+			ptr<const SymbolTable> lookup = &table;
 
-		}
+			for (auto p : pGenerics)
+			{
+				generics.push_back(p->resolve(table));
+			}
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
-		{
-			if (varSym == nullptr)
+			if (target != nullptr)
+			{
+				args.push_back(target);
+
+				lookup = target->type->memberTable;
+
+			}
+
+			for (auto a : args)
+			{
+				a->resolveSymbols(table);
+			}
+
+			auto fn = lookup->find(name->str);
+
+			if (fn->type == SymbolType::FUNCTION)
+			{
+				funcID = 0;//lookup + create generic variant
+			}
+			else
 			{
 				//TODO complain
-				return 0;
-			}
-
-			if (varSym->type == SymbolType::VARIABLE)
-			{
-				return ((Variable*)varSym->data)->emitLoadCLLR(codeAsm);
-			}
-			else if (varSym->type == SymbolType::VALUE)
-			{
-				auto val = (Value*)varSym->data;
-				return val->emitValueCLLR(codeAsm);
-			}
-			
-			//TODO complain
-			return 0;
-		}
-
-	};
-
-	struct AccessChainValue : public Value
-	{
-		std::vector<ptr<Token>> accesses;
-		ptr<Symbol> endSym = nullptr;
-		
-		AccessChainValue() : Value(ValueType::UNKNOWN) {}
-		virtual ~AccessChainValue() {}
-
-		virtual Token* firstTkn() const override
-		{
-			return accesses.front();
-		}
-
-		virtual Token* lastTkn() const override
-		{
-			return accesses.back();
-		}
-
-		virtual bool isLValue() const override
-		{
-			return true;
-		}
-
-		virtual bool isCompileTimeConst() const override
-		{
-			return false;
-		}
-
-		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		//!!! THIS CODE IS STUPID AND DOES NOT WORK !!!
-		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		virtual void resolveSymbols(ref<const SymbolTable> table) override
-		{
-			auto lookup = &table;
-			size_t depth = 0;
-
-			/*
-			We need to change this code to account for members existing.
-
-			So a Type.getMember() method needs to be written.
-			*/
-			for (auto tkn : accesses)
-			{
-				++depth;
-				
-				auto sym = lookup->find(tkn->str);
-
-				if (sym == nullptr)
-				{
-					//TODO complain
-					break;
-				}
-
-				switch (sym->type)
-				{
-				case SymbolType::MODULE: lookup = ((SymbolTable*)sym->data); continue;
-				case SymbolType::VARIABLE: lookup = ((Variable*)sym->data)->type->members; continue;
-				default: endSym = sym; break;
-				}
-
-				//Workaround for inability to break a loop within a switch (yes, that's a thing)
-				if (endSym != nullptr)
-				{
-					break;
-				}
-
+				return;
 			}
 
 		}
 
 		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
-			if (endSym->type == SymbolType::VALUE)
+			auto callID = codeAsm.pushNew(cllr::Opcode::CALL, {(uint32_t)args.size() + (target != nullptr)}, { funcID });
+
+			for (uint32_t i = 0; i < args.size(); ++i)
 			{
-				return ((Value*)endSym->data)->emitValueCLLR(codeAsm);
+				auto arg = args.at(i);
+				auto aID = arg->emitValueCLLR(codeAsm);
+
+				codeAsm.pushNew(cllr::Opcode::CALL_ARG, { i }, { aID, callID });
+
 			}
 
-			if (endSym->type == SymbolType::VARIABLE)
-			{
-				return ((Variable*)endSym->data)->emitLoadCLLR(codeAsm);
-			}
+			return callID;
+		}
+
+	};
+
+	struct SetterValue : public Value
+	{
+		ptr<Value> lhs = nullptr;
+		ptr<Value> rhs = nullptr;
+
+		SetterValue() : Value(ValueType::UNKNOWN) {}
+		virtual ~SetterValue() {}
+
+		virtual Token* firstTkn() const override
+		{
+			return lhs->firstTkn();
+		}
+
+		virtual Token* lastTkn() const override
+		{
+			return rhs->firstTkn();
+		}
+
+		virtual bool isLValue() const override
+		{
+			return false;
+		}
+
+		virtual bool isCompileTimeConst() const override
+		{
+			return true;
+		}
+
+		virtual void resolveSymbols(ref<const SymbolTable> table) override
+		{
+			lhs->resolveSymbols(table);
+			rhs->resolveSymbols(table);
+
+		}
+
+		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		{
+			auto lVal = lhs->emitValueCLLR(codeAsm);
+			auto rVal = rhs->emitValueCLLR(codeAsm);
+
+			codeAsm.push(0, cllr::Opcode::ASSIGN, {}, { lVal, rVal });
 
 			return 0;
+		}
+
+	};
+
+	struct NullValue : public Value
+	{
+		const ptr<Token> lit;
+
+		NullValue(ptr<Token> v) : Value(ValueType::UNKNOWN), lit(v) {}
+		virtual ~NullValue() {}
+
+		virtual Token* firstTkn() const override
+		{
+			return lit;
+		}
+
+		virtual Token* lastTkn() const override
+		{
+			return lit;
+		}
+
+		virtual bool isLValue() const override
+		{
+			return false;
+		}
+
+		virtual bool isCompileTimeConst() const override
+		{
+			return true;
+		}
+
+		virtual void resolveSymbols(ref<const SymbolTable> table) override {}
+
+		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		{
+			return codeAsm.pushNew(cllr::Opcode::VALUE_NULL, {}, {});
 		}
 
 	};

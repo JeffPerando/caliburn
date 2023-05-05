@@ -7,11 +7,17 @@ namespace caliburn
 {
 	struct TypedefStatement : public Statement
 	{
-		Token* first = nullptr;
+		const ptr<Token> first;
 		const ptr<Token> name;
 		const ptr<ParsedType> alias;
 
-		TypedefStatement(Token* n, ParsedType* t) : Statement(StatementType::TYPEDEF), name(n), alias(t) {}
+		bool isStrong = false;
+
+		TypedefStatement(ptr<Token> f, ptr<Token> n, ptr<ParsedType> t) : Statement(StatementType::TYPEDEF), first(f), name(n), alias(t)
+		{
+			isStrong = (first->str == "strong");
+		}
+
 		virtual ~TypedefStatement() {}
 
 		Token* firstTkn() const override
@@ -24,7 +30,7 @@ namespace caliburn
 			return alias->lastTkn();
 		}
 
-		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm, bool declChildren) override
+		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override
 		{
 			auto sym = table.find(name->str);
 
@@ -46,6 +52,7 @@ namespace caliburn
 			
 			//We do a little cheating and do a little resolving here; It will probably bite me in the arse, tbh
 			//Actually I know it will since the top-level symbols won't all be here
+			//Hi past me, it's present me! Finish the declareHeader system and this will fix itself!
 			auto cType = alias->resolve(table);
 
 			if (cType == nullptr)

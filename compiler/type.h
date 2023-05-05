@@ -12,6 +12,7 @@
 #include "cllrasm.h"
 #include "langcore.h"
 #include "symbols.h"
+#include "syntax.h"
 
 namespace caliburn
 {
@@ -22,7 +23,8 @@ namespace caliburn
 	{
 		UNKNOWN,
 
-		LITERAL,
+		INT_LITERAL,
+		FLOAT_LITERAL,
 		STR_LITERAL,
 		EXPRESSION,
 		VAR_READ,
@@ -35,7 +37,7 @@ namespace caliburn
 	struct Value : public ParsedObject
 	{
 		ValueType const vType;
-		Type* type = nullptr;
+		ptr<Type> type = nullptr;
 
 		Value(ValueType vt) : vType(vt) {}
 		virtual ~Value() {}
@@ -53,14 +55,15 @@ namespace caliburn
 	struct Variable : public ParsedObject
 	{
 		cllr::SSA id = 0;
+		StorageModifiers storeMods = {};
 		bool isConst = false;
-		Token* name = nullptr;
-		ParsedType* typeHint = nullptr;
-		Type* type = nullptr;
-		Value* initValue = nullptr;
+		ptr<Token> name = nullptr;
+		ptr<ParsedType> typeHint = nullptr;
+		ptr<Type> type = nullptr;
+		ptr<Value> initValue = nullptr;
 		
 		Variable() {}
-		Variable(Token* varName, ParsedType* hint, Value* init, bool isImmut) :
+		Variable(ptr<Token> varName, ptr<ParsedType> hint, ptr<Value> init, bool isImmut) :
 			name(varName),
 			typeHint(hint),
 			initValue(init),
@@ -68,6 +71,7 @@ namespace caliburn
 		Variable(ref<const Variable> rhs)
 		{
 			id = rhs.id;
+			storeMods = rhs.storeMods;
 			name = rhs.name;
 			typeHint = rhs.typeHint;
 			type = rhs.type;
@@ -77,13 +81,13 @@ namespace caliburn
 		}
 		virtual ~Variable() {}
 
-		virtual void resolveSymbols(ref<const SymbolTable> table) = 0;
+		virtual void resolveSymbols(ref<const SymbolTable> table);
 
 		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) = 0;
 
-		virtual cllr::SSA emitLoadCLLR(cllr::Assembler& codeAsm) = 0;
+		virtual cllr::SSA emitLoadCLLR(ref<cllr::Assembler> codeAsm, cllr::SSA target) = 0;
 
-		virtual void emitStoreCLLR(cllr::Assembler& codeAsm, cllr::SSA value) = 0;
+		virtual void emitStoreCLLR(ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) = 0;
 
 	};
 
@@ -104,40 +108,51 @@ namespace caliburn
 	{
 	private:
 		std::string fullName = "";
-		Type* resultType = nullptr;
+	protected:
+		ptr<Type> resultType = nullptr;
 	public:
 		const ptr<Token> mod;
 		const ptr<Token> name;
-		std::vector<ParsedType*> generics;
+		ptr<Token> lastToken = nullptr;
+		std::vector<ptr<ParsedType>> generics;
+		std::vector<ptr<Value>> arrayDims;
 		
 		ParsedType() : ParsedType(nullptr) {}
 		ParsedType(std::string name) : ParsedType(nullptr)
 		{
 			fullName = name;
 		}
-		ParsedType(Token* n) : ParsedType(nullptr, n) {}
-		ParsedType(Token* m, Token* n) : mod(m), name(n) {}
+		ParsedType(ptr<Token> n) : ParsedType(nullptr, n) {}
+		ParsedType(ptr<Token> m, ptr<Token> n) : mod(m), name(n) {}
 
 		virtual ~ParsedType()
 		{
-			for (ParsedType* type : generics)
+			for (ptr<ParsedType> type : generics)
 			{
 				delete type;
 			}
 
 		}
 
-		Token* firstTkn() const override
+		ptr<Token> firstTkn() const override
 		{
 			if (mod != nullptr)
 				return mod;
 			return name;
 		}
 
-		Token* lastTkn() const override
+		ptr<Token> lastTkn() const override
 		{
+			if (lastToken != nullptr)
+			{
+				return lastToken;
+			}
+
 			if (!generics.empty())
+			{
 				return generics.back()->lastTkn();
+			}
+
 			return name;
 		}
 
@@ -197,7 +212,7 @@ namespace caliburn
 			return fullName;
 		}
 
-		ParsedType* addGeneric(ParsedType* s)
+		ptr<ParsedType> addGeneric(ptr<ParsedType> s)
 		{
 			generics.push_back(s);
 			return this;
@@ -206,7 +221,7 @@ namespace caliburn
 		/*
 		TODO check for memory leaks; this part involves cloning.
 		*/
-		Type* resolve(ref<const SymbolTable> table);
+		ptr<Type> resolve(ref<const SymbolTable> table);
 
 	};
 
@@ -217,11 +232,11 @@ namespace caliburn
 		const std::string canonName;
 		const size_t maxGenerics;
 		const size_t minGenerics;
-		const ptr<SymbolTable> members = new SymbolTable();
+		const ptr<SymbolTable> memberTable = new SymbolTable();
 	protected:
-		Type* superType = nullptr;
-		std::vector<Type*> generics, genericDefaults;
-		std::vector<Variable*> vars;
+		ptr<Type> superType = nullptr;
+		std::vector<ptr<Type>> generics, genericDefaults;
+		std::vector<ptr<Variable>> members;
 
 		//TODO add dirty flag to trigger a refresh. that or just control when aspects can be edited
 		std::string fullName = "";
@@ -241,18 +256,19 @@ namespace caliburn
 			}
 			
 		}
+
 		virtual ~Type()
 		{
-			delete members;
+			delete memberTable;
 		}
 
 		//annoyed that != doesn't have a default implementation that does this
-		bool operator!=(const Type& rhs) const
+		bool operator!=(ref<const Type> rhs) const
 		{
 			return !(*this == rhs);
 		}
 
-		bool operator==(const Type& rhs) const
+		bool operator==(ref<const Type> rhs) const
 		{
 			if (canonName != rhs.canonName)
 			{
@@ -266,8 +282,8 @@ namespace caliburn
 
 			for (size_t i = 0; i < generics.size(); ++i)
 			{
-				Type* lhsGeneric = generics[i];
-				Type* rhsGeneric = rhs.generics[i];
+				ptr<Type> lhsGeneric = generics[i];
+				ptr<Type> rhsGeneric = rhs.generics[i];
 
 				if (*lhsGeneric == *rhsGeneric)
 				{
@@ -307,14 +323,14 @@ namespace caliburn
 			return fullName;
 		}
 
-		Type* getSuper()
+		ptr<Type> getSuper()
 		{
 			return superType;
 		}
 
-		bool isSuperOf(Type* type)
+		bool isSuperOf(ptr<Type> type)
 		{
-			Type* head = this;
+			ptr<Type> head = this;
 
 			while (head)
 			{
@@ -330,7 +346,7 @@ namespace caliburn
 			return false;
 		}
 
-		virtual void setGeneric(size_t index, Type* type)
+		virtual void setGeneric(size_t index, ptr<Type> type)
 		{
 			if (index >= maxGenerics)
 			{
@@ -344,10 +360,6 @@ namespace caliburn
 
 		virtual cllr::SSA emitDefaultInitValue(ref<cllr::Assembler> codeAsm) = 0;
 
-		//ONLY exists for making a new generic type. so if you don't use generics, there's ZERO point in
-		//properly implementing this. So just return this and be done with it.
-		virtual Type* clone() const = 0;
-
 		//NOTE: because the size can depend on things like generics, members, etc., this HAS to be a method
 		virtual uint32_t getSizeBytes() const = 0;
 
@@ -357,9 +369,19 @@ namespace caliburn
 			return getSizeBytes();
 		}
 		
-		//virtual void getConvertibleTypes(std::set<ConcreteType*>& types) = 0;
+		//virtual void getConvertibleTypes(std::set<Concreteptr<Type>>& types) = 0;
 
-		virtual TypeCompat isCompatible(Operator op, Type* rType) const = 0;
+		virtual TypeCompat isCompatible(Operator op, ptr<Type> rType) const = 0;
+
+		virtual ptr<Type> makeVariant(ref<std::vector<ptr<Type>>> genArgs) const
+		{
+			throw std::exception("Cannot make variant of unspecified type");
+		}
+
+		virtual uint64_t parseLiteral(std::string lit) const
+		{
+			throw std::exception("Cannot parse literal for type; Please only attempt parsing literals of ints or floats");
+		}
 
 	};
 

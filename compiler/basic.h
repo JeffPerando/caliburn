@@ -1,4 +1,8 @@
 
+/*
+This header only exists to help make C++ syntax less goofy
+*/
+
 #pragma once
 
 #include <memory>
@@ -26,3 +30,15 @@ using wptr = std::weak_ptr<T>;
 
 
 #define pass [[fallthrough]]
+
+//Gotta make a way to make lambdas legible too smh my head
+
+#define lambda(...) [](__VA_ARGS__)
+
+/*
+Since we can't have multiple variadic parts, and I don't want clunky passthrough nonsense, I just hand-wrote these.
+I doubt anyone will need more than 3 capture variables, but eh
+*/
+#define lambda_p1(v0, ...) [v0](__VA_ARGS__)
+#define lambda_p2(v0, v1, ...) [v0, v1](__VA_ARGS__)
+#define lambda_p3(v0, v1, v2, ...) [v0, v1, v2](__VA_ARGS__)

@@ -5,9 +5,9 @@
 
 namespace caliburn
 {
-	struct TypeVoid : public ConcreteType
+	struct TypeVoid : public Type
 	{
-		TypeVoid() : ConcreteType(TypeCategory::VOID, "") {}
+		TypeVoid() : Type(TypeCategory::VOID, "") {}
 
 		uint32_t getSizeBytes() const override
 		{
@@ -18,12 +18,6 @@ namespace caliburn
 		{
 			return 0;
 		}
-
-		//void getConvertibleTypes(std::set<ConcreteType*>* types) override;
-
-		TypeCompat isCompatible(Operator op, ConcreteType* rType) const override;
-
-		virtual void getSSAs(cllr::Assembler& codeAsm) override;
 
 		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override;
 

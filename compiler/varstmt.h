@@ -17,7 +17,7 @@ namespace caliburn
 		std::vector<LocalVariable*> vars;
 
 	public:
-		LocalVarStatement(Statement* parent) : Statement(StatementType::VARIABLE, parent){}
+		LocalVarStatement() : Statement(StatementType::VARIABLE){}
 
 		virtual ~LocalVarStatement()
 		{
@@ -30,7 +30,7 @@ namespace caliburn
 
 		}
 
-		void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm, bool declChildren) override
+		void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override
 		{
 			for (auto name : names)
 			{

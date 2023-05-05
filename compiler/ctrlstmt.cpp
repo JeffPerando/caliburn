@@ -7,11 +7,15 @@ void IfStatement::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 {
 	auto cID = condition->emitValueCLLR(codeAsm);
 
-	codeAsm.push(id, cllr::Opcode::JUMP_COND, {}, { cID, innerIf->id, innerElse ? innerElse->id : 0 });
+	auto ifLabel = codeAsm.createSSA(cllr::Opcode::LABEL);
+	auto elseLabel = codeAsm.createSSA(cllr::Opcode::LABEL);
+	auto postLabel = codeAsm.createSSA(cllr::Opcode::LABEL);
+
+	codeAsm.push(0, cllr::Opcode::JUMP_COND, {}, { cID, ifLabel, innerElse ? elseLabel : postLabel });
 
 	innerIf->emitDeclCLLR(codeAsm);
 
-	codeAsm.push(0, cllr::Opcode::JUMP, {}, { postBranchID });
+	codeAsm.push(0, cllr::Opcode::JUMP, {}, { postLabel });
 
 	if (innerElse)
 	{
@@ -19,7 +23,7 @@ void IfStatement::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 
 	}
 
-	codeAsm.push(postBranchID, cllr::Opcode::LABEL, {}, {});
+	codeAsm.push(postLabel, cllr::Opcode::LABEL, {}, {});
 
 }
 
@@ -95,15 +99,22 @@ void WhileStatement::emitDeclCLLR(cllr::Assembler& codeAsm)
 	/*
 	Until CLLR is more fleshed out, we're just going to do the SPIR-V route of putting jumps before labels
 	*/
-	codeAsm.push(0, cllr::Opcode::JUMP, {}, { doWhile ? loop->id : start });
+
+	auto start = codeAsm.createSSA(cllr::Opcode::LABEL);
+	auto cont = codeAsm.createSSA(cllr::Opcode::LABEL);
+	auto loopLabel = codeAsm.createSSA(cllr::Opcode::LABEL);
+	auto exit = codeAsm.createSSA(cllr::Opcode::LABEL);
+
+	codeAsm.push(0, cllr::Opcode::JUMP, {}, { doWhile ? loopLabel : start });
 	codeAsm.push(start, cllr::Opcode::LABEL, {}, {});
-	codeAsm.push(0, cllr::Opcode::LOOP, {}, { exit, cont, loop->id });
+	codeAsm.push(0, cllr::Opcode::LOOP, {}, { exit, cont, loopLabel });
 
 	auto cID = condition->emitValueCLLR(codeAsm);
 
-	codeAsm.push(0, cllr::Opcode::JUMP_COND, {}, { cID, loop->id, exit });
+	codeAsm.push(0, cllr::Opcode::JUMP_COND, {}, { cID, loopLabel, exit });
 
 	codeAsm.setLoop(cont, exit);
+	codeAsm.push(loopLabel, cllr::Opcode::LABEL, {}, {});
 	loop->emitDeclCLLR(codeAsm);
 	codeAsm.exitLoop();
 
