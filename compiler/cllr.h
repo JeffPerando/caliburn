@@ -126,7 +126,7 @@ namespace caliburn
 		struct CompilationUnit
 		{
 			Target target = Target::GPU;
-			std::vector<ptr<Instruction>> code;
+			//std::vector<sptr<Instruction>> code;
 
 		};
 

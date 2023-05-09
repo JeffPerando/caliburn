@@ -20,31 +20,24 @@ namespace caliburn
 	struct Symbol
 	{
 		const SymbolType type;
-		const void* data;
+		const sptr<void> data;
+
+		Symbol(SymbolType t, sptr<void> d) : type(t), data(d) {}
 
 	};
 
 	class SymbolTable
 	{
-		std::map<std::string, Symbol*> symbols;
+		std::map<std::string, sptr<Symbol>> symbols;
 		
 	public:
-		const ptr<const SymbolTable> parent;
+		const sptr<const SymbolTable> parent;
 
 		SymbolTable() : parent(nullptr) {}
-		SymbolTable(SymbolTable* p) : parent(p) {}
-		virtual ~SymbolTable()
-		{
-			for (auto& table : symbols)
-			{
-				delete table.second;
-			}
+		SymbolTable(sptr<SymbolTable> p) : parent(p) {}
+		virtual ~SymbolTable() {}
 
-			symbols.clear();
-
-		}
-
-		bool add(std::string symName, SymbolType type, void* data)
+		bool add(std::string symName, SymbolType type, sptr<void> data)
 		{
 			auto sym = find(symName);
 
@@ -53,12 +46,12 @@ namespace caliburn
 				return false;
 			}
 
-			symbols.emplace(symName, new Symbol{ type, data });
+			symbols.emplace(symName, std::make_shared<Symbol>(type, data));
 
 			return true;
 		}
 
-		Symbol* find(std::string symName) const
+		sptr<Symbol> find(std::string symName) const
 		{
 			auto result = symbols.find(symName);
 

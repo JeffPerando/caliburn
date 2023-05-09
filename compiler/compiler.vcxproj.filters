@@ -53,9 +53,6 @@
     <ClCompile Include="langcore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cfg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="caliburn.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -116,9 +113,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="langcore.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="cfg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="caliburn.h">
@@ -224,6 +218,9 @@
       <Filter>Header Files\ast</Filter>
     </ClInclude>
     <ClInclude Include="valstmt.h">
+      <Filter>Header Files\ast</Filter>
+    </ClInclude>
+    <ClInclude Include="fn.h">
       <Filter>Header Files\ast</Filter>
     </ClInclude>
   </ItemGroup>

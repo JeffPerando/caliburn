@@ -13,28 +13,12 @@ uint32_t TypeVector::getAlignBytes() const
 	return inner->getAlignBytes();
 }
 
-ptr<Type> TypeVector::makeVariant(ref<std::vector<ptr<Type>>> genArgs) const
+sptr<Type> TypeVector::makeVariant(ref<std::vector<sptr<Type>>> genArgs) const
 {
-	return new TypeVector(elements, genArgs[0]);
+	return std::make_shared<TypeVector>(elements, genArgs[0]);
 }
-/*
-void TypeVector::getConvertibleTypes(std::set<ConcreteType*>& types)
-{
-	auto vecs = codeAsm->getAllVecTypes();
 
-	for (auto vt : *vecs)
-	{
-		if (vt->elements < elements)
-		{
-			types->emplace(vt);
-
-		}
-
-	}
-	
-}
-*/
-TypeCompat TypeVector::isCompatible(Operator op, Type* rType) const
+TypeCompat TypeVector::isCompatible(Operator op, sptr<Type> rType) const
 {
 	if (rType == nullptr)
 	{
@@ -57,7 +41,7 @@ TypeCompat TypeVector::isCompatible(Operator op, Type* rType) const
 	return TypeCompat::INCOMPATIBLE_TYPE;
 }
 
-void TypeVector::emitDeclCLLR(cllr::Assembler& codeAsm)
+void TypeVector::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 {
 	inner->emitDeclCLLR(codeAsm);
 	id = codeAsm.pushNew(cllr::Opcode::TYPE_VECTOR, { elements }, { inner->id });

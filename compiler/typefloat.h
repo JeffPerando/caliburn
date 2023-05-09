@@ -15,6 +15,7 @@ namespace caliburn
 			Type(TypeCategory::FLOAT, std::string("float" + s)),
 			floatBits(s)
 		{}
+		virtual ~TypeFloat() {}
 
 		uint32_t getSizeBytes() const override
 		{
@@ -33,7 +34,7 @@ namespace caliburn
 			return codeAsm.pushNew(cllr::Opcode::VALUE_FP_LIT, { }, { sID, this->id });
 		}
 
-		TypeCompat isCompatible(Operator op, ptr<Type> rType) const override;
+		TypeCompat isCompatible(Operator op, sptr<Type> rType) const override;
 		
 		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
 		{

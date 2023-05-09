@@ -33,13 +33,18 @@ SSA Assembler::push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::a
 		//TODO complain
 	}
 
-	auto ins = new Instruction{ ssa, op, operands, refs };
+	auto ins = std::make_shared<Instruction>();
 
-	code.push_back(ins);
+	ins->index = ssa;
+	ins->op = op;
+	ins->operands = operands;
+	ins->refs = refs;
+
+	code.push_back(std::move(ins));
 
 	if (ssa != 0)
 	{
-		ssaToCode.push_back(ins);
+		//ssaToCode.push_back(ins);
 	}
 
 	for (auto i = 0; i < 3; ++i)
@@ -54,9 +59,9 @@ SSA Assembler::push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::a
 	return ssa;
 }
 
-void Assembler::findRefs(SSA id, ref<std::vector<ptr<Instruction>>> result)
+void Assembler::findRefs(SSA id, ref<std::vector<sptr<Instruction>>> result)
 {
-	for (auto op : code)
+	for (auto const& op : code)
 	{
 		for (size_t i = 0; i < 3; ++i)
 		{
@@ -72,7 +77,7 @@ void Assembler::findRefs(SSA id, ref<std::vector<ptr<Instruction>>> result)
 
 }
 
-void Assembler::findPattern(ref<std::vector<ptr<Instruction>>> result,
+void Assembler::findPattern(ref<std::vector<sptr<Instruction>>> result,
 	Opcode opcode,
 	std::array<bool, 3> opFlags, std::array<uint32_t, 3> ops,
 	std::array<bool, 3> refFlags, std::array<SSA, 3> refs,
@@ -80,7 +85,7 @@ void Assembler::findPattern(ref<std::vector<ptr<Instruction>>> result,
 {
 	size_t count = 0;
 
-	for (auto ins : code)
+	for (auto const& ins : code)
 	{
 		if (count == limit)
 		{
@@ -139,7 +144,7 @@ uint32_t Assembler::replace(SSA in, SSA out)
 	uint32_t count = 0;
 	uint32_t limit = ssaRefs[in];
 
-	for (auto op : code)
+	for (auto const& op : code)
 	{
 		for (size_t i = 0; i < 3; ++i)
 		{

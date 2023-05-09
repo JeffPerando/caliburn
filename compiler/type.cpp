@@ -4,17 +4,17 @@
 
 using namespace caliburn;
 
-ptr<Type> ParsedType::resolve(ref<const SymbolTable> table)
+sptr<Type> ParsedType::resolve(sptr<const SymbolTable> table)
 {
-	auto lookup = &table;
+	ptr<const SymbolTable> lookup = table.get();
 
 	if (mod != nullptr)
 	{
-		auto modSym = table.find(mod->str);
+		auto modSym = table->find(mod->str);
 
 		if (modSym->type == SymbolType::MODULE)
 		{
-			lookup = (ptr<const SymbolTable>)modSym->data;
+			lookup = (ptr<const SymbolTable>)modSym->data.get();
 		}
 		else
 		{
@@ -38,7 +38,7 @@ ptr<Type> ParsedType::resolve(ref<const SymbolTable> table)
 		return nullptr;
 	}
 
-	auto cType = (Type*)cTypeSym->data;
+	auto cType = static_cast<sptr<Type>>(cTypeSym->data);
 
 	if (cType->maxGenerics == 0 && this->generics.size() == 0)
 	{
@@ -60,11 +60,11 @@ ptr<Type> ParsedType::resolve(ref<const SymbolTable> table)
 
 	try
 	{
-		std::vector<ptr<Type>> resolvedGenerics;
+		std::vector<sptr<Type>> resolvedGenerics;
 
 		for (size_t i = 0; i < generics.size(); ++i)
 		{
-			auto gType = generics.at(i);
+			auto const& gType = generics.at(i);
 
 			auto gConcrete = gType->resolve(table);
 
@@ -88,7 +88,7 @@ ptr<Type> ParsedType::resolve(ref<const SymbolTable> table)
 	return resultType;
 }
 
-void Variable::resolveSymbols(ref<const SymbolTable> table)
+void Variable::resolveSymbols(sptr<const SymbolTable> table)
 {
 	if (typeHint != nullptr)
 	{
@@ -100,7 +100,7 @@ void Variable::resolveSymbols(ref<const SymbolTable> table)
 
 void Variable::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 {
-	Value* value = initValue;
+	auto const& value = initValue;
 
 	if (type == nullptr)
 	{

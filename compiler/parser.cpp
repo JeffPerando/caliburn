@@ -9,39 +9,41 @@
 
 using namespace caliburn;
 
-void Parser::postParseException(CaliburnException* e)
+void Parser::postParseException(uptr<CaliburnException> e)
 {
 	errors.push_back(e);
 
 }
 
-void Parser::parse(ptr<std::vector<Token>> tokenList, ptr<std::vector<ptr<Statement>>> ast)
+void Parser::parse(ref<std::vector<sptr<Token>>> tokenList, ref<std::vector<uptr<Statement>>> ast)
 {
 	//don't want to pollute the heap
-	auto bufferTmp = buffer<Token>(tokenList);
+	auto bufferTmp = buffer<sptr<Token>>(&tokenList);
 	tokens = &bufferTmp;
 
 	while (tokens->hasNext())
 	{
 		auto start = tokens->current();
-		ptr<Statement> finished = parseDecl();
+		auto finished = parseDecl();
 
 		if (finished)
 		{
-			ast->push_back(finished);
+			ast.push_back(finished);
 		}
 		else
 		{
-			postParseException(new InvalidDeclException(start));
+			postParseException(std::make_unique<InvalidDeclException>(start.get()));
 			break;
 		}
 
 	}
 
+	tokens = nullptr;
+
 }
 
 template<typename T>
-ptr<T> Parser::parseAny(std::initializer_list<ParseMethod<T>> fns)
+uptr<T> Parser::parseAny(std::initializer_list<ParseMethod<T>> fns)
 {
 	/*
 	this code is really smart, and stupid. at the same time.
@@ -54,7 +56,7 @@ ptr<T> Parser::parseAny(std::initializer_list<ParseMethod<T>> fns)
 
 	for (auto fn : fns)
 	{
-		T* parsed = (this->*fn)();
+		auto parsed = (this->*fn)();
 
 		if (parsed)
 		{
@@ -73,7 +75,7 @@ ptr<T> Parser::parseAny(std::initializer_list<ParseMethod<T>> fns)
 }
 
 template<typename T>
-ptr<T> Parser::parseBetween(std::string start, ParseMethod<T> fn, std::string end)
+uptr<T> Parser::parseBetween(std::string start, ParseMethod<T> fn, std::string end)
 {
 	if (tokens->current()->str != start)
 	{
@@ -83,7 +85,7 @@ ptr<T> Parser::parseBetween(std::string start, ParseMethod<T> fn, std::string en
 
 	tokens->consume();
 
-	T* ret = (this->*fn)();
+	auto ret = (this->*fn)();
 
 	if (tokens->current()->str != end)
 	{
@@ -118,7 +120,7 @@ void Parser::parseAnyBetween(std::string start, std::function<void()> fn, std::s
 
 }
 
-void Parser::parseIdentifierList(ref<std::vector<ptr<Token>>> ids)
+void Parser::parseIdentifierList(ref<std::vector<sptr<Token>>> ids)
 {
 	while (tokens->hasNext())
 	{
@@ -143,7 +145,7 @@ void Parser::parseIdentifierList(ref<std::vector<ptr<Token>>> ids)
 
 }
 
-bool Parser::parseGenerics(ref<std::vector<ptr<ParsedType>>> generics)
+bool Parser::parseGenerics(ref<std::vector<uptr<ParsedType>>> generics)
 {
 	bool valid = false;
 	auto oldIndex = tokens->currentIndex();
@@ -190,11 +192,6 @@ bool Parser::parseGenerics(ref<std::vector<ptr<ParsedType>>> generics)
 
 	if (!valid)
 	{
-		for (auto type : generics)
-		{
-			delete type;
-		}
-
 		generics.clear();
 		tokens->revertTo(oldIndex);
 
@@ -203,7 +200,7 @@ bool Parser::parseGenerics(ref<std::vector<ptr<ParsedType>>> generics)
 	return valid;
 }
 
-bool Parser::parseValueList(ref<std::vector<ptr<Value>>> values, bool commaOptional)
+bool Parser::parseValueList(ref<std::vector<uptr<Value>>> values, bool commaOptional)
 {
 	while (tokens->hasNext())
 	{
@@ -234,11 +231,11 @@ bool Parser::parseSemicolon()
 		return true;
 	}
 
-	//postParseException(new UnexpectedTokenException(tkn, ';'));
+	//postParseException(std::make_unique<UnexpectedTokenException>(tkn, ';'));
 	return false;
 }
 
-bool Parser::parseScopeEnd(ptr<ScopeStatement> stmt)
+bool Parser::parseScopeEnd(uptr<ScopeStatement> stmt)
 {
 	auto tkn = tokens->current();
 	auto tknIndex = tokens->currentIndex();
@@ -329,7 +326,7 @@ StorageModifiers Parser::parseStorageMods()
 	return mods;
 }
 
-ptr<ScopeStatement> Parser::parseScope(std::initializer_list<ParseMethod<Statement>> pms)
+uptr<ScopeStatement> Parser::parseScope(std::initializer_list<ParseMethod<Statement>> pms)
 {
 	auto mods = parseStorageMods();
 
@@ -340,7 +337,7 @@ ptr<ScopeStatement> Parser::parseScope(std::initializer_list<ParseMethod<Stateme
 		return nullptr;
 	}
 
-	auto scope = new ScopeStatement();
+	auto scope = std::make_unique<ScopeStatement>();
 
 	tokens->consume();
 
@@ -354,7 +351,7 @@ ptr<ScopeStatement> Parser::parseScope(std::initializer_list<ParseMethod<Stateme
 			break;
 		}
 
-		ptr<Statement> stmt = nullptr;
+		uptr<Statement> stmt = nullptr;
 
 		for (auto pm : pms)
 		{
@@ -378,26 +375,26 @@ ptr<ScopeStatement> Parser::parseScope(std::initializer_list<ParseMethod<Stateme
 			//TODO complain but continue parsing
 		}
 
-		scope->stmts.push_back(stmt);
+		scope->stmts.push_back(std::move(stmt));
 
 	}
 
 	return scope;
 }
 
-ptr<ParsedType> Parser::parseTypeName()
+uptr<ParsedType> Parser::parseTypeName()
 {
 	auto tkn = tokens->current();
 
 	if (tkn->type != TokenType::IDENTIFIER)
 	{
-		postParseException(new ParseException("Expected identifier; this is NOT a valid identifier.", tkn));
+		postParseException(std::make_unique<ParseException>("Expected identifier; this is NOT a valid identifier.", tkn));
 		return nullptr;
 	}
 
 	tokens->consume();
 
-	ptr<ParsedType> type = new ParsedType(tkn);
+	uptr<ParsedType> type = std::make_unique<ParsedType>(tkn);
 
 	parseGenerics(type->generics);
 
@@ -407,7 +404,7 @@ ptr<ParsedType> Parser::parseTypeName()
 	{
 		tkn = tokens->next();
 
-		ptr<Value> len = nullptr;
+		uptr<Value> len = nullptr;
 
 		if (tkn->type != TokenType::END_BRACKET)
 		{
@@ -422,7 +419,7 @@ ptr<ParsedType> Parser::parseTypeName()
 			//TODO complain
 		}
 
-		type->arrayDims.push_back(len);
+		type->arrayDims.push_back(std::move(len));
 		type->lastToken = tkn;
 
 		tkn = tokens->next();
@@ -432,7 +429,7 @@ ptr<ParsedType> Parser::parseTypeName()
 	return type;
 }
 
-ptr<Statement> Parser::parseDecl()
+uptr<Statement> Parser::parseDecl()
 {
 	auto mods = parseStorageMods();
 
@@ -449,7 +446,7 @@ ptr<Statement> Parser::parseDecl()
 
 	if (stmt == nullptr)
 	{
-		postParseException(new ParseException("Invalid start to declaration:", tokens->current()));
+		postParseException(std::make_unique<ParseException>("Invalid start to declaration:", tokens->current()));
 		return stmt;
 	}
 
@@ -457,13 +454,13 @@ ptr<Statement> Parser::parseDecl()
 
 	if (!parseSemicolon())
 	{
-		postParseException(new ParseException("All declarations must end with a semicolon", tokens->current()));
+		postParseException(std::make_unique<ParseException>("All declarations must end with a semicolon", tokens->current()));
 	}
 
 	return stmt;
 }
 
-ptr<Statement> Parser::parseImport()
+uptr<Statement> Parser::parseImport()
 {
 	auto tkn = tokens->current();
 
@@ -474,7 +471,7 @@ ptr<Statement> Parser::parseImport()
 
 	auto modName = tokens->next();
 	
-	ptr<Token> alias = nullptr;
+	sptr<Token> alias = nullptr;
 
 	tkn = tokens->next();
 
@@ -492,7 +489,7 @@ ptr<Statement> Parser::parseImport()
 
 	}
 
-	auto ret = new ImportStatement(tkn);
+	auto ret = std::make_unique<ImportStatement>(tkn);
 
 	ret->name = modName;
 	ret->alias = alias;
@@ -500,7 +497,7 @@ ptr<Statement> Parser::parseImport()
 	return ret;
 }
 
-ptr<Statement> Parser::parseModuleDef()
+uptr<Statement> Parser::parseModuleDef()
 {
 	auto start = tokens->current();
 
@@ -511,10 +508,10 @@ ptr<Statement> Parser::parseModuleDef()
 
 	auto name = tokens->next();
 
-	return new ModuleStatement(start, name);
+	return std::make_unique<ModuleStatement>(start, name);
 }
 
-ptr<Statement> Parser::parseTypedef()
+uptr<Statement> Parser::parseTypedef()
 {
 	auto start = tokens->current();
 
@@ -548,19 +545,19 @@ ptr<Statement> Parser::parseTypedef()
 
 	tokens->consume();
 
-	ptr<ParsedType> aliasedType = parseTypeName();
+	uptr<ParsedType> aliasedType = parseTypeName();
 
-	auto stmt = new TypedefStatement(start, name, aliasedType);
+	auto stmt = std::make_unique<TypedefStatement>(start, name, aliasedType);
 	
 	return stmt;
 }
 
-//ptr<Statement> Parser::parseShader();
+//uptr<Statement> Parser::parseShader();
 
-//ptr<Statement> Parser::parseDescriptor();
+//uptr<Statement> Parser::parseDescriptor();
 
 //TODO clean up architecture, make expandable
-ptr<Statement> Parser::parseStruct()
+uptr<Statement> Parser::parseStruct()
 {
 	bool isConst = false;
 	auto tkn = tokens->current();
@@ -586,7 +583,7 @@ ptr<Statement> Parser::parseStruct()
 		//TODO complain
 	}
 
-	auto ret = new StructStatement(name, isConst ? StatementType::RECORD : StatementType::STRUCT);
+	auto ret = std::make_unique<StructStatement>(name, isConst ? StatementType::RECORD : StatementType::STRUCT);
 
 	ret->first = tkn;
 
@@ -630,9 +627,9 @@ ptr<Statement> Parser::parseStruct()
 	return ret;
 }
 
-//ptr<Statement> Parser::parseClass();
+//uptr<Statement> Parser::parseClass();
 
-ptr<Statement> Parser::parseFunction()
+uptr<Statement> Parser::parseFunction()
 {
 	auto tkn = tokens->current();
 
@@ -643,10 +640,10 @@ ptr<Statement> Parser::parseFunction()
 
 	tkn = tokens->next();
 
-	ptr<ParsedType> type = parseTypeName();
+	uptr<ParsedType> type = parseTypeName();
 	std::string name = tokens->current()->str;
-	std::vector<ptr<ParsedType>> generics;
-	std::vector<ptr<Token>> gpuThreadData;
+	std::vector<uptr<ParsedType>> generics;
+	std::vector<sptr<Token>> gpuThreadData;
 
 	tokens->consume();
 
@@ -659,12 +656,12 @@ ptr<Statement> Parser::parseFunction()
 
 		if (gpuThreadData.size() == 0)
 		{
-			postParseException(new ParseException("GPU threading data is empty or has invalid values", tkn));
+			postParseException(std::make_unique<ParseException>("GPU threading data is empty or has invalid values", tkn));
 		}
 
 		if (tokens->current()->str != "]")
 		{
-			postParseException(new UnexpectedTokenException(tokens->current(), ']'));
+			postParseException(std::make_unique<UnexpectedTokenException>(tokens->current(), ']'));
 		}
 
 		tkn = tokens->next();
@@ -673,7 +670,7 @@ ptr<Statement> Parser::parseFunction()
 
 	if (tkn->str != "(")
 	{
-		postParseException(new UnexpectedTokenException(tokens->current(), '('));
+		postParseException(std::make_unique<UnexpectedTokenException>(tokens->current(), '('));
 		return nullptr;
 	}
 
@@ -683,18 +680,18 @@ ptr<Statement> Parser::parseFunction()
 
 	if (tkn->str != ")")
 	{
-		postParseException(new UnexpectedTokenException(tokens->current(), ')'));
+		postParseException(std::make_unique<UnexpectedTokenException>(tokens->current(), ')'));
 		return nullptr;
 	}
 
-	ptr<Statement> body = parseLogic();
+	uptr<Statement> body = parseLogic();
 
 	if (!body)
 	{
 		return nullptr;
 	}
 	/*
-	Functionptr<Statement> func = new FunctionStatement();
+	Functionptr<Statement> func = std::make_unique<FunctionStatement>();
 
 	func->type = type;
 	func->name = name;
@@ -705,7 +702,7 @@ ptr<Statement> Parser::parseFunction()
 	return nullptr;
 }
 
-ptr<Statement> Parser::parseMethod()
+uptr<Statement> Parser::parseMethod()
 {
 	return parseAny({
 		&Parser::parseFunction,
@@ -714,7 +711,7 @@ ptr<Statement> Parser::parseMethod()
 		});
 }
 
-ptr<Statement> Parser::parseConstructor()
+uptr<Statement> Parser::parseConstructor()
 {
 	auto tkn = tokens->current();
 
@@ -726,7 +723,7 @@ ptr<Statement> Parser::parseConstructor()
 	return nullptr;
 }
 
-ptr<Statement> Parser::parseDestructor()
+uptr<Statement> Parser::parseDestructor()
 {
 	auto tkn = tokens->current();
 
@@ -738,14 +735,14 @@ ptr<Statement> Parser::parseDestructor()
 	return nullptr;
 }
 
-//ptr<Statement> parseOp();
+//uptr<Statement> parseOp();
 
-ptr<Statement> Parser::parseLogic()
+uptr<Statement> Parser::parseLogic()
 {
 	return parseAny({ &Parser::parseControl, &Parser::parseValueStmt });
 }
 
-ptr<Statement> Parser::parseControl()
+uptr<Statement> Parser::parseControl()
 {
 	auto tkn = tokens->current();
 
@@ -758,7 +755,7 @@ ptr<Statement> Parser::parseControl()
 		&Parser::parseDoWhile, /* parseSwitch */ });
 }
 
-ptr<Statement> Parser::parseIf()
+uptr<Statement> Parser::parseIf()
 {
 	auto tkn = tokens->current();
 
@@ -769,7 +766,7 @@ ptr<Statement> Parser::parseIf()
 
 	tokens->consume();
 
-	auto parsed = new IfStatement();
+	auto parsed = std::make_unique<IfStatement>();
 
 	parsed->condition = parseBetween("(", &Parser::parseAnyValue, ")");
 	parsed->innerIf = parseScope({&Parser::parseDecl});
@@ -782,9 +779,9 @@ ptr<Statement> Parser::parseIf()
 
 		if (innerElseStmt != nullptr)
 		{
-			parsed->innerElse = new ScopeStatement();
+			parsed->innerElse = std::make_unique<ScopeStatement>();
 
-			parsed->innerElse->stmts.push_back(innerElseStmt);
+			parsed->innerElse->stmts.push_back(std::move(innerElseStmt));
 
 		}
 		else
@@ -798,12 +795,12 @@ ptr<Statement> Parser::parseIf()
 	return parsed;
 }
 
-ptr<Statement> Parser::parseFor()
+uptr<Statement> Parser::parseFor()
 {
 	return nullptr;
 }
 
-ptr<Statement> Parser::parseWhile()
+uptr<Statement> Parser::parseWhile()
 {
 	auto tkn = tokens->current();
 
@@ -814,16 +811,16 @@ ptr<Statement> Parser::parseWhile()
 
 	auto cond = parseBetween("(", &Parser::parseAnyValue, ")");
 
-	auto stmt = new WhileStatement();
+	auto stmt = std::make_unique<WhileStatement>();
 	
 	stmt->first = tkn;
-	stmt->condition = cond;
+	stmt->condition = std::move(cond);
 	stmt->loop = parseScope({ &Parser::parseLogic });
 
 	return stmt;
 }
 
-ptr<Statement> Parser::parseDoWhile()
+uptr<Statement> Parser::parseDoWhile()
 {
 	auto tkn = tokens->current();
 
@@ -839,29 +836,27 @@ ptr<Statement> Parser::parseDoWhile()
 	if (tokens->current()->type != TokenType::KEYWORD || tokens->current()->str != "while")
 	{
 		//TODO complain
-		delete body;
 		return nullptr;
 	}
 
-	ptr<Value> cond = parseBetween("(", &Parser::parseAnyValue, ")");
+	uptr<Value> cond = parseBetween("(", &Parser::parseAnyValue, ")");
 
 	if (cond == nullptr)
 	{
 		//TODO complain
-		delete body;
 		return nullptr;
 	}
 
-	auto ret = new WhileStatement();
+	auto ret = std::make_unique<WhileStatement>();
 
 	ret->doWhile = true;
-	ret->loop = body;
-	ret->condition = cond;
+	ret->loop = std::move(body);
+	ret->condition = std::move(cond);
 
 	return ret;
 }
 
-ptr<Statement> Parser::parseValueStmt()
+uptr<Statement> Parser::parseValueStmt()
 {
 	auto val = parseAny({ &Parser::parseAnyFnCall, &Parser::parseAnyExpr });
 
@@ -870,19 +865,19 @@ ptr<Statement> Parser::parseValueStmt()
 		return nullptr;
 	}
 
-	return new ValueStatement(val);
+	return std::make_unique<ValueStatement>(val);
 }
 
-ptr<Value> Parser::parseAnyValue()
+uptr<Value> Parser::parseAnyValue()
 {
 	return parseAny({ &Parser::parseAnyExpr, &Parser::parseLiteral, &Parser::parseAnyFnCall });
 }
 
-ptr<Value> Parser::parseNonExpr()
+uptr<Value> Parser::parseNonExpr()
 {
 	auto tkn = tokens->current();
 
-	ptr<Value> v = parseAny({ &Parser::parseLiteral, &Parser::parseAnyFnCall });
+	auto v = parseAny({ &Parser::parseLiteral, &Parser::parseAnyFnCall });
 
 	if (v == nullptr)
 	{
@@ -896,15 +891,15 @@ ptr<Value> Parser::parseNonExpr()
 
 			if (tkn->str == "this")
 			{
-				v = new VarReadValue(tkn);
+				v = std::make_unique<VarReadValue>(tkn);
 			}
 			else if (tkn->str == "sign")
 			{
-				v = new UnaryValue(tkn, Operator::SIGN, parseNonExpr());
+				v = std::make_unique<UnaryValue>(tkn, Operator::SIGN, parseNonExpr());
 			}
 			else if (tkn->str == "unsign")
 			{
-				v = new UnaryValue(tkn, Operator::UNSIGN, parseNonExpr());
+				v = std::make_unique<UnaryValue>(tkn, Operator::UNSIGN, parseNonExpr());
 			}
 			else
 			{
@@ -937,7 +932,7 @@ ptr<Value> Parser::parseNonExpr()
 
 			tokens->consume();
 
-			auto unary = new UnaryValue();
+			auto unary = std::make_unique<UnaryValue>();
 
 			unary->op = uOp;
 			unary->val = parseNonExpr();
@@ -947,7 +942,6 @@ ptr<Value> Parser::parseNonExpr()
 				if (tokens->current()->str != "|")
 				{
 					//TODO complain
-					delete unary;
 					return nullptr;
 				}
 
@@ -955,7 +949,7 @@ ptr<Value> Parser::parseNonExpr()
 
 			}
 
-			v = unary;
+			v = std::move(unary);
 
 		}
 		else
@@ -978,13 +972,13 @@ ptr<Value> Parser::parseNonExpr()
 		{
 			auto i = parseBetween("[", &Parser::parseAnyValue, "]");//enables for expressions inside of array access
 			
-			auto subA = new SubArrayValue();
+			auto subA = std::make_unique<SubArrayValue>();
 
-			subA->array = v;
-			subA->index = i;
+			subA->array = std::move(v);
+			subA->index = std::move(i);
 			subA->last = tokens->prev();
 
-			v = subA;
+			v = std::move(subA);
 
 		}
 		else if (tkn->type == TokenType::PERIOD && tokens->peek()->type == TokenType::IDENTIFIER)
@@ -994,17 +988,17 @@ ptr<Value> Parser::parseNonExpr()
 
 			if (pk->type == TokenType::START_PAREN || pk->str == GENERIC_START)
 			{
-				v = parseFnCall(v);
+				v = parseFnCall(std::move(v));
 
 			}
 			else
 			{
-				auto memRead = new MemberReadValue();
+				auto memRead = std::make_unique<MemberReadValue>();
 
-				memRead->target = v;
+				memRead->target = std::move(v);
 				memRead->memberName = tkn;
 
-				v = memRead;
+				v = std::move(memRead);
 
 				tokens->consume();
 
@@ -1021,32 +1015,34 @@ ptr<Value> Parser::parseNonExpr()
 	return v;
 }
 
-ptr<Value> Parser::parseLiteral()
+uptr<Value> Parser::parseLiteral()
 {
 	auto tkn = tokens->current();
 
-	//"this" won't be counted here; it's only a keyword for syntax highlighting purposes
-	//Instead, a MethodStatement will add a "this" argument to its own argument list
 	if (tkn->type == TokenType::KEYWORD)
 	{
-		if (tkn->str == "null")
+		if (tkn->str == "this")
 		{
-			return new NullValue(tkn);
+			return std::make_unique<VarReadValue>(tkn);
+		}
+		else if (tkn->str == "null")
+		{
+			return std::make_unique<NullValue>(tkn);
 		}
 
 	}
 
 	switch (tkn->type)
 	{
-	case TokenType::LITERAL_INT: return new IntLiteralValue(*tkn);
-	case TokenType::LITERAL_FLOAT: return new FloatLiteralValue(*tkn);
-	case TokenType::LITERAL_BOOL: return new BoolLitValue(*tkn);
-	case TokenType::LITERAL_STR: return new StringLitValue(*tkn);
+	case TokenType::LITERAL_INT: return std::make_unique<IntLiteralValue>(*tkn);
+	case TokenType::LITERAL_FLOAT: return std::make_unique<FloatLiteralValue>(*tkn);
+	case TokenType::LITERAL_BOOL: return std::make_unique<BoolLitValue>(*tkn);
+	case TokenType::LITERAL_STR: return std::make_unique<StringLitValue>(*tkn);
 	}
 
 	if (tkn->str == "[")
 	{
-		auto arrLit = new ArrayLitValue();
+		auto arrLit = std::make_unique<ArrayLitValue>();
 
 		arrLit->start = tkn;
 
@@ -1078,12 +1074,12 @@ ptr<Value> Parser::parseLiteral()
 	return nullptr;
 }
 
-ptr<Value> Parser::parseAnyExpr()
+uptr<Value> Parser::parseAnyExpr()
 {
 	return parseExpr(OP_PRECEDENCE_MAX);
 }
 
-ptr<Value> Parser::parseExpr(uint32_t precedence)
+uptr<Value> Parser::parseExpr(uint32_t precedence)
 {
 	auto lhs = parseNonExpr();
 
@@ -1097,24 +1093,24 @@ ptr<Value> Parser::parseExpr(uint32_t precedence)
 			{
 				tokens->consume();
 
-				auto isa = new IsAValue();
+				auto isa = std::make_unique<IsAValue>();
 
-				isa->val = lhs;
+				isa->val = std::move(lhs);
 				isa->chkPType = parseTypeName();
 
-				lhs = isa;
+				lhs = std::move(isa);
 
 			}
 			else if (tkn->str == "as")
 			{
 				tokens->consume();
 
-				auto cast = new CastValue();
+				auto cast = std::make_unique<CastValue>();
 
-				cast->lhs = lhs;
+				cast->lhs = std::move(lhs);
 				cast->resultPType = parseTypeName();
 
-				lhs = cast;
+				lhs = std::move(cast);
 
 			}
 			else
@@ -1150,39 +1146,39 @@ ptr<Value> Parser::parseExpr(uint32_t precedence)
 		{
 			tokens->consume();
 
-			auto set = new SetterValue();
+			auto set = std::make_unique<SetterValue>();
 
-			auto expr = new ExpressionValue();
+			auto expr = std::make_unique<ExpressionValue>();
 
-			expr->lValue = lhs;
+			expr->lValue = std::move(lhs);
 			expr->op = op->second;
 			expr->rValue = parseAnyExpr();
 
-			set->lhs = lhs;
-			set->rhs = expr;
+			set->lhs = std::move(lhs);
+			set->rhs = std::move(expr);
 
 			return set;
 		}
 		
-		auto expr = new ExpressionValue();
+		auto expr = std::make_unique<ExpressionValue>();
 
-		expr->lValue = lhs;
+		expr->lValue = std::move(lhs);
 		expr->op = op->second;
 		expr->rValue = parseExpr(opWeight);
 
-		lhs = expr;
+		lhs = std::move(expr);
 
 	}
 
 	return lhs;
 }
 
-ptr<Value> Parser::parseAnyFnCall()
+uptr<Value> Parser::parseAnyFnCall()
 {
 	return parseFnCall(nullptr);
 }
 
-ptr<Value> Parser::parseFnCall(ptr<Value> start)
+uptr<Value> Parser::parseFnCall(uptr<Value> start)
 {
 	auto tkn = tokens->current();
 
@@ -1192,7 +1188,7 @@ ptr<Value> Parser::parseFnCall(ptr<Value> start)
 	}
 
 	auto name = tkn;
-	std::vector<ptr<ParsedType>> pGenerics;
+	std::vector<uptr<ParsedType>> pGenerics;
 
 	tkn = tokens->next();
 	
@@ -1214,10 +1210,10 @@ ptr<Value> Parser::parseFnCall(ptr<Value> start)
 
 	tokens->consume();
 
-	auto ret = new FnCallValue();
+	auto ret = std::make_unique<FnCallValue>();
 
 	ret->name = name;
-	ret->target = start;
+	ret->target = std::move(start);
 	ret->pGenerics = pGenerics;
 
 	if (!parseValueList(ret->args, false))
@@ -1230,11 +1226,11 @@ ptr<Value> Parser::parseFnCall(ptr<Value> start)
 	return ret;
 }
 
-ptr<Variable> Parser::parseLocalVar()
+sptr<Variable> Parser::parseLocalVar()
 {
-	ptr<ParsedType> type = nullptr;
-	ptr<Token> name = nullptr;
-	ptr<Value> initVal = nullptr;
+	uptr<ParsedType> type = nullptr;
+	sptr<Token> name = nullptr;
+	uptr<Value> initVal = nullptr;
 	bool constant = false;
 
 	auto tkn = tokens->current();
@@ -1275,7 +1271,7 @@ ptr<Variable> Parser::parseLocalVar()
 
 	if (name->type != TokenType::IDENTIFIER)
 	{
-		postParseException(new ParseException("Invalid name for a variable:", name));
+		postParseException(std::make_unique<ParseException>("Invalid name for a variable:", name));
 		return nullptr;
 	}
 
@@ -1283,7 +1279,7 @@ ptr<Variable> Parser::parseLocalVar()
 
 	if (tkn->str == ":")
 	{
-		postParseException(new ParseException("That's not how type hints work in Caliburn. Type hints go before the variable name, not after. So var: int x is valid. var x: int isn't.", tkn));
+		postParseException(std::make_unique<ParseException>("That's not how type hints work in Caliburn. Type hints go before the variable name, not after. So var: int x is valid. var x: int isn't.", tkn));
 		return nullptr;
 	}
 
@@ -1296,7 +1292,7 @@ ptr<Variable> Parser::parseLocalVar()
 	}
 	else if (!type)
 	{
-		postParseException(new ParseException("All implicitly-typed variables must be manually initialized", tkn));
+		postParseException(std::make_unique<ParseException>("All implicitly-typed variables must be manually initialized", tkn));
 		return nullptr;
 	}
 
@@ -1305,13 +1301,13 @@ ptr<Variable> Parser::parseLocalVar()
 		//TODO complain
 	}
 
-	return new LocalVariable(name, type, initVal, constant);
+	return std::make_shared<LocalVariable>(name, type, initVal, constant);
 }
 
-ptr<Variable> Parser::parseMemberVar()
+sptr<Variable> Parser::parseMemberVar()
 {
 	bool isConst = false;
-	ptr<Token> start = tokens->current();
+	auto start = tokens->current();
 
 	if (start->type == TokenType::KEYWORD && start->str == "const")
 	{
@@ -1328,12 +1324,11 @@ ptr<Variable> Parser::parseMemberVar()
 	}
 
 	auto name = tokens->current();
-	ptr<Value> initVal = nullptr;
+	uptr<Value> initVal = nullptr;
 
 	if (name->type != TokenType::IDENTIFIER)
 	{
 		//TODO complain
-		delete type;
 		return nullptr;
 	}
 
@@ -1346,5 +1341,5 @@ ptr<Variable> Parser::parseMemberVar()
 
 	}
 
-	return new MemberVariable(name, type, initVal, isConst);
+	return std::make_shared<MemberVariable>(name, type, initVal, isConst);
 }

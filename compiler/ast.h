@@ -137,7 +137,7 @@ namespace caliburn
 		const StatementType type;
 
 		StorageModifiers mods = {};
-		std::map<std::string, ParsedType*> typeAliases;
+		std::map<std::string, uptr<ParsedType>> typeAliases;
 
 		Statement(StatementType stmtType) : type(stmtType) {}
 		virtual ~Statement() {}
@@ -147,79 +147,76 @@ namespace caliburn
 			return false;
 		}
 
-		virtual Token* firstTkn() const override = 0;
+		virtual sptr<Token> firstTkn() const override = 0;
 
-		virtual Token* lastTkn() const override = 0;
+		virtual sptr<Token> lastTkn() const override = 0;
 
 		//Only used by top-level statements which declare symbols. The rest, like variables, should use declareSymbols() instead
-		virtual void declareHeader(ref<SymbolTable> table, cllr::Assembler& codeAsm) {}
+		virtual void declareHeader(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) {}
 
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) = 0;
+		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) = 0;
 
-		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override = 0;
+		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override = 0;
 
-		virtual void resolveSymbols(ref<const SymbolTable> table, cllr::Assembler& codeAsm) override = 0;
+		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override = 0;
 
 	};
 
 	struct ScopeStatement : public Statement
 	{
-		ptr<Token> first = nullptr;
-		ptr<Token> last = nullptr;
+		sptr<Token> first = nullptr;
+		sptr<Token> last = nullptr;
 
-		std::vector<ptr<Statement>> stmts;
+		std::vector<uptr<Statement>> stmts;
 		
-		ptr<SymbolTable> scopeTable = nullptr;
+		sptr<SymbolTable> scopeTable = nullptr;
 
 		ReturnMode retMode = ReturnMode::NONE;
-		ptr<Value> retValue = nullptr;
+		uptr<Value> retValue = nullptr;
 
 		ScopeStatement(StatementType stmtType = StatementType::SCOPE) : Statement(stmtType) {}
-		virtual ~ScopeStatement()
-		{
-			delete scopeTable;
-		}
+		virtual ~ScopeStatement() {}
 
-		virtual Token* firstTkn() const override
+		virtual sptr<Token> firstTkn() const override
 		{
 			return first;
 		}
 
-		virtual Token* lastTkn() const override
+		virtual sptr<Token> lastTkn() const override
 		{
 			return last;
 		}
 
-		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override
+		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			if (scopeTable != nullptr)
 			{
 				return;
 			}
 
-			scopeTable = new SymbolTable(table);
+			scopeTable = std::make_shared<SymbolTable>(table);
 
-			for (auto stmt : stmts)
+			for (auto const &stmt : stmts)
 			{
-				stmt->declareSymbols(*scopeTable, codeAsm);
+				stmt->declareSymbols(scopeTable, codeAsm);
 
 			}
 
 		}
 
-		virtual void resolveSymbols(ref<const SymbolTable> table, cllr::Assembler& codeAsm) override
+		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-			for (auto stmt : stmts)
+			for (auto const& stmt : stmts)
 			{
-				stmt->resolveSymbols(*scopeTable, codeAsm);
+				stmt->resolveSymbols(scopeTable, codeAsm);
 
 			}
 
 		}
 
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override
+		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
 		{
-			for (auto inner : stmts)
+			for (auto const& inner : stmts)
 			{
 				inner->emitDeclCLLR(codeAsm);
 			}
@@ -260,9 +257,8 @@ namespace caliburn
 
 	struct GenericStatement : public Statement
 	{
-		//std::vector<std::pair<std::string, ParsedType*>> 
-		std::map<std::string, ptr<Type>> cNames;
-		std::map<std::string, ptr<Value>> tNames;
+		std::map<std::string, sptr<Type>> cNames;
+		std::map<std::string, sptr<Value>> tNames;
 
 		GenericStatement(StatementType stmtType) : Statement(stmtType) {}
 		virtual ~GenericStatement() {}

@@ -7,21 +7,20 @@ namespace caliburn
 {
 	struct LocalVariable : public Variable
 	{
-		LocalVariable(Token* varName, ParsedType* hint, Value* init, bool isImmut) : Variable(varName, hint, init, isImmut) {}
-		LocalVariable(const LocalVariable& rhs) : Variable(rhs) {}
+		LocalVariable(sptr<Token> varName, uptr<ParsedType> hint, uptr<Value> init, bool isImmut) : Variable(varName, std::move(hint), std::move(init), isImmut) {}
 		virtual ~LocalVariable() {}
 
-		Token* firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return name;
 		}
 
-		Token* lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return name;
 		}
 
-		void resolveSymbols(ref<const SymbolTable> mod) override
+		void resolveSymbols(sptr<const SymbolTable> mod) override
 		{
 
 		}
@@ -31,12 +30,12 @@ namespace caliburn
 
 		}
 
-		cllr::SSA emitLoadCLLR(cllr::Assembler& codeAsm, cllr::SSA target) override
+		cllr::SSA emitLoadCLLR(ref<cllr::Assembler> codeAsm, cllr::SSA target) override
 		{
 			return 0;
 		}
 
-		void emitStoreCLLR(cllr::Assembler& codeAsm, cllr::SSA target, cllr::SSA value) override
+		void emitStoreCLLR(ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override
 		{
 
 		}
@@ -45,23 +44,19 @@ namespace caliburn
 
 	struct MemberVariable : public Variable
 	{
-		ptr<Type> parent = nullptr;
+		sptr<Type> parent = nullptr;
 		uint32_t memberIndex = 0;
 
-		MemberVariable(Token* varName, ParsedType* hint, Value* init, bool isImmut) :
-			Variable(varName, hint, init, isImmut) {}
-		MemberVariable(const MemberVariable& rhs) :
-			Variable(rhs),
-			parent(rhs.parent),
-			memberIndex(rhs.memberIndex) {}
+		MemberVariable(sptr<Token> varName, uptr<ParsedType> hint, uptr<Value> init, bool isImmut) :
+			Variable(varName, std::move(hint), std::move(init), isImmut) {}
 		virtual ~MemberVariable() {}
 
-		Token* firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return name;
 		}
 
-		Token* lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return name;
 		}
@@ -72,12 +67,12 @@ namespace caliburn
 
 		}
 
-		cllr::SSA emitLoadCLLR(cllr::Assembler& codeAsm, cllr::SSA target) override
+		cllr::SSA emitLoadCLLR(ref<cllr::Assembler> codeAsm, cllr::SSA target) override
 		{
 			return codeAsm.pushNew(cllr::Opcode::VALUE_MEMBER, { memberIndex }, { target, type->id });
 		}
 
-		void emitStoreCLLR(cllr::Assembler& codeAsm, cllr::SSA target, cllr::SSA value) override
+		void emitStoreCLLR(ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override
 		{
 			auto memberSSA = emitLoadCLLR(codeAsm, target);
 

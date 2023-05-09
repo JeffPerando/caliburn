@@ -7,32 +7,32 @@ namespace caliburn
 {
 	struct TypedefStatement : public Statement
 	{
-		const ptr<Token> first;
-		const ptr<Token> name;
-		const ptr<ParsedType> alias;
+		const sptr<Token> first;
+		const sptr<Token> name;
+		const uptr<ParsedType> alias;
 
 		bool isStrong = false;
 
-		TypedefStatement(ptr<Token> f, ptr<Token> n, ptr<ParsedType> t) : Statement(StatementType::TYPEDEF), first(f), name(n), alias(t)
+		TypedefStatement(sptr<Token> f, sptr<Token> n, uptr<ParsedType> t) : Statement(StatementType::TYPEDEF), first(f), name(n), alias(std::move(t))
 		{
 			isStrong = (first->str == "strong");
 		}
 
 		virtual ~TypedefStatement() {}
 
-		Token* firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return first;
 		}
 
-		Token* lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return alias->lastTkn();
 		}
 
-		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override
+		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-			auto sym = table.find(name->str);
+			auto sym = table->find(name->str);
 
 			if (sym != nullptr)
 			{
@@ -61,21 +61,21 @@ namespace caliburn
 				return;
 			}
 
-			table.add(name->str, SymbolType::TYPE, cType);
+			table->add(name->str, SymbolType::TYPE, cType);
 
 		}
 
-		virtual void resolveSymbols(ref<const SymbolTable> table, cllr::Assembler& codeAsm) override
+		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			
 		}
 
-		virtual void emitHeaderCLLR(SymbolTable* table, cllr::Assembler& codeAsm)
+		virtual void declareHeader(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 
 		}
 
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override
+		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
 		{
 
 		}

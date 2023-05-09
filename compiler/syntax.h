@@ -106,9 +106,9 @@ namespace caliburn
 	
 	struct ParsedObject
 	{
-		virtual Token* firstTkn() const = 0;
+		virtual sptr<Token> firstTkn() const = 0;
 
-		virtual Token* lastTkn() const = 0;
+		virtual sptr<Token> lastTkn() const = 0;
 
 	};
 

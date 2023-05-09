@@ -32,7 +32,7 @@ void TypeInt::getConvertibleTypes(std::set<ConcreteType*>& types)
 
 }
 */
-TypeCompat TypeInt::isCompatible(Operator op, ptr<Type> rType) const
+TypeCompat TypeInt::isCompatible(Operator op, sptr<Type> rType) const
 {
 	if (rType == nullptr)
 	{

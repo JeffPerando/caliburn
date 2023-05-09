@@ -1,14 +1,14 @@
 
 #pragma once
 
-#include "basic.h"
-
 #include <vector>
+
+#include "basic.h"
 
 namespace caliburn
 {
-	//A buffer in this case is a read-only container used to maintain a current index to a vector
-	//might implement the ability to add new elements, but imo that wouldn't be too useful
+	//A buffer in this case is a read-only container used to maintain a current index to a vector.
+	//might implement the ability to add std::make_unique<elements>, but imo that wouldn't be too useful.
 	template<typename T>
 	class buffer
 	{
@@ -20,50 +20,29 @@ namespace caliburn
 
 		bool hasNext() const
 		{
-			return vec->size() > index;
+			return (index + 1) < vec->size();
 		}
 
 		//fetch current
-		T* current() const
-		{
-			return &vec->at(index);
-		}
-
-		T currentVal() const
+		T current() const
 		{
 			return vec->at(index);
 		}
 
 		//increment and fetch
-		T* next()
-		{
-			++index;
-			return &vec->at(index);
-		}
-
-		T nextVal()
+		T next()
 		{
 			++index;
 			return vec->at(index);
 		}
 
-		T* prev(int64_t off = 1)
-		{
-			return &vec->at(index - off);
-		}
-
-		T prevVal(int64_t off = 1)
+		T prev(int64_t off = 1)
 		{
 			return vec->at(index - off);
 		}
 
 		//fetch upcoming
-		T* peek(size_t offset = 1) const
-		{
-			return &vec->at(index + offset);
-		}
-
-		T peekVal(size_t offset = 1) const
+		T peek(size_t offset = 1) const
 		{
 			return vec->at(index + offset);
 		}

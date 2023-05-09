@@ -8,20 +8,20 @@ namespace caliburn
 {
 	struct IfStatement : public Statement
 	{
-		ptr<Token> first = nullptr;
+		sptr<Token> first = nullptr;
 
-		ptr<Value> condition = nullptr;
-		ptr<ScopeStatement> innerIf = nullptr;
-		ptr<ScopeStatement> innerElse = nullptr;
+		uptr<Value> condition = nullptr;
+		uptr<ScopeStatement> innerIf = nullptr;
+		uptr<ScopeStatement> innerElse = nullptr;
 		
 		IfStatement() : Statement(StatementType::IF) {}
 
-		virtual Token* firstTkn() const override
+		virtual sptr<Token> firstTkn() const override
 		{
 			return first;
 		}
 
-		virtual Token* lastTkn() const override
+		virtual sptr<Token> lastTkn() const override
 		{
 			if (innerElse != nullptr)
 			{
@@ -31,7 +31,7 @@ namespace caliburn
 			return innerIf->lastTkn();
 		}
 
-		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override
+		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			innerIf->declareSymbols(table, codeAsm);
 
@@ -42,7 +42,7 @@ namespace caliburn
 
 		}
 
-		virtual void resolveSymbols(ref<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			condition->resolveSymbols(table);
 			innerIf->resolveSymbols(table, codeAsm);
@@ -84,23 +84,23 @@ namespace caliburn
 
 	struct ForRangeStatement : public Statement
 	{
-		ptr<Token> first = nullptr;
-		ptr<Token> index = nullptr;
-		ptr<LocalVariable> indexVar = nullptr;
-		ptr<Value> from = nullptr;
-		ptr<Value> to = nullptr;
-		ptr<ScopeStatement> loop = nullptr;
+		sptr<Token> first = nullptr;
+		sptr<Token> index = nullptr;
+		uptr<LocalVariable> indexVar = nullptr;
+		uptr<Value> from = nullptr;
+		uptr<Value> to = nullptr;
+		uptr<ScopeStatement> loop = nullptr;
 
 		ForRangeStatement() : Statement(StatementType::FOR) {}
 
-		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override {}
+		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
-		virtual void resolveSymbols(ref<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 
 		}
 
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override;
+		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
 
 		/*
 		virtual ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
@@ -119,34 +119,34 @@ namespace caliburn
 
 	struct WhileStatement : public Statement
 	{
-		ptr<Token> first = nullptr;
+		sptr<Token> first = nullptr;
 
-		Value* condition = nullptr;
-		ScopeStatement* loop = nullptr;
+		uptr<Value> condition = nullptr;
+		uptr<ScopeStatement> loop = nullptr;
 		bool doWhile = false;
 
 		WhileStatement() : Statement(StatementType::WHILE) {}
 
-		virtual Token* firstTkn() const override
+		virtual sptr<Token> firstTkn() const override
 		{
 			return first;
 		}
 		
-		virtual Token* lastTkn() const override
+		virtual sptr<Token> lastTkn() const override
 		{
 			return loop->lastTkn();
 		}
 
-		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override {}
+		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
-		virtual void resolveSymbols(ref<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			condition->resolveSymbols(table);
 			loop->resolveSymbols(table, codeAsm);
 
 		}
 		
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override;
+		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
 
 	};
 

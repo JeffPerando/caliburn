@@ -7,23 +7,23 @@ namespace caliburn
 {
 	struct ValueStatement : public Statement
 	{
-		const ptr<Value> val;
+		const uptr<Value> val;
 
-		ValueStatement(ptr<Value> v) : Statement(StatementType::UNKNOWN), val(v) {}
+		ValueStatement(uptr<Value> v) : Statement(StatementType::UNKNOWN), val(std::move(v)) {}
 
-		virtual Token* firstTkn() const override
+		virtual sptr<Token> firstTkn() const override
 		{
 			return val->firstTkn();
 		}
 
-		virtual Token* lastTkn() const override
+		virtual sptr<Token> lastTkn() const override
 		{
 			return val->lastTkn();
 		}
 
-		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override {}
+		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
-		virtual void resolveSymbols(ref<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			val->resolveSymbols(table);
 

@@ -17,10 +17,10 @@ namespace caliburn
 		{
 			uint32_t nextSSA = 0;
 			
-			std::vector<ptr<Instruction>> code;
+			std::vector<sptr<Instruction>> code;
 
 			std::vector<cllr::Opcode> ssaToOpcode;
-			std::vector<ptr<Instruction>> ssaToCode;
+			//std::vector<sptr<Instruction>> ssaToCode;
 			std::vector<std::string> strs;
 			std::vector<uint32_t> ssaRefs;
 			
@@ -40,17 +40,7 @@ namespace caliburn
 
 			}
 
-			virtual ~Assembler()
-			{
-				for (auto i : code)
-				{
-					delete i;
-				}
-
-				code.clear();
-				ssaToCode.clear();
-
-			}
+			virtual ~Assembler() {}
 
 			SSA createSSA(Opcode op);
 
@@ -61,20 +51,18 @@ namespace caliburn
 				return push(createSSA(op), op, operands, refs);
 			}
 
-			//void toSPIRV(spirv::Assembler* out);
-
 			uint32_t addString(std::string str);
 
 			std::string getString(uint32_t index)
 			{
 				return strs.at(index);
 			}
-
-			ptr<std::vector<ptr<Instruction>>> getCode()
+			/*
+			ptr<std::vector<sptr<Instruction>>> getCode()
 			{
 				return &code;
 			}
-
+			*/
 			void setLoop(SSA start, SSA end)
 			{
 				loops.push_back(std::pair(start, end));
@@ -99,9 +87,9 @@ namespace caliburn
 
 			}
 
-			void findRefs(SSA id, ref<std::vector<ptr<Instruction>>> result);
+			void findRefs(SSA id, ref<std::vector<sptr<Instruction>>> result);
 
-			void findPattern(ref<std::vector<ptr<Instruction>>> result,
+			void findPattern(ref<std::vector<sptr<Instruction>>> result,
 				Opcode opcode,
 				std::array<bool, 3> ops, std::array<uint32_t, 3> opValues,
 				std::array<bool, 3> ids, std::array<SSA, 3> idValues,

@@ -15,7 +15,7 @@ namespace caliburn
 	struct RootModule : public Module
 	{
 		std::vector<std::pair<std::string, std::string>> modRequests;
-		std::map<std::string, Module*> modules;
+		std::map<std::string, sptr<Module>> modules;
 		
 		RootModule() {}
 		virtual ~RootModule() {}
@@ -31,12 +31,12 @@ namespace caliburn
 			modRequests.push_back(std::pair(alias, name));
 		}
 
-		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override
+		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 
 		}
 
-		virtual void resolveSymbols(ref<const SymbolTable> table, cllr::Assembler& codeAsm) override
+		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 
 		}
@@ -52,20 +52,20 @@ namespace caliburn
 	{
 		std::string name;
 
-		std::map<std::string, Variable*> vars;
-		std::map<std::string, Type*> types;
-		std::map<std::string, FunctionStatement*> fns;
-		std::map<std::string, ShaderStatement*> shaders;
+		std::map<std::string, sptr<Variable>> vars;
+		std::map<std::string, sptr<Type>> types;
+		std::map<std::string, sptr<FunctionStatement>> fns;
+		std::map<std::string, sptr<ShaderStatement>> shaders;
 
 		CompiledModule() {}
 		virtual ~CompiledModule() {}
 
-		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override
+		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 
 		}
 
-		virtual void resolveSymbols(ref<const SymbolTable> table, cllr::Assembler& codeAsm) override
+		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 
 		}

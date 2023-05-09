@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "basic.h"
 #include "buffer.h"
 #include "syntax.h"
 
@@ -22,7 +23,7 @@ namespace caliburn
 
 	class Tokenizer
 	{
-		buffer<char>* buf = nullptr;
+		ptr<buffer<char>> buf = nullptr;
 		uint64_t line = 1;
 		uint64_t col = 1;
 
@@ -88,12 +89,11 @@ namespace caliburn
 
 		virtual ~Tokenizer() {}
 
-		void tokenize(std::string& text, std::vector<Token>& tokens);
+		void tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> tokens);
 
-		Tokenizer* enableSignificantWhitespace()
+		void enableSignificantWhitespace()
 		{
 			significantWhitespace = true;
-			return this;
 		}
 
 	private:
@@ -101,7 +101,7 @@ namespace caliburn
 
 		std::string findStr(char delim);
 
-		std::string findIntLiteral(TokenType& type, uint64_t& offset);
+		std::string findIntLiteral(ref<TokenType> type, ref<uint64_t> offset);
 
 		size_t findIdentifierLen();
 

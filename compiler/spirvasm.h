@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "basic.h"
 #include "spirv.h"
 
 namespace caliburn
@@ -29,11 +30,11 @@ namespace caliburn
 
         class CodeSection
         {
-            Assembler* const codeAsm;
+            const sptr<Assembler> codeAsm;
             std::vector<SpvOp> validOps;
             std::vector<uint32_t> code;
         public:
-            CodeSection(Assembler* code, std::initializer_list<SpvOp> ops) : codeAsm(code), validOps(ops)
+            CodeSection(sptr<Assembler> code, std::initializer_list<SpvOp> ops) : codeAsm(code), validOps(ops)
             {
                 //OpNop is always valid
                 if (!validOps.empty())
@@ -58,14 +59,17 @@ namespace caliburn
             AddressingModel addrModel = AddressingModel::Logical;
             MemoryModel memModel = MemoryModel::GLSL450;
             std::vector<EntryPoint> entries;
-            CodeSection spvImports, spvTypes, spvDecs, spvConsts, spvGloVars, spvCode;
+            sptr<CodeSection> spvImports, spvTypes, spvDecs, spvConsts, spvGloVars, spvCode;
 
             std::vector<SSAEntry> ssaEntries;
 
         public:
-            Assembler() :
-                spvImports(this, { OpExtInstImport() }),
-                spvTypes(this, {
+            Assembler()
+            {
+                /*
+                auto me = std::make_shared<Assembler>(this);
+                spvImports = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{ OpExtInstImport() });
+                spvTypes = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{
                     OpTypeArray(),
                     OpTypeBool(),
                     OpTypeFloat(),
@@ -79,16 +83,16 @@ namespace caliburn
                     OpTypeStruct(),
                     OpTypeVector(),
                     OpTypeVoid()
-                        }),
-                spvDecs(this, {
+                });
+                spvDecs = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{
                     OpDecorate(),
                     OpGroupDecorate(),
                     OpGroupMemberDecorate(),
                     OpMemberDecorate(),
                     OpMemberDecorateString(),
                     OpDecorationGroup()
-                        }),
-                spvConsts(this, {
+                });
+                spvConsts = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{
                     OpConstant(),
                     OpConstantComposite(),
                     OpConstantFalse(),
@@ -99,32 +103,33 @@ namespace caliburn
                     OpSpecConstantFalse(),
                     OpSpecConstantOp(),
                     OpSpecConstantTrue(),
-                        }),
-                spvGloVars(this, {
+                });
+                spvGloVars = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{
                     OpVariable()
-                        }),
-                spvCode(this, {})
-            {}
+                });
+                spvCode = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{});
+                */
+            }
             virtual ~Assembler() {}
             
-            CodeSection* main()
+            sptr<CodeSection> main()
             {
-                return &spvCode;
+                return spvCode;
             }
 
-            CodeSection* types()
+            sptr<CodeSection> types()
             {
-                return &spvTypes;
+                return spvTypes;
             }
 
-            CodeSection* consts()
+            sptr<CodeSection> consts()
             {
-                return &spvConsts;
+                return spvConsts;
             }
 
-            CodeSection* decors()
+            sptr<CodeSection> decors()
             {
-                return &spvDecs;
+                return spvDecs;
             }
 
             SSA createSSA(SpvOp op);

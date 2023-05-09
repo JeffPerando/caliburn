@@ -15,7 +15,7 @@ void TypeBool::getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssem
 }
 */
 
-TypeCompat TypeBool::isCompatible(Operator op, Type* rType) const
+TypeCompat TypeBool::isCompatible(Operator op, sptr<Type> rType) const
 {
 	if (!rType)
 	{
@@ -53,7 +53,7 @@ TypeCompat TypeBool::isCompatible(Operator op, Type* rType) const
 	return TypeCompat::INCOMPATIBLE_OP;
 }
 
-void TypeBool::emitDeclCLLR(cllr::Assembler& codeAsm)
+void TypeBool::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 {
 	id = codeAsm.pushNew(cllr::Opcode::TYPE_BOOL, {}, {});
 }

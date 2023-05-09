@@ -8,14 +8,14 @@ namespace caliburn
 {
 	struct ClassStatement : public StructStatement
 	{
-		ClassStatement(Module* p) : StructStatement(StatementType::CLASS, p) {}
+		ClassStatement(sptr<Token> f) : StructStatement(f, StatementType::CLASS) {}
 		virtual ~ClassStatement() {}
 
 	};
 
 	struct MemberFunctionStatement : public FunctionStatement
 	{
-		MemberFunctionStatement(Module* parent) : FunctionStatement(parent) {}
+		MemberFunctionStatement() : FunctionStatement() {}
 		virtual ~MemberFunctionStatement() {}
 
 	};

@@ -33,7 +33,7 @@ namespace caliburn
 			return codeAsm.pushNew(cllr::Opcode::VALUE_INT_LIT, { 0 }, { this->id });
 		}
 
-		TypeCompat isCompatible(Operator op, ptr<Type> rType) const override;
+		TypeCompat isCompatible(Operator op, sptr<Type> rType) const override;
 		
 		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
 

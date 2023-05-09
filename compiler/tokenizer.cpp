@@ -4,7 +4,6 @@
 #include <iostream>
 #include <sstream>
 
-#include "basic.h"
 #include "tokenizer.h"
 
 using namespace caliburn;
@@ -20,7 +19,7 @@ std::string Tokenizer::findStr(char delim)
 
 	while (buf->hasNext())
 	{
-		char current = buf->currentVal();
+		char current = buf->current();
 
 		if (current == delim)
 		{
@@ -36,7 +35,7 @@ std::string Tokenizer::findStr(char delim)
 
 			while (buf->hasNext())
 			{
-				char ws = buf->nextVal();
+				char ws = buf->next();
 
 				if (getType(ws) != CharType::WHITESPACE)
 					break;
@@ -65,7 +64,7 @@ std::string Tokenizer::findStr(char delim)
 	return ss.str();
 }
 
-std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
+std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 {
 	std::vector<char> decInts =
 	{ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
@@ -77,17 +76,17 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 
 	std::vector<char>* validIntChars = &decInts;
 
-	auto isDecInt = [decInts](char chr)
+	auto isDecInt = lambda(char chr)
 	{
 		return std::binary_search(decInts.begin(), decInts.end(), chr);
 	};
 
-	auto isValidInt = [validIntChars](char chr)
+	auto isValidInt = lambda(char chr)
 	{
 		return std::binary_search(validIntChars->begin(), validIntChars->end(), chr);
 	};
 
-	char first = buf->currentVal();
+	char first = buf->current();
 
 	if (!isDecInt(first))
 	{
@@ -103,7 +102,7 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 	//find either a hex, binary, or octal integer
 	if (first == '0' && buf->remaining() > 2)
 	{
-		char litType = buf->peekVal();
+		char litType = buf->peek();
 
 		switch (litType)
 		{
@@ -131,7 +130,7 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 	//get the actual numerical digits
 	while (buf->hasNext())
 	{
-		char current = buf->currentVal();
+		char current = buf->current();
 		
 		if (current == '_')
 		{
@@ -158,14 +157,14 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 		//find the fractional component
 		if (buf->remaining() >= 2)
 		{
-			if (buf->currentVal() == '.')
+			if (buf->current() == '.')
 			{
 				ss << '.';
 				isFloat = true;
 
 				do
 				{
-					char dec = buf->nextVal();
+					char dec = buf->next();
 
 					if (isDecInt(dec))
 					{
@@ -182,13 +181,13 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 		//find an exponent
 		if (buf->remaining() >= 2)
 		{
-			char exp = buf->currentVal();
+			char exp = buf->current();
 
 			if (exp == 'e' || exp == 'E')
 			{
 				ss << exp;
 				
-				char sign = buf->nextVal();
+				char sign = buf->next();
 
 				if (sign == '+' || sign == '-')
 				{
@@ -196,9 +195,9 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 					buf->consume();
 				}
 
-				while (buf->hasNext() && isValidInt(buf->currentVal()))
+				while (buf->hasNext() && isValidInt(buf->current()))
 				{
-					ss << buf->currentVal();
+					ss << buf->current();
 					buf->consume();
 				}
 
@@ -214,7 +213,7 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 	//find suffix
 	if (buf->hasNext())
 	{
-		char suffix = buf->currentVal();
+		char suffix = buf->current();
 		buf->consume();
 
 		if (suffix > 96)
@@ -223,7 +222,7 @@ std::string Tokenizer::findIntLiteral(TokenType& type, uint64_t& offset)
 		if (suffix == 'U')
 		{
 			typeSuffix = "uint";
-			suffix = buf->currentVal();
+			suffix = buf->current();
 			buf->consume();
 		}
 
@@ -263,7 +262,7 @@ size_t Tokenizer::findIdentifierLen()
 
 	while (buf->inRange(offset))
 	{
-		char chrAtOff = buf->peekVal(offset);
+		char chrAtOff = buf->peek(offset);
 		if (getType(chrAtOff) != CharType::IDENTIFIER &&
 			getType(chrAtOff) != CharType::INT)
 		{
@@ -277,8 +276,9 @@ size_t Tokenizer::findIdentifierLen()
 
 //TODO use 32-bit wide chars for UTF-8 support
 //or, y'know, find a UTF-8 library (NOT BOOST)
-void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
+void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> tokens)
 {
+	
 	auto vec = std::vector<char>(text.begin(), text.end());
 	auto back = buffer<char>(&vec);
 	buf = &back;
@@ -288,18 +288,16 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 
 	while (buf->hasNext())
 	{
-		char current = buf->currentVal();
+		char current = buf->current();
 
 		CharType type = getType(current);
 
-		/*
-		See https://en.wikipedia.org/w/index.php?title=Newline
+		//See https://en.wikipedia.org/w/index.php?title=Newline
 
-		So there's 2 major line endings we care about:
-		Windows \n
-		Linux/MacOS \r\n
-		Result: We don't care about \r. We just don't. We see it, we skip it. That way line counts are kept sane.
-		*/
+		//So there's 2 major line endings we care about:
+		//Windows \n
+		//Linux/MacOS \r\n
+		//Result: We don't care about \r. We just don't. We see it, we skip it. That way line counts are kept sane.
 		if (type == CharType::WHITESPACE)
 		{
 			if (current == '\r')
@@ -311,7 +309,7 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 
 			if (significantWhitespace)
 			{
-				tokens.push_back(Token(std::string(1, current), TokenType::UNKNOWN, line, col, buf->currentIndex(), buf->currentIndex() + 1L));
+				tokens.push_back(std::make_shared<Token>(std::string(1, current), TokenType::UNKNOWN, line, col, buf->currentIndex(), buf->currentIndex() + 1L));
 			}
 
 			buf->consume();
@@ -334,9 +332,7 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 			continue;
 		}
 
-		/*
-		Identifiers can start with a number
-		*/
+		//Identifiers can start with a number
 		if (type == CharType::IDENTIFIER || type == CharType::INT)
 		{
 			std::string intLit = "";
@@ -351,12 +347,11 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 
 			size_t idOffset = findIdentifierLen();
 
-			/*
-			So the idea is simple: We try to make an identifier token, and we try
-			to make an integer token. Whichever is longer is the one we go with. BUT
-			if they're the same length, we go with the integer literal. That way,
-			literals like 0f or 0xDEADBEEF are correctly identified.
-			*/
+			
+			//So the idea is simple: We try to make an identifier token, and we try
+			//to make an integer token. Whichever is longer is the one we go with. BUT
+			//if they're the same length, we go with the integer literal. That way,
+			//literals like 0f or 0xDEADBEEF are correctly identified.
 			if (idOffset > intOffset)
 			{
 				auto idStr = text.substr(buf->currentIndex(), idOffset);
@@ -377,7 +372,7 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 
 				}
 
-				tokens.push_back(Token(idStr, idType, line, col, buf->currentIndex(), idOffset));
+				tokens.push_back(std::make_shared<Token>(idStr, idType, line, col, buf->currentIndex(), idOffset));
 
 				buf->consume(idOffset);
 				col += idOffset;
@@ -385,7 +380,7 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 			}
 			else
 			{
-				tokens.push_back(Token(intLit, intType, line, col, buf->currentIndex(), intOffset));
+				tokens.push_back(std::make_shared<Token>(intLit, intType, line, col, buf->currentIndex(), intOffset));
 
 				buf->consume(intOffset);
 				col += intOffset;
@@ -401,7 +396,7 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 			{
 				++col;
 
-				if (buf->nextVal() == '\n')
+				if (buf->next() == '\n')
 					break;
 
 			}
@@ -415,7 +410,7 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 			auto str = findStr(current);
 
 			//findStr should offset col and line
-			tokens.push_back(Token(str, TokenType::LITERAL_STR, line, col, start, start - buf->currentIndex()));
+			tokens.push_back(std::make_shared<Token>(str, TokenType::LITERAL_STR, line, col, start, start - buf->currentIndex()));
 			continue;
 		}
 
@@ -425,7 +420,7 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 
 			if (specialType != charTokenTypes.end())
 			{
-				tokens.push_back(Token(std::string(1, current), specialType->second, line, col, buf->currentIndex(), 1L));
+				tokens.push_back(std::make_shared<Token>(std::string(1, current), specialType->second, line, col, buf->currentIndex(), 1L));
 			}
 
 		}
@@ -435,7 +430,7 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 
 			for (off = 1; off < buf->remaining(); ++off)
 			{
-				if (getType(buf->peekVal(off)) != CharType::OPERATOR)
+				if (getType(buf->peek(off)) != CharType::OPERATOR)
 					break;
 			}
 
@@ -444,13 +439,13 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 
 			if (meaning == specialOps.end())
 			{
-				tokens.push_back(Token(fullOp, meaning->second, line, col, buf->currentIndex(), off));
+				tokens.push_back(std::make_shared<Token>(fullOp, meaning->second, line, col, buf->currentIndex(), off));
 				buf->consume(off);
 				col += off;
 				continue;
 			}
 
-			tokens.push_back(Token(std::string(1, current), TokenType::OPERATOR, line, col, buf->currentIndex(), 1L));
+			tokens.push_back(std::make_shared<Token>(std::string(1, current), TokenType::OPERATOR, line, col, buf->currentIndex(), 1L));
 
 		}
 		
@@ -461,5 +456,5 @@ void Tokenizer::tokenize(std::string& text, std::vector<Token>& tokens)
 	}
 
 	buf = nullptr;
-
+	
 }

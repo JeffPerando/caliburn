@@ -15,7 +15,7 @@ namespace caliburn
 	class Parser;
 
 	template<typename T>
-	using ParseMethod = T* (Parser::*)();
+	using ParseMethod = uptr<T> (Parser::*)();
 
 	class Parser
 	{
@@ -23,97 +23,97 @@ namespace caliburn
 		Parser() {}
 		virtual ~Parser() {}
 
-		void parse(ptr<std::vector<Token>> tokenList, ptr<std::vector<ptr<Statement>>> ast);
+		void parse(ref<std::vector<sptr<Token>>> tokenList, ref<std::vector<uptr<Statement>>> ast);
 
 	private:
-		ptr<buffer<Token>> tokens = nullptr;
-		std::vector<ptr<CaliburnException>> errors;
+		ptr<buffer<sptr<Token>>> tokens = nullptr;
+		std::vector<uptr<CaliburnException>> errors;
 
 		template<typename T>
-		ptr<T> parseAny(std::initializer_list<ParseMethod<T>> fns);
+		uptr<T> parseAny(std::initializer_list<ParseMethod<T>> fns);
 
 		template<typename T>
-		ptr<T> parseBetween(std::string start, ParseMethod<T> fn, std::string end);
+		uptr<T> parseBetween(std::string start, ParseMethod<T> fn, std::string end);
 
 		void parseAnyBetween(std::string start, std::function<void()> fn, std::string end);
 
-		void postParseException(CaliburnException* ex);
+		void postParseException(uptr<CaliburnException> ex);
 
-		void parseIdentifierList(ref<std::vector<ptr<Token>>> ids);
+		void parseIdentifierList(ref<std::vector<sptr<Token>>> ids);
 
-		bool parseGenerics(ref<std::vector<ptr<ParsedType>>> generics);
+		bool parseGenerics(ref<std::vector<uptr<ParsedType>>> generics);
 
-		bool parseValueList(ref<std::vector<ptr<Value>>> values, bool commaOptional);
+		bool parseValueList(ref<std::vector<uptr<Value>>> values, bool commaOptional);
 
 		bool parseSemicolon();
 
-		bool parseScopeEnd(ptr<ScopeStatement> stmt);
+		bool parseScopeEnd(uptr<ScopeStatement> stmt);
 
-		ptr<ParsedType> parseTypeName();
+		uptr<ParsedType> parseTypeName();
 
 		StorageModifiers parseStorageMods();
 
-		ptr<ScopeStatement> parseScope(std::initializer_list<ParseMethod<Statement>> pms);
+		uptr<ScopeStatement> parseScope(std::initializer_list<ParseMethod<Statement>> pms);
 
-		ptr<Statement> parseDecl();
+		uptr<Statement> parseDecl();
 		
-		ptr<Statement> parseImport();
+		uptr<Statement> parseImport();
 
-		ptr<Statement> parseModuleDef();
+		uptr<Statement> parseModuleDef();
 
-		ptr<Statement> parseTypedef();
+		uptr<Statement> parseTypedef();
 
-		//ptr<Statement> parseShader();
+		//uptr<Statement> parseShader();
 
-		ptr<Statement> parseStruct();
+		uptr<Statement> parseStruct();
 
-		//ptr<Statement> parseClass();
+		//uptr<Statement> parseClass();
 		
-		ptr<Statement> parseFunction();
+		uptr<Statement> parseFunction();
 
-		ptr<Statement> parseMethod();
+		uptr<Statement> parseMethod();
 
-		ptr<Statement> parseConstructor();
+		uptr<Statement> parseConstructor();
 
-		ptr<Statement> parseDestructor();
+		uptr<Statement> parseDestructor();
 
-		//ptr<Statement> parseOp();
+		//uptr<Statement> parseOp();
 
-		ptr<Statement> parseLogic();
+		uptr<Statement> parseLogic();
 
-		//ptr<Statement> parseSetter();
+		//uptr<Statement> parseSetter();
 
-		ptr<Statement> parseControl();
+		uptr<Statement> parseControl();
 
-		ptr<Statement> parseIf();
+		uptr<Statement> parseIf();
 
-		ptr<Statement> parseFor();
+		uptr<Statement> parseFor();
 		
-		ptr<Statement> parseWhile();
+		uptr<Statement> parseWhile();
 		
-		ptr<Statement> parseDoWhile();
+		uptr<Statement> parseDoWhile();
 
-		ptr<Statement> parseValueStmt();
+		uptr<Statement> parseValueStmt();
 
-		ptr<Statement> parseMemberVarStmt();
+		uptr<Statement> parseMemberVarStmt();
 
-		ptr<Value> parseAnyValue();
+		uptr<Value> parseAnyValue();
 
-		ptr<Value> parseNonExpr();
+		uptr<Value> parseNonExpr();
 
-		ptr<Value> parseLiteral();
+		uptr<Value> parseLiteral();
 
-		ptr<Value> parseAnyExpr();
+		uptr<Value> parseAnyExpr();
 
-		ptr<Value> parseExpr(uint32_t precedence);
+		uptr<Value> parseExpr(uint32_t precedence);
 
-		ptr<Value> parseAnyFnCall();
+		uptr<Value> parseAnyFnCall();
 
-		ptr<Value> parseFnCall(ptr<Value> start);
+		uptr<Value> parseFnCall(uptr<Value> start);
 
-		ptr<Variable> parseLocalVar();
+		sptr<Variable> parseLocalVar();
 
-		ptr<Variable> parseMemberVar();
+		sptr<Variable> parseMemberVar();
 
 	};
 

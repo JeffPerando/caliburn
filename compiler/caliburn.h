@@ -39,15 +39,15 @@ namespace caliburn
 	private:
 		OptimizeLevel optimizeLvl = OptimizeLevel::BALANCED;
 		std::map<std::string, std::string> dynTypes;
-		std::vector<Statement*> ast;
+		std::vector<uptr<Statement>> ast;
 	public:
 		Compiler() = default;
-		virtual ~Compiler();
+		virtual ~Compiler() {};
 
 		/*
 		Sets the optimization level for the compiler. See OptimizeLevel enum.
 		*/
-		Compiler* o(OptimizeLevel lvl);
+		void o(OptimizeLevel lvl);
 
 		/*
 		In Caliburn, a type can be defined as "dynamic", which means the actual
@@ -59,7 +59,7 @@ namespace caliburn
 		- concrete must correlate to an existing type within a compiled shader,
 		  and ideally be a built-in type.
 		*/
-		Compiler* setDynamicType(std::string inner, std::string concrete);
+		void setDynamicType(std::string inner, std::string concrete);
 
 		/*
 		Uses existing CBIR code to create an internal AST which can then be compiled.
@@ -67,7 +67,7 @@ namespace caliburn
 		CBIR is merely the binary representation of a Caliburn source file, and is
 		the format recommended for redistribution.
 		*/
-		void parseCBIR(std::vector<uint32_t>* cbir);
+		void parseCBIR(ref<std::vector<uint32_t>> cbir);
 
 		/*
 		Parses source code text into an internal AST.
@@ -89,7 +89,7 @@ namespace caliburn
 
 		An empty shaderName will result in a failed compilation.
 		*/
-		bool compileShaders(std::string shaderName, std::vector<Shader>& shaderDest);
+		bool compileShaders(std::string shaderName, ref<std::vector<Shader>> shaderDest);
 
 	};
 

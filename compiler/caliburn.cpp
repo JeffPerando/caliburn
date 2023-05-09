@@ -9,17 +9,6 @@
 
 using namespace caliburn;
 
-Compiler::~Compiler()
-{
-	for (auto stmt : ast)
-	{
-		delete stmt;
-	}
-
-	ast.clear();
-
-}
-
 void Compiler::parseText(std::string text)
 {
 	if (!ast.empty())
@@ -27,7 +16,7 @@ void Compiler::parseText(std::string text)
 		throw std::exception("Caliburn: parsing method called a second time");
 	}
 
-	std::vector<Token> tokens;
+	std::vector<sptr<Token>> tokens;
 	
 	//Parse the text into tokens (duh)
 	Tokenizer t;
@@ -35,10 +24,10 @@ void Compiler::parseText(std::string text)
 
 	//Build the initial AST (ok)
 	Parser p;
-	p.parse(&tokens, &ast);
+	p.parse(tokens, ast);
 
 	//Validate AST
-	for (auto stmt : ast)
+	for (auto const& stmt : ast)
 	{
 		std::set<StatementType> topStmts = TOP_STMT_TYPES;
 
@@ -57,12 +46,12 @@ void Compiler::parseText(std::string text)
 
 }
 
-void Compiler::parseCBIR(std::vector<uint32_t>* cbir)
+void Compiler::parseCBIR(ref<std::vector<uint32_t>> cbir)
 {
 
 }
 
-bool Compiler::compileShaders(std::string shaderName, std::vector<Shader>& shaderDest)
+bool Compiler::compileShaders(std::string shaderName, ref<std::vector<Shader>> shaderDest)
 {
 	if (ast.empty())
 	{
@@ -80,14 +69,14 @@ bool Compiler::compileShaders(std::string shaderName, std::vector<Shader>& shade
 
 	//Conditional compilation
 	/*
-	auto sortAST = lambda_p1(this) {
-		std::sort(ast.begin(), ast.end(), lambda(const ptr<Statement> a, const ptr<Statement> b)
+	auto sortAST = lambda() {
+		std::sort(ast.begin(), ast.end(), lambda(const uptr<Statement> a, const uptr<Statement> b)
 			{
 				return a->type > b->type;
 			});
 	};
 
-	auto insertCode = lambda_p2(this, sortAST, ptr<ScopeStatement> stmt) {
+	auto insertCode = lambda(uptr<ScopeStatement> stmt) {
 		auto inner = &stmt->stmts;
 		ast.insert(ast.end(), inner->begin(), inner->end());
 		sortAST();
@@ -137,23 +126,23 @@ bool Compiler::compileShaders(std::string shaderName, std::vector<Shader>& shade
 
 	}
 	*/
-	auto root = new RootModule();
-	auto mod = new CompiledModule();
+	auto root = std::make_unique<RootModule>();
+	auto mod = std::make_unique<CompiledModule>();
 
 	//COMPILE
-	for (auto stmt : ast)
+	for (auto const& stmt : ast)
 	{
 		if (stmt->type == StatementType::IMPORT)
 		{
-			auto& imp = *(ImportStatement*)stmt;
+			auto imp = static_cast<ptr<ImportStatement>>(stmt.get());
 
-			root->importModule(imp.name->str, imp.alias == nullptr ? "" : imp.alias->str);
+			root->importModule(imp->name->str, imp->alias == nullptr ? "" : imp->alias->str);
 			continue;
 		}
 
 		if (stmt->type == StatementType::MODULE)
 		{
-			auto modDecl = (ModuleStatement*)stmt;
+			auto modDecl = static_cast<ptr<ModuleStatement>>(stmt.get());
 
 			mod->name = modDecl->name->str;
 			continue;
@@ -161,20 +150,15 @@ bool Compiler::compileShaders(std::string shaderName, std::vector<Shader>& shade
 
 	}
 
-	delete mod;
-	delete root;
-
 	return false;
 }
 
-Compiler* Compiler::o(OptimizeLevel lvl)
+void Compiler::o(OptimizeLevel lvl)
 {
 	optimizeLvl = lvl;
-	return this;
 }
 
-Compiler* Compiler::setDynamicType(std::string inner, std::string concrete)
+void Compiler::setDynamicType(std::string inner, std::string concrete)
 {
 	dynTypes.emplace(inner, concrete);
-	return this;
 }

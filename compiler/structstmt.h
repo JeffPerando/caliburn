@@ -10,57 +10,48 @@ namespace caliburn
 {
 	struct StructStatement : public GenericStatement
 	{
-		ptr<Token> first = nullptr;
-		ptr<Token> last = nullptr;
+		sptr<Token> first = nullptr;
+		sptr<Token> last = nullptr;
 
-		const ptr<Token> name;
+		const sptr<Token> name;
 
-		ptr<Type> innerType = nullptr;
-		std::vector<ptr<Variable>> members;
+		sptr<Type> innerType = nullptr;
+		std::vector<sptr<Variable>> members;
 
-		StructStatement(ptr<Token> n, StatementType type = StatementType::STRUCT) : GenericStatement(type), name(n) {}
+		StructStatement(sptr<Token> n, StatementType type = StatementType::STRUCT) : GenericStatement(type), name(n) {}
 
-		virtual ~StructStatement()
-		{
-			if (innerType != nullptr)
-			{
-				delete innerType;
-				innerType = nullptr;
+		virtual ~StructStatement() {}
 
-			}
-
-		}
-
-		virtual Token* firstTkn() const override
+		virtual sptr<Token> firstTkn() const override
 		{
 			return first;
 		}
 
-		virtual Token* lastTkn() const override
+		virtual sptr<Token> lastTkn() const override
 		{
 			return last;
 		}
 
 		//Only used by top-level statements which declare symbols. The rest, like local variables, should use declareSymbols() instead
-		virtual void declareHeader(ref<SymbolTable> table, cllr::Assembler& codeAsm)
+		virtual void declareHeader(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
 		{
-			innerType = new TypeStruct(name->str, tNames.size() + cNames.size());
+			innerType = std::make_unique<TypeStruct>(name->str, tNames.size() + cNames.size());
 		}
 
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override {}
+		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override {}
 
-		virtual void declareSymbols(ref<SymbolTable> table, cllr::Assembler& codeAsm) override
+		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-			for (auto mem : members)
+			for (auto const& mem : members)
 			{
 				
 			}
 
 		}
 
-		virtual void resolveSymbols(ref<const SymbolTable> table, cllr::Assembler& codeAsm) override
+		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-			for (auto mem : members)
+			for (auto const& mem : members)
 			{
 				mem->resolveSymbols(table);
 

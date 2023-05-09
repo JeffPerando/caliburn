@@ -8,25 +8,24 @@ namespace caliburn
 {
 	struct FunctionStatement : public Statement
 	{
-		Token* first = nullptr;
-		Token* name = nullptr;
+		sptr<Token> first = nullptr;
+		sptr<Token> name = nullptr;
 
 		cllr::SSA funcID = 0;
 
-		std::vector<Variable*> args;
-		ParsedType* retPType = nullptr;
-		Type* retType = nullptr;
-
-		ScopeStatement* body = nullptr;
+		std::vector<uptr<Variable>> args;
+		uptr<ParsedType> retPType = nullptr;
+		sptr<Type> retType = nullptr;
+		uptr<ScopeStatement> body = nullptr;
 		
 		FunctionStatement() : Statement(StatementType::FUNCTION) {}
 
-		virtual Token* firstTkn() const override
+		virtual sptr<Token> firstTkn() const override
 		{
 			return first;
 		}
 
-		virtual Token* lastTkn() const override
+		virtual sptr<Token> lastTkn() const override
 		{
 			return body ? body->last : nullptr;
 		}
@@ -50,7 +49,7 @@ namespace caliburn
 			return body->validate(bodyTypes, bodyModes);
 		}
 
-		virtual void getSSAs(cllr::Assembler& codeAsm) override
+		virtual void getSSAs(ref<cllr::Assembler> codeAsm) override
 		{
 			funcID = codeAsm.createSSA(cllr::Opcode::FUNCTION);
 
@@ -58,7 +57,7 @@ namespace caliburn
 
 		}
 		*/
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override
+		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
 		{
 			retType->emitDeclCLLR(codeAsm);
 

@@ -15,10 +15,10 @@ namespace caliburn
 		class CllrTranslator;
 
 		//Function pointer type for easier usage later
-		using CllrImpl = spirv::SSA(cllr::Instruction i, spirv::CllrTranslator* t);
+		using CllrImpl = spirv::SSA(ref<const sptr<cllr::Instruction>> i, ref<spirv::CllrTranslator> t);
 
 		//Macro shorthand for implementation signature
-		#define CLLR_SPIRV_IMPL(Name) spirv::SSA Name(cllr::Instruction i, spirv::CllrTranslator* t)
+		#define CLLR_SPIRV_IMPL(Name) spirv::SSA Name(ref<const sptr<cllr::Instruction>> i, ref<spirv::CllrTranslator> t)
 
 		namespace cllr_impl
 		{
@@ -46,10 +46,10 @@ namespace caliburn
 			std::array<ptr<CllrImpl>, (uint64_t)cllr::Opcode::CLLR_OP_COUNT> opImpls = {};
 
 		public:
-			const ptr<cllr::Assembler> in;
-			const ptr<spirv::Assembler> out;
+			const sptr<cllr::Assembler> in;
+			const sptr<spirv::Assembler> out;
 
-			CllrTranslator(cllr::Assembler* inAsm, spirv::Assembler* outAsm) : in(inAsm), out(outAsm)
+			CllrTranslator(sptr<cllr::Assembler> inAsm, sptr<spirv::Assembler> outAsm) : in(inAsm), out(outAsm)
 			{
 				//here we go...
 
@@ -59,7 +59,7 @@ namespace caliburn
 
 			spirv::SSA getOrCreateAlias(cllr::SSA ssa, spirv::SpvOp op);
 
-			void translate(std::vector<cllr::Instruction>* code);
+			void translate(ref<std::vector<sptr<cllr::Instruction>>> code);
 
 		};
 

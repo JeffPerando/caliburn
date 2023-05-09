@@ -9,17 +9,17 @@ namespace caliburn
 {
 	struct ShaderStageStatement : public Statement
 	{
-		ptr<Token> first = nullptr;
-		ptr<Token> name = nullptr;
+		sptr<Token> first = nullptr;
+		sptr<Token> name = nullptr;
 
-		std::set<std::pair<Token*, ParsedType*>> inputs;
-		ptr<ParsedType> output = nullptr;
+		std::set<std::pair<sptr<Token>, uptr<ParsedType>>> inputs;
+		uptr<ParsedType> output = nullptr;
 
-		ptr<ScopeStatement> code = nullptr;
+		uptr<ScopeStatement> code = nullptr;
 
 		ShaderStageStatement() : Statement(StatementType::SHADER_STAGE) {}
-
-		ptr<cllr::CompilationUnit> compile(ref<SymbolTable> symbols)
+		/*
+		uptr<cllr::CompilationUnit> compile(sptr<SymbolTable> symbols)
 		{
 			auto codeAsm = cllr::Assembler();
 			
@@ -28,28 +28,28 @@ namespace caliburn
 
 			code->emitDeclCLLR(codeAsm);
 
-			return new cllr::CompilationUnit{ cllr::Target::GPU, std::move(*codeAsm.getCode())};
+			return std::make_unique<cllr::CompilationUnit>(cllr::Target::GPU, std::move(*codeAsm.getCode()));
 		}
-
+		*/
 	};
 
 	struct ShaderStatement : public Statement
 	{
-		ptr<Token> first = nullptr;
-		ptr<Token> last = nullptr;
+		sptr<Token> first = nullptr;
+		sptr<Token> last = nullptr;
 
-		std::vector<ptr<ShaderStageStatement>> stages;
+		std::vector<uptr<ShaderStageStatement>> stages;
 
 		ShaderStatement() : Statement(StatementType::SHADER) {}
 		virtual ~ShaderStatement() {}
-
-		void compile(ref<SymbolTable> table, std::vector<cllr::CompilationUnit*>& codeDest, std::vector<uint32_t>* cbir)
+		/*
+		void compile(sptr<SymbolTable> table, ref<std::vector<uptr<cllr::CompilationUnit>>> codeDest, ptr<std::vector<uint32_t>> cbir)
 		{
-			for (auto stage : stages)
+			for (auto const& stage : stages)
 			{
 				auto result = stage->compile(table);
 
-				codeDest.push_back(result);
+				codeDest.push_back(std::move(result));
 
 			}
 
@@ -59,7 +59,7 @@ namespace caliburn
 			}
 
 		}
-
+		*/
 	};
 
 }

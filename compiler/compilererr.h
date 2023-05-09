@@ -26,10 +26,10 @@ namespace caliburn
 	{
 		CompileStage const stage;
 		std::string const message;
-		Token* const current;
+		sptr<Token> const current;
 		std::vector<std::string> extras;
 
-		CaliburnException(CompileStage s, std::string m, Token* tkn) :
+		CaliburnException(CompileStage s, std::string m, sptr<Token> tkn) :
 			stage(s), message(m), current(tkn) {}
 		
 		virtual void toStr(std::string& out)
@@ -54,31 +54,25 @@ namespace caliburn
 
 		}
 
-		CaliburnException* extra(std::string str)
-		{
-			extras.push_back(str);
-			return this;
-		}
-
 	};
 
 	struct ParseException : public CaliburnException
 	{
-		ParseException(std::string m, Token* tkn) :
+		ParseException(std::string m, sptr<Token> tkn) :
 			CaliburnException(CompileStage::PARSER, m, tkn) {}
 
 	};
 
 	struct CompilerException : public CaliburnException
 	{
-		CompilerException(std::string m, Token* tkn) :
+		CompilerException(std::string m, sptr<Token> tkn) :
 			CaliburnException(CompileStage::COMPILER, m, tkn) {}
 
 	};
 
 	struct InvalidDeclException : public ParseException
 	{
-		InvalidDeclException(Token* invalid) :
+		InvalidDeclException(sptr<Token> invalid) :
 			ParseException((std::stringstream() << "invalid declaration: \"" << invalid->str << '\"').str(),
 				current) {}
 
@@ -88,7 +82,7 @@ namespace caliburn
 	//Please use a more descriptive exception when possible
 	struct UnexpectedTokenException : public ParseException
 	{
-		UnexpectedTokenException(Token* current, char expected) :
+		UnexpectedTokenException(sptr<Token> current, char expected) :
 			ParseException(
 				(std::stringstream() << "expected \'" << expected << "\', found \'" << current->str << '\'').str(),
 				current) {}

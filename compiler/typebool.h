@@ -26,9 +26,9 @@ namespace caliburn
 
 		//void getConvertibleTypes(std::set<ConcreteType*>* types) override;
 
-		TypeCompat isCompatible(Operator op, Type* rType) const override;
+		TypeCompat isCompatible(Operator op, sptr<Type> rType) const override;
 
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override;
+		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
 
 	};
 

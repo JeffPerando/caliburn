@@ -8,9 +8,9 @@ namespace caliburn
 	struct TypeVector : public Type
 	{
 		const uint32_t elements;
-		const ptr<Type> inner;
+		const sptr<Type> inner;
 
-		TypeVector(uint32_t vecElements, Type* innerType) :
+		TypeVector(uint32_t vecElements, sptr<Type> innerType) :
 			Type(TypeCategory::VECTOR, "vec" + vecElements, 1),
 			elements(vecElements), inner(innerType)
 		{
@@ -29,13 +29,13 @@ namespace caliburn
 			//return codeAsm.push(0, cllr::Opcode::VALUE_LITERAL, { 0, 0, 0 }, { this->id }, true);
 		}
 
-		//virtual void getConvertibleTypes(std::set<Type*>* types) override;
+		//virtual void getConvertibleTypes(std::set<sptr<Type>>* types) override;
 
-		TypeCompat isCompatible(Operator op, Type* rType) const override;
+		TypeCompat isCompatible(Operator op, sptr<Type> rType) const override;
 
-		virtual ptr<Type> makeVariant(ref<std::vector<ptr<Type>>> genArgs) const override;
+		virtual sptr<Type> makeVariant(ref<std::vector<sptr<Type>>> genArgs) const override;
 
-		virtual void emitDeclCLLR(cllr::Assembler& codeAsm) override;
+		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
 
 	};
 

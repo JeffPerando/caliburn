@@ -7,22 +7,22 @@ namespace caliburn
 {
 	struct SetterStatement : public Statement
 	{
-		Value* lValue = nullptr;
-		Value* rValue = nullptr;
+		uptr<Value> lValue = nullptr;
+		uptr<Value> rValue = nullptr;
 
 		SetterStatement() : Statement(StatementType::SETTER) {}
 
-		Token* firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return lValue->firstTkn();
 		}
 
-		Token* lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return rValue->lastTkn();
 		}
 
-		void resolveSymbols(ref<const SymbolTable> table, cllr::Assembler& codeAsm) override
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			lValue->resolveSymbols(table);
 			rValue->resolveSymbols(table);

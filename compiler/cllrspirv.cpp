@@ -3,11 +3,11 @@
 
 using namespace caliburn;
 
-void spirv::CllrTranslator::translate(std::vector<cllr::Instruction>* code)
+void spirv::CllrTranslator::translate(ref<std::vector<sptr<cllr::Instruction>>> code)
 {
-	for (const auto& i : *code)
+	for (const auto& i : code)
 	{
-		opImpls[(uint32_t)i.op](i, this);
+		opImpls[(uint32_t)i->op](i, *this);
 	}
 
 }
@@ -39,7 +39,7 @@ CLLR_SPIRV_IMPL(spirv::cllr_impl::OpUnknown)
 
 CLLR_SPIRV_IMPL(spirv::cllr_impl::OpLabel)
 {
-	return t->out->main()->push(spirv::OpLabel(), {});
+	return t.out->main()->push(spirv::OpLabel(), {});
 }
 
 /*
@@ -56,17 +56,17 @@ CLLR_SPIRV_IMPL(spirv::cllr_impl::OpLoop)
 
 CLLR_SPIRV_IMPL(spirv::cllr_impl::OpTypeInt)
 {
-	return t->out->types()->push(spirv::OpTypeInt(), {i.operands[0], i.operands[1]});
+	return t.out->types()->push(spirv::OpTypeInt(), {i->operands[0], i->operands[1]});
 }
 
 CLLR_SPIRV_IMPL(spirv::cllr_impl::OpTypeFloat)
 {
-	return t->out->types()->push(spirv::OpTypeInt(), { i.operands[0] });
+	return t.out->types()->push(spirv::OpTypeInt(), { i->operands[0] });
 }
 
 CLLR_SPIRV_IMPL(spirv::cllr_impl::OpTypeStruct)
 {
-	auto ssa = t->out->createSSA(spirv::OpTypeStruct());
+	auto ssa = t.out->createSSA(spirv::OpTypeStruct());
 
 	return 0;
 }

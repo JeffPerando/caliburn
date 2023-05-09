@@ -16,7 +16,7 @@ namespace caliburn
 			uint32_t size = 0;
 			uint32_t lastAlign = 1;
 
-			for (auto m : members)
+			for (auto const& m : members)
 			{
 				auto t = m->type;
 				size += t->getSizeBytes();
@@ -46,15 +46,15 @@ namespace caliburn
 			return members.back()->type->getAlignBytes();
 		}
 
-		virtual ptr<Type> makeVariant(ref<std::vector<ptr<Type>>> genArgs) const override
+		virtual sptr<Type> makeVariant(ref<std::vector<sptr<Type>>> genArgs) const override
 		{
-			auto ret = new TypeStruct(canonName, maxGenerics);
+			auto ret = std::make_unique<TypeStruct>(canonName, maxGenerics);
 
 			//TODO check compatibility
 
 			for (size_t i = 0; i < genArgs.size(); ++i)
 			{
-				ret->setGeneric(i, genArgs[i]);
+				ret->setGeneric(i, genArgs.at(i));
 			}
 
 			return ret;
@@ -66,7 +66,7 @@ namespace caliburn
 			return codeAsm.pushNew(cllr::Opcode::UNKNOWN, {}, { this->id });
 		}
 
-		TypeCompat isCompatible(Operator op, Type* rType) const override
+		TypeCompat isCompatible(Operator op, sptr<Type> rType) const override
 		{
 			return TypeCompat::INCOMPATIBLE_TYPE;
 		}
@@ -80,7 +80,7 @@ namespace caliburn
 
 			id = codeAsm.pushNew(cllr::Opcode::TYPE_STRUCT, {}, {});
 
-			for (auto m : members)
+			for (auto const& m : members)
 			{
 				m->emitDeclCLLR(codeAsm);
 

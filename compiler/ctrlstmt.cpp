@@ -27,7 +27,7 @@ void IfStatement::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 
 }
 
-void ForRangeStatement::emitDeclCLLR(cllr::Assembler& codeAsm)
+void ForRangeStatement::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 {
 /*
 uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
@@ -94,7 +94,7 @@ uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 */
 }
 
-void WhileStatement::emitDeclCLLR(cllr::Assembler& codeAsm)
+void WhileStatement::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 {
 	/*
 	Until CLLR is more fleshed out, we're just going to do the SPIR-V route of putting jumps before labels

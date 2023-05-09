@@ -36,8 +36,8 @@ namespace caliburn
 
 	struct Value : public ParsedObject
 	{
-		ValueType const vType;
-		ptr<Type> type = nullptr;
+		const ValueType vType;
+		sptr<Type> type = nullptr;
 
 		Value(ValueType vt) : vType(vt) {}
 		virtual ~Value() {}
@@ -46,7 +46,7 @@ namespace caliburn
 
 		virtual bool isCompileTimeConst() const = 0;
 
-		virtual void resolveSymbols(ref<const SymbolTable> table) = 0;
+		virtual void resolveSymbols(sptr<const SymbolTable> table) = 0;
 
 		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const = 0;
 
@@ -57,31 +57,21 @@ namespace caliburn
 		cllr::SSA id = 0;
 		StorageModifiers storeMods = {};
 		bool isConst = false;
-		ptr<Token> name = nullptr;
-		ptr<ParsedType> typeHint = nullptr;
-		ptr<Type> type = nullptr;
-		ptr<Value> initValue = nullptr;
+		sptr<Token> name = nullptr;
+		sptr<Type> type = nullptr;
+
+		uptr<ParsedType> typeHint = nullptr;
+		uptr<Value> initValue = nullptr;
 		
 		Variable() {}
-		Variable(ptr<Token> varName, ptr<ParsedType> hint, ptr<Value> init, bool isImmut) :
+		Variable(sptr<Token> varName, uptr<ParsedType> hint, uptr<Value> init, bool isImmut) :
 			name(varName),
-			typeHint(hint),
-			initValue(init),
+			typeHint(std::move(hint)),
+			initValue(std::move(init)),
 			isConst(isImmut) {}
-		Variable(ref<const Variable> rhs)
-		{
-			id = rhs.id;
-			storeMods = rhs.storeMods;
-			name = rhs.name;
-			typeHint = rhs.typeHint;
-			type = rhs.type;
-			initValue = rhs.initValue;
-			isConst = rhs.isConst;
-
-		}
 		virtual ~Variable() {}
 
-		virtual void resolveSymbols(ref<const SymbolTable> table);
+		virtual void resolveSymbols(sptr<const SymbolTable> table);
 
 		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) = 0;
 
@@ -109,39 +99,32 @@ namespace caliburn
 	private:
 		std::string fullName = "";
 	protected:
-		ptr<Type> resultType = nullptr;
+		sptr<Type> resultType = nullptr;
 	public:
-		const ptr<Token> mod;
-		const ptr<Token> name;
-		ptr<Token> lastToken = nullptr;
-		std::vector<ptr<ParsedType>> generics;
-		std::vector<ptr<Value>> arrayDims;
+		const sptr<Token> mod;
+		const sptr<Token> name;
+		sptr<Token> lastToken = nullptr;
+		std::vector<uptr<ParsedType>> generics;
+		std::vector<uptr<Value>> arrayDims;
 		
-		ParsedType() : ParsedType(nullptr) {}
-		ParsedType(std::string name) : ParsedType(nullptr)
+		ParsedType() : ParsedType(sptr<Token>(nullptr)) {}
+		ParsedType(std::string name) : ParsedType(sptr<Token>(nullptr))
 		{
 			fullName = name;
 		}
-		ParsedType(ptr<Token> n) : ParsedType(nullptr, n) {}
-		ParsedType(ptr<Token> m, ptr<Token> n) : mod(m), name(n) {}
+		ParsedType(sptr<Token> n) : ParsedType(nullptr, n) {}
+		ParsedType(sptr<Token> m, sptr<Token> n) : mod(m), name(n) {}
 
-		virtual ~ParsedType()
-		{
-			for (ptr<ParsedType> type : generics)
-			{
-				delete type;
-			}
+		virtual ~ParsedType() {}
 
-		}
-
-		ptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			if (mod != nullptr)
 				return mod;
 			return name;
 		}
 
-		ptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			if (lastToken != nullptr)
 			{
@@ -193,7 +176,7 @@ namespace caliburn
 
 				for (size_t i = 0; i < generics.size(); ++i)
 				{
-					auto g = generics[i];
+					auto const& g = generics[i];
 					ss << g->getFullName();
 
 					if (i + 1 < generics.size())
@@ -212,16 +195,15 @@ namespace caliburn
 			return fullName;
 		}
 
-		ptr<ParsedType> addGeneric(ptr<ParsedType> s)
+		void addGeneric(uptr<ParsedType> s)
 		{
-			generics.push_back(s);
-			return this;
+			generics.push_back(std::move(s));
 		}
 
 		/*
 		TODO check for memory leaks; this part involves cloning.
 		*/
-		ptr<Type> resolve(ref<const SymbolTable> table);
+		sptr<Type> resolve(sptr<const SymbolTable> table);
 
 	};
 
@@ -232,11 +214,11 @@ namespace caliburn
 		const std::string canonName;
 		const size_t maxGenerics;
 		const size_t minGenerics;
-		const ptr<SymbolTable> memberTable = new SymbolTable();
+		const sptr<SymbolTable> memberTable = std::make_shared<SymbolTable>();
 	protected:
-		ptr<Type> superType = nullptr;
-		std::vector<ptr<Type>> generics, genericDefaults;
-		std::vector<ptr<Variable>> members;
+		sptr<Type> superType = nullptr;
+		std::vector<sptr<Type>> generics, genericDefaults;
+		std::vector<uptr<Variable>> members;
 
 		//TODO add dirty flag to trigger a refresh. that or just control when aspects can be edited
 		std::string fullName = "";
@@ -246,7 +228,7 @@ namespace caliburn
 		{
 			if (minGenerics > maxGenerics)
 			{
-				throw new std::exception("Invalid concrete type; More generics required than alotted");
+				throw std::make_unique<std::exception>("Invalid concrete type; More generics required than alotted");
 			}
 
 			if (maxGenerics > 0)
@@ -257,10 +239,7 @@ namespace caliburn
 			
 		}
 
-		virtual ~Type()
-		{
-			delete memberTable;
-		}
+		virtual ~Type() {}
 
 		//annoyed that != doesn't have a default implementation that does this
 		bool operator!=(ref<const Type> rhs) const
@@ -282,8 +261,8 @@ namespace caliburn
 
 			for (size_t i = 0; i < generics.size(); ++i)
 			{
-				ptr<Type> lhsGeneric = generics[i];
-				ptr<Type> rhsGeneric = rhs.generics[i];
+				auto const& lhsGeneric = generics[i];
+				auto const& rhsGeneric = rhs.generics[i];
 
 				if (*lhsGeneric == *rhsGeneric)
 				{
@@ -323,30 +302,30 @@ namespace caliburn
 			return fullName;
 		}
 
-		ptr<Type> getSuper()
+		sptr<Type> getSuper()
 		{
 			return superType;
 		}
 
-		bool isSuperOf(ptr<Type> type)
+		bool isSuperOf(sptr<Type> type)
 		{
 			ptr<Type> head = this;
 
 			while (head)
 			{
-				if (type == head)
+				if (type.get() == head)
 				{
 					return true;
 				}
 
-				head = head->superType;
+				head = head->superType.get();
 
 			}
 
 			return false;
 		}
 
-		virtual void setGeneric(size_t index, ptr<Type> type)
+		virtual void setGeneric(size_t index, sptr<Type> type)
 		{
 			if (index >= maxGenerics)
 			{
@@ -371,9 +350,9 @@ namespace caliburn
 		
 		//virtual void getConvertibleTypes(std::set<Concreteptr<Type>>& types) = 0;
 
-		virtual TypeCompat isCompatible(Operator op, ptr<Type> rType) const = 0;
+		virtual TypeCompat isCompatible(Operator op, sptr<Type> rType) const = 0;
 
-		virtual ptr<Type> makeVariant(ref<std::vector<ptr<Type>>> genArgs) const
+		virtual sptr<Type> makeVariant(ref<std::vector<sptr<Type>>> genArgs) const
 		{
 			throw std::exception("Cannot make variant of unspecified type");
 		}
