@@ -34,11 +34,11 @@ namespace caliburn
 		{
 			auto sym = table->find(name->str);
 
-			if (sym != nullptr)
+			if (!std::holds_alternative<nullptr_t>(sym))
 			{
 				//I don't know what to do for an error of this kind
 				//This would've been defered to validation, but that would come with complications
-				if (sym->type == SymbolType::TYPE)
+				if (std::holds_alternative<sptr<Type>>(sym))
 				{
 					//TODO complain
 				}
@@ -52,7 +52,7 @@ namespace caliburn
 			
 			//We do a little cheating and do a little resolving here; It will probably bite me in the arse, tbh
 			//Actually I know it will since the top-level symbols won't all be here
-			//Hi past me, it's present me! Finish the declareHeader system and this will fix itself!
+			//Hi present me, it's past me! Finish the declareHeader system and this will fix itself!
 			auto cType = alias->resolve(table);
 
 			if (cType == nullptr)
@@ -61,7 +61,7 @@ namespace caliburn
 				return;
 			}
 
-			table->add(name->str, SymbolType::TYPE, cType);
+			table->add(name->str, cType);
 
 		}
 

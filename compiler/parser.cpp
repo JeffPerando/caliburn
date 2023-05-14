@@ -11,7 +11,7 @@ using namespace caliburn;
 
 void Parser::postParseException(uptr<CaliburnException> e)
 {
-	errors.push_back(e);
+	errors.push_back(std::move(e));
 
 }
 
@@ -28,11 +28,11 @@ void Parser::parse(ref<std::vector<sptr<Token>>> tokenList, ref<std::vector<uptr
 
 		if (finished)
 		{
-			ast.push_back(finished);
+			ast.push_back(std::move(finished));
 		}
 		else
 		{
-			postParseException(std::make_unique<InvalidDeclException>(start.get()));
+			postParseException(std::make_unique<InvalidDeclException>(start));
 			break;
 		}
 
@@ -145,57 +145,183 @@ void Parser::parseIdentifierList(ref<std::vector<sptr<Token>>> ids)
 
 }
 
-bool Parser::parseGenerics(ref<std::vector<uptr<ParsedType>>> generics)
+bool Parser::parseGenericSig(ref<GenericSignature> sig)
 {
-	bool valid = false;
 	auto oldIndex = tokens->currentIndex();
-
-	if (tokens->current()->str != GENERIC_START)
+	auto tkn = tokens->current();
+	bool valid = false;
+	
+	if (tkn->str != GENERIC_START)
 	{
 		return false;
 	}
 
-	tokens->consume();
+	sig.first = tkn;
+
+	bool parsingDefaults = false;
 
 	while (tokens->hasNext())
 	{
-		auto tkn = tokens->current();
+		tkn = tokens->next();
 
-		if (tkn->type == TokenType::COMMA)
+		if (tkn->type != TokenType::KEYWORD)
 		{
-			tokens->consume();
-			continue;
-		}
-
-		if (tkn->str == GENERIC_END)
-		{
-			tokens->consume();
-			valid = true;
+			valid = false;
 			break;
 		}
 
-		auto type = parseTypeName();
+		if (tkn->str != "type" && tkn->str != "const")
+		{
+			valid = false;
+			break;
+		}
 
-		if (!type)
+		auto genName = GenericName();
+
+		genName.type = tkn;
+		genName.name = tokens->next();
+
+		if (genName.name->type != TokenType::IDENTIFIER)
+		{
+			valid = false;
+			break;
+		}
+
+		tkn = tokens->next();
+
+		if (tkn->str == "=")
+		{
+			parsingDefaults = true;
+
+			tokens->consume();
+
+			auto v = parseLiteral();
+
+			if (v != nullptr)
+			{
+				genName.defaultResult = std::move(v);
+
+			}
+			else
+			{
+				auto t = parseTypeName();
+
+				if (t == nullptr)
+				{
+					//TODO complain
+					break;
+				}
+
+				genName.defaultResult = std::move(t);
+
+			}
+
+			tkn = tokens->current();//parse methods should leave us at the first invalid token for that parse
+
+		}
+		else
+		{
+			++sig.minArgs;
+
+			if (parsingDefaults)
+			{
+				//TODO complain
+				//Generics must always have defaults at the end
+				//I may reconsider this rule if explicit-named generics become a thing. But that logic is too hard right now
+			}
+
+		}
+
+		/*
+		NOTE: Because this name contains unique_ptrs, it may be prudent to ensure that the needed copies are handled correctly
+		*/
+		sig.names.push_back(std::move(genName));
+
+		if (tkn->str != ",")
 		{
 			break;
 		}
 
-		generics.push_back(type);
+		tokens->consume();
 
 	}
 
-	if (generics.size() == 0)
+	tkn = tokens->current();
+
+	if (tkn->str != GENERIC_END)
 	{
+		tokens->revertTo(oldIndex);
 		valid = false;
 	}
 
-	if (!valid)
+	sig.last = tkn;
+	sig.isValid = valid;
+
+	return valid;
+}
+
+bool Parser::parseGenericArgs(ref<GenericArguments> args)
+{
+	auto oldIndex = tokens->currentIndex();
+	auto tkn = tokens->current();
+	bool valid = false;
+
+	if (tkn->str != GENERIC_START)
 	{
-		generics.clear();
-		tokens->revertTo(oldIndex);
+		return false;
+	}
+
+	args.first = tkn;
+
+	while (tokens->hasNext())
+	{
+		tkn = tokens->next();
+
+		GenericResult result;
+
+		auto v = parseLiteral();
+
+		if (v != nullptr)
+		{
+			result = std::move(v);
+
+		}
+		else
+		{
+			auto t = parseTypeName();
+
+			if (t == nullptr)
+			{
+				//TODO complain
+				break;
+			}
+
+			result = std::move(t);
+
+		}
+
+		tkn = tokens->current();//parse methods should leave us at the first invalid token for that parse
+
+		args.args.push_back(std::move(result));
+
+		if (tkn->str != ",")
+		{
+			break;
+		}
+
+		tokens->consume();
 
 	}
+
+	tkn = tokens->current();
+
+	if (tkn->str != GENERIC_END)
+	{
+		tokens->revertTo(oldIndex);
+		valid = false;
+	}
+
+	args.last = tkn;
 
 	return valid;
 }
@@ -396,7 +522,7 @@ uptr<ParsedType> Parser::parseTypeName()
 
 	uptr<ParsedType> type = std::make_unique<ParsedType>(tkn);
 
-	parseGenerics(type->generics);
+	parseGenericArgs(type->genericArgs);
 
 	tkn = tokens->current();
 
@@ -547,7 +673,7 @@ uptr<Statement> Parser::parseTypedef()
 
 	uptr<ParsedType> aliasedType = parseTypeName();
 
-	auto stmt = std::make_unique<TypedefStatement>(start, name, aliasedType);
+	auto stmt = std::make_unique<TypedefStatement>(start, name, std::move(aliasedType));
 	
 	return stmt;
 }
@@ -642,12 +768,12 @@ uptr<Statement> Parser::parseFunction()
 
 	uptr<ParsedType> type = parseTypeName();
 	std::string name = tokens->current()->str;
-	std::vector<uptr<ParsedType>> generics;
+	GenericSignature genSig;
 	std::vector<sptr<Token>> gpuThreadData;
 
 	tokens->consume();
 
-	parseGenerics(generics);
+	parseGenericSig(genSig);
 
 	//parse GPU threading data
 	if (tkn->str == "[")
@@ -865,7 +991,7 @@ uptr<Statement> Parser::parseValueStmt()
 		return nullptr;
 	}
 
-	return std::make_unique<ValueStatement>(val);
+	return std::make_unique<ValueStatement>(std::move(val));
 }
 
 uptr<Value> Parser::parseAnyValue()
@@ -1034,10 +1160,10 @@ uptr<Value> Parser::parseLiteral()
 
 	switch (tkn->type)
 	{
-	case TokenType::LITERAL_INT: return std::make_unique<IntLiteralValue>(*tkn);
-	case TokenType::LITERAL_FLOAT: return std::make_unique<FloatLiteralValue>(*tkn);
-	case TokenType::LITERAL_BOOL: return std::make_unique<BoolLitValue>(*tkn);
-	case TokenType::LITERAL_STR: return std::make_unique<StringLitValue>(*tkn);
+	case TokenType::LITERAL_INT: return std::make_unique<IntLiteralValue>(tkn);
+	case TokenType::LITERAL_FLOAT: return std::make_unique<FloatLiteralValue>(tkn);
+	case TokenType::LITERAL_BOOL: return std::make_unique<BoolLitValue>(tkn);
+	case TokenType::LITERAL_STR: return std::make_unique<StringLitValue>(tkn);
 	}
 
 	if (tkn->str == "[")
@@ -1064,7 +1190,7 @@ uptr<Value> Parser::parseLiteral()
 
 			auto val = parseAnyValue();
 
-			arrLit->values.push_back(val);
+			arrLit->values.push_back(std::move(val));
 
 		}
 
@@ -1146,16 +1272,13 @@ uptr<Value> Parser::parseExpr(uint32_t precedence)
 		{
 			tokens->consume();
 
+			//AND we made a dedicated class for it
+			//Why? Because memory management, that's why
 			auto set = std::make_unique<SetterValue>();
 
-			auto expr = std::make_unique<ExpressionValue>();
-
-			expr->lValue = std::move(lhs);
-			expr->op = op->second;
-			expr->rValue = parseAnyExpr();
-
 			set->lhs = std::move(lhs);
-			set->rhs = std::move(expr);
+			set->op = op->second;
+			set->rhs = parseAnyExpr();
 
 			return set;
 		}
@@ -1188,13 +1311,14 @@ uptr<Value> Parser::parseFnCall(uptr<Value> start)
 	}
 
 	auto name = tkn;
-	std::vector<uptr<ParsedType>> pGenerics;
+
+	auto ret = std::make_unique<FnCallValue>();
 
 	tkn = tokens->next();
 	
 	if (tkn->str == GENERIC_START)
 	{
-		if (!parseGenerics(pGenerics))
+		if (!parseGenericArgs(ret->genArgs))
 		{
 			return nullptr;
 		}
@@ -1210,11 +1334,8 @@ uptr<Value> Parser::parseFnCall(uptr<Value> start)
 
 	tokens->consume();
 
-	auto ret = std::make_unique<FnCallValue>();
-
 	ret->name = name;
 	ret->target = std::move(start);
-	ret->pGenerics = pGenerics;
 
 	if (!parseValueList(ret->args, false))
 	{
@@ -1301,7 +1422,7 @@ sptr<Variable> Parser::parseLocalVar()
 		//TODO complain
 	}
 
-	return std::make_shared<LocalVariable>(name, type, initVal, constant);
+	return std::make_shared<LocalVariable>(name, std::move(type), std::move(initVal), constant);
 }
 
 sptr<Variable> Parser::parseMemberVar()
@@ -1341,5 +1462,5 @@ sptr<Variable> Parser::parseMemberVar()
 
 	}
 
-	return std::make_shared<MemberVariable>(name, type, initVal, isConst);
+	return std::make_shared<MemberVariable>(name, std::move(type), std::move(initVal), isConst);
 }

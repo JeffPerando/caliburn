@@ -32,7 +32,7 @@ namespace caliburn
 		CaliburnException(CompileStage s, std::string m, sptr<Token> tkn) :
 			stage(s), message(m), current(tkn) {}
 		
-		virtual void toStr(std::string& out)
+		virtual void toStr(ref<std::string> out)
 		{
 			std::stringstream ss;
 

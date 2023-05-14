@@ -3,12 +3,12 @@
 
 #include <functional>
 
+#include "ast.h"
 #include "buffer.h"
 #include "compilererr.h"
+#include "generics.h"
 #include "syntax.h"
 #include "type.h"
-
-#include "ast.h"
 
 namespace caliburn
 {
@@ -41,7 +41,9 @@ namespace caliburn
 
 		void parseIdentifierList(ref<std::vector<sptr<Token>>> ids);
 
-		bool parseGenerics(ref<std::vector<uptr<ParsedType>>> generics);
+		bool parseGenericSig(ref<GenericSignature> sig);
+
+		bool parseGenericArgs(ref<GenericArguments> args);
 
 		bool parseValueList(ref<std::vector<uptr<Value>>> values, bool commaOptional);
 

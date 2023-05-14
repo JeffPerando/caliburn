@@ -22,16 +22,14 @@ namespace caliburn
 	public:
 		DefaultLib()
 		{
-			auto constexpr aType = SymbolType::TYPE;
-
 			boolType = std::make_shared<TypeBool>();
-			add("bool", aType, boolType);
+			add("bool", boolType);
 
 			for (auto b = MIN_FLOAT_BITS; b < MAX_FLOAT_BITS; b *= 2)
 			{
 				auto f = std::make_shared<TypeFloat>(b);
 				floats.push_back(f);
-				add("float" + b, aType, f);
+				add("float" + b, f);
 			}
 
 			for (auto b = MIN_INT_BITS; b < MAX_INT_BITS; b *= 2)
@@ -42,8 +40,8 @@ namespace caliburn
 				ints.push_back(i);
 				ints.push_back(u);
 
-				add("int" + b, aType, i);
-				add("uint" + b, aType, u);
+				add("int" + b, i);
+				add("uint" + b, u);
 
 			}
 

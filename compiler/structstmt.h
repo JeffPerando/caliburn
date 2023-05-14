@@ -32,10 +32,9 @@ namespace caliburn
 			return last;
 		}
 
-		//Only used by top-level statements which declare symbols. The rest, like local variables, should use declareSymbols() instead
 		virtual void declareHeader(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
 		{
-			innerType = std::make_unique<TypeStruct>(name->str, tNames.size() + cNames.size());
+			//innerType = std::make_unique<TypeStruct>(name->str, tNames.size() + cNames.size());
 		}
 
 		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override {}

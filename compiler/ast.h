@@ -257,8 +257,7 @@ namespace caliburn
 
 	struct GenericStatement : public Statement
 	{
-		std::map<std::string, sptr<Type>> cNames;
-		std::map<std::string, sptr<Value>> tNames;
+		GenericSignature genSig;
 
 		GenericStatement(StatementType stmtType) : Statement(stmtType) {}
 		virtual ~GenericStatement() {}

@@ -78,6 +78,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <ExternalIncludePath>$(ProjectDir)\libs\include;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -124,6 +126,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\llvm-project\llvm\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -155,9 +158,9 @@
     <ClCompile Include="cllrasm.cpp" />
     <ClCompile Include="cllrspirv.cpp" />
     <ClCompile Include="ctrlstmt.cpp" />
+    <ClCompile Include="generics.cpp" />
     <ClCompile Include="langcore.cpp" />
     <ClCompile Include="spirvasm.cpp" />
-    <ClCompile Include="spirvtrans.cpp" />
     <ClCompile Include="type.cpp" />
     <ClCompile Include="typebool.cpp" />
     <ClCompile Include="typefloat.cpp" />
@@ -183,6 +186,7 @@
     <ClInclude Include="deftypes.h" />
     <ClInclude Include="fn.h" />
     <ClInclude Include="funcstmt.h" />
+    <ClInclude Include="generics.h" />
     <ClInclude Include="langcore.h" />
     <ClInclude Include="linq.h" />
     <ClInclude Include="miscstmt.h" />
@@ -192,7 +196,6 @@
     <ClInclude Include="shaderstmt.h" />
     <ClInclude Include="spirv.h" />
     <ClInclude Include="spirvasm.h" />
-    <ClInclude Include="spirvtrans.h" />
     <ClInclude Include="ast.h" />
     <ClInclude Include="cbrn_std.h" />
     <ClInclude Include="structstmt.h" />

@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "cllrasm.h"
+#include "generics.h"
 #include "langcore.h"
 #include "symbols.h"
 #include "syntax.h"
@@ -101,10 +102,9 @@ namespace caliburn
 	protected:
 		sptr<Type> resultType = nullptr;
 	public:
-		const sptr<Token> mod;
 		const sptr<Token> name;
 		sptr<Token> lastToken = nullptr;
-		std::vector<uptr<ParsedType>> generics;
+		GenericArguments genericArgs;
 		std::vector<uptr<Value>> arrayDims;
 		
 		ParsedType() : ParsedType(sptr<Token>(nullptr)) {}
@@ -112,15 +112,12 @@ namespace caliburn
 		{
 			fullName = name;
 		}
-		ParsedType(sptr<Token> n) : ParsedType(nullptr, n) {}
-		ParsedType(sptr<Token> m, sptr<Token> n) : mod(m), name(n) {}
+		ParsedType(sptr<Token> n) : name(n) {}
 
 		virtual ~ParsedType() {}
 
 		sptr<Token> firstTkn() const override
 		{
-			if (mod != nullptr)
-				return mod;
 			return name;
 		}
 
@@ -131,9 +128,9 @@ namespace caliburn
 				return lastToken;
 			}
 
-			if (!generics.empty())
+			if (!genericArgs.args.empty())
 			{
-				return generics.back()->lastTkn();
+				return genericArgs.lastTkn();
 			}
 
 			return name;
@@ -141,11 +138,6 @@ namespace caliburn
 
 		std::string getBasicName()
 		{
-			if (mod)
-			{
-				return (std::stringstream() << mod->str << ':' << name->str).str();
-			}
-
 			return name->str;
 		}
 		
@@ -163,12 +155,9 @@ namespace caliburn
 
 			std::stringstream ss;
 
-			if (mod != nullptr)
-			{
-				ss << mod->str << ':';
-			}
-
 			ss << name->str;
+
+			auto const& generics = genericArgs.args;
 
 			if (generics.size() > 0)
 			{
@@ -177,11 +166,11 @@ namespace caliburn
 				for (size_t i = 0; i < generics.size(); ++i)
 				{
 					auto const& g = generics[i];
-					ss << g->getFullName();
+					ss << parseGeneric(g);
 
 					if (i + 1 < generics.size())
 					{
-						ss << ',';
+						ss << ", ";
 					}
 
 				}
@@ -193,11 +182,6 @@ namespace caliburn
 			ss.str(fullName);
 
 			return fullName;
-		}
-
-		void addGeneric(uptr<ParsedType> s)
-		{
-			generics.push_back(std::move(s));
 		}
 
 		/*

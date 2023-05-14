@@ -2,33 +2,23 @@
 #pragma once
 
 #include <map>
+#include <variant>
 
 #include "langcore.h"
 
 namespace caliburn
 {
-	enum class SymbolType
-	{
-		UNKNOWN,
-		MODULE,
-		FUNCTION,
-		VALUE,
-		VARIABLE,
-		TYPE
-	};
+	struct Module;
+	struct Function;
+	struct Value;
+	struct Variable;
+	struct Type;
 
-	struct Symbol
-	{
-		const SymbolType type;
-		const sptr<void> data;
-
-		Symbol(SymbolType t, sptr<void> d) : type(t), data(d) {}
-
-	};
+	using Symbol = std::variant<nullptr_t, sptr<Module>, sptr<Function>, sptr<Value>, sptr<Variable>, sptr<Type>>;
 
 	class SymbolTable
 	{
-		std::map<std::string, sptr<Symbol>> symbols;
+		std::map<std::string, Symbol> symbols;
 		
 	public:
 		const sptr<const SymbolTable> parent;
@@ -37,21 +27,19 @@ namespace caliburn
 		SymbolTable(sptr<SymbolTable> p) : parent(p) {}
 		virtual ~SymbolTable() {}
 
-		bool add(std::string symName, SymbolType type, sptr<void> data)
+		bool add(std::string symName, Symbol sym)
 		{
-			auto sym = find(symName);
-
-			if (sym)
+			if (symbols.find(symName) != symbols.end())
 			{
 				return false;
 			}
 
-			symbols.emplace(symName, std::make_shared<Symbol>(type, data));
+			symbols.emplace(symName, sym);
 
 			return true;
 		}
 
-		sptr<Symbol> find(std::string symName) const
+		Symbol find(std::string symName) const
 		{
 			auto result = symbols.find(symName);
 

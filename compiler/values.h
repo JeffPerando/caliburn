@@ -59,7 +59,7 @@ namespace caliburn
 	{
 		const sptr<Token> lit;
 
-		FloatLiteralValue(ref<Token> l) : Value(ValueType::FLOAT_LITERAL), lit(&l) {}
+		FloatLiteralValue(sptr<Token> l) : Value(ValueType::FLOAT_LITERAL), lit(l) {}
 
 		virtual sptr<Token> firstTkn() const override
 		{
@@ -105,7 +105,7 @@ namespace caliburn
 	{
 		const sptr<Token> lit;
 
-		StringLitValue(ref<Token> str) : Value(ValueType::STR_LITERAL), lit(&str) {}
+		StringLitValue(sptr<Token> str) : Value(ValueType::STR_LITERAL), lit(str) {}
 
 		virtual sptr<Token> firstTkn() const override
 		{
@@ -129,17 +129,16 @@ namespace caliburn
 
 		virtual void resolveSymbols(sptr<const SymbolTable> table) override
 		{
-			auto sym = table->find("string");
+			auto t = table->find("string");
+			auto tResult = std::get_if<sptr<Type>>(&t);
 
-			if (sym == nullptr)
+			if (tResult == nullptr)
 			{
+				//TODO complain
 				return;
 			}
 
-			if (sym->type == SymbolType::TYPE)
-			{
-				type = (sptr<Type>)sym->data;
-			}
+			type = *tResult;
 
 		}
 
@@ -158,7 +157,7 @@ namespace caliburn
 	{
 		const sptr<Token> lit;
 		
-		BoolLitValue(ref<Token> v) : Value(ValueType::STR_LITERAL), lit(&v)  {}
+		BoolLitValue(sptr<Token> v) : Value(ValueType::STR_LITERAL), lit(v)  {}
 
 		virtual sptr<Token> firstTkn() const override
 		{
@@ -182,17 +181,16 @@ namespace caliburn
 
 		virtual void resolveSymbols(sptr<const SymbolTable> table) override
 		{
-			auto sym = table->find("bool");
+			auto t = table->find("bool");
+			auto tResult = std::get_if<sptr<Type>>(&t);
 
-			if (sym == nullptr)
+			if (tResult == nullptr)
 			{
+				//TODO complain
 				return;
 			}
 
-			if (sym->type == SymbolType::TYPE)
-			{
-				type = (sptr<Type>)sym->data;
-			}
+			type = *tResult;
 
 		}
 
@@ -473,7 +471,7 @@ namespace caliburn
 	{
 		const sptr<Token> var;
 
-		sptr<Symbol> varSym = nullptr;
+		Symbol varSym = nullptr;
 
 		VarReadValue(sptr<Token> v) : Value(ValueType::UNKNOWN), var(v) {}
 		virtual ~VarReadValue() {}
@@ -490,12 +488,7 @@ namespace caliburn
 
 		virtual bool isLValue() const override
 		{
-			if (varSym == nullptr)
-			{
-				return true;
-			}
-
-			return varSym->type == SymbolType::VARIABLE;
+			return std::holds_alternative<sptr<Variable>>(varSym);
 		}
 
 		virtual bool isCompileTimeConst() const override
@@ -511,15 +504,21 @@ namespace caliburn
 
 		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
-			if (varSym->type == SymbolType::VARIABLE)
+			auto varRes = std::get_if<sptr<Variable>>(&varSym);
+
+			if (varRes != nullptr)
 			{
-				return ((sptr<Variable>)varSym->data)->emitLoadCLLR(codeAsm, 0);
+				return (*varRes)->emitLoadCLLR(codeAsm, 0);
 			}
-			else if (varSym->type == SymbolType::VALUE)
+			
+			auto valRes = std::get_if<sptr<Value>>(&varSym);
+
+			if (valRes != nullptr)
 			{
-				return ((sptr<Value>)varSym->data)->emitValueCLLR(codeAsm);
+				return (*valRes)->emitValueCLLR(codeAsm);
 			}
 
+			//TODO complain
 			return 0;
 		}
 
@@ -529,7 +528,7 @@ namespace caliburn
 	{
 		uptr<Value> target = nullptr;
 		sptr<Token> memberName = nullptr;
-		sptr<Symbol> member = nullptr;
+		Symbol member = nullptr;
 
 		MemberReadValue() : Value(ValueType::UNKNOWN) {}
 		virtual ~MemberReadValue() {}
@@ -560,7 +559,7 @@ namespace caliburn
 
 			member = target->type->memberTable->find(memberName->str);
 
-			if (member->type != SymbolType::VARIABLE)
+			if (!std::holds_alternative<sptr<Variable>>(member))
 			{
 				//TODO complain
 			}
@@ -571,7 +570,7 @@ namespace caliburn
 		{
 			auto vID = target->emitValueCLLR(codeAsm);
 
-			return ((sptr<Variable>)member->data)->emitLoadCLLR(codeAsm, vID);
+			return std::get<sptr<Variable>>(member)->emitLoadCLLR(codeAsm, vID);
 		}
 
 	};
@@ -584,6 +583,7 @@ namespace caliburn
 		sptr<Token> end = nullptr;
 
 		UnaryValue() : Value(ValueType::UNKNOWN) {}
+		UnaryValue(sptr<Token> s, Operator o, uptr<Value> v) : start(s), op(o), val(std::move(v)), Value(ValueType::UNKNOWN) {}
 		virtual ~UnaryValue() {}
 
 		virtual sptr<Token> firstTkn() const override
@@ -627,8 +627,7 @@ namespace caliburn
 		sptr<Token> name = nullptr;
 		cllr::SSA funcID = 0;
 		uptr<Value> target = nullptr;
-		std::vector<uptr<ParsedType>> pGenerics;
-		std::vector<sptr<Type>> generics;
+		GenericArguments genArgs;
 		std::vector<uptr<Value>> args;
 		sptr<Token> end = nullptr;
 
@@ -660,17 +659,19 @@ namespace caliburn
 		virtual void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			ptr<const SymbolTable> lookup = table.get();
-
+			/*
 			for (auto const& p : pGenerics)
 			{
 				generics.push_back(p->resolve(table));
 			}
-
+			*/
 			if (target != nullptr)
 			{
-				args.push_back(target);
-
 				lookup = target->type->memberTable.get();
+
+				args.push_back(std::move(target));
+
+				target = nullptr;
 
 			}
 
@@ -681,7 +682,7 @@ namespace caliburn
 
 			auto fn = lookup->find(name->str);
 
-			if (fn->type == SymbolType::FUNCTION)
+			if (std::holds_alternative<sptr<Function>>(fn))
 			{
 				funcID = 0;//lookup + create generic variant
 			}
@@ -715,6 +716,7 @@ namespace caliburn
 	{
 		uptr<Value> lhs = nullptr;
 		uptr<Value> rhs = nullptr;
+		Operator op = Operator::UNKNOWN;
 
 		SetterValue() : Value(ValueType::UNKNOWN) {}
 		virtual ~SetterValue() {}
@@ -750,6 +752,21 @@ namespace caliburn
 		{
 			auto lVal = lhs->emitValueCLLR(codeAsm);
 			auto rVal = rhs->emitValueCLLR(codeAsm);
+
+			if (op != Operator::UNKNOWN)
+			{
+				auto cllrOp = cllr::Opcode::VALUE_EXPR;
+
+				auto opType = opCategories.at(op);
+
+				if (opType == OpCategory::LOGICAL)
+				{
+					cllrOp = cllr::Opcode::COMPARE;
+				}
+
+				rVal = codeAsm.pushNew(cllrOp, { (uint32_t)op }, { lVal, rVal });
+
+			}
 
 			codeAsm.push(0, cllr::Opcode::ASSIGN, {}, { lVal, rVal });
 

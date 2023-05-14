@@ -6,40 +6,19 @@ using namespace caliburn;
 
 sptr<Type> ParsedType::resolve(sptr<const SymbolTable> table)
 {
-	ptr<const SymbolTable> lookup = table.get();
+	auto cTypeSym = table.get()->find(name->str);
+	auto cTypePtr = std::get_if<sptr<Type>>(&cTypeSym);
 
-	if (mod != nullptr)
-	{
-		auto modSym = table->find(mod->str);
-
-		if (modSym->type == SymbolType::MODULE)
-		{
-			lookup = (ptr<const SymbolTable>)modSym->data.get();
-		}
-		else
-		{
-			//TODO complain
-			return nullptr;
-		}
-
-	}
-
-	auto cTypeSym = lookup->find(name->str);
-
-	if (cTypeSym == nullptr)
+	if (cTypePtr == nullptr)
 	{
 		//TODO complain
 		return nullptr;
 	}
 
-	if (cTypeSym->type != SymbolType::TYPE)
-	{
-		//TODO complain
-		return nullptr;
-	}
+	auto const& cType = *cTypePtr;
 
-	auto cType = static_cast<sptr<Type>>(cTypeSym->data);
-
+	//TODO replace
+	/*
 	if (cType->maxGenerics == 0 && this->generics.size() == 0)
 	{
 		resultType = cType;
@@ -84,7 +63,7 @@ sptr<Type> ParsedType::resolve(sptr<const SymbolTable> table)
 	{
 		//TODO complain
 	}
-	
+	*/
 	return resultType;
 }
 

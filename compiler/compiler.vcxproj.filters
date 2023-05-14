@@ -59,9 +59,6 @@
     <ClCompile Include="spirvasm.cpp">
       <Filter>Source Files\spirv</Filter>
     </ClCompile>
-    <ClCompile Include="spirvtrans.cpp">
-      <Filter>Source Files\spirv</Filter>
-    </ClCompile>
     <ClCompile Include="cllrasm.cpp">
       <Filter>Source Files\cllr</Filter>
     </ClCompile>
@@ -91,6 +88,9 @@
     </ClCompile>
     <ClCompile Include="type.cpp">
       <Filter>Source Files\types</Filter>
+    </ClCompile>
+    <ClCompile Include="generics.cpp">
+      <Filter>Source Files\ast</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -132,9 +132,6 @@
     </ClInclude>
     <ClInclude Include="cbirasm.h">
       <Filter>Header Files\cbir</Filter>
-    </ClInclude>
-    <ClInclude Include="spirvtrans.h">
-      <Filter>Header Files\spirv</Filter>
     </ClInclude>
     <ClInclude Include="spirv.h">
       <Filter>Header Files\spirv</Filter>
@@ -221,6 +218,9 @@
       <Filter>Header Files\ast</Filter>
     </ClInclude>
     <ClInclude Include="fn.h">
+      <Filter>Header Files\ast</Filter>
+    </ClInclude>
+    <ClInclude Include="generics.h">
       <Filter>Header Files\ast</Filter>
     </ClInclude>
   </ItemGroup>
