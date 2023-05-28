@@ -19,7 +19,7 @@ namespace caliburn
 			return 0;
 		}
 
-		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
 
 	};
 }

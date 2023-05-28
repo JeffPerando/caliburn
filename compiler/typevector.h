@@ -29,13 +29,13 @@ namespace caliburn
 			//return codeAsm.push(0, cllr::Opcode::VALUE_LITERAL, { 0, 0, 0 }, { this->id }, true);
 		}
 
-		//virtual void getConvertibleTypes(std::set<sptr<Type>>* types) override;
+		//void getConvertibleTypes(std::set<sptr<Type>>* types) override;
 
 		TypeCompat isCompatible(Operator op, sptr<Type> rType) const override;
 
-		virtual sptr<Type> makeVariant(ref<std::vector<sptr<Type>>> genArgs) const override;
+		sptr<Type> makeVariant(ref<std::vector<sptr<Type>>> genArgs) const override;
 
-		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
 
 	};
 

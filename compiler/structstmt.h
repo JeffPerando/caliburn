@@ -22,12 +22,12 @@ namespace caliburn
 
 		virtual ~StructStatement() {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return first;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return last;
 		}
@@ -37,9 +37,9 @@ namespace caliburn
 			//innerType = std::make_unique<TypeStruct>(name->str, tNames.size() + cNames.size());
 		}
 
-		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override {}
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override {}
 
-		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			for (auto const& mem : members)
 			{
@@ -48,7 +48,7 @@ namespace caliburn
 
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			for (auto const& mem : members)
 			{

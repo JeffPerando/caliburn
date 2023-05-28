@@ -30,7 +30,7 @@ namespace caliburn
 			return alias->lastTkn();
 		}
 
-		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			auto sym = table->find(name->str);
 
@@ -65,17 +65,17 @@ namespace caliburn
 
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			
 		}
 
-		virtual void declareHeader(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void declareHeader(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 
 		}
 
-		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
 		{
 
 		}

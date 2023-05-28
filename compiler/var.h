@@ -61,6 +61,28 @@ namespace caliburn
 			return name;
 		}
 
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			typeHint->prettyPrint(ss);
+
+			ss << ' ';
+
+			ss << name->str;
+
+			ss << ' ';
+
+			if (initValue != nullptr)
+			{
+				ss << "= ";
+
+				initValue->prettyPrint(ss);
+
+			}
+
+			ss << ';';
+
+		}
+
 		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
 		{
 			codeAsm.push(0, cllr::Opcode::STRUCT_MEMBER, { memberIndex }, { parent->id, type->id });

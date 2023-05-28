@@ -14,12 +14,12 @@ namespace caliburn
 		ImportStatement(sptr<Token> f) : Statement(StatementType::IMPORT), first(f) {}
 		virtual ~ImportStatement() {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return first;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			if (alias == nullptr)
 			{
@@ -29,9 +29,9 @@ namespace caliburn
 			return alias;
 		}
 
-		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
+		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
 		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) {}
 
@@ -44,19 +44,19 @@ namespace caliburn
 		ModuleStatement(sptr<Token> s, sptr<Token> n) : Statement(StatementType::MODULE), first(s), name(n) {}
 		virtual ~ModuleStatement() {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return first;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return name;
 		}
 
-		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
+		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
 		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) {}
 

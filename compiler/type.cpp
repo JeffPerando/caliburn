@@ -17,6 +17,8 @@ sptr<Type> ParsedType::resolve(sptr<const SymbolTable> table)
 
 	auto const& cType = *cTypePtr;
 
+	resultType = cType;
+
 	//TODO replace
 	/*
 	if (cType->maxGenerics == 0 && this->generics.size() == 0)

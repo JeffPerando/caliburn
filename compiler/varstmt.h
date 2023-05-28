@@ -21,22 +21,35 @@ namespace caliburn
 
 		virtual ~LocalVarStatement() {}
 
+		sptr<Token> firstTkn() const override
+		{
+			return nullptr;
+		}
+
+		sptr<Token> lastTkn() const override
+		{
+			return nullptr;
+		}
+
 		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-			for (auto name : names)
+			for (auto const& name : names)
 			{
-				vars.push_back(std::make_unique<LocalVariable>(name, typeHint, initialValue, isConst));
+				//TODO problematic lifetime
+				//vars.push_back(std::make_unique<LocalVariable>(name, typeHint, initialValue, isConst));
 
 			}
 
 			for (auto const& v : vars)
 			{
-				table->add(v->name->str, SymbolType::VARIABLE, v);
+				table->add(v->name->str, v);
 			}
 
 		}
 
 		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
+
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override {}
 
 	};
 

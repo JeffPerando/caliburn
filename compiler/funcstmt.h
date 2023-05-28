@@ -20,17 +20,17 @@ namespace caliburn
 		
 		FunctionStatement() : Statement(StatementType::FUNCTION) {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return first;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return body ? body->last : nullptr;
 		}
 		/*
-		virtual void resolveSymbols() override
+		void resolveSymbols() override
 		{
 			body->resolveSymbols();
 
@@ -38,7 +38,7 @@ namespace caliburn
 
 		}
 
-		virtual ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
+		ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
 		{
 			std::set<StatementType> bodyTypes = LOGIC_STMT_TYPES;
 			std::set<ReturnMode> bodyModes = { ReturnMode::RETURN };
@@ -49,7 +49,7 @@ namespace caliburn
 			return body->validate(bodyTypes, bodyModes);
 		}
 
-		virtual void getSSAs(ref<cllr::Assembler> codeAsm) override
+		void getSSAs(ref<cllr::Assembler> codeAsm) override
 		{
 			funcID = codeAsm.createSSA(cllr::Opcode::FUNCTION);
 
@@ -57,7 +57,7 @@ namespace caliburn
 
 		}
 		*/
-		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
 		{
 			retType->emitDeclCLLR(codeAsm);
 

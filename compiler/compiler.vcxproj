@@ -161,6 +161,7 @@
     <ClCompile Include="generics.cpp" />
     <ClCompile Include="langcore.cpp" />
     <ClCompile Include="spirvasm.cpp" />
+    <ClCompile Include="syntax.cpp" />
     <ClCompile Include="type.cpp" />
     <ClCompile Include="typebool.cpp" />
     <ClCompile Include="typefloat.cpp" />

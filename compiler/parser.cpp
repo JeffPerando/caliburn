@@ -3,9 +3,11 @@
 
 #include "ctrlstmt.h"
 #include "modstmts.h"
+#include "shaderstmt.h"
 #include "structstmt.h"
 #include "typestmt.h"
 #include "valstmt.h"
+#include "varstmt.h"
 
 using namespace caliburn;
 
@@ -465,11 +467,9 @@ uptr<ScopeStatement> Parser::parseScope(std::initializer_list<ParseMethod<Statem
 
 	auto scope = std::make_unique<ScopeStatement>();
 
-	tokens->consume();
-
 	while (tokens->hasNext())
 	{
-		tkn = tokens->current();
+		tkn = tokens->next();
 
 		if (tkn->type == TokenType::END_SCOPE)
 		{
@@ -678,9 +678,30 @@ uptr<Statement> Parser::parseTypedef()
 	return stmt;
 }
 
-//uptr<Statement> Parser::parseShader();
+uptr<Statement> Parser::parseShader()
+{
+	auto tkn = tokens->next();
 
-//uptr<Statement> Parser::parseDescriptor();
+	if (tkn->type != TokenType::KEYWORD)
+	{
+		return nullptr;
+	}
+
+	if (tkn->str != "shader")
+	{
+		return nullptr;
+	}
+
+	auto shader = std::make_unique<ShaderStatement>();
+
+	shader->first = tkn;
+
+	shader->name = tokens->next();
+
+	auto stages = parseBetween("{", nullptr, "}");
+
+	return shader;
+}
 
 //TODO clean up architecture, make expandable
 uptr<Statement> Parser::parseStruct()
@@ -992,6 +1013,92 @@ uptr<Statement> Parser::parseValueStmt()
 	}
 
 	return std::make_unique<ValueStatement>(std::move(val));
+}
+
+uptr<Statement> Parser::parseLocalVarStmt()
+{
+	uptr<ParsedType> type = nullptr;
+	sptr<Token> name = nullptr;
+	uptr<Value> initVal = nullptr;
+	bool isConst = false;
+
+	auto tkn = tokens->current();
+
+	if (tkn->type != TokenType::KEYWORD)
+	{
+		return nullptr;
+	}
+
+	if (tkn->str == "var")
+	{
+		tkn = tokens->current();
+
+	}
+	else if (tkn->str == "const")
+	{
+		tkn = tokens->current();
+		isConst = true;
+	}
+	else
+	{
+		return nullptr;
+	}
+
+	if (tkn->str == ":")
+	{
+		tkn = tokens->next();
+		type = parseTypeName();
+
+		if (type == nullptr)
+		{
+			//TODO complain
+		}
+
+	}
+
+	auto ret = std::make_unique<LocalVarStatement>();
+
+	parseIdentifierList(ret->names);
+
+	tkn = tokens->current();
+
+	if (tkn->str == ":")
+	{
+		postParseException(std::make_unique<ParseException>("That's not how type hints work in Caliburn. Type hints go before the variable name, not after. So var: int x is valid. var x: int isn't.", tkn));
+		return nullptr;
+	}
+
+	if (tkn->str == "=")
+	{
+		tokens->consume();
+		initVal = parseAnyValue();
+		
+	}
+	else if (!type)
+	{
+		postParseException(std::make_unique<ParseException>("All implicitly-typed variables must be manually initialized", tkn));
+		return nullptr;
+	}
+
+	if (!parseSemicolon())
+	{
+		//TODO complain
+	}
+
+	ret->isConst = isConst;
+
+	if (initVal != nullptr)
+	{
+		ret->initialValue = std::move(initVal);
+
+	}
+	
+	if (type != nullptr)
+	{
+		ret->typeHint = std::move(type);
+	}
+	
+	return ret;
 }
 
 uptr<Value> Parser::parseAnyValue()
@@ -1345,84 +1452,6 @@ uptr<Value> Parser::parseFnCall(uptr<Value> start)
 	ret->end = tokens->current();
 
 	return ret;
-}
-
-sptr<Variable> Parser::parseLocalVar()
-{
-	uptr<ParsedType> type = nullptr;
-	sptr<Token> name = nullptr;
-	uptr<Value> initVal = nullptr;
-	bool constant = false;
-
-	auto tkn = tokens->current();
-
-	if (tkn->type != TokenType::KEYWORD)
-	{
-		return nullptr;
-	}
-
-	if (tkn->str == "var")
-	{
-		tkn = tokens->current();
-
-	}
-	else if (tkn->str == "const")
-	{
-		tkn = tokens->current();
-		constant = true;
-	}
-	else
-	{
-		return nullptr;
-	}
-
-	if (tkn->str == ":")
-	{
-		tkn = tokens->next();
-		type = parseTypeName();
-
-		if (type == nullptr)
-		{
-			//TODO complain
-		}
-
-	}
-	
-	name = tokens->next();
-
-	if (name->type != TokenType::IDENTIFIER)
-	{
-		postParseException(std::make_unique<ParseException>("Invalid name for a variable:", name));
-		return nullptr;
-	}
-
-	tkn = tokens->next();
-
-	if (tkn->str == ":")
-	{
-		postParseException(std::make_unique<ParseException>("That's not how type hints work in Caliburn. Type hints go before the variable name, not after. So var: int x is valid. var x: int isn't.", tkn));
-		return nullptr;
-	}
-
-	if (tkn->str == "=")
-	{
-		tokens->consume();
-		initVal = parseAnyValue();
-		//type = defVal->type;
-
-	}
-	else if (!type)
-	{
-		postParseException(std::make_unique<ParseException>("All implicitly-typed variables must be manually initialized", tkn));
-		return nullptr;
-	}
-
-	if (!parseSemicolon())
-	{
-		//TODO complain
-	}
-
-	return std::make_shared<LocalVariable>(name, std::move(type), std::move(initVal), constant);
 }
 
 sptr<Variable> Parser::parseMemberVar()

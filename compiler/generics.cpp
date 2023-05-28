@@ -4,6 +4,65 @@
 
 using namespace caliburn;
 
+void GenericArguments::prettyPrint(ref<std::stringstream> ss) const
+{
+	if (args.size() == 0)
+	{
+		return;
+	}
+
+	ss << '<';
+
+	for (size_t i = 0; i < args.size(); ++i)
+	{
+		auto const& arg = args[i];
+
+		ss << parseGeneric(arg);
+
+		if (i + 1 < args.size())
+		{
+			ss << ", ";
+
+		}
+
+	}
+
+	ss << '>';
+
+}
+
+void GenericSignature::prettyPrint(ref<std::stringstream> ss) const
+{
+	if (names.size() == 0)
+	{
+		return;
+	}
+
+	ss << '<';
+
+	for (size_t i = 0; i < names.size(); ++i)
+	{
+		auto const& name = names[i];
+
+		ss << name.type->str << ' ' << name.name->str;
+
+		if (!std::holds_alternative<std::monostate>(name.defaultResult))
+		{
+			ss << " = " << parseGeneric(name.defaultResult);
+		}
+
+		if (i + 1 < names.size())
+		{
+			ss << ", ";
+
+		}
+
+	}
+
+	ss << '>';
+
+}
+
 bool GenericSignature::canApply(ref<GenericArguments> genArgs)
 {
 	auto const& args = genArgs.args;
@@ -61,15 +120,14 @@ std::string caliburn::parseGeneric(ref<const GenericResult> result)
 
 	if (vArg != nullptr)
 	{
-		//TODO pretty print
-
+		return (*vArg)->prettyStr();
 	}
 
 	auto tArg = std::get_if<uptr<ParsedType>>(&result);
 
 	if (tArg != nullptr)
 	{
-		//TODO pretty print
+		return (*tArg)->prettyStr();
 	}
 
 	//TODO complain

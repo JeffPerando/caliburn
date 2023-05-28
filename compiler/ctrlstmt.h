@@ -16,12 +16,12 @@ namespace caliburn
 		
 		IfStatement() : Statement(StatementType::IF) {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return first;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			if (innerElse != nullptr)
 			{
@@ -31,7 +31,7 @@ namespace caliburn
 			return innerIf->lastTkn();
 		}
 
-		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			innerIf->declareSymbols(table, codeAsm);
 
@@ -42,7 +42,7 @@ namespace caliburn
 
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			condition->resolveSymbols(table);
 			innerIf->resolveSymbols(table, codeAsm);
@@ -54,10 +54,10 @@ namespace caliburn
 
 		}
 
-		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override; //see ctrlstmt.cpp
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override; //see ctrlstmt.cpp
 
 		/*
-		virtual ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
+		ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
 		{
 			auto innerIfV = innerIf->validate(types, retModes);
 
@@ -93,17 +93,17 @@ namespace caliburn
 
 		ForRangeStatement() : Statement(StatementType::FOR) {}
 
-		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
+		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 
 		}
 
-		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
 
 		/*
-		virtual ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
+		ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
 		{
 			std::set<StatementType> bodyTypes = LOGIC_STMT_TYPES;
 			std::set<ReturnMode> bodyModes = { ReturnMode::CONTINUE, ReturnMode::BREAK };
@@ -127,26 +127,26 @@ namespace caliburn
 
 		WhileStatement() : Statement(StatementType::WHILE) {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return first;
 		}
 		
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return loop->lastTkn();
 		}
 
-		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
+		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			condition->resolveSymbols(table);
 			loop->resolveSymbols(table, codeAsm);
 
 		}
 		
-		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
 
 	};
 

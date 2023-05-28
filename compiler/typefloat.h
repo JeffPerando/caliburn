@@ -36,7 +36,7 @@ namespace caliburn
 
 		TypeCompat isCompatible(Operator op, sptr<Type> rType) const override;
 		
-		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
 		{
 			codeAsm.push(id, cllr::Opcode::TYPE_FLOAT, { floatBits }, {});
 		}

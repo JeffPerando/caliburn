@@ -46,7 +46,7 @@ namespace caliburn
 			return members.back()->type->getAlignBytes();
 		}
 
-		virtual sptr<Type> makeVariant(ref<std::vector<sptr<Type>>> genArgs) const override
+		sptr<Type> makeVariant(ref<std::vector<sptr<Type>>> genArgs) const override
 		{
 			auto ret = std::make_unique<TypeStruct>(canonName, maxGenerics);
 
@@ -71,7 +71,7 @@ namespace caliburn
 			return TypeCompat::INCOMPATIBLE_TYPE;
 		}
 
-		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
 		{
 			if (id != 0)
 			{

@@ -65,7 +65,7 @@ namespace caliburn
 
 		uptr<Statement> parseTypedef();
 
-		//uptr<Statement> parseShader();
+		uptr<Statement> parseShader();
 
 		uptr<Statement> parseStruct();
 
@@ -97,7 +97,7 @@ namespace caliburn
 
 		uptr<Statement> parseValueStmt();
 
-		uptr<Statement> parseMemberVarStmt();
+		uptr<Statement> parseLocalVarStmt();
 
 		uptr<Value> parseAnyValue();
 
@@ -112,8 +112,6 @@ namespace caliburn
 		uptr<Value> parseAnyFnCall();
 
 		uptr<Value> parseFnCall(uptr<Value> start);
-
-		sptr<Variable> parseLocalVar();
 
 		sptr<Variable> parseMemberVar();
 

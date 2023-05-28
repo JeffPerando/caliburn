@@ -136,57 +136,29 @@ namespace caliburn
 			return name;
 		}
 
-		std::string getBasicName()
+		void prettyPrint(ref<std::stringstream> ss) const override
 		{
-			return name->str;
-		}
-		
-		std::string getFullName()
-		{
-			if (fullName.length() > 0)
-			{
-				return fullName;
-			}
-
 			if (name == nullptr)
 			{
-				return "INVALID TYPE PLS FIX";
+				ss << "INVALID TYPE PLS FIX";
+				return;
 			}
 
-			std::stringstream ss;
-
-			ss << name->str;
-
-			auto const& generics = genericArgs.args;
-
-			if (generics.size() > 0)
+			if (fullName.length() == 0)
 			{
-				ss << GENERIC_START;
+				std::stringstream s;
 
-				for (size_t i = 0; i < generics.size(); ++i)
-				{
-					auto const& g = generics[i];
-					ss << parseGeneric(g);
+				s << name->str;
+				genericArgs.prettyPrint(s);
 
-					if (i + 1 < generics.size())
-					{
-						ss << ", ";
-					}
-
-				}
-
-				ss << GENERIC_END;
+				s.str(fullName);
 
 			}
 
-			ss.str(fullName);
+			ss << fullName;
 
-			return fullName;
 		}
 
-		/*
-		TODO check for memory leaks; this part involves cloning.
-		*/
 		sptr<Type> resolve(sptr<const SymbolTable> table);
 
 	};

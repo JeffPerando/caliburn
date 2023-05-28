@@ -31,17 +31,17 @@ namespace caliburn
 			modRequests.push_back(std::pair(alias, name));
 		}
 
-		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 
 		}
 
-		virtual bool validateModule() const override
+		bool validateModule() const override
 		{
 			return false;
 		}
@@ -60,17 +60,17 @@ namespace caliburn
 		CompiledModule() {}
 		virtual ~CompiledModule() {}
 
-		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 
 		}
 
-		virtual bool validateModule() const override
+		bool validateModule() const override
 		{
 			return false;
 		}

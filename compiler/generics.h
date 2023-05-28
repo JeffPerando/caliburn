@@ -14,23 +14,25 @@ namespace caliburn
 	struct Value;
 	
 	using GenericResult = std::variant<std::monostate, uptr<ParsedType>, uptr<Value>>;
-	
+
 	struct GenericArguments : public ParsedObject
 	{
 		sptr<Token> first = nullptr;
 		sptr<Token> last = nullptr;
 		std::vector<GenericResult> args;
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return first;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return last;
 		}
-		
+
+		void prettyPrint(ref<std::stringstream> ss) const override;
+
 	};
 
 	struct GenericName
@@ -49,15 +51,17 @@ namespace caliburn
 		std::vector<GenericName> names;
 		bool isValid = false;
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return first;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return last;
 		}
+
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		//TODO consider more explicit rejection reasons (for error handling)
 		bool canApply(ref<GenericArguments> args);

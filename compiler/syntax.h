@@ -2,6 +2,7 @@
 #pragma once
 
 #include <map>
+#include <sstream>
 #include <vector>
 
 namespace caliburn
@@ -110,6 +111,17 @@ namespace caliburn
 
 		virtual sptr<Token> lastTkn() const = 0;
 
+		virtual void prettyPrint(ref<std::stringstream> ss) const = 0;
+
+		virtual std::string prettyStr() const
+		{
+			std::stringstream ss;
+
+			prettyPrint(ss);
+
+			return ss.str();
+		}
+
 	};
 
 	static const std::map<char, TokenType> charTokenTypes = {
@@ -161,6 +173,8 @@ namespace caliburn
 
 		{"++",	Operator::APPEND}
 	};
+
+	std::string findStrForOp(Operator op);
 
 	//So here's why math ops are separate from logic ops:
 	//Math ops can use (op)= to set something, e.g. +=.

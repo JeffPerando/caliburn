@@ -36,6 +36,7 @@ namespace caliburn
 	struct ShaderStatement : public Statement
 	{
 		sptr<Token> first = nullptr;
+		sptr<Token> name = nullptr;
 		sptr<Token> last = nullptr;
 
 		std::vector<uptr<ShaderStageStatement>> stages;

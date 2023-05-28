@@ -13,27 +13,32 @@ namespace caliburn
 
 		IntLiteralValue(sptr<Token> l) : Value(ValueType::INT_LITERAL), lit(l) {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return lit;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return lit;
 		}
 
-		virtual bool isLValue() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			ss << lit->str;
+		}
+
+		bool isLValue() const override
 		{
 			return false;
 		}
 
-		virtual bool isCompileTimeConst() const override
+		bool isCompileTimeConst() const override
 		{
 			return true;
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) override
+		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			auto pType = ParsedType(lit->str.substr(lit->str.find_first_of('_') + 1));
 
@@ -41,7 +46,7 @@ namespace caliburn
 
 		}
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
 			type->emitDeclCLLR(codeAsm);
 
@@ -61,27 +66,32 @@ namespace caliburn
 
 		FloatLiteralValue(sptr<Token> l) : Value(ValueType::FLOAT_LITERAL), lit(l) {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return lit;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return lit;
 		}
 
-		virtual bool isLValue() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			ss << lit->str;
+		}
+
+		bool isLValue() const override
 		{
 			return false;
 		}
 
-		virtual bool isCompileTimeConst() const override
+		bool isCompileTimeConst() const override
 		{
 			return true;
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) override
+		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			auto pType = ParsedType(lit->str.substr(lit->str.find_first_of('_') + 1));
 
@@ -89,7 +99,7 @@ namespace caliburn
 
 		}
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
 			type->emitDeclCLLR(codeAsm);
 
@@ -107,27 +117,32 @@ namespace caliburn
 
 		StringLitValue(sptr<Token> str) : Value(ValueType::STR_LITERAL), lit(str) {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return lit;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return lit;
 		}
 
-		virtual bool isLValue() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			ss << lit->str;
+		}
+
+		bool isLValue() const override
 		{
 			return false;
 		}
 
-		virtual bool isCompileTimeConst() const override
+		bool isCompileTimeConst() const override
 		{
 			return true;
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) override
+		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			auto t = table->find("string");
 			auto tResult = std::get_if<sptr<Type>>(&t);
@@ -142,7 +157,7 @@ namespace caliburn
 
 		}
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
 			type->emitDeclCLLR(codeAsm);
 
@@ -159,27 +174,32 @@ namespace caliburn
 		
 		BoolLitValue(sptr<Token> v) : Value(ValueType::STR_LITERAL), lit(v)  {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return lit;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return lit;
 		}
 
-		virtual bool isLValue() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			ss << lit->str;
+		}
+
+		bool isLValue() const override
 		{
 			return false;
 		}
 
-		virtual bool isCompileTimeConst() const override
+		bool isCompileTimeConst() const override
 		{
 			return true;
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) override
+		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			auto t = table->find("bool");
 			auto tResult = std::get_if<sptr<Type>>(&t);
@@ -194,7 +214,7 @@ namespace caliburn
 
 		}
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
 			type->emitDeclCLLR(codeAsm);
 
@@ -212,27 +232,46 @@ namespace caliburn
 		ArrayLitValue() : Value(ValueType::UNKNOWN) {}
 		virtual ~ArrayLitValue() {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return start;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return end;
 		}
 
-		virtual bool isLValue() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			ss << '[';
+
+			for (size_t i = 0; i < values.size(); ++i)
+			{
+				values[i]->prettyPrint(ss);
+
+				if (i + 1 < values.size())
+				{
+					ss << ", ";
+				}
+
+			}
+
+			ss << ']';
+
+		}
+
+		bool isLValue() const override
 		{
 			return false;
 		}
 
-		virtual bool isCompileTimeConst() const override
+		bool isCompileTimeConst() const override
 		{
 			return true;
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) override
+		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			for (auto const& v : values)
 			{
@@ -247,7 +286,7 @@ namespace caliburn
 			//TODO type inference
 		}
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
 			auto id = codeAsm.pushNew(cllr::Opcode::VALUE_ARRAY_LIT, { (uint32_t)values.size() }, {});
 
@@ -275,27 +314,47 @@ namespace caliburn
 
 		ExpressionValue() : Value(ValueType::EXPRESSION) {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return lValue->firstTkn();
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return rValue->lastTkn();
 		}
 
-		virtual bool isLValue() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			const auto cat = opCategories.find(op)->second;
+
+			if (cat == OpCategory::UNARY)
+			{
+				//TODO complain
+				return;
+			}
+
+			const auto& opStr = findStrForOp(op);
+
+			lValue->prettyPrint(ss);
+
+			ss << ' ' << opStr << ' ';
+				
+			rValue->prettyPrint(ss);
+			
+		}
+
+		bool isLValue() const override
 		{
 			return false;
 		}
 
-		virtual bool isCompileTimeConst() const override
+		bool isCompileTimeConst() const override
 		{
 			return lValue->isCompileTimeConst() && rValue->isCompileTimeConst();
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) override
+		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			lValue->resolveSymbols(table);
 			rValue->resolveSymbols(table);
@@ -308,7 +367,7 @@ namespace caliburn
 
 		}
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
 			auto lhs = lValue->emitValueCLLR(codeAsm);
 			auto rhs = rValue->emitValueCLLR(codeAsm);
@@ -336,34 +395,44 @@ namespace caliburn
 		IsAValue() : Value(ValueType::CAST) {}
 		virtual ~IsAValue() {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return val->firstTkn();
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return chkPType->lastTkn();
 		}
 
-		virtual bool isLValue() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			val->prettyPrint(ss);
+
+			ss << " is ";
+
+			chkPType->prettyPrint(ss);
+
+		}
+
+		bool isLValue() const override
 		{
 			return false;
 		}
 
-		virtual bool isCompileTimeConst() const override
+		bool isCompileTimeConst() const override
 		{
 			return val->isCompileTimeConst();
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) override
+		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			val->resolveSymbols(table);
 			chkType = chkPType->resolve(table);
 
 		}
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
 			chkType->emitDeclCLLR(codeAsm);
 			auto vID = val->emitValueCLLR(codeAsm);
@@ -382,34 +451,46 @@ namespace caliburn
 
 		SubArrayValue() : Value(ValueType::SUB_ARRAY) {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return array->firstTkn();
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return last;
 		}
 
-		virtual bool isLValue() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			array->prettyPrint(ss);
+
+			ss << '[';
+
+			index->prettyPrint(ss);
+
+			ss << ']';
+
+		}
+
+		bool isLValue() const override
 		{
 			return true;
 		}
 
-		virtual bool isCompileTimeConst() const override
+		bool isCompileTimeConst() const override
 		{
 			return array->isCompileTimeConst() && index->isCompileTimeConst();
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) override
+		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			array->resolveSymbols(table);
 			index->resolveSymbols(table);
 
 		}
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
 			auto aID = array->emitValueCLLR(codeAsm);
 			auto iID = index->emitValueCLLR(codeAsm);
@@ -429,34 +510,44 @@ namespace caliburn
 		CastValue() : Value(ValueType::CAST) {}
 		virtual ~CastValue() {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return lhs->firstTkn();
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return resultPType->lastTkn();
 		}
 
-		virtual bool isLValue() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			lhs->prettyPrint(ss);
+
+			ss << " as ";
+
+			resultPType->prettyPrint(ss);
+
+		}
+
+		bool isLValue() const override
 		{
 			return false;
 		}
 
-		virtual bool isCompileTimeConst() const override
+		bool isCompileTimeConst() const override
 		{
 			return lhs->isCompileTimeConst();
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) override
+		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			type = resultPType->resolve(table);
 			lhs->resolveSymbols(table);
 			
 		}
 		
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
 			auto vID = lhs->emitValueCLLR(codeAsm);
 
@@ -476,33 +567,38 @@ namespace caliburn
 		VarReadValue(sptr<Token> v) : Value(ValueType::UNKNOWN), var(v) {}
 		virtual ~VarReadValue() {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return var;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return var;
 		}
 
-		virtual bool isLValue() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			ss << var->str;
+		}
+
+		bool isLValue() const override
 		{
 			return std::holds_alternative<sptr<Variable>>(varSym);
 		}
 
-		virtual bool isCompileTimeConst() const override
+		bool isCompileTimeConst() const override
 		{
 			return false;
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) override
+		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			varSym = table->find(var->str);
 
 		}
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
 			auto varRes = std::get_if<sptr<Variable>>(&varSym);
 
@@ -533,27 +629,37 @@ namespace caliburn
 		MemberReadValue() : Value(ValueType::UNKNOWN) {}
 		virtual ~MemberReadValue() {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return target->firstTkn();
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return memberName;
 		}
 
-		virtual bool isLValue() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			target->prettyPrint(ss);
+
+			ss << '.';
+
+			ss << memberName->str;
+
+		}
+
+		bool isLValue() const override
 		{
 			return false;
 		}
 
-		virtual bool isCompileTimeConst() const override
+		bool isCompileTimeConst() const override
 		{
 			return false;
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) override
+		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			target->resolveSymbols(table);
 
@@ -566,7 +672,7 @@ namespace caliburn
 
 		}
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
 			auto vID = target->emitValueCLLR(codeAsm);
 
@@ -586,34 +692,52 @@ namespace caliburn
 		UnaryValue(sptr<Token> s, Operator o, uptr<Value> v) : start(s), op(o), val(std::move(v)), Value(ValueType::UNKNOWN) {}
 		virtual ~UnaryValue() {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return start;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			if (end == nullptr)
 				return val->lastTkn();
 			return end;
 		}
 
-		virtual bool isLValue() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			ss << start->str;
+
+			if (op == Operator::SIGN || op == Operator::UNSIGN)
+			{
+				ss << ' ';
+			}
+
+			val->prettyPrint(ss);
+
+			if (end != nullptr)
+			{
+				ss << end->str;
+			}
+
+		}
+
+		bool isLValue() const override
 		{
 			return false;
 		}
 
-		virtual bool isCompileTimeConst() const override
+		bool isCompileTimeConst() const override
 		{
 			return val->isCompileTimeConst();
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) override
+		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			val->resolveSymbols(table);
 		}
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
 			auto vID = val->emitValueCLLR(codeAsm);
 ;			
@@ -634,29 +758,63 @@ namespace caliburn
 		FnCallValue() : Value(ValueType::FUNCTION_CALL) {}
 		virtual ~FnCallValue() {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			if (target != nullptr)
 				return target->firstTkn();
 			return name;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return end;
 		}
 
-		virtual bool isLValue() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			if (target != nullptr)
+			{
+				target->prettyPrint(ss);
+
+				ss << '.';
+
+			}
+
+			ss << name->str;
+
+			genArgs.prettyPrint(ss);
+
+			ss << '(';
+
+			for (size_t i = 0; i < args.size(); ++i)
+			{
+				const auto& arg = args[i];
+
+				arg->prettyPrint(ss);
+
+				if (i + 1 < args.size())
+				{
+					ss << ", ";
+
+				}
+
+			}
+
+			ss << ')';
+
+		}
+
+		bool isLValue() const override
 		{
 			return false;
 		}
 
-		virtual bool isCompileTimeConst() const override
+		bool isCompileTimeConst() const override
 		{
 			return true;
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) override
+		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			ptr<const SymbolTable> lookup = table.get();
 			/*
@@ -694,7 +852,7 @@ namespace caliburn
 
 		}
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
 			auto callID = codeAsm.pushNew(cllr::Opcode::CALL, {(uint32_t)args.size() + (target != nullptr)}, { funcID });
 
@@ -721,34 +879,52 @@ namespace caliburn
 		SetterValue() : Value(ValueType::UNKNOWN) {}
 		virtual ~SetterValue() {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return lhs->firstTkn();
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return rhs->firstTkn();
 		}
 
-		virtual bool isLValue() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			lhs->prettyPrint(ss);
+
+			ss << ' ';
+
+			if (op != Operator::UNKNOWN)
+			{
+				ss << findStrForOp(op);
+
+			}
+
+			ss << "= ";
+
+			rhs->prettyPrint(ss);
+
+		}
+
+		bool isLValue() const override
 		{
 			return false;
 		}
 
-		virtual bool isCompileTimeConst() const override
+		bool isCompileTimeConst() const override
 		{
 			return true;
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) override
+		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			lhs->resolveSymbols(table);
 			rhs->resolveSymbols(table);
 
 		}
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
 			auto lVal = lhs->emitValueCLLR(codeAsm);
 			auto rVal = rhs->emitValueCLLR(codeAsm);
@@ -777,34 +953,39 @@ namespace caliburn
 
 	struct NullValue : public Value
 	{
-		const sptr<Token> lit;
+		const sptr<Token> lit;//I don't even know what to do with this
 
 		NullValue(sptr<Token> v) : Value(ValueType::UNKNOWN), lit(v) {}
 		virtual ~NullValue() {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return lit;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return lit;
 		}
 
-		virtual bool isLValue() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			ss << "null";
+		}
+
+		bool isLValue() const override
 		{
 			return false;
 		}
 
-		virtual bool isCompileTimeConst() const override
+		bool isCompileTimeConst() const override
 		{
 			return true;
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) override {}
+		void resolveSymbols(sptr<const SymbolTable> table) override {}
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
+		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
 			return codeAsm.pushNew(cllr::Opcode::VALUE_NULL, {}, {});
 		}

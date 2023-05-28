@@ -142,23 +142,25 @@ namespace caliburn
 		Statement(StatementType stmtType) : type(stmtType) {}
 		virtual ~Statement() {}
 
-		virtual bool validateModule() const override
+		bool validateModule() const override
 		{
 			return false;
 		}
 
-		virtual sptr<Token> firstTkn() const override = 0;
+		sptr<Token> firstTkn() const override = 0;
 
-		virtual sptr<Token> lastTkn() const override = 0;
+		sptr<Token> lastTkn() const override = 0;
+
+		void prettyPrint(ref<std::stringstream> ss) const override {}
 
 		//Only used by top-level statements which declare symbols. The rest, like variables, should use declareSymbols() instead
 		virtual void declareHeader(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) {}
 
 		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) = 0;
 
-		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override = 0;
+		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override = 0;
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override = 0;
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override = 0;
 
 	};
 
@@ -177,17 +179,30 @@ namespace caliburn
 		ScopeStatement(StatementType stmtType = StatementType::SCOPE) : Statement(stmtType) {}
 		virtual ~ScopeStatement() {}
 
-		virtual sptr<Token> firstTkn() const override
+		sptr<Token> firstTkn() const override
 		{
 			return first;
 		}
 
-		virtual sptr<Token> lastTkn() const override
+		sptr<Token> lastTkn() const override
 		{
 			return last;
 		}
+		/* TODO low priority
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			ss << "{\n";
 
-		virtual void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+			for (auto const& stmt : stmts)
+			{
+				stmt->prettyPrint(ss);
+			}
+
+			ss << "}";
+
+		}
+		*/
+		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			if (scopeTable != nullptr)
 			{
@@ -196,7 +211,7 @@ namespace caliburn
 
 			scopeTable = std::make_shared<SymbolTable>(table);
 
-			for (auto const &stmt : stmts)
+			for (auto const& stmt : stmts)
 			{
 				stmt->declareSymbols(scopeTable, codeAsm);
 
@@ -204,7 +219,7 @@ namespace caliburn
 
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			for (auto const& stmt : stmts)
 			{
@@ -214,7 +229,7 @@ namespace caliburn
 
 		}
 
-		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
 		{
 			for (auto const& inner : stmts)
 			{
