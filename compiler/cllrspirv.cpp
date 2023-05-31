@@ -3,16 +3,19 @@
 
 using namespace caliburn;
 
-void spirv::CllrTranslator::translate(ref<std::vector<sptr<cllr::Instruction>>> code)
+uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(ref<std::vector<sptr<cllr::Instruction>>> code)
 {
 	for (const auto& i : code)
 	{
-		opImpls[(uint32_t)i->op](i, *this);
+		auto fn = (impls[(uint32_t)i->op]);
+		(*fn)(target, i, this->spirvAsm);
+
 	}
 
+	return spirvAsm.toShader();
 }
 
-spirv::SSA spirv::CllrTranslator::getOrCreateAlias(cllr::SSA ssa, spirv::SpvOp op)
+spirv::SSA cllr::SPIRVOutAssembler::getOrCreateAlias(cllr::SSA ssa, spirv::SpvOp op)
 {
 	auto spvSSA = ssaAliases.find(ssa);
 
@@ -21,7 +24,7 @@ spirv::SSA spirv::CllrTranslator::getOrCreateAlias(cllr::SSA ssa, spirv::SpvOp o
 		return spvSSA->second;
 	}
 
-	auto nextSpvSSA = out->createSSA(op);
+	auto nextSpvSSA = spirvAsm.createSSA(op);
 
 	ssaAliases.emplace(ssa, nextSpvSSA);
 
@@ -32,14 +35,14 @@ spirv::SSA spirv::CllrTranslator::getOrCreateAlias(cllr::SSA ssa, spirv::SpvOp o
 //SPIR-V -> CLLR functions beyond this point
 //==========================================
 
-CLLR_SPIRV_IMPL(spirv::cllr_impl::OpUnknown)
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpUnknown)
 {
 	return 0;
 }
 
-CLLR_SPIRV_IMPL(spirv::cllr_impl::OpLabel)
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpLabel)
 {
-	return t.out->main()->push(spirv::OpLabel(), {});
+	return out.main()->push(spirv::OpLabel(), {});
 }
 
 /*
@@ -54,24 +57,24 @@ CLLR_SPIRV_IMPL(spirv::cllr_impl::OpLoop)
 }
 */
 
-CLLR_SPIRV_IMPL(spirv::cllr_impl::OpTypeInt)
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeInt)
 {
-	return t.out->types()->push(spirv::OpTypeInt(), {i->operands[0], i->operands[1]});
+	return out.types()->push(spirv::OpTypeInt(), {i->operands[0], i->operands[1]});
 }
 
-CLLR_SPIRV_IMPL(spirv::cllr_impl::OpTypeFloat)
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeFloat)
 {
-	return t.out->types()->push(spirv::OpTypeInt(), { i->operands[0] });
+	return out.types()->push(spirv::OpTypeInt(), { i->operands[0] });
 }
 
-CLLR_SPIRV_IMPL(spirv::cllr_impl::OpTypeStruct)
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeStruct)
 {
-	auto ssa = t.out->createSSA(spirv::OpTypeStruct());
+	auto ssa = out.createSSA(spirv::OpTypeStruct());
 
 	return 0;
 }
 
-CLLR_SPIRV_IMPL(spirv::cllr_impl::OpEntryPoint)
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpEntryPoint)
 {
 	
 

@@ -66,7 +66,6 @@ namespace caliburn
         public:
             Assembler()
             {
-                /*
                 auto me = std::make_shared<Assembler>(this);
                 spvImports = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{ OpExtInstImport() });
                 spvTypes = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{
@@ -108,7 +107,7 @@ namespace caliburn
                     OpVariable()
                 });
                 spvCode = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{});
-                */
+                
             }
             virtual ~Assembler() {}
             
@@ -142,6 +141,8 @@ namespace caliburn
             SSA addGlobalVar(SSA type, StorageClass stClass, SSA init = 0);
 
             void addEntryPoint(SSA fn, ExecutionModel type, std::initializer_list<uint32_t> ios);
+
+            uptr<std::vector<uint32_t>> toShader();
 
         };
 

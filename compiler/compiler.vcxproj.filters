@@ -226,5 +226,8 @@
     <ClInclude Include="generics.h">
       <Filter>Header Files\ast</Filter>
     </ClInclude>
+    <ClInclude Include="cllrout.h">
+      <Filter>Header Files\cllr</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

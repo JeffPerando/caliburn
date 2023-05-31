@@ -5,22 +5,20 @@
 #include <vector>
 
 #include "basic.h"
-#include "cllr.h"
+#include "cllrout.h"
 #include "spirvasm.h"
 
 namespace caliburn
 {
-	namespace spirv
+	namespace cllr
 	{
-		class CllrTranslator;
-
 		//Function pointer type for easier usage later
-		using CllrImpl = spirv::SSA(ref<const sptr<cllr::Instruction>> i, ref<spirv::CllrTranslator> t);
+		using SPIRVOutImpl = OutAsmImpl<spirv::Assembler>;
 
 		//Macro shorthand for implementation signature
-		#define CLLR_SPIRV_IMPL(Name) spirv::SSA Name(ref<const sptr<cllr::Instruction>> i, ref<spirv::CllrTranslator> t)
+		#define CLLR_SPIRV_IMPL(Name) spirv::SSA Name(Target target, ref<const sptr<Instruction>> i, ref<spirv::Assembler> out)
 
-		namespace cllr_impl
+		namespace spirv_impl
 		{
 			CLLR_SPIRV_IMPL(OpUnknown);
 
@@ -38,28 +36,26 @@ namespace caliburn
 
 		}
 		
-		class CllrTranslator
+		class SPIRVOutAssembler : cllr::OutAssembler<uint32_t>
 		{
 		private:
+			OutImpls<SPIRVOutImpl> impls;
 			std::map<cllr::SSA, spirv::SSA> ssaAliases;
 
-			std::array<ptr<CllrImpl>, (uint64_t)cllr::Opcode::CLLR_OP_COUNT> opImpls = {};
+			spirv::Assembler spirvAsm;
 
 		public:
-			const sptr<cllr::Assembler> in;
-			const sptr<spirv::Assembler> out;
-
-			CllrTranslator(sptr<cllr::Assembler> inAsm, sptr<spirv::Assembler> outAsm) : in(inAsm), out(outAsm)
+			SPIRVOutAssembler() : OutAssembler(Target::GPU)
 			{
 				//here we go...
 
 			}
 
-			virtual ~CllrTranslator() {}
+			virtual ~SPIRVOutAssembler() {}
 
 			spirv::SSA getOrCreateAlias(cllr::SSA ssa, spirv::SpvOp op);
 
-			void translate(ref<std::vector<sptr<cllr::Instruction>>> code);
+			uptr<std::vector<spirv::SSA>> translateCLLR(ref<std::vector<sptr<cllr::Instruction>>> code) override;
 
 		};
 

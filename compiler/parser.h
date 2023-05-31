@@ -53,7 +53,7 @@ namespace caliburn
 
 		uptr<ParsedType> parseTypeName();
 
-		StorageModifiers parseStorageMods();
+		StmtModifiers parseStmtMods();
 
 		uptr<ScopeStatement> parseScope(std::initializer_list<ParseMethod<Statement>> pms);
 
@@ -82,8 +82,6 @@ namespace caliburn
 		//uptr<Statement> parseOp();
 
 		uptr<Statement> parseLogic();
-
-		//uptr<Statement> parseSetter();
 
 		uptr<Statement> parseControl();
 

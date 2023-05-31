@@ -11,7 +11,7 @@ namespace caliburn
 {
 	struct Function
 	{
-		StorageModifiers mods = {};
+		StmtModifiers mods = {};
 
 		Function() {}
 		virtual ~Function() {}

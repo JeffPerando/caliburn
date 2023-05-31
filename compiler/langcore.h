@@ -40,6 +40,28 @@ namespace caliburn
 		MESH
 	};
 
+	static const std::map<std::string, ShaderType> shaderTypes = {
+		/*
+		{"main",		ShaderType::COMPUTE},
+		*/
+		{"vertex",		ShaderType::VERTEX},
+		{"frag",		ShaderType::FRAGMENT},
+		/*
+		{"tessCtrl",	ShaderType::TESS_CTRL},
+		{"tessEval",	ShaderType::TESS_EVAL},
+		*/
+		{"geom", 		ShaderType::GEOMETRY},
+		/*
+		{"rayGen",   	ShaderType::RT_GEN},
+		{"rayClose",	ShaderType::RT_CLOSE},
+		{"rayHit",		ShaderType::RT_ANY_HIT},
+		{"rayInt",		ShaderType::RT_INTERSECT},
+		{"rayMiss",		ShaderType::RT_MISS},
+		{"task",		ShaderType::TASK},
+		{"mesh",		ShaderType::MESH}
+		*/
+	};
+
 	struct DescriptorSet
 	{
 		std::string name;
@@ -58,16 +80,14 @@ namespace caliburn
 
 	struct Shader
 	{
-		std::string name;
 		ShaderType type;
-		ptr<const uint32_t> spirv;
-		size_t spirv_length;
+		std::vector<uint32_t> spirv;
 		std::vector<VertexInputAttribute> inputs;
 		std::vector<DescriptorSet> sets;
 
 	};
 
-	struct StorageModifiers
+	struct StmtModifiers
 	{
 		uint32_t
 			PUBLIC : 1,
@@ -76,7 +96,7 @@ namespace caliburn
 			SHARED : 1,
 			STATIC : 1;
 
-		StorageModifiers()
+		StmtModifiers()
 		{
 			PUBLIC = 0;
 			PROTECTED = 0;

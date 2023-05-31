@@ -426,9 +426,9 @@ bool Parser::parseScopeEnd(uptr<ScopeStatement> stmt)
 	return false;
 }
 
-StorageModifiers Parser::parseStorageMods()
+StmtModifiers Parser::parseStmtMods()
 {
-	StorageModifiers mods = {};
+	StmtModifiers mods = {};
 
 	while (tokens->hasNext())
 	{
@@ -456,7 +456,7 @@ StorageModifiers Parser::parseStorageMods()
 
 uptr<ScopeStatement> Parser::parseScope(std::initializer_list<ParseMethod<Statement>> pms)
 {
-	auto mods = parseStorageMods();
+	auto mods = parseStmtMods();
 
 	auto tkn = tokens->current();
 
@@ -557,7 +557,7 @@ uptr<ParsedType> Parser::parseTypeName()
 
 uptr<Statement> Parser::parseDecl()
 {
-	auto mods = parseStorageMods();
+	auto mods = parseStmtMods();
 
 	auto stmt = parseAny({
 		&Parser::parseImport,

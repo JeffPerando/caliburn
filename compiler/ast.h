@@ -136,7 +136,7 @@ namespace caliburn
 	{
 		const StatementType type;
 
-		StorageModifiers mods = {};
+		StmtModifiers mods = {};
 		std::map<std::string, uptr<ParsedType>> typeAliases;
 
 		Statement(StatementType stmtType) : type(stmtType) {}

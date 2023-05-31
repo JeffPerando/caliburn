@@ -57,12 +57,12 @@ namespace caliburn
 			{
 				return strs.at(index);
 			}
-			/*
-			ptr<std::vector<sptr<Instruction>>> getCode()
+			
+			uptr<std::vector<sptr<Instruction>>> getCode()
 			{
-				return &code;
+				return std::make_unique<std::vector<sptr<Instruction>>>(code);
 			}
-			*/
+			
 			void setLoop(SSA start, SSA end)
 			{
 				loops.push_back(std::pair(start, end));

@@ -7,6 +7,9 @@
 #include "ctrlstmt.h"
 #include "modstmts.h"
 
+#include "cllrout.h"
+#include "cllrspirv.h"
+
 using namespace caliburn;
 
 void Compiler::parseText(std::string text)
@@ -129,6 +132,10 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<Shader>> s
 	auto root = std::make_unique<RootModule>();
 	auto mod = std::make_unique<CompiledModule>();
 
+	std::vector<ptr<ShaderStatement>> shaderDecls;
+
+	ptr<ShaderStatement> shaderStmt = nullptr;
+
 	//COMPILE
 	for (auto const& stmt : ast)
 	{
@@ -148,9 +155,61 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<Shader>> s
 			continue;
 		}
 
+		if (stmt->type == StatementType::SHADER)
+		{
+			auto shadDecl = static_cast<ptr<ShaderStatement>>(stmt.get());
+
+			shaderDecls.push_back(shadDecl);
+
+			if (shadDecl->name->str == shaderName)
+			{
+				if (shaderStmt == nullptr)
+				{
+					shaderStmt = shadDecl;
+				}
+				else
+				{
+					//TODO complain
+					break;
+				}
+			}
+
+			continue;
+		}
+
 	}
 
-	return false;
+	if (shaderStmt == nullptr)
+	{
+		//TODO complain
+		return false;
+	}
+
+	std::vector<uptr<cllr::CompilationUnit>> shaderUnits;
+
+	shaderStmt->compile(nullptr, shaderUnits, nullptr);
+
+	auto outAsm = std::make_unique<cllr::SPIRVOutAssembler>();
+
+	for (auto const& unit : shaderUnits)
+	{
+		if (unit->target != cllr::Target::GPU)
+		{
+			//TODO complain
+			continue;
+		}
+
+		Shader shader;
+		
+		auto spirvShader = outAsm->translateCLLR(*(unit->code));
+
+		shader.spirv = *spirvShader;
+
+
+	}
+
+
+	return true;
 }
 
 void Compiler::o(OptimizeLevel lvl)

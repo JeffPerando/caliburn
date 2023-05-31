@@ -56,7 +56,7 @@ namespace caliburn
 	struct Variable : public ParsedObject
 	{
 		cllr::SSA id = 0;
-		StorageModifiers storeMods = {};
+		StmtModifiers storeMods = {};
 		bool isConst = false;
 		sptr<Token> name = nullptr;
 		sptr<Type> type = nullptr;
