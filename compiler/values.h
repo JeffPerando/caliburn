@@ -326,7 +326,7 @@ namespace caliburn
 
 		void prettyPrint(ref<std::stringstream> ss) const override
 		{
-			const auto cat = opCategories.find(op)->second;
+			const auto cat = OP_CATEGORIES.find(op)->second;
 
 			if (cat == OpCategory::UNARY)
 			{
@@ -374,7 +374,7 @@ namespace caliburn
 
 			auto cllrOp = cllr::Opcode::VALUE_EXPR;
 
-			auto opType = opCategories.at(op);
+			auto opType = OP_CATEGORIES.at(op);
 
 			if (opType == OpCategory::LOGICAL)
 			{
@@ -933,7 +933,7 @@ namespace caliburn
 			{
 				auto cllrOp = cllr::Opcode::VALUE_EXPR;
 
-				auto opType = opCategories.at(op);
+				auto opType = OP_CATEGORIES.at(op);
 
 				if (opType == OpCategory::LOGICAL)
 				{

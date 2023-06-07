@@ -698,7 +698,7 @@ uptr<Statement> Parser::parseShader()
 
 	shader->name = tokens->next();
 
-	auto stages = parseBetween("{", nullptr, "}");
+	//auto stages = parseBetween("{", nullptr, "}");
 
 	return shader;
 }
@@ -1358,14 +1358,14 @@ uptr<Value> Parser::parseExpr(uint32_t precedence)
 			break;
 		}
 
-		auto op = infixOps.find(tkn->str);
+		auto op = INFIX_OPS.find(tkn->str);
 
-		if (op == infixOps.end())
+		if (op == INFIX_OPS.end())
 		{
 			return lhs;
 		}
 
-		auto opWeight = opPrecedence.at(op->second);
+		auto opWeight = OP_PRECEDENCE.at(op->second);
 
 		if (opWeight > precedence)
 		{

@@ -359,9 +359,9 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 
 				if (std::binary_search(KEYWORDS.begin(), KEYWORDS.end(), idStr))
 				{
-					auto foundType = strTokenTypes.find(idStr);
+					auto foundType = STR_TOKEN_TYPES.find(idStr);
 
-					if (foundType == strTokenTypes.end())
+					if (foundType == STR_TOKEN_TYPES.end())
 					{
 						idType = TokenType::KEYWORD;
 					}
@@ -416,9 +416,9 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 
 		if (type == CharType::SPECIAL)
 		{
-			auto specialType = charTokenTypes.find(current);
+			auto specialType = CHAR_TOKEN_TYPES.find(current);
 
-			if (specialType != charTokenTypes.end())
+			if (specialType != CHAR_TOKEN_TYPES.end())
 			{
 				tokens.push_back(std::make_shared<Token>(std::string(1, current), specialType->second, line, col, buf->currentIndex(), 1L));
 			}
@@ -435,9 +435,9 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 			}
 
 			auto fullOp = text.substr(buf->currentIndex(), off);
-			auto meaning = specialOps.find(fullOp);
+			auto meaning = SPECIAL_OPS.find(fullOp);
 
-			if (meaning == specialOps.end())
+			if (meaning == SPECIAL_OPS.end())
 			{
 				tokens.push_back(std::make_shared<Token>(fullOp, meaning->second, line, col, buf->currentIndex(), off));
 				buf->consume(off);

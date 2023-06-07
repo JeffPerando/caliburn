@@ -40,7 +40,7 @@ namespace caliburn
 		MESH
 	};
 
-	static const std::map<std::string, ShaderType> shaderTypes = {
+	static const std::map<std::string, ShaderType> SHADER_TYPES = {
 		/*
 		{"main",		ShaderType::COMPUTE},
 		*/

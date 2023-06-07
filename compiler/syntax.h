@@ -124,7 +124,7 @@ namespace caliburn
 
 	};
 
-	static const std::map<char, TokenType> charTokenTypes = {
+	static const std::map<char, TokenType> CHAR_TOKEN_TYPES = {
 		{';',	TokenType::END},
 		{'{',	TokenType::START_SCOPE},
 		{'}',	TokenType::END_SCOPE},
@@ -137,17 +137,17 @@ namespace caliburn
 		{':',	TokenType::COLON}
 	};
 
-	static const std::map<std::string, TokenType> strTokenTypes = {
+	static const std::map<std::string, TokenType> STR_TOKEN_TYPES = {
 		{"true",	TokenType::LITERAL_BOOL},
-		{"false",	TokenType::LITERAL_BOOL},
+		{"false",	TokenType::LITERAL_BOOL}
 	};
 
-	static const std::map<std::string, TokenType> specialOps = {
+	static const std::map<std::string, TokenType> SPECIAL_OPS = {
 		{"->",	TokenType::ARROW},
 		{"=>",	TokenType::ARROW}
 	};
 
-	static const std::map<std::string, Operator> infixOps = {
+	static const std::map<std::string, Operator> INFIX_OPS = {
 		{"+",	Operator::ADD},
 		{"-",	Operator::SUB},
 		{"*",	Operator::MUL},
@@ -180,7 +180,7 @@ namespace caliburn
 	//Math ops can use (op)= to set something, e.g. +=.
 	//Logic ops can't, mostly because I don't want to deal with parsing that.
 
-	static const std::map<Operator, OpCategory> opCategories = {
+	static const std::map<Operator, OpCategory> OP_CATEGORIES = {
 		{Operator::ADD,			OpCategory::ARITHMETIC},
 		{Operator::SUB,			OpCategory::ARITHMETIC},
 		{Operator::MUL,			OpCategory::ARITHMETIC},
@@ -214,7 +214,7 @@ namespace caliburn
 
 	static constexpr uint32_t OP_PRECEDENCE_MAX = 10;
 
-	static const std::map<Operator, uint32_t> opPrecedence = {
+	static const std::map<Operator, uint32_t> OP_PRECEDENCE = {
 		{Operator::POW,			10},
 		{Operator::MUL,			9},
 		{Operator::DIV,			8},
