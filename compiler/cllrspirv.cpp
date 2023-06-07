@@ -3,16 +3,16 @@
 
 using namespace caliburn;
 
-uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(ref<std::vector<sptr<cllr::Instruction>>> code)
+uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(ref<cllr::Assembler> cllrAsm, ref<std::vector<sptr<cllr::Instruction>>> code)
 {
 	for (const auto& i : code)
 	{
 		auto fn = (impls[(uint32_t)i->op]);
-		(*fn)(target, i, this->spirvAsm);
+		(*fn)(target, *i, cllrAsm, *this, *this->spirvAsm);
 
 	}
 
-	return spirvAsm.toShader();
+	return spirvAsm->toShader();
 }
 
 spirv::SSA cllr::SPIRVOutAssembler::getOrCreateAlias(cllr::SSA ssa, spirv::SpvOp op)
@@ -24,7 +24,7 @@ spirv::SSA cllr::SPIRVOutAssembler::getOrCreateAlias(cllr::SSA ssa, spirv::SpvOp
 		return spvSSA->second;
 	}
 
-	auto nextSpvSSA = spirvAsm.createSSA(op);
+	auto nextSpvSSA = spirvAsm->createSSA(op);
 
 	ssaAliases.emplace(ssa, nextSpvSSA);
 
@@ -35,14 +35,11 @@ spirv::SSA cllr::SPIRVOutAssembler::getOrCreateAlias(cllr::SSA ssa, spirv::SpvOp
 //SPIR-V -> CLLR functions beyond this point
 //==========================================
 
-CLLR_SPIRV_IMPL(cllr::spirv_impl::OpUnknown)
-{
-	return 0;
-}
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpUnknown) {}
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpLabel)
 {
-	return out.main()->push(spirv::OpLabel(), {});
+	spv.main()->push(spirv::OpLabel(), {});
 }
 
 /*
@@ -59,24 +56,21 @@ CLLR_SPIRV_IMPL(spirv::cllr_impl::OpLoop)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeInt)
 {
-	return out.types()->push(spirv::OpTypeInt(), {i->operands[0], i->operands[1]});
+	spv.types()->push(spirv::OpTypeInt(), { i.operands[0], i.operands[1]});
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeFloat)
 {
-	return out.types()->push(spirv::OpTypeInt(), { i->operands[0] });
+	spv.types()->push(spirv::OpTypeInt(), { i.operands[0] });
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeStruct)
 {
-	auto ssa = out.createSSA(spirv::OpTypeStruct());
+	//auto ssa = spv.createSSA(spirv::OpTypeStruct());
 
-	return 0;
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpEntryPoint)
 {
 	
-
-	return 0;
 }

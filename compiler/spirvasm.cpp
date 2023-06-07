@@ -80,3 +80,24 @@ void Assembler::addExt(std::string ext)
 {
 	extensions.push_back(ext);
 }
+
+SSA Assembler::addImport(std::string instructions)
+{
+	return 0;
+}
+
+SSA Assembler::addGlobalVar(SSA type, StorageClass stClass, SSA init)
+{
+	return 0;
+}
+
+void Assembler::addEntryPoint(SSA fn, ExecutionModel type, std::initializer_list<uint32_t> ios)
+{
+
+}
+
+uptr<std::vector<uint32_t>> Assembler::toShader()
+{
+	return nullptr;
+}
+

@@ -154,11 +154,11 @@ namespace caliburn
 		void prettyPrint(ref<std::stringstream> ss) const override {}
 
 		//Only used by top-level statements which declare symbols. The rest, like variables, should use declareSymbols() instead
-		virtual void declareHeader(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) {}
+		virtual void declareHeader(sptr<SymbolTable> table) const {}
 
 		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) = 0;
 
-		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override = 0;
+		void declareSymbols(sptr<SymbolTable> table) override = 0;
 
 		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override = 0;
 
@@ -202,7 +202,7 @@ namespace caliburn
 
 		}
 		*/
-		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void declareSymbols(sptr<SymbolTable> table) override
 		{
 			if (scopeTable != nullptr)
 			{
@@ -213,7 +213,7 @@ namespace caliburn
 
 			for (auto const& stmt : stmts)
 			{
-				stmt->declareSymbols(scopeTable, codeAsm);
+				stmt->declareSymbols(scopeTable);
 
 			}
 

@@ -9,9 +9,6 @@ namespace caliburn
 {
 	namespace cllr
 	{
-		template<typename OutAsm>
-		using OutAsmImpl = void(Target target, sptr<const cllr::Instruction> i, ref<OutAsm> out);
-
 		template<typename OutImpl>
 		using OutImpls = std::array<ptr<OutImpl>, (uint64_t)cllr::Opcode::CLLR_OP_COUNT>;
 
@@ -34,7 +31,7 @@ namespace caliburn
 			OutAssembler(Target t) : target(t) {}
 			virtual ~OutAssembler() {}
 
-			virtual uptr<std::vector<OutCode>> translateCLLR(ref<std::vector<sptr<cllr::Instruction>>> code) = 0;
+			virtual uptr<std::vector<OutCode>> translateCLLR(ref<cllr::Assembler> cllrAsm, ref<std::vector<sptr<cllr::Instruction>>> code) = 0;
 
 		};
 

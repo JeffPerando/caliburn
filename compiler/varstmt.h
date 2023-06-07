@@ -31,7 +31,7 @@ namespace caliburn
 			return nullptr;
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void declareSymbols(sptr<SymbolTable> table) override
 		{
 			for (auto const& name : names)
 			{

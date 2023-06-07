@@ -3,7 +3,7 @@
 
 #include "ast.h"
 #include "cbrn_std.h"
-#include "cllrasm.h"
+#include "cllropt.h"
 #include "cllrspirv.h"
 
 namespace caliburn
@@ -25,19 +25,46 @@ namespace caliburn
 
 		ShaderStageStatement(sptr<Token> f, sptr<Token> n) : Statement(StatementType::SHADER_STAGE), first(f), name(n)
 		{
-			type = shaderTypes.find(n->str)->second;
+			type = SHADER_TYPES.find(n->str)->second;
 		}
 		ShaderStageStatement(ShaderType t) : Statement(StatementType::SHADER_STAGE), type(t), first(nullptr), name(nullptr) {}
 		virtual ~ShaderStageStatement() {}
 
-		uptr<Shader> compile(sptr<SymbolTable> symbols, ptr<std::vector<uint32_t>> cbir)
+		sptr<Token> firstTkn() const override
+		{
+			return first;
+		}
+
+		sptr<Token> lastTkn() const override
+		{
+			return code->lastTkn();//idk
+		}
+
+		void prettyPrint(ref<std::stringstream> ss) const override {}
+
+		void declareHeader(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) {}
+
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) {}
+
+		void declareSymbols(sptr<SymbolTable> table) override
+		{
+			code->declareSymbols(table);
+		}
+
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		{
+
+		}
+
+		uptr<Shader> compile(sptr<SymbolTable> symbols, ptr<std::vector<uint32_t>> cbir, OptimizeLevel lvl)
 		{
 			auto codeAsm = cllr::Assembler();
 			
-			code->declareSymbols(symbols, codeAsm);
 			code->resolveSymbols(symbols, codeAsm);
 
 			code->emitDeclCLLR(codeAsm);
+
+			cllr::optimize(lvl, codeAsm);
 
 			//TODO emit CBIR
 			/*
@@ -47,14 +74,14 @@ namespace caliburn
 			}
 			*/
 
-			auto spirvAsm = cllr::SPIRVOutAssembler();
+			cllr::SPIRVOutAssembler spirvAsm;
 
-			auto spv = spirvAsm.translateCLLR(*(codeAsm.getCode()));
+			auto spv = spirvAsm.translateCLLR(codeAsm, *codeAsm.getCode());
 
 			auto out = std::make_unique<Shader>();
 			
 			out->type = type;
-			out->spirv = *spv;
+			out->spirv = std::move(spv);
 
 			if (type == ShaderType::VERTEX)
 			{
@@ -86,32 +113,35 @@ namespace caliburn
 
 		ShaderStatement() : Statement(StatementType::SHADER) {}
 		virtual ~ShaderStatement() {}
-		
-		void compile(sptr<SymbolTable> table, ref<std::vector<uptr<Shader>>> codeDest, ptr<std::vector<uint32_t>> cbir)
+
+		sptr<Token> firstTkn() const override
+		{
+			return first;
+		}
+
+		sptr<Token> lastTkn() const override
+		{
+			return last;
+		}
+
+		void prettyPrint(ref<std::stringstream> ss) const override {}
+
+		void declareHeader(sptr<SymbolTable> table) const override {} //We don't add shaders to the symbol table
+
+		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) {}
+
+		void declareSymbols(sptr<SymbolTable> table) override {}
+
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			for (auto const& stage : stages)
 			{
-				auto result = stage->compile(table, cbir);
+				stage->resolveSymbols(table, codeAsm);
 
-				for (uint32_t i = 0; i < descriptors.size(); ++i)
-				{
-					auto const& desc = descriptors.at(i);
-
-					result->sets.push_back(DescriptorSet{desc.second->str, i});
-
-				}
-
-				codeDest.push_back(std::move(result));
-
-			}
-
-			if (cbir != nullptr)
-			{
-				//TODO emit CBIR code
 			}
 
 		}
-		
+
 	};
 
 }

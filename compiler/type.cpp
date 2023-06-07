@@ -4,15 +4,15 @@
 
 using namespace caliburn;
 
-sptr<Type> ParsedType::resolve(sptr<const SymbolTable> table)
+bool ParsedType::resolve(sptr<const SymbolTable> table)
 {
-	auto cTypeSym = table.get()->find(name->str);
+	auto cTypeSym = table->find(name->str);
 	auto cTypePtr = std::get_if<sptr<Type>>(&cTypeSym);
 
 	if (cTypePtr == nullptr)
 	{
 		//TODO complain
-		return nullptr;
+		return false;
 	}
 
 	auto const& cType = *cTypePtr;
@@ -66,14 +66,25 @@ sptr<Type> ParsedType::resolve(sptr<const SymbolTable> table)
 		//TODO complain
 	}
 	*/
-	return resultType;
+	return true;
 }
 
 void Variable::resolveSymbols(sptr<const SymbolTable> table)
 {
+	if (initValue != nullptr)
+	{
+		initValue->resolveSymbols(table);
+
+	}
+
 	if (typeHint != nullptr)
 	{
-		type = typeHint->resolve(table);
+		if (!typeHint->resolve(table))
+		{
+			//TODO complain
+		}
+
+		type = typeHint->real();
 
 	}
 

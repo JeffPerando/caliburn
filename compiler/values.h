@@ -42,7 +42,13 @@ namespace caliburn
 		{
 			auto pType = ParsedType(lit->str.substr(lit->str.find_first_of('_') + 1));
 
-			type = pType.resolve(table);
+			if (!pType.resolve(table))
+			{
+				//TODO complain
+				return;
+			}
+
+			type = pType.real();
 
 		}
 
@@ -94,8 +100,12 @@ namespace caliburn
 		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			auto pType = ParsedType(lit->str.substr(lit->str.find_first_of('_') + 1));
-
-			type = pType.resolve(table);
+			if (!pType.resolve(table))
+			{
+				//TODO complain
+				return;
+			}
+			type = pType.real();
 
 		}
 
@@ -428,7 +438,8 @@ namespace caliburn
 		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
 			val->resolveSymbols(table);
-			chkType = chkPType->resolve(table);
+			chkPType->resolve(table);
+			chkType = chkPType->real();
 
 		}
 
@@ -542,7 +553,8 @@ namespace caliburn
 
 		void resolveSymbols(sptr<const SymbolTable> table) override
 		{
-			type = resultPType->resolve(table);
+			resultPType->resolve(table);
+			type = resultPType->real();
 			lhs->resolveSymbols(table);
 			
 		}

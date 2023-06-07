@@ -31,13 +31,13 @@ namespace caliburn
 			return innerIf->lastTkn();
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void declareSymbols(sptr<SymbolTable> table) override
 		{
-			innerIf->declareSymbols(table, codeAsm);
+			innerIf->declareSymbols(table);
 
 			if (innerElse != nullptr)
 			{
-				innerElse->declareSymbols(table, codeAsm);
+				innerElse->declareSymbols(table);
 			}
 
 		}
@@ -93,7 +93,7 @@ namespace caliburn
 
 		ForRangeStatement() : Statement(StatementType::FOR) {}
 
-		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
+		void declareSymbols(sptr<SymbolTable> table) override {}
 
 		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
@@ -137,7 +137,7 @@ namespace caliburn
 			return loop->lastTkn();
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
+		void declareSymbols(sptr<SymbolTable> table) override {}
 
 		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{

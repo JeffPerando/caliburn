@@ -95,6 +95,9 @@
     <ClCompile Include="syntax.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cllropt.cpp">
+      <Filter>Source Files\cllr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="buffer.h">
@@ -227,6 +230,9 @@
       <Filter>Header Files\ast</Filter>
     </ClInclude>
     <ClInclude Include="cllrout.h">
+      <Filter>Header Files\cllr</Filter>
+    </ClInclude>
+    <ClInclude Include="cllropt.h">
       <Filter>Header Files\cllr</Filter>
     </ClInclude>
   </ItemGroup>

@@ -29,7 +29,7 @@ namespace caliburn
 			return alias;
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
+		void declareSymbols(sptr<SymbolTable> table) override {}
 
 		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
@@ -54,7 +54,7 @@ namespace caliburn
 			return name;
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
+		void declareSymbols(sptr<SymbolTable> table) override {}
 
 		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 

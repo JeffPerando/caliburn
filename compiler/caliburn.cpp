@@ -12,7 +12,7 @@
 
 using namespace caliburn;
 
-void Compiler::parseText(std::string text)
+bool Compiler::parseText(std::string text)
 {
 	if (!ast.empty())
 	{
@@ -47,14 +47,15 @@ void Compiler::parseText(std::string text)
 		*/
 	}
 
+	return !ast.empty();
 }
 
-void Compiler::parseCBIR(ref<std::vector<uint32_t>> cbir)
+bool Compiler::parseCBIR(ref<std::vector<uint32_t>> cbir)
 {
-
+	return false;
 }
 
-bool Compiler::compileShaders(std::string shaderName, ref<std::vector<Shader>> shaderDest)
+bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shader>>> shaders)
 {
 	if (ast.empty())
 	{
@@ -130,8 +131,7 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<Shader>> s
 	}
 	*/
 	auto root = std::make_unique<RootModule>();
-	auto mod = std::make_unique<CompiledModule>();
-
+	
 	std::vector<ptr<ShaderStatement>> shaderDecls;
 
 	ptr<ShaderStatement> shaderStmt = nullptr;
@@ -139,6 +139,7 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<Shader>> s
 	//COMPILE
 	for (auto const& stmt : ast)
 	{
+		//import x;
 		if (stmt->type == StatementType::IMPORT)
 		{
 			auto imp = static_cast<ptr<ImportStatement>>(stmt.get());
@@ -147,14 +148,23 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<Shader>> s
 			continue;
 		}
 
+		//mod x;
+		//So we rename the module here. Right now it does nothing.
 		if (stmt->type == StatementType::MODULE)
 		{
 			auto modDecl = static_cast<ptr<ModuleStatement>>(stmt.get());
 
-			mod->name = modDecl->name->str;
 			continue;
 		}
 
+		//type x = y;
+		if (stmt->type == StatementType::TYPEDEF)
+		{
+
+		}
+
+		//shader x {}
+		//where the real magic happens
 		if (stmt->type == StatementType::SHADER)
 		{
 			auto shadDecl = static_cast<ptr<ShaderStatement>>(stmt.get());
@@ -177,6 +187,7 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<Shader>> s
 			continue;
 		}
 
+		break;
 	}
 
 	if (shaderStmt == nullptr)
@@ -185,31 +196,37 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<Shader>> s
 		return false;
 	}
 
-	std::vector<uptr<cllr::CompilationUnit>> shaderUnits;
+	auto table = std::make_shared<SymbolTable>();
 
-	shaderStmt->compile(nullptr, shaderUnits, nullptr);
-
-	auto outAsm = std::make_unique<cllr::SPIRVOutAssembler>();
-
-	for (auto const& unit : shaderUnits)
+	root->declareSymbols(table);
+	
+	for (auto const& node : ast)
 	{
-		if (unit->target != cllr::Target::GPU)
+		node->declareHeader(table);
+	}
+
+	for (auto const& node : ast)
+	{
+		node->declareSymbols(table);
+	}
+	
+	for (auto const& stage : shaderStmt->stages)
+	{
+		auto result = stage->compile(table, nullptr, optimizeLvl);
+
+		uint32_t d = 0;
+
+		for (auto const& desc : shaderStmt->descriptors)
 		{
-			//TODO complain
-			continue;
+			result->sets.push_back(DescriptorSet{ desc.second->str, d++ });
+
 		}
 
-		Shader shader;
-		
-		auto spirvShader = outAsm->translateCLLR(*(unit->code));
-
-		shader.spirv = *spirvShader;
-
+		shaders.push_back(std::move(result));
 
 	}
 
-
-	return true;
+	return !shaders.empty();
 }
 
 void Compiler::o(OptimizeLevel lvl)

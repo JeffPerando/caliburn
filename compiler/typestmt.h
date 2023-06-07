@@ -12,7 +12,7 @@ namespace caliburn
 		const uptr<ParsedType> alias;
 
 		bool isStrong = false;
-
+		
 		TypedefStatement(sptr<Token> f, sptr<Token> n, uptr<ParsedType> t) : Statement(StatementType::TYPEDEF), first(f), name(n), alias(std::move(t))
 		{
 			isStrong = (first->str == "strong");
@@ -30,7 +30,9 @@ namespace caliburn
 			return alias->lastTkn();
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void declareHeader(sptr<SymbolTable> table) const override {} //Do nothing here
+
+		void declareSymbols(sptr<SymbolTable> table) override
 		{
 			auto sym = table->find(name->str);
 
@@ -53,26 +55,19 @@ namespace caliburn
 			//We do a little cheating and do a little resolving here; It will probably bite me in the arse, tbh
 			//Actually I know it will since the top-level symbols won't all be here
 			//Hi present me, it's past me! Finish the declareHeader system and this will fix itself!
-			auto cType = alias->resolve(table);
-
-			if (cType == nullptr)
+			if (!alias->resolve(table))
 			{
 				//TODO complain
 				return;
 			}
-
-			table->add(name->str, cType);
+			
+			table->add(name->str, alias->real());
 
 		}
 
 		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			
-		}
-
-		void declareHeader(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
-		{
-
 		}
 
 		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override

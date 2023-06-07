@@ -12,11 +12,13 @@ namespace caliburn
 {
 	namespace cllr
 	{
+		class SPIRVOutAssembler;
+
 		//Function pointer type for easier usage later
-		using SPIRVOutImpl = OutAsmImpl<spirv::Assembler>;
+		using SPIRVOutFn = void(Target target, ref<cllr::Instruction> i, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out, ref<spirv::Assembler> spv);
 
 		//Macro shorthand for implementation signature
-		#define CLLR_SPIRV_IMPL(Name) spirv::SSA Name(Target target, ref<const sptr<Instruction>> i, ref<spirv::Assembler> out)
+		#define CLLR_SPIRV_IMPL(Name) void Name(Target target, ref<Instruction> i, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out, ref<spirv::Assembler> spv)
 
 		namespace spirv_impl
 		{
@@ -39,14 +41,16 @@ namespace caliburn
 		class SPIRVOutAssembler : cllr::OutAssembler<uint32_t>
 		{
 		private:
-			OutImpls<SPIRVOutImpl> impls;
+			OutImpls<SPIRVOutFn> impls = {};
 			std::map<cllr::SSA, spirv::SSA> ssaAliases;
 
-			spirv::Assembler spirvAsm;
+			uptr<spirv::Assembler> spirvAsm = nullptr;
 
 		public:
 			SPIRVOutAssembler() : OutAssembler(Target::GPU)
 			{
+				spirvAsm = std::make_unique<spirv::Assembler>();
+
 				//here we go...
 
 			}
@@ -55,7 +59,7 @@ namespace caliburn
 
 			spirv::SSA getOrCreateAlias(cllr::SSA ssa, spirv::SpvOp op);
 
-			uptr<std::vector<spirv::SSA>> translateCLLR(ref<std::vector<sptr<cllr::Instruction>>> code) override;
+			uptr<std::vector<spirv::SSA>> translateCLLR(ref<cllr::Assembler> cllrAsm, ref<std::vector<sptr<cllr::Instruction>>> code) override;
 
 		};
 

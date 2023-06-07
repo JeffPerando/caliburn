@@ -156,6 +156,7 @@
   <ItemGroup>
     <ClCompile Include="caliburn.cpp" />
     <ClCompile Include="cllrasm.cpp" />
+    <ClCompile Include="cllropt.cpp" />
     <ClCompile Include="cllrspirv.cpp" />
     <ClCompile Include="ctrlstmt.cpp" />
     <ClCompile Include="generics.cpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="classstmt.h" />
     <ClInclude Include="cllr.h" />
     <ClInclude Include="cllrasm.h" />
+    <ClInclude Include="cllropt.h" />
     <ClInclude Include="cllrout.h" />
     <ClInclude Include="cllrspirv.h" />
     <ClInclude Include="compilererr.h" />

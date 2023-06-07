@@ -66,6 +66,7 @@ namespace caliburn
         public:
             Assembler()
             {
+                /* Something is broken in here
                 auto me = std::make_shared<Assembler>(this);
                 spvImports = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{ OpExtInstImport() });
                 spvTypes = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{
@@ -107,7 +108,7 @@ namespace caliburn
                     OpVariable()
                 });
                 spvCode = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{});
-                
+                */
             }
             virtual ~Assembler() {}
             
@@ -136,7 +137,7 @@ namespace caliburn
             void addExt(std::string ext);
 
             //popular import is "GLSL.std.450"
-            SSA addImport(SpvOp op, std::string instructions);
+            SSA addImport(std::string instructions);
 
             SSA addGlobalVar(SSA type, StorageClass stClass, SSA init = 0);
 

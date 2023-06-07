@@ -159,7 +159,12 @@ namespace caliburn
 
 		}
 
-		sptr<Type> resolve(sptr<const SymbolTable> table);
+		bool resolve(sptr<const SymbolTable> table);
+
+		sptr<Type> real()
+		{
+			return resultType;
+		}
 
 	};
 

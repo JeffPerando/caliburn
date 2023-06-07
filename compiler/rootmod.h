@@ -29,10 +29,17 @@ namespace caliburn
 
 			//swap the args so the alias is the one acting as the 'key' (also matches with the map sig)
 			modRequests.push_back(std::pair(alias, name));
+			//TODO resolve modules somehow
+
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void declareSymbols(sptr<SymbolTable> table) override
 		{
+			for (auto const&[name, mod] : modules)
+			{
+				table->add(name, mod);
+
+			}
 
 		}
 
@@ -60,7 +67,7 @@ namespace caliburn
 		CompiledModule() {}
 		virtual ~CompiledModule() {}
 
-		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void declareSymbols(sptr<SymbolTable> table) override
 		{
 
 		}

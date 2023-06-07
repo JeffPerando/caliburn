@@ -39,7 +39,7 @@ namespace caliburn
 
 		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override {}
 
-		void declareSymbols(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void declareSymbols(sptr<SymbolTable> table) override
 		{
 			for (auto const& mem : members)
 			{
