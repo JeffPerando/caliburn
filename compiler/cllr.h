@@ -34,7 +34,6 @@ namespace caliburn
 		{
 			UNKNOWN,
 
-			SHADER,
 			SHADER_STAGE,
 			DESCRIPTOR,
 			SHADER_END,
@@ -50,18 +49,11 @@ namespace caliburn
 			VAR_SHADER_OUT,
 
 			CALL,
-			DISPATCH,
+			//DISPATCH,
 			CALL_ARG,
 
 			//These should match the TypeCategory in type.h
-			/*
-			
-			enum class TypeCategory
-			{
-				VOID, FLOAT, INT, VECTOR, MATRIX, ARRAY, STRUCT, BOOLEAN, POINTER, TUPLE, STRING
-			};
-			
-			*/
+			//enum class TypeCategory { VOID, FLOAT, INT, VECTOR, MATRIX, ARRAY, STRUCT, BOOLEAN, POINTER, TUPLE, STRING };
 			TYPE_VOID,
 			TYPE_FLOAT,
 			TYPE_INT,

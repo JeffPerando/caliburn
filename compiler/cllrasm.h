@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "basic.h"
+#include "langcore.h"
 #include "cllr.h"
 
 namespace caliburn
@@ -15,6 +16,9 @@ namespace caliburn
 	{
 		class Assembler
 		{
+		public:
+			const ShaderType type;
+		private:
 			uint32_t nextSSA = 0;
 			
 			std::vector<sptr<Instruction>> code;
@@ -28,7 +32,7 @@ namespace caliburn
 			std::vector<std::pair<SSA, SSA>> loops;
 
 		public:
-			Assembler(uint32_t initSize = 2048)
+			Assembler(ShaderType t, uint32_t initSize = 2048) : type(t)
 			{
 				code.reserve(initSize);
 				ssaRefs.reserve(initSize);
@@ -36,7 +40,7 @@ namespace caliburn
 				
 				ssaRefs.push_back(0);
 
-				ssaToOpcode.push_back(Opcode::UNKNOWN);
+				ssaToOpcode.push_back(Opcode::UNKNOWN);//ID 0 is unused
 
 			}
 

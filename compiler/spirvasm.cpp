@@ -3,30 +3,38 @@
 
 using namespace caliburn::spirv;
 
-SSA CodeSection::push(SpvOp op, std::initializer_list<uint32_t> args, bool genSSA)
+void CodeSection::push(SpvOp op, SSA id, std::initializer_list<uint32_t> args)
 {
 	if (!validOps.empty())
 	{
 		if (!std::binary_search(validOps.begin(), validOps.end(), op))
 		{
-			return 0;
+			return;
 		}
 
 	}
 
-	SSA ssa = 0;
-
 	code.push_back(op);
 
-	if (genSSA)
+	if (id != 0)
 	{
-		ssa = codeAsm->createSSA(op);
-		code.push_back(ssa);
+		code.push_back(id);
 	}
 
 	code.insert(code.end(), args.begin(), args.end());
 
-	return ssa;
+}
+
+void CodeSection::pushRaw(std::initializer_list<uint32_t> args)
+{
+	code.insert(code.end(), args.begin(), args.end());
+
+}
+
+void CodeSection::pushRaw(std::vector<uint32_t> args)
+{
+	code.insert(code.end(), args.begin(), args.end());
+
 }
 
 //Do NOT try to replace this with a memcpy
@@ -64,40 +72,3 @@ void CodeSection::pushStr(std::string str)
 	}
 
 }
-
-SSA Assembler::createSSA(SpvOp op)
-{
-	auto entry = SSAEntry { ssa, op };
-
-	++ssa;
-
-	ssaEntries.push_back(entry);
-
-	return entry.ssa;
-}
-
-void Assembler::addExt(std::string ext)
-{
-	extensions.push_back(ext);
-}
-
-SSA Assembler::addImport(std::string instructions)
-{
-	return 0;
-}
-
-SSA Assembler::addGlobalVar(SSA type, StorageClass stClass, SSA init)
-{
-	return 0;
-}
-
-void Assembler::addEntryPoint(SSA fn, ExecutionModel type, std::initializer_list<uint32_t> ios)
-{
-
-}
-
-uptr<std::vector<uint32_t>> Assembler::toShader()
-{
-	return nullptr;
-}
-

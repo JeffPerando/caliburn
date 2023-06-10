@@ -58,7 +58,7 @@ namespace caliburn
 
 		uptr<Shader> compile(sptr<SymbolTable> symbols, ptr<std::vector<uint32_t>> cbir, OptimizeLevel lvl)
 		{
-			auto codeAsm = cllr::Assembler();
+			auto codeAsm = cllr::Assembler(type);
 			
 			code->resolveSymbols(symbols, codeAsm);
 

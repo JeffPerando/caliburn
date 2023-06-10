@@ -52,7 +52,7 @@ namespace caliburn
             uint8_t minor;
         private:
             const uint8_t unused_1 = 0;
-
+        public:
             Version(uint8_t maj = 1, uint8_t min = 0) : major(maj), minor(min) {}
 
             operator uint32_t()
