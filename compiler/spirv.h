@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #define SPIRV_Op(Name, ID, Count) SpvOp inline Name() {return SpvOp(Count, ID);}
-#define SPIRV_OpVar(Name, ID, Base) SpvOp inline Name(uint32_t var = 0) {return SpvOp(Base + var, ID);}
+#define SPIRV_OpVar(Name, ID, Base) SpvOp inline Name(uint32_t v = 0) {return SpvOp(Base + v, ID);}
 
 namespace caliburn
 {

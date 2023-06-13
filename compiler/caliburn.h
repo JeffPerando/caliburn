@@ -15,12 +15,12 @@ namespace caliburn
 	class Compiler
 	{
 	private:
-		OptimizeLevel optimizeLvl = OptimizeLevel::BALANCED;
+		CompilerSettings settings;
 		std::map<std::string, std::string> dynTypes;
 		std::vector<uptr<Statement>> ast;
 	public:
 		Compiler() = default;
-		virtual ~Compiler() {};
+		virtual ~Compiler() {}
 
 		/*
 		Sets the optimization level for the compiler. See OptimizeLevel enum.

@@ -1,5 +1,6 @@
 
 #include "caliburn.h"
+
 #include "parser.h"
 #include "tokenizer.h"
 
@@ -11,6 +12,16 @@
 #include "cllrspirv.h"
 
 using namespace caliburn;
+
+void Compiler::o(OptimizeLevel lvl)
+{
+	settings.o = lvl;
+}
+
+void Compiler::setDynamicType(std::string inner, std::string concrete)
+{
+	dynTypes.emplace(inner, concrete);
+}
 
 bool Compiler::parseText(std::string text)
 {
@@ -198,13 +209,16 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 
 	auto table = std::make_shared<SymbolTable>();
 
+	//Populate table with the standard library
 	root->declareSymbols(table);
 	
+	//Make headers
 	for (auto const& node : ast)
 	{
 		node->declareHeader(table);
 	}
 
+	//Declare everything else
 	for (auto const& node : ast)
 	{
 		node->declareSymbols(table);
@@ -212,7 +226,7 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 	
 	for (auto const& stage : shaderStmt->stages)
 	{
-		auto result = stage->compile(table, nullptr, optimizeLvl);
+		auto result = stage->compile(table, nullptr, settings.o);
 
 		uint32_t d = 0;
 
@@ -227,14 +241,4 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 	}
 
 	return !shaders.empty();
-}
-
-void Compiler::o(OptimizeLevel lvl)
-{
-	optimizeLvl = lvl;
-}
-
-void Compiler::setDynamicType(std::string inner, std::string concrete)
-{
-	dynTypes.emplace(inner, concrete);
 }

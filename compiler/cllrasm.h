@@ -21,10 +21,10 @@ namespace caliburn
 		private:
 			uint32_t nextSSA = 0;
 			
-			std::vector<sptr<Instruction>> code;
+			InstructionVec code;
 
 			std::vector<cllr::Opcode> ssaToOpcode;
-			//std::vector<sptr<Instruction>> ssaToCode;
+			//InstructionVec ssaToCode;
 			std::vector<std::string> strs;
 			std::vector<uint32_t> ssaRefs;
 			
@@ -62,9 +62,9 @@ namespace caliburn
 				return strs.at(index);
 			}
 			
-			uptr<std::vector<sptr<Instruction>>> getCode()
+			uptr<InstructionVec> getCode()
 			{
-				return std::make_unique<std::vector<sptr<Instruction>>>(code);
+				return std::make_unique<InstructionVec>(code);
 			}
 			
 			void setLoop(SSA start, SSA end)
@@ -91,13 +91,15 @@ namespace caliburn
 
 			}
 
-			void findRefs(SSA id, ref<std::vector<sptr<Instruction>>> result);
+			void findRefs(SSA id, ref<InstructionVec> result) const;
 
-			void findPattern(ref<std::vector<sptr<Instruction>>> result,
+			void findPattern(ref<InstructionVec> result,
 				Opcode opcode,
 				std::array<bool, 3> ops, std::array<uint32_t, 3> opValues,
 				std::array<bool, 3> ids, std::array<SSA, 3> idValues,
-				size_t limit = UINT64_MAX);
+				size_t limit = UINT64_MAX) const;
+
+			void findAll(ref<InstructionVec> result, const std::vector<Opcode> ops, size_t limit = UINT64_MAX) const;
 
 			uint32_t replace(SSA in, SSA out);
 

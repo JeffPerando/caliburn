@@ -14,6 +14,11 @@ and compiling Caliburn code.
 */
 namespace caliburn
 {
+	enum class Target : uint32_t
+	{
+		CPU, GPU
+	};
+
 	/*
 	Enum denoting how much to optimize emitted shader code.
 
@@ -34,6 +39,14 @@ namespace caliburn
 		BALANCED,
 		//equivalent to O3; does EVERY optimization
 		PERFORMANCE
+	};
+
+	struct CompilerSettings
+	{
+		//Target output; Not applicable; Write a new method in Compiler for a new target
+		OptimizeLevel o;
+		bool validate = false;
+
 	};
 
 	auto static constexpr MIN_INT_BITS = 8;

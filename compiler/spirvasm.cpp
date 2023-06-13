@@ -1,4 +1,5 @@
 
+#include "cllrspirv.h"
 #include "spirvasm.h"
 
 using namespace caliburn::spirv;
@@ -19,6 +20,8 @@ void CodeSection::push(SpvOp op, SSA id, std::initializer_list<uint32_t> args)
 	if (id != 0)
 	{
 		code.push_back(id);
+		spvAsm->setOpForSSA(id, op);
+
 	}
 
 	code.insert(code.end(), args.begin(), args.end());

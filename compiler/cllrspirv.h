@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "basic.h"
+#include "cllrasm.h"
 #include "cllrout.h"
 #include "spirvasm.h"
 
@@ -16,9 +17,11 @@ namespace caliburn
 
 		//Function pointer type for easier usage later
 		using SPIRVOutFn = void(Target target, ref<cllr::Instruction> i, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out);
+		using SPIRVOpList = std::initializer_list<spirv::SpvOp>;
 
 		//Macro shorthand for implementation signature
 		#define CLLR_SPIRV_IMPL(Name) void Name(Target target, ref<Instruction> i, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out)
+		#define SPIRV_CODE_SECTION(...) std::make_unique<spirv::CodeSection>(__VA_ARGS__)
 
 		namespace spirv_impl
 		{
@@ -92,7 +95,30 @@ namespace caliburn
 		
 		class SPIRVOutAssembler : cllr::OutAssembler<uint32_t>
 		{
-			const sptr<spirv::CodeSection> spvHeader, spvImports, spvMisc, spvDebug, spvGloVars;
+			const uptr<spirv::CodeSection> spvHeader = SPIRV_CODE_SECTION(this, SPIRVOpList{
+				spirv::OpCapability(),
+				spirv::OpExtension()
+			});
+			const uptr<spirv::CodeSection> spvImports = SPIRV_CODE_SECTION(this, SPIRVOpList{
+				spirv::OpExtInstImport()
+			});
+			const uptr<spirv::CodeSection> spvMisc = SPIRV_CODE_SECTION(this, SPIRVOpList{
+				spirv::OpMemoryModel(),
+				spirv::OpExecutionMode(),
+				spirv::OpExecutionModeId()
+			});
+			const uptr<spirv::CodeSection> spvDebug = SPIRV_CODE_SECTION(this, SPIRVOpList{
+				spirv::OpString(),
+				spirv::OpSource(),
+				spirv::OpSourceExtension(),
+				spirv::OpSourceContinued(),
+				spirv::OpName(),
+				spirv::OpMemberName(),
+				spirv::OpModuleProcessed()
+			});
+			const uptr<spirv::CodeSection> spvGloVars = SPIRV_CODE_SECTION(this, SPIRVOpList{
+				spirv::OpVariable()
+			});
 
 			uint32_t ssa = 1;
 			std::vector<spirv::SSAEntry> ssaEntries;
@@ -107,12 +133,50 @@ namespace caliburn
 			OutImpls<SPIRVOutFn> impls = {};
 
 		public:
-			const sptr<spirv::CodeSection> types, decs, consts, main;
+			const uptr<spirv::CodeSection> decs = SPIRV_CODE_SECTION(this, SPIRVOpList{
+				spirv::OpDecorate(),
+				spirv::OpGroupDecorate(),
+				spirv::OpGroupMemberDecorate(),
+				spirv::OpMemberDecorate(),
+				spirv::OpMemberDecorateString(),
+				spirv::OpDecorationGroup()
+			});
+			const uptr<spirv::CodeSection> types = SPIRV_CODE_SECTION(this, SPIRVOpList{
+				spirv::OpTypeArray(),
+				spirv::OpTypeBool(),
+				spirv::OpTypeFloat(),
+				spirv::OpTypeFunction(),
+				spirv::OpTypeImage(),
+				spirv::OpTypeInt(),
+				spirv::OpTypeMatrix(),
+				spirv::OpTypeOpaque(),
+				spirv::OpTypePointer(),
+				spirv::OpTypeSampler(),
+				spirv::OpTypeStruct(),
+				spirv::OpTypeVector(),
+				spirv::OpTypeVoid(),
+				spirv::OpLine(),
+				spirv::OpNoLine()
+			});
+			const uptr<spirv::CodeSection> consts = SPIRV_CODE_SECTION(this, SPIRVOpList{
+				spirv::OpConstant(),
+				spirv::OpConstantComposite(),
+				spirv::OpConstantFalse(),
+				spirv::OpConstantNull(),
+				spirv::OpConstantSampler(),
+				spirv::OpConstantTrue(),
+				spirv::OpSpecConstantComposite(),
+				spirv::OpSpecConstantFalse(),
+				spirv::OpSpecConstantOp(),
+				spirv::OpSpecConstantTrue(),
+				spirv::OpLine(),
+				spirv::OpNoLine()
+			});
+			const uptr<spirv::CodeSection> main = SPIRV_CODE_SECTION(this, SPIRVOpList{});
 
 			SPIRVOutAssembler() : OutAssembler(Target::GPU)
 			{
 				//here we go...
-
 				impls[(uint32_t)Opcode::SHADER_STAGE] = spirv_impl::OpShaderStage;
 				impls[(uint32_t)Opcode::DESCRIPTOR] = spirv_impl::OpDescriptor;
 				impls[(uint32_t)Opcode::SHADER_END] = spirv_impl::OpShaderEnd;
@@ -176,51 +240,6 @@ namespace caliburn
 				impls[(uint32_t)Opcode::RETURN_VALUE] = spirv_impl::OpReturnValue;
 				impls[(uint32_t)Opcode::DISCARD] = spirv_impl::OpDiscard;
 
-				/* Something is broken in here
-				auto me = std::make_shared<Assembler>(this);
-				spvImports = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{
-					OpExtInstImport()
-				});
-				spvTypes = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{
-					OpTypeArray(),
-					OpTypeBool(),
-					OpTypeFloat(),
-					OpTypeFunction(),
-					OpTypeImage(),
-					OpTypeInt(),
-					OpTypeMatrix(),
-					OpTypeOpaque(),
-					OpTypePointer(),
-					OpTypeSampler(),
-					OpTypeStruct(),
-					OpTypeVector(),
-					OpTypeVoid()
-				});
-				spvDecs = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{
-					OpDecorate(),
-					OpGroupDecorate(),
-					OpGroupMemberDecorate(),
-					OpMemberDecorate(),
-					OpMemberDecorateString(),
-					OpDecorationGroup()
-				});
-				spvConsts = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{
-					OpConstant(),
-					OpConstantComposite(),
-					OpConstantFalse(),
-					OpConstantNull(),
-					OpConstantSampler(),
-					OpConstantTrue(),
-					OpSpecConstantComposite(),
-					OpSpecConstantFalse(),
-					OpSpecConstantOp(),
-					OpSpecConstantTrue(),
-				});
-				spvGloVars = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{
-					OpVariable()
-				});
-				spvCode = std::make_shared<CodeSection>(me, std::initializer_list<SpvOp>{});
-				*/
 			}
 
 			virtual ~SPIRVOutAssembler() {}
@@ -234,9 +253,11 @@ namespace caliburn
 		public:
 			uptr<std::vector<spirv::SSA>> translateCLLR(ref<cllr::Assembler> cllrAsm, ref<std::vector<sptr<cllr::Instruction>>> code) override;
 
-			SSA createSSA(spirv::SpvOp op);
+			spirv::SSA createSSA();
 
-			spirv::SSA getOrCreateAlias(cllr::SSA ssa, spirv::SpvOp op);
+			spirv::SSA toSpvID(cllr::SSA ssa);
+
+			void setOpForSSA(spirv::SSA id, spirv::SpvOp op);
 
 			void addExt(std::string ext);
 
@@ -245,7 +266,9 @@ namespace caliburn
 
 			SSA addGlobalVar(SSA type, spirv::StorageClass stClass, SSA init);
 
-			void addEntryPoint(SSA fn, spirv::ExecutionModel type, std::initializer_list<uint32_t> ios);
+			void setMemoryModel(spirv::AddressingModel addr, spirv::MemoryModel mem);
+
+			void addEntryPoint(SSA fn, spirv::ExecutionModel type, ref<std::vector<uint32_t>> ios);
 
 		};
 

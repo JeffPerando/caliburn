@@ -35,10 +35,14 @@ namespace caliburn
         {
             friend class cllr::SPIRVOutAssembler;
 
+            //DO NOT DELETE
+            //DO NOT TRY TO TURN INTO A SMART POINTER
+            const ptr<cllr::SPIRVOutAssembler> spvAsm;
+
             std::vector<SpvOp> validOps;
             std::vector<uint32_t> code;
         public:
-            CodeSection(std::initializer_list<SpvOp> ops) : validOps(ops)
+            CodeSection(ptr<cllr::SPIRVOutAssembler> spv, std::initializer_list<SpvOp> ops) : spvAsm(spv), validOps(ops)
             {
                 //OpNop is always valid
                 if (!validOps.empty())

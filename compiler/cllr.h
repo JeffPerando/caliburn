@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <vector>
 
+#include "langcore.h"
+
 /*
 Caliburn Low-Level Representation (CLLR [pronounced Caller]):
 
@@ -22,13 +24,10 @@ namespace caliburn
 	namespace cllr
 	{
 		class Assembler;
+		struct Instruction;
 
 		using SSA = uint32_t;
-
-		enum class Target : uint32_t
-		{
-			CPU, GPU
-		};
+		using InstructionVec = std::vector<sptr<Instruction>>;
 
 		enum class Opcode : uint32_t
 		{
@@ -118,7 +117,7 @@ namespace caliburn
 		struct CompilationUnit
 		{
 			Target target = Target::GPU;
-			uptr<std::vector<sptr<Instruction>>> code;
+			uptr<InstructionVec> code;
 
 		};
 

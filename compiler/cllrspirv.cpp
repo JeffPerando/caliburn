@@ -35,7 +35,7 @@ uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(ref<cllr::Ass
 	//from hereon we use spvMisc
 
 	//Memory model
-	spvMisc->push(spirv::OpMemoryModel(), 0, { (uint32_t)memModel });
+	spvMisc->push(spirv::OpMemoryModel(), 0, { (uint32_t)addrModel, (uint32_t)memModel });
 
 	//Entry points
 	for (auto const& entry : entries)
@@ -48,27 +48,27 @@ uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(ref<cllr::Ass
 
 	//TODO insert debug instructions
 
-	auto codeSecs = { spvHeader, spvImports, spvMisc, decs, types, consts, spvGloVars, main };
+	auto codeSecs = { &spvHeader, &spvImports, &spvMisc, &decs, &types, &consts, &spvGloVars, &main };
 
 	size_t len = 0;
 	for (auto const& sec : codeSecs)
 	{
-		len += sec->code.size();
+		len += (*sec)->code.size();
 	}
 
 	shader->reserve(shader->size() + len);
 
 	for (auto const& sec : codeSecs)
 	{
-		sec->dump(*shader);
+		(*sec)->dump(*shader);
 	}
 
 	return shader;
 }
 
-spirv::SSA cllr::SPIRVOutAssembler::createSSA(spirv::SpvOp op)
+spirv::SSA cllr::SPIRVOutAssembler::createSSA()
 {
-	auto entry = spirv::SSAEntry{ ssa, op };
+	auto entry = spirv::SSAEntry{ ssa, spirv::OpNop() };
 
 	++ssa;
 
@@ -77,7 +77,7 @@ spirv::SSA cllr::SPIRVOutAssembler::createSSA(spirv::SpvOp op)
 	return entry.ssa;
 }
 
-spirv::SSA cllr::SPIRVOutAssembler::getOrCreateAlias(cllr::SSA ssa, spirv::SpvOp op)
+spirv::SSA cllr::SPIRVOutAssembler::toSpvID(cllr::SSA ssa)
 {
 	auto spvSSA = ssaAliases.find(ssa);
 
@@ -86,11 +86,30 @@ spirv::SSA cllr::SPIRVOutAssembler::getOrCreateAlias(cllr::SSA ssa, spirv::SpvOp
 		return spvSSA->second;
 	}
 
-	auto nextSpvSSA = createSSA(op);
+	auto nextSpvSSA = createSSA();
 
 	ssaAliases.emplace(ssa, nextSpvSSA);
 
 	return nextSpvSSA;
+}
+
+void cllr::SPIRVOutAssembler::setOpForSSA(spirv::SSA id, spirv::SpvOp op)
+{
+	if (id == 0 || op == spirv::OpNop())
+	{
+		return;
+	}
+
+	auto& entry = ssaEntries.at(id);
+
+	if (entry.instruction != spirv::OpNop())
+	{
+		//TODO complain
+		return;
+	}
+
+	entry.instruction = op;
+
 }
 
 void cllr::SPIRVOutAssembler::addExt(std::string ext)
@@ -100,7 +119,7 @@ void cllr::SPIRVOutAssembler::addExt(std::string ext)
 
 spirv::SSA cllr::SPIRVOutAssembler::addImport(std::string instructions)
 {
-	auto id = createSSA(spirv::OpExtInstImport());
+	auto id = createSSA();
 
 	spvImports->push(spirv::OpExtInstImport(), id, {});
 	spvImports->pushStr(instructions);
@@ -110,12 +129,20 @@ spirv::SSA cllr::SPIRVOutAssembler::addImport(std::string instructions)
 
 spirv::SSA cllr::SPIRVOutAssembler::addGlobalVar(SSA type, spirv::StorageClass stClass, SSA init)
 {
-	return 0;
+	auto id = createSSA();
+	spvGloVars->push(spirv::OpVariable(), id, { (uint32_t)stClass, init });
+	return id;
 }
 
-void cllr::SPIRVOutAssembler::addEntryPoint(SSA fn, spirv::ExecutionModel type, std::initializer_list<uint32_t> ios)
+void cllr::SPIRVOutAssembler::setMemoryModel(spirv::AddressingModel addr, spirv::MemoryModel mem)
 {
+	addrModel = addr;
+	memModel = mem;
+}
 
+void cllr::SPIRVOutAssembler::addEntryPoint(SSA fn, spirv::ExecutionModel type, ref<std::vector<uint32_t>> ios)
+{
+	entries.push_back(spirv::EntryPoint{fn, type, std::vector(ios)});
 }
 
 //==========================================
@@ -129,7 +156,38 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpUnknown)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpShaderStage)
 {
-	
+	auto exModels = std::map<ShaderType, spirv::ExecutionModel>{
+		{ShaderType::COMPUTE, spirv::ExecutionModel::Kernel},//TODO re-evaluate; may use GLCompute
+		{ShaderType::VERTEX, spirv::ExecutionModel::Vertex},
+		{ShaderType::FRAGMENT, spirv::ExecutionModel::Fragment},
+		{ShaderType::TESS_CTRL, spirv::ExecutionModel::TessellationControl},
+		{ShaderType::TESS_EVAL, spirv::ExecutionModel::TessellationEvaluation},
+		{ShaderType::GEOMETRY, spirv::ExecutionModel::Geometry},
+		{ShaderType::RT_GEN, spirv::ExecutionModel::RayGenerationKHR},
+		{ShaderType::RT_CLOSE, spirv::ExecutionModel::ClosestHitKHR},
+		{ShaderType::RT_ANY_HIT, spirv::ExecutionModel::AnyHitKHR},
+		{ShaderType::RT_INTERSECT, spirv::ExecutionModel::IntersectionKHR},
+		{ShaderType::RT_MISS, spirv::ExecutionModel::MissKHR},
+		{ShaderType::TASK, spirv::ExecutionModel::CallableKHR},//TODO re-evaluate
+		{ShaderType::MESH, spirv::ExecutionModel::GLCompute},//TODO what. is. this.
+	};
+
+	auto type = (ShaderType)i.refs[0];
+	auto ex = exModels.find(type)->second;
+
+	InstructionVec cllrIns;
+	std::vector<cllr::Opcode> ops = { Opcode::VAR_SHADER_IN, Opcode::VAR_SHADER_OUT };
+
+	in.findAll(cllrIns, ops, i.refs[1]);
+
+	std::vector<uint32_t> ios;
+	for (auto const& i : cllrIns)
+	{
+		ios.push_back(out.toSpvID(i->index));
+	}
+
+	out.addEntryPoint(out.toSpvID(i.index), ex, ios);
+
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpDescriptor)
@@ -144,7 +202,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpShaderEnd)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpFunction)
 {
-	auto id = out.getOrCreateAlias(i.index, spirv::OpFunction());
+	auto id = out.toSpvID(i.index);
 	out.main->push(spirv::OpFunction(), id, {});
 
 }
@@ -163,6 +221,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpVarGlobal)
 {
 	
 }
+
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpVarFuncArg)
 {
 	
@@ -189,7 +248,6 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCallArg)
 {
 	
 }
-
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeVoid)
 {
@@ -258,7 +316,10 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpStructEnd)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpLabel)
 {
-	
+	auto id = out.toSpvID(i.index);
+
+	out.main->push(spirv::OpLabel(), id, {});
+
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpJump)
@@ -378,12 +439,19 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueVariable)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpReturn)
 {
-	
+	auto id = out.toSpvID(i.index);
+
+	out.main->push(spirv::OpReturn(), id, {});
+
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpReturnValue)
 {
-	
+	auto id = out.toSpvID(i.index);
+	auto val = out.toSpvID(i.refs[0]);
+
+	out.main->push(spirv::OpReturnValue(), id, { val });
+
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpDiscard)

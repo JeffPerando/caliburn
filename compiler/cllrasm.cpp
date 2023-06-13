@@ -1,4 +1,6 @@
 
+#include <algorithm>
+
 #include "cllrasm.h"
 
 using namespace caliburn::cllr;
@@ -59,7 +61,7 @@ SSA Assembler::push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::a
 	return ssa;
 }
 
-void Assembler::findRefs(SSA id, ref<std::vector<sptr<Instruction>>> result)
+void Assembler::findRefs(SSA id, ref<InstructionVec> result) const
 {
 	for (auto const& op : code)
 	{
@@ -77,11 +79,11 @@ void Assembler::findRefs(SSA id, ref<std::vector<sptr<Instruction>>> result)
 
 }
 
-void Assembler::findPattern(ref<std::vector<sptr<Instruction>>> result,
+void Assembler::findPattern(ref<InstructionVec> result,
 	Opcode opcode,
 	std::array<bool, 3> opFlags, std::array<uint32_t, 3> ops,
 	std::array<bool, 3> refFlags, std::array<SSA, 3> refs,
-	size_t limit)
+	size_t limit) const
 {
 	size_t count = 0;
 
@@ -128,6 +130,33 @@ void Assembler::findPattern(ref<std::vector<sptr<Instruction>>> result,
 		{
 			result.push_back(ins);
 			++count;
+		}
+
+	}
+
+}
+
+void Assembler::findAll(ref<InstructionVec> result, const std::vector<Opcode> ops, size_t limit) const
+{
+	if (limit == 0)
+	{
+		return;
+	}
+
+	size_t count = 0;
+
+	for (auto const& i : code)
+	{
+		if (std::binary_search(ops.begin(), ops.end(), i->op))
+		{
+			result.push_back(i);
+			++count;
+
+			if (count == limit)
+			{
+				break;
+			}
+
 		}
 
 	}
