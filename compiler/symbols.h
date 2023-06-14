@@ -18,7 +18,7 @@ namespace caliburn
 
 	class SymbolTable
 	{
-		std::map<std::string, Symbol> symbols;
+		HashMap<std::string, Symbol> symbols;
 		
 	public:
 		const sptr<const SymbolTable> parent;

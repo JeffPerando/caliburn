@@ -34,7 +34,7 @@ namespace caliburn
 
 		virtual void declareHeader(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
 		{
-			//innerType = std::make_unique<TypeStruct>(name->str, tNames.size() + cNames.size());
+			//innerType = new_uptr<TypeStruct>(name->str, tNames.size() + cNames.size());
 		}
 
 		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override {}

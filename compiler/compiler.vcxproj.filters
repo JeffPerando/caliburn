@@ -235,5 +235,8 @@
     <ClInclude Include="cllropt.h">
       <Filter>Header Files\cllr</Filter>
     </ClInclude>
+    <ClInclude Include="cllrvalid.h">
+      <Filter>Header Files\cllr</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -48,7 +48,7 @@ namespace caliburn
 
 		sptr<Type> makeVariant(ref<std::vector<sptr<Type>>> genArgs) const override
 		{
-			auto ret = std::make_unique<TypeStruct>(canonName, maxGenerics);
+			auto ret = new_uptr<TypeStruct>(canonName, maxGenerics);
 
 			//TODO check compatibility
 

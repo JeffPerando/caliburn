@@ -33,12 +33,10 @@ namespace caliburn
 		{
 			UNKNOWN,
 
-			SHADER_STAGE,
-			DESCRIPTOR,
-			SHADER_END,
+			KERNEL,
+			KERNEL_END,
 
 			FUNCTION,
-			//FUNCTION_KERNEL,
 			FUNCTION_END,
 
 			VAR_LOCAL,
@@ -46,12 +44,13 @@ namespace caliburn
 			VAR_FUNC_ARG,
 			VAR_SHADER_IN,
 			VAR_SHADER_OUT,
+			VAR_DESCRIPTOR,
 
 			CALL,
 			//DISPATCH,
 			CALL_ARG,
 
-			//These should match the TypeCategory in type.h
+			//These should match the TypeCategory in langcore.h
 			//enum class TypeCategory { VOID, FLOAT, INT, VECTOR, MATRIX, ARRAY, STRUCT, BOOLEAN, POINTER, TUPLE, STRING };
 			TYPE_VOID,
 			TYPE_FLOAT,
@@ -59,15 +58,15 @@ namespace caliburn
 			TYPE_ARRAY,
 			TYPE_VECTOR,
 			TYPE_MATRIX,
+
 			TYPE_STRUCT,
+			STRUCT_MEMBER,
+			STRUCT_END,
 
 			TYPE_BOOL,
 			TYPE_PTR,
 			TYPE_TUPLE,
 			TYPE_STRING,
-
-			STRUCT_MEMBER,
-			STRUCT_END,
 
 			LABEL,
 			JUMP,
@@ -105,10 +104,22 @@ namespace caliburn
 
 		};
 		
+		/*
+		CLLR instructions are now typed. Most will be type VOID.
+		*/
+		struct IType
+		{
+			TypeCategory cat = TypeCategory::VOID;
+			uint32_t len = 1;
+			std::array<uint32_t, 2> misc = { 0, 0 };
+
+		};
+
 		struct Instruction
 		{
 			SSA index = 0;
 			Opcode op = Opcode::UNKNOWN;
+			IType type;
 			std::array<uint32_t, 3> operands = {};
 			std::array<SSA, 3> refs = {};
 

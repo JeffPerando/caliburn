@@ -124,7 +124,7 @@ namespace caliburn
 
 	};
 
-	static const std::map<char, TokenType> CHAR_TOKEN_TYPES = {
+	static const HashMap<char, TokenType> CHAR_TOKEN_TYPES = {
 		{';',	TokenType::END},
 		{'{',	TokenType::START_SCOPE},
 		{'}',	TokenType::END_SCOPE},
@@ -147,7 +147,7 @@ namespace caliburn
 		{"=>",	TokenType::ARROW}
 	};
 
-	static const std::map<std::string, Operator> INFIX_OPS = {
+	static const HashMap<std::string, Operator> INFIX_OPS = {
 		{"+",	Operator::ADD},
 		{"-",	Operator::SUB},
 		{"*",	Operator::MUL},

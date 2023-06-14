@@ -16,7 +16,7 @@ namespace caliburn
 	{
 	private:
 		CompilerSettings settings;
-		std::map<std::string, std::string> dynTypes;
+		HashMap<std::string, std::string> dynTypes;
 		std::vector<uptr<Statement>> ast;
 	public:
 		Compiler() = default;
@@ -28,10 +28,14 @@ namespace caliburn
 		void o(OptimizeLevel lvl);
 
 		/*
+		Enables CLLR validation. Will lower compilation performance.
+		*/
+		void enableValidation();
+
+		/*
 		In Caliburn, a type can be defined as "dynamic", which means the actual
-		type is determined during the actual compilation process. This is where
-		they're defined. This allows devs to write one shader that can use both,
-		say, FP16 and FP32.
+		type is determined externally. This is where they're defined. This allows
+		devs to write one shader that can use both, say, FP16 and FP32.
 
 		- inner must correlate to a dynamic type within a shader being compiled.
 		- concrete must correlate to an existing type within a compiled shader,

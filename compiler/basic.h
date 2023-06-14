@@ -6,6 +6,7 @@ This header only exists to help make C++ syntax less goofy
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 
 template<typename T>
 using ptr = T*;
@@ -25,6 +26,24 @@ using uptr = std::unique_ptr<T>;
 
 template<typename T>
 using wptr = std::weak_ptr<T>;
+
+/*
+STORY TIME!
+
+Back when I was writing this header, I wanted to alias the std::make_... functions. But that didn't work.
+
+Turns out, templates are really goofy. So I sacked it. But the length of the existing functions still bugged me.
+
+It's June 13th and I'm tired. This is the closest I can get to truly aliasing them.
+*/
+
+#define new_sptr std::make_shared
+#define new_uptr std::make_unique
+
+//Great, now we're doing containers too.
+
+template<typename K, typename V>
+using HashMap = std::unordered_map<K, V>;
 
 #define pass [[fallthrough]]
 

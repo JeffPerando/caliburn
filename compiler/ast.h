@@ -137,7 +137,7 @@ namespace caliburn
 		const StatementType type;
 
 		StmtModifiers mods = {};
-		std::map<std::string, uptr<ParsedType>> typeAliases;
+		HashMap<std::string, uptr<ParsedType>> typeAliases;//what??? TODO review why this is here
 
 		Statement(StatementType stmtType) : type(stmtType) {}
 		virtual ~Statement() {}
@@ -209,7 +209,7 @@ namespace caliburn
 				return;
 			}
 
-			scopeTable = std::make_shared<SymbolTable>(table);
+			scopeTable = new_sptr<SymbolTable>(table);
 
 			for (auto const& stmt : stmts)
 			{

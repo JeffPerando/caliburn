@@ -36,7 +36,7 @@ namespace caliburn
 			for (auto const& name : names)
 			{
 				//TODO problematic lifetime
-				//vars.push_back(std::make_unique<LocalVariable>(name, typeHint, initialValue, isConst));
+				//vars.push_back(new_uptr<LocalVariable>(name, typeHint, initialValue, isConst));
 
 			}
 

@@ -15,7 +15,7 @@ uint32_t TypeVector::getAlignBytes() const
 
 sptr<Type> TypeVector::makeVariant(ref<std::vector<sptr<Type>>> genArgs) const
 {
-	return std::make_shared<TypeVector>(elements, genArgs[0]);
+	return new_sptr<TypeVector>(elements, genArgs[0]);
 }
 
 TypeCompat TypeVector::isCompatible(Operator op, sptr<Type> rType) const

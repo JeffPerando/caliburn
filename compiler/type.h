@@ -82,11 +82,6 @@ namespace caliburn
 
 	};
 
-	enum class TypeCategory
-	{
-		VOID, FLOAT, INT, VECTOR, MATRIX, ARRAY, STRUCT, BOOLEAN, POINTER, TUPLE, STRING
-	};
-	
 	enum class TypeCompat
 	{
 		COMPATIBLE,
@@ -175,7 +170,7 @@ namespace caliburn
 		const std::string canonName;
 		const size_t maxGenerics;
 		const size_t minGenerics;
-		const sptr<SymbolTable> memberTable = std::make_shared<SymbolTable>();
+		const sptr<SymbolTable> memberTable = new_sptr<SymbolTable>();
 	protected:
 		sptr<Type> superType = nullptr;
 		std::vector<sptr<Type>> generics, genericDefaults;
@@ -189,7 +184,7 @@ namespace caliburn
 		{
 			if (minGenerics > maxGenerics)
 			{
-				throw std::make_unique<std::exception>("Invalid concrete type; More generics required than alotted");
+				throw new_uptr<std::exception>("Invalid concrete type; More generics required than alotted");
 			}
 
 			if (maxGenerics > 0)

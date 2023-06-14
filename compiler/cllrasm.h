@@ -64,7 +64,7 @@ namespace caliburn
 			
 			uptr<InstructionVec> getCode()
 			{
-				return std::make_unique<InstructionVec>(code);
+				return new_uptr<InstructionVec>(code);
 			}
 			
 			void setLoop(SSA start, SSA end)
@@ -91,15 +91,15 @@ namespace caliburn
 
 			}
 
-			void findRefs(SSA id, ref<InstructionVec> result) const;
+			void findRefs(SSA id, ref<InstructionVec> result, size_t off = 0) const;
 
 			void findPattern(ref<InstructionVec> result,
 				Opcode opcode,
 				std::array<bool, 3> ops, std::array<uint32_t, 3> opValues,
-				std::array<bool, 3> ids, std::array<SSA, 3> idValues,
+				std::array<bool, 3> ids, std::array<SSA, 3> idValues, size_t off = 0,
 				size_t limit = UINT64_MAX) const;
 
-			void findAll(ref<InstructionVec> result, const std::vector<Opcode> ops, size_t limit = UINT64_MAX) const;
+			void findAll(ref<InstructionVec> result, const std::vector<Opcode> ops, size_t off = 0, size_t limit = UINT64_MAX) const;
 
 			uint32_t replace(SSA in, SSA out);
 

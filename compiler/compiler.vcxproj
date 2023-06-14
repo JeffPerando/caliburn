@@ -185,6 +185,7 @@
     <ClInclude Include="cllropt.h" />
     <ClInclude Include="cllrout.h" />
     <ClInclude Include="cllrspirv.h" />
+    <ClInclude Include="cllrvalid.h" />
     <ClInclude Include="compilererr.h" />
     <ClInclude Include="ctrlstmt.h" />
     <ClInclude Include="deftypes.h" />

@@ -35,19 +35,16 @@ SSA Assembler::push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::a
 		//TODO complain
 	}
 
-	auto ins = std::make_shared<Instruction>();
+	auto ins = new_sptr<Instruction>();
 
 	ins->index = ssa;
 	ins->op = op;
 	ins->operands = operands;
 	ins->refs = refs;
 
-	code.push_back(std::move(ins));
+	code.push_back(ins);
 
-	if (ssa != 0)
-	{
-		//ssaToCode.push_back(ins);
-	}
+	//if (ssa != 0) ssaToCode.push_back(ins);
 
 	for (auto i = 0; i < 3; ++i)
 	{
@@ -61,10 +58,11 @@ SSA Assembler::push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::a
 	return ssa;
 }
 
-void Assembler::findRefs(SSA id, ref<InstructionVec> result) const
+void Assembler::findRefs(SSA id, ref<InstructionVec> result, size_t off) const
 {
-	for (auto const& op : code)
+	for (size_t i = off; i < code.size(); ++i)
 	{
+		auto const& op = code[i];
 		for (size_t i = 0; i < 3; ++i)
 		{
 			if (op->refs[i] == id)
@@ -83,12 +81,13 @@ void Assembler::findPattern(ref<InstructionVec> result,
 	Opcode opcode,
 	std::array<bool, 3> opFlags, std::array<uint32_t, 3> ops,
 	std::array<bool, 3> refFlags, std::array<SSA, 3> refs,
-	size_t limit) const
+	size_t off, size_t limit) const
 {
 	size_t count = 0;
 
-	for (auto const& ins : code)
+	for (size_t i = off; i < code.size(); ++i)
 	{
+		auto const& ins = code[i];
 		if (count == limit)
 		{
 			break;
@@ -136,7 +135,7 @@ void Assembler::findPattern(ref<InstructionVec> result,
 
 }
 
-void Assembler::findAll(ref<InstructionVec> result, const std::vector<Opcode> ops, size_t limit) const
+void Assembler::findAll(ref<InstructionVec> result, const std::vector<Opcode> ops, size_t off, size_t limit) const
 {
 	if (limit == 0)
 	{
@@ -145,11 +144,12 @@ void Assembler::findAll(ref<InstructionVec> result, const std::vector<Opcode> op
 
 	size_t count = 0;
 
-	for (auto const& i : code)
+	for (size_t i = off; i < code.size(); ++i)
 	{
-		if (std::binary_search(ops.begin(), ops.end(), i->op))
+		auto const& in = code[i];
+		if (std::binary_search(ops.begin(), ops.end(), in->op))
 		{
-			result.push_back(i);
+			result.push_back(in);
 			++count;
 
 			if (count == limit)

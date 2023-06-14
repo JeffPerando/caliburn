@@ -15,7 +15,7 @@ namespace caliburn
 	struct RootModule : public Module
 	{
 		std::vector<std::pair<std::string, std::string>> modRequests;
-		std::map<std::string, sptr<Module>> modules;
+		HashMap<std::string, sptr<Module>> modules;
 		
 		RootModule() {}
 		virtual ~RootModule() {}
@@ -59,10 +59,10 @@ namespace caliburn
 	{
 		std::string name;
 
-		std::map<std::string, sptr<Variable>> vars;
-		std::map<std::string, sptr<Type>> types;
-		std::map<std::string, sptr<FunctionStatement>> fns;
-		std::map<std::string, sptr<ShaderStatement>> shaders;
+		HashMap<std::string, sptr<Variable>> vars;
+		HashMap<std::string, sptr<Type>> types;
+		HashMap<std::string, sptr<FunctionStatement>> fns;
+		HashMap<std::string, sptr<ShaderStatement>> shaders;
 
 		CompiledModule() {}
 		virtual ~CompiledModule() {}

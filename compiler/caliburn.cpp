@@ -18,6 +18,12 @@ void Compiler::o(OptimizeLevel lvl)
 	settings.o = lvl;
 }
 
+void caliburn::Compiler::enableValidation()
+{
+	settings.validate = true;
+
+}
+
 void Compiler::setDynamicType(std::string inner, std::string concrete)
 {
 	dynTypes.emplace(inner, concrete);
@@ -141,7 +147,7 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 
 	}
 	*/
-	auto root = std::make_unique<RootModule>();
+	auto root = new_uptr<RootModule>();
 	
 	std::vector<ptr<ShaderStatement>> shaderDecls;
 
@@ -182,20 +188,21 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 
 			shaderDecls.push_back(shadDecl);
 
-			if (shadDecl->name->str == shaderName)
+			if (shadDecl->name->str != shaderName)
 			{
-				if (shaderStmt == nullptr)
-				{
-					shaderStmt = shadDecl;
-				}
-				else
-				{
-					//TODO complain
-					break;
-				}
+				continue;
 			}
 
-			continue;
+			if (shaderStmt == nullptr)
+			{
+				shaderStmt = shadDecl;
+			}
+			else
+			{
+				//TODO complain
+			}
+
+			break;
 		}
 
 		break;
@@ -207,9 +214,9 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 		return false;
 	}
 
-	auto table = std::make_shared<SymbolTable>();
+	auto table = new_sptr<SymbolTable>();
 
-	//Populate table with the standard library
+	//Populate table with the built-in library
 	root->declareSymbols(table);
 	
 	//Make headers

@@ -2,6 +2,7 @@
 #pragma once
 
 #include <map>
+#include <set>
 #include <vector>
 
 #include "basic.h"
@@ -16,20 +17,21 @@ namespace caliburn
 		class SPIRVOutAssembler;
 
 		//Function pointer type for easier usage later
-		using SPIRVOutFn = void(Target target, ref<cllr::Instruction> i, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out);
+		using SPIRVOutFn = void(Target target, ref<cllr::Instruction> i, size_t off, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out);
 		using SPIRVOpList = std::initializer_list<spirv::SpvOp>;
 
 		//Macro shorthand for implementation signature
-		#define CLLR_SPIRV_IMPL(Name) void Name(Target target, ref<Instruction> i, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out)
-		#define SPIRV_CODE_SECTION(...) std::make_unique<spirv::CodeSection>(__VA_ARGS__)
+		#define CLLR_SPIRV_IMPL(Name) void Name(Target target, ref<Instruction> i, size_t off, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out)
+		
+		//I hate how wordy modern C++ can be...
+		#define SPIRV_CODE_SECTION(...) new_uptr<spirv::CodeSection>(__VA_ARGS__)
 
 		namespace spirv_impl
 		{
 			CLLR_SPIRV_IMPL(OpUnknown);
 
-			CLLR_SPIRV_IMPL(OpShaderStage);
-			CLLR_SPIRV_IMPL(OpDescriptor);
-			CLLR_SPIRV_IMPL(OpShaderEnd);
+			CLLR_SPIRV_IMPL(OpKernel);
+			CLLR_SPIRV_IMPL(OpKernelEnd);
 
 			CLLR_SPIRV_IMPL(OpFunction);
 			CLLR_SPIRV_IMPL(OpFunctionEnd);
@@ -39,6 +41,7 @@ namespace caliburn
 			CLLR_SPIRV_IMPL(OpVarFuncArg);
 			CLLR_SPIRV_IMPL(OpVarShaderIn);
 			CLLR_SPIRV_IMPL(OpVarShaderOut);
+			CLLR_SPIRV_IMPL(OpVarDescriptor);
 
 			CLLR_SPIRV_IMPL(OpCall);
 			//CLLR_SPIRV_IMPL(OpDispatch);
@@ -122,14 +125,16 @@ namespace caliburn
 
 			uint32_t ssa = 1;
 			std::vector<spirv::SSAEntry> ssaEntries;
-			std::map<cllr::SSA, spirv::SSA> ssaAliases;
+			HashMap<cllr::SSA, spirv::SSA> ssaAliases;
 
-			std::vector<spirv::Capability> capabilities;
-			std::vector<std::string> extensions, instructions;
+			std::set<spirv::Capability> capabilities;
+			std::vector<std::string> extensions;
+			std::vector<std::string> instructions{"GLSL.std.450"};//TODO reconsider
+			std::vector<spirv::EntryPoint> entries;
+
 			spirv::AddressingModel addrModel = spirv::AddressingModel::Logical;
 			spirv::MemoryModel memModel = spirv::MemoryModel::GLSL450;
-			std::vector<spirv::EntryPoint> entries;
-			
+
 			OutImpls<SPIRVOutFn> impls = {};
 
 		public:
@@ -177,9 +182,9 @@ namespace caliburn
 			SPIRVOutAssembler() : OutAssembler(Target::GPU)
 			{
 				//here we go...
-				impls[(uint32_t)Opcode::SHADER_STAGE] = spirv_impl::OpShaderStage;
-				impls[(uint32_t)Opcode::DESCRIPTOR] = spirv_impl::OpDescriptor;
-				impls[(uint32_t)Opcode::SHADER_END] = spirv_impl::OpShaderEnd;
+				
+				impls[(uint32_t)Opcode::KERNEL] = spirv_impl::OpKernel;
+				impls[(uint32_t)Opcode::KERNEL_END] = spirv_impl::OpKernelEnd;
 
 				impls[(uint32_t)Opcode::FUNCTION] = spirv_impl::OpFunction;
 				impls[(uint32_t)Opcode::FUNCTION_END] = spirv_impl::OpFunctionEnd;
@@ -189,6 +194,7 @@ namespace caliburn
 				impls[(uint32_t)Opcode::VAR_FUNC_ARG] = spirv_impl::OpVarFuncArg;
 				impls[(uint32_t)Opcode::VAR_SHADER_IN] = spirv_impl::OpVarShaderIn;
 				impls[(uint32_t)Opcode::VAR_SHADER_OUT] = spirv_impl::OpVarShaderOut;
+				impls[(uint32_t)Opcode::VAR_DESCRIPTOR] = spirv_impl::OpVarDescriptor;
 
 				impls[(uint32_t)Opcode::CALL] = spirv_impl::OpCall;
 				impls[(uint32_t)Opcode::CALL_ARG] = spirv_impl::OpCallArg;
@@ -199,15 +205,15 @@ namespace caliburn
 				impls[(uint32_t)Opcode::TYPE_ARRAY] = spirv_impl::OpTypeArray;
 				impls[(uint32_t)Opcode::TYPE_VECTOR] = spirv_impl::OpTypeVector;
 				impls[(uint32_t)Opcode::TYPE_MATRIX] = spirv_impl::OpTypeMatrix;
+
 				impls[(uint32_t)Opcode::TYPE_STRUCT] = spirv_impl::OpTypeStruct;
+				impls[(uint32_t)Opcode::STRUCT_MEMBER] = spirv_impl::OpStructMember;
+				impls[(uint32_t)Opcode::STRUCT_END] = spirv_impl::OpStructEnd;
 
 				impls[(uint32_t)Opcode::TYPE_BOOL] = spirv_impl::OpTypeBool;
 				impls[(uint32_t)Opcode::TYPE_PTR] = spirv_impl::OpTypePtr;
 				impls[(uint32_t)Opcode::TYPE_TUPLE] = spirv_impl::OpTypeTuple;
 				impls[(uint32_t)Opcode::TYPE_STRING] = spirv_impl::OpTypeString;
-
-				impls[(uint32_t)Opcode::STRUCT_MEMBER] = spirv_impl::OpStructMember;
-				impls[(uint32_t)Opcode::STRUCT_END] = spirv_impl::OpStructEnd;
 
 				impls[(uint32_t)Opcode::LABEL] = spirv_impl::OpLabel;
 				impls[(uint32_t)Opcode::JUMP] = spirv_impl::OpJump;
@@ -235,7 +241,7 @@ namespace caliburn
 				impls[(uint32_t)Opcode::VALUE_STR_LIT] = spirv_impl::OpValueStrLit;
 				impls[(uint32_t)Opcode::VALUE_SUBARRAY] = spirv_impl::OpValueSubarray;
 				impls[(uint32_t)Opcode::VALUE_VARIABLE] = spirv_impl::OpValueVariable;
-				
+
 				impls[(uint32_t)Opcode::RETURN] = spirv_impl::OpReturn;
 				impls[(uint32_t)Opcode::RETURN_VALUE] = spirv_impl::OpReturnValue;
 				impls[(uint32_t)Opcode::DISCARD] = spirv_impl::OpDiscard;
@@ -245,7 +251,7 @@ namespace caliburn
 			virtual ~SPIRVOutAssembler() {}
 
 		private:
-			uint32_t maxSSA()
+			constexpr uint32_t maxSSA() const
 			{
 				return ssa + 1;
 			}
@@ -261,7 +267,6 @@ namespace caliburn
 
 			void addExt(std::string ext);
 
-			//popular import is "GLSL.std.450"
 			SSA addImport(std::string instructions);
 
 			SSA addGlobalVar(SSA type, spirv::StorageClass stClass, SSA init);

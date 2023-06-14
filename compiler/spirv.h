@@ -6,6 +6,9 @@
 #define SPIRV_Op(Name, ID, Count) SpvOp inline Name() {return SpvOp(Count, ID);}
 #define SPIRV_OpVar(Name, ID, Base) SpvOp inline Name(uint32_t v = 0) {return SpvOp(Base + v, ID);}
 
+//Pro-tip, future me: For whatever reason, not marking functions as inline in this particular file
+//results in linking errors. So... yeah. Fun.
+
 namespace caliburn
 {
     namespace spirv
@@ -16,19 +19,22 @@ namespace caliburn
 
         using SSA = uint32_t;
 
+        inline uint32_t SpvStrLen(std::string str)
+        {
+            return (str.length() >> 2) + ((str.length() & 0x3) == 0);
+        }
+
         struct SpvOp
         {
             uint16_t words = 0;
             uint16_t op = 0;
 
-            SpvOp() {}
-
+            SpvOp() = default;
             SpvOp(uint32_t code)
             {
-                words = ((code >> 16) & 0xFFFF);
+                words = (code >> 16);
                 op = (code & 0xFFFF);
             }
-
             SpvOp(uint16_t wordCount, uint16_t opcode) : words(wordCount), op(opcode) {}
 
             operator uint32_t()
@@ -36,9 +42,9 @@ namespace caliburn
                 return *(uint32_t*)this;
             }
 
-            bool operator<(const SpvOp& op) const
+            bool operator<(const SpvOp& rhs) const
             {
-                return this->op < op.op;
+                return op < rhs.op;
             }
 
         };
@@ -82,6 +88,20 @@ namespace caliburn
                 return *(uint32_t*)this;
             }
 
+        };
+
+        //Caliburn doesn't use this, this is just for completion's sake.
+        //Maybe one day we'll get a spot in this enum...
+        enum class SourceLang : uint32_t
+        {
+            Unknown = 0,
+            ESSL = 1,
+            GLSL = 2,
+            OpenCL_C = 3,
+            OpenCL_CPP = 4,
+            HLSL = 5,
+            CPP_for_OpenCL = 6,
+            SYCL = 7
         };
 
         enum class Capability : uint32_t
@@ -154,7 +174,6 @@ namespace caliburn
             VulkanKHR = 3
         };
 
-        //Not complete, missing a lot of RT extension enums
         enum class StorageClass : uint32_t
         {
             UniformConstant = 0,
@@ -178,10 +197,10 @@ namespace caliburn
             IncomingRayPayloadKHR = 5342,
             ShaderRecordBufferKHR = 5343,
             //version >= 1.5
-            PhysicalStorageBuffer = 5349,
-            PhysicalStorageBufferEXT = 5349
+            PhysicalStorageBuffer = 5349
         };
-
+        
+        //Nvidia's labels are all the same ID, so we don't bother.
         enum class ExecutionModel : uint32_t
         {
             Vertex = 0,
@@ -196,7 +215,10 @@ namespace caliburn
             AnyHitKHR = 5315,
             ClosestHitKHR = 5316,
             MissKHR = 5317,
-            CallableKHR = 5318
+            CallableKHR = 5318,
+            //I had to dig way too deep to find these
+            TaskEXT = 5364,
+            MeshEXT = 5365
         };
 
         enum class Dim : uint32_t
@@ -243,9 +265,89 @@ namespace caliburn
 
         };
 
-        //ONLY INSTRUCTIONS BELOW THIS POINT
-        //also they're sorted by opcode
-        //sorry
+        struct FPFastMathMode
+        {
+            uint32_t NotNan : 1,
+                NotInf : 1,
+                NSZ : 1,
+                AllowRecip : 1,
+                Fast : 1;
+
+            operator uint32_t()
+            {
+                return *(uint32_t*)this;
+            }
+
+        };
+
+        enum class Decoration : uint32_t
+        {
+            RelaxedPrecision = 0,
+            SpecId = 1,
+            Block = 2,
+            BufferBlock = 3,
+            RowMajor = 4,
+            ColMajor = 5,
+            ArrayStride = 6,
+            MatrixStride = 7,
+            GLSLShared = 8,
+            GLSLPacked = 9,
+            CPacked = 10,
+            BuiltIn = 11,
+            //no 12???
+            NoPerspective = 13,
+            Flat = 14,
+            Patch = 15,
+            Centroid = 16,
+            Sample = 17,
+            Invariant = 18,
+            Restrict = 19,
+            Aliased = 20,
+            Volatile = 21,
+            Constant = 22,
+            Coherent = 23,
+            NonWritable = 24,//ayo why is this-- nvm
+            NonReadable = 25,//...why?
+            Uniform = 26,
+            UniformId = 27,
+            SaturatedConversion = 28,
+            Stream = 29,
+            Location = 30,
+            Component = 31,
+            Index = 32,
+            Binding = 33,
+            DescriptorSet = 34,
+            Offset = 35,
+            XfbBuffer = 36,
+            XfbStride = 37,
+            FuncParamAttr = 38,
+            FPRoundingMode = 39,
+            FPFastMathMode = 40,
+            LinkageAttributes = 41,
+            NoContraction = 42,
+            InputAttachmentIndex = 43,
+            Alignment = 44,
+            MaxByteOffset = 45,
+            AlignmentId = 46,
+            MaxByteOffsetId = 47,
+            NoSignedWrap = 4469,
+            NoUnsignedWrap = 4470,
+            //skipping proprietary nonsense...
+            PerVertexKHR = 5285,
+            NonUniform = 5300,
+            RestrictPointer = 5355,
+            AliasedPointer = 5356,
+            //the above, again...
+            CounterBuffer = 5634,
+            UserSemantic = 5635
+            //why does intel have so many decorations???
+        };
+
+        //==========================================
+        // SPIR-V opcodes beyond this point
+        // also they're sorted by opcode
+        // sorry
+        //==========================================
 
         SPIRV_Op(OpNop, 0, 1);
 

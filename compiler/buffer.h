@@ -7,8 +7,7 @@
 
 namespace caliburn
 {
-	//A buffer in this case is a read-only container used to maintain a current index to a vector.
-	//might implement the ability to add std::make_unique<elements>, but imo that wouldn't be too useful.
+	//A buffer in this case is a read-only container used to maintain an index to a vector.
 	template<typename T>
 	class buffer
 	{
@@ -36,7 +35,7 @@ namespace caliburn
 			return vec->at(index);
 		}
 
-		T prev(int64_t off = 1)
+		T prev(size_t off = 1)
 		{
 			return vec->at(index - off);
 		}

@@ -34,7 +34,7 @@ void Parser::parse(ref<std::vector<sptr<Token>>> tokenList, ref<std::vector<uptr
 		}
 		else
 		{
-			postParseException(std::make_unique<InvalidDeclException>(start));
+			postParseException(new_uptr<InvalidDeclException>(start));
 			break;
 		}
 
@@ -359,7 +359,7 @@ bool Parser::parseSemicolon()
 		return true;
 	}
 
-	//postParseException(std::make_unique<UnexpectedTokenException>(tkn, ';'));
+	//postParseException(new_uptr<UnexpectedTokenException>(tkn, ';'));
 	return false;
 }
 
@@ -465,7 +465,7 @@ uptr<ScopeStatement> Parser::parseScope(std::initializer_list<ParseMethod<Statem
 		return nullptr;
 	}
 
-	auto scope = std::make_unique<ScopeStatement>();
+	auto scope = new_uptr<ScopeStatement>();
 
 	while (tokens->hasNext())
 	{
@@ -514,13 +514,13 @@ uptr<ParsedType> Parser::parseTypeName()
 
 	if (tkn->type != TokenType::IDENTIFIER)
 	{
-		postParseException(std::make_unique<ParseException>("Expected identifier; this is NOT a valid identifier.", tkn));
+		postParseException(new_uptr<ParseException>("Expected identifier; this is NOT a valid identifier.", tkn));
 		return nullptr;
 	}
 
 	tokens->consume();
 
-	uptr<ParsedType> type = std::make_unique<ParsedType>(tkn);
+	uptr<ParsedType> type = new_uptr<ParsedType>(tkn);
 
 	parseGenericArgs(type->genericArgs);
 
@@ -572,7 +572,7 @@ uptr<Statement> Parser::parseDecl()
 
 	if (stmt == nullptr)
 	{
-		postParseException(std::make_unique<ParseException>("Invalid start to declaration:", tokens->current()));
+		postParseException(new_uptr<ParseException>("Invalid start to declaration:", tokens->current()));
 		return stmt;
 	}
 
@@ -580,7 +580,7 @@ uptr<Statement> Parser::parseDecl()
 
 	if (!parseSemicolon())
 	{
-		postParseException(std::make_unique<ParseException>("All declarations must end with a semicolon", tokens->current()));
+		postParseException(new_uptr<ParseException>("All declarations must end with a semicolon", tokens->current()));
 	}
 
 	return stmt;
@@ -615,7 +615,7 @@ uptr<Statement> Parser::parseImport()
 
 	}
 
-	auto ret = std::make_unique<ImportStatement>(tkn);
+	auto ret = new_uptr<ImportStatement>(tkn);
 
 	ret->name = modName;
 	ret->alias = alias;
@@ -634,7 +634,7 @@ uptr<Statement> Parser::parseModuleDef()
 
 	auto name = tokens->next();
 
-	return std::make_unique<ModuleStatement>(start, name);
+	return new_uptr<ModuleStatement>(start, name);
 }
 
 uptr<Statement> Parser::parseTypedef()
@@ -673,7 +673,7 @@ uptr<Statement> Parser::parseTypedef()
 
 	uptr<ParsedType> aliasedType = parseTypeName();
 
-	auto stmt = std::make_unique<TypedefStatement>(start, name, std::move(aliasedType));
+	auto stmt = new_uptr<TypedefStatement>(start, name, std::move(aliasedType));
 	
 	return stmt;
 }
@@ -692,7 +692,7 @@ uptr<Statement> Parser::parseShader()
 		return nullptr;
 	}
 
-	auto shader = std::make_unique<ShaderStatement>();
+	auto shader = new_uptr<ShaderStatement>();
 
 	shader->first = tkn;
 
@@ -730,7 +730,7 @@ uptr<Statement> Parser::parseStruct()
 		//TODO complain
 	}
 
-	auto ret = std::make_unique<StructStatement>(name, isConst ? StatementType::RECORD : StatementType::STRUCT);
+	auto ret = new_uptr<StructStatement>(name, isConst ? StatementType::RECORD : StatementType::STRUCT);
 
 	ret->first = tkn;
 
@@ -803,12 +803,12 @@ uptr<Statement> Parser::parseFunction()
 
 		if (gpuThreadData.size() == 0)
 		{
-			postParseException(std::make_unique<ParseException>("GPU threading data is empty or has invalid values", tkn));
+			postParseException(new_uptr<ParseException>("GPU threading data is empty or has invalid values", tkn));
 		}
 
 		if (tokens->current()->str != "]")
 		{
-			postParseException(std::make_unique<UnexpectedTokenException>(tokens->current(), ']'));
+			postParseException(new_uptr<UnexpectedTokenException>(tokens->current(), ']'));
 		}
 
 		tkn = tokens->next();
@@ -817,7 +817,7 @@ uptr<Statement> Parser::parseFunction()
 
 	if (tkn->str != "(")
 	{
-		postParseException(std::make_unique<UnexpectedTokenException>(tokens->current(), '('));
+		postParseException(new_uptr<UnexpectedTokenException>(tokens->current(), '('));
 		return nullptr;
 	}
 
@@ -827,7 +827,7 @@ uptr<Statement> Parser::parseFunction()
 
 	if (tkn->str != ")")
 	{
-		postParseException(std::make_unique<UnexpectedTokenException>(tokens->current(), ')'));
+		postParseException(new_uptr<UnexpectedTokenException>(tokens->current(), ')'));
 		return nullptr;
 	}
 
@@ -838,7 +838,7 @@ uptr<Statement> Parser::parseFunction()
 		return nullptr;
 	}
 	/*
-	Functionptr<Statement> func = std::make_unique<FunctionStatement>();
+	Functionptr<Statement> func = new_uptr<FunctionStatement>();
 
 	func->type = type;
 	func->name = name;
@@ -913,7 +913,7 @@ uptr<Statement> Parser::parseIf()
 
 	tokens->consume();
 
-	auto parsed = std::make_unique<IfStatement>();
+	auto parsed = new_uptr<IfStatement>();
 
 	parsed->condition = parseBetween("(", &Parser::parseAnyValue, ")");
 	parsed->innerIf = parseScope({&Parser::parseDecl});
@@ -926,7 +926,7 @@ uptr<Statement> Parser::parseIf()
 
 		if (innerElseStmt != nullptr)
 		{
-			parsed->innerElse = std::make_unique<ScopeStatement>();
+			parsed->innerElse = new_uptr<ScopeStatement>();
 
 			parsed->innerElse->stmts.push_back(std::move(innerElseStmt));
 
@@ -958,7 +958,7 @@ uptr<Statement> Parser::parseWhile()
 
 	auto cond = parseBetween("(", &Parser::parseAnyValue, ")");
 
-	auto stmt = std::make_unique<WhileStatement>();
+	auto stmt = new_uptr<WhileStatement>();
 	
 	stmt->first = tkn;
 	stmt->condition = std::move(cond);
@@ -994,7 +994,7 @@ uptr<Statement> Parser::parseDoWhile()
 		return nullptr;
 	}
 
-	auto ret = std::make_unique<WhileStatement>();
+	auto ret = new_uptr<WhileStatement>();
 
 	ret->doWhile = true;
 	ret->loop = std::move(body);
@@ -1012,7 +1012,7 @@ uptr<Statement> Parser::parseValueStmt()
 		return nullptr;
 	}
 
-	return std::make_unique<ValueStatement>(std::move(val));
+	return new_uptr<ValueStatement>(std::move(val));
 }
 
 uptr<Statement> Parser::parseLocalVarStmt()
@@ -1056,7 +1056,7 @@ uptr<Statement> Parser::parseLocalVarStmt()
 
 	}
 
-	auto ret = std::make_unique<LocalVarStatement>();
+	auto ret = new_uptr<LocalVarStatement>();
 
 	parseIdentifierList(ret->names);
 
@@ -1064,7 +1064,7 @@ uptr<Statement> Parser::parseLocalVarStmt()
 
 	if (tkn->str == ":")
 	{
-		postParseException(std::make_unique<ParseException>("That's not how type hints work in Caliburn. Type hints go before the variable name, not after. So var: int x is valid. var x: int isn't.", tkn));
+		postParseException(new_uptr<ParseException>("That's not how type hints work in Caliburn. Type hints go before the variable name, not after. So var: int x is valid. var x: int isn't.", tkn));
 		return nullptr;
 	}
 
@@ -1076,7 +1076,7 @@ uptr<Statement> Parser::parseLocalVarStmt()
 	}
 	else if (!type)
 	{
-		postParseException(std::make_unique<ParseException>("All implicitly-typed variables must be manually initialized", tkn));
+		postParseException(new_uptr<ParseException>("All implicitly-typed variables must be manually initialized", tkn));
 		return nullptr;
 	}
 
@@ -1124,15 +1124,15 @@ uptr<Value> Parser::parseNonExpr()
 
 			if (tkn->str == "this")
 			{
-				v = std::make_unique<VarReadValue>(tkn);
+				v = new_uptr<VarReadValue>(tkn);
 			}
 			else if (tkn->str == "sign")
 			{
-				v = std::make_unique<UnaryValue>(tkn, Operator::SIGN, parseNonExpr());
+				v = new_uptr<UnaryValue>(tkn, Operator::SIGN, parseNonExpr());
 			}
 			else if (tkn->str == "unsign")
 			{
-				v = std::make_unique<UnaryValue>(tkn, Operator::UNSIGN, parseNonExpr());
+				v = new_uptr<UnaryValue>(tkn, Operator::UNSIGN, parseNonExpr());
 			}
 			else
 			{
@@ -1165,7 +1165,7 @@ uptr<Value> Parser::parseNonExpr()
 
 			tokens->consume();
 
-			auto unary = std::make_unique<UnaryValue>();
+			auto unary = new_uptr<UnaryValue>();
 
 			unary->op = uOp;
 			unary->val = parseNonExpr();
@@ -1205,7 +1205,7 @@ uptr<Value> Parser::parseNonExpr()
 		{
 			auto i = parseBetween("[", &Parser::parseAnyValue, "]");//enables for expressions inside of array access
 			
-			auto subA = std::make_unique<SubArrayValue>();
+			auto subA = new_uptr<SubArrayValue>();
 
 			subA->array = std::move(v);
 			subA->index = std::move(i);
@@ -1226,7 +1226,7 @@ uptr<Value> Parser::parseNonExpr()
 			}
 			else
 			{
-				auto memRead = std::make_unique<MemberReadValue>();
+				auto memRead = new_uptr<MemberReadValue>();
 
 				memRead->target = std::move(v);
 				memRead->memberName = tkn;
@@ -1256,26 +1256,26 @@ uptr<Value> Parser::parseLiteral()
 	{
 		if (tkn->str == "this")
 		{
-			return std::make_unique<VarReadValue>(tkn);
+			return new_uptr<VarReadValue>(tkn);
 		}
 		else if (tkn->str == "null")
 		{
-			return std::make_unique<NullValue>(tkn);
+			return new_uptr<NullValue>(tkn);
 		}
 
 	}
 
 	switch (tkn->type)
 	{
-	case TokenType::LITERAL_INT: return std::make_unique<IntLiteralValue>(tkn);
-	case TokenType::LITERAL_FLOAT: return std::make_unique<FloatLiteralValue>(tkn);
-	case TokenType::LITERAL_BOOL: return std::make_unique<BoolLitValue>(tkn);
-	case TokenType::LITERAL_STR: return std::make_unique<StringLitValue>(tkn);
+	case TokenType::LITERAL_INT: return new_uptr<IntLiteralValue>(tkn);
+	case TokenType::LITERAL_FLOAT: return new_uptr<FloatLiteralValue>(tkn);
+	case TokenType::LITERAL_BOOL: return new_uptr<BoolLitValue>(tkn);
+	case TokenType::LITERAL_STR: return new_uptr<StringLitValue>(tkn);
 	}
 
 	if (tkn->str == "[")
 	{
-		auto arrLit = std::make_unique<ArrayLitValue>();
+		auto arrLit = new_uptr<ArrayLitValue>();
 
 		arrLit->start = tkn;
 
@@ -1326,7 +1326,7 @@ uptr<Value> Parser::parseExpr(uint32_t precedence)
 			{
 				tokens->consume();
 
-				auto isa = std::make_unique<IsAValue>();
+				auto isa = new_uptr<IsAValue>();
 
 				isa->val = std::move(lhs);
 				isa->chkPType = parseTypeName();
@@ -1338,7 +1338,7 @@ uptr<Value> Parser::parseExpr(uint32_t precedence)
 			{
 				tokens->consume();
 
-				auto cast = std::make_unique<CastValue>();
+				auto cast = new_uptr<CastValue>();
 
 				cast->lhs = std::move(lhs);
 				cast->resultPType = parseTypeName();
@@ -1381,7 +1381,7 @@ uptr<Value> Parser::parseExpr(uint32_t precedence)
 
 			//AND we made a dedicated class for it
 			//Why? Because memory management, that's why
-			auto set = std::make_unique<SetterValue>();
+			auto set = new_uptr<SetterValue>();
 
 			set->lhs = std::move(lhs);
 			set->op = op->second;
@@ -1390,7 +1390,7 @@ uptr<Value> Parser::parseExpr(uint32_t precedence)
 			return set;
 		}
 		
-		auto expr = std::make_unique<ExpressionValue>();
+		auto expr = new_uptr<ExpressionValue>();
 
 		expr->lValue = std::move(lhs);
 		expr->op = op->second;
@@ -1419,7 +1419,7 @@ uptr<Value> Parser::parseFnCall(uptr<Value> start)
 
 	auto name = tkn;
 
-	auto ret = std::make_unique<FnCallValue>();
+	auto ret = new_uptr<FnCallValue>();
 
 	tkn = tokens->next();
 	
@@ -1491,5 +1491,5 @@ sptr<Variable> Parser::parseMemberVar()
 
 	}
 
-	return std::make_shared<MemberVariable>(name, std::move(type), std::move(initVal), isConst);
+	return new_sptr<MemberVariable>(name, std::move(type), std::move(initVal), isConst);
 }

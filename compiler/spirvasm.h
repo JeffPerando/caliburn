@@ -31,6 +31,40 @@ namespace caliburn
             std::vector<uint32_t> io;
         };
 
+        struct Type
+        {
+            SpvOp opcode = 0;
+            SSA id = 0;
+            std::vector<uint32_t> operands;
+
+            bool operator<(const Type& rhs) const
+            {
+                if (opcode < rhs.opcode)
+                    return true;
+                /*
+                //Don't compare the IDs
+                //This struct will go in a map and we need to find pre-existing types
+                if (id < rhs.id)
+                    return true;
+                */
+                if (operands.size() < rhs.operands.size())
+                    return true;
+
+                if (operands.size() > rhs.operands.size())
+                    return false;
+
+                for (size_t i = 0; i < operands.size(); ++i)
+                {
+                    if (operands[i] < rhs.operands[i])
+                        return true;
+
+                }
+
+                return false;
+            }
+
+        };
+
         class CodeSection
         {
             friend class cllr::SPIRVOutAssembler;
@@ -53,9 +87,17 @@ namespace caliburn
 
             }
 
-            void push(SpvOp op, SSA id, std::initializer_list<uint32_t> args);
+            void push(SpvOp op, SSA id, std::initializer_list<uint32_t> args)
+            {
+                push(op, id, std::vector(args));
+            }
 
-            void pushRaw(std::initializer_list<uint32_t> args);
+            void push(SpvOp op, SSA id, std::vector<uint32_t> args);
+
+            void pushRaw(std::initializer_list<uint32_t> args)
+            {
+                pushRaw(std::vector(args));
+            }
 
             void pushRaw(std::vector<uint32_t> args);
 

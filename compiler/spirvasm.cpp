@@ -2,9 +2,9 @@
 #include "cllrspirv.h"
 #include "spirvasm.h"
 
-using namespace caliburn::spirv;
+using namespace caliburn;
 
-void CodeSection::push(SpvOp op, SSA id, std::initializer_list<uint32_t> args)
+void spirv::CodeSection::push(spirv::SpvOp op, SSA id, std::vector<uint32_t> args)
 {
 	if (!validOps.empty())
 	{
@@ -28,24 +28,16 @@ void CodeSection::push(SpvOp op, SSA id, std::initializer_list<uint32_t> args)
 
 }
 
-void CodeSection::pushRaw(std::initializer_list<uint32_t> args)
-{
-	code.insert(code.end(), args.begin(), args.end());
-
-}
-
-void CodeSection::pushRaw(std::vector<uint32_t> args)
+void spirv::CodeSection::pushRaw(std::vector<uint32_t> args)
 {
 	code.insert(code.end(), args.begin(), args.end());
 
 }
 
 //Do NOT try to replace this with a memcpy
-void CodeSection::pushStr(std::string str)
+void spirv::CodeSection::pushStr(std::string str)
 {
-	bool needsExtraNull = ((str.length() & 0x3) == 0);
-	size_t packedLen = (str.length() >> 2) + needsExtraNull;
-	code.reserve(code.size() + packedLen);
+	code.reserve(code.size() + spirv::SpvStrLen(str));
 
 	auto iter = str.begin();
 
@@ -60,7 +52,7 @@ void CodeSection::pushStr(std::string str)
 				break;
 			}
 
-			packed |= (((uint32_t)*iter) << i * 8);
+			packed |= (((uint32_t)*iter) << (i * 8));
 			++iter;
 
 		}
@@ -69,7 +61,7 @@ void CodeSection::pushStr(std::string str)
 
 	}
 
-	if (needsExtraNull)
+	if ((str.size() & 0x3) == 0)
 	{
 		code.push_back(0);
 	}

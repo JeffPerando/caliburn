@@ -309,7 +309,7 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 
 			if (significantWhitespace)
 			{
-				tokens.push_back(std::make_shared<Token>(std::string(1, current), TokenType::UNKNOWN, line, col, buf->currentIndex(), buf->currentIndex() + 1L));
+				tokens.push_back(new_sptr<Token>(std::string(1, current), TokenType::UNKNOWN, line, col, buf->currentIndex(), buf->currentIndex() + 1L));
 			}
 
 			buf->consume();
@@ -372,7 +372,7 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 
 				}
 
-				tokens.push_back(std::make_shared<Token>(idStr, idType, line, col, buf->currentIndex(), idOffset));
+				tokens.push_back(new_sptr<Token>(idStr, idType, line, col, buf->currentIndex(), idOffset));
 
 				buf->consume(idOffset);
 				col += idOffset;
@@ -380,7 +380,7 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 			}
 			else
 			{
-				tokens.push_back(std::make_shared<Token>(intLit, intType, line, col, buf->currentIndex(), intOffset));
+				tokens.push_back(new_sptr<Token>(intLit, intType, line, col, buf->currentIndex(), intOffset));
 
 				buf->consume(intOffset);
 				col += intOffset;
@@ -410,7 +410,7 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 			auto str = findStr(current);
 
 			//findStr should offset col and line
-			tokens.push_back(std::make_shared<Token>(str, TokenType::LITERAL_STR, line, col, start, start - buf->currentIndex()));
+			tokens.push_back(new_sptr<Token>(str, TokenType::LITERAL_STR, line, col, start, start - buf->currentIndex()));
 			continue;
 		}
 
@@ -420,7 +420,7 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 
 			if (specialType != CHAR_TOKEN_TYPES.end())
 			{
-				tokens.push_back(std::make_shared<Token>(std::string(1, current), specialType->second, line, col, buf->currentIndex(), 1L));
+				tokens.push_back(new_sptr<Token>(std::string(1, current), specialType->second, line, col, buf->currentIndex(), 1L));
 			}
 
 		}
@@ -439,13 +439,13 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 
 			if (meaning == SPECIAL_OPS.end())
 			{
-				tokens.push_back(std::make_shared<Token>(fullOp, meaning->second, line, col, buf->currentIndex(), off));
+				tokens.push_back(new_sptr<Token>(fullOp, meaning->second, line, col, buf->currentIndex(), off));
 				buf->consume(off);
 				col += off;
 				continue;
 			}
 
-			tokens.push_back(std::make_shared<Token>(std::string(1, current), TokenType::OPERATOR, line, col, buf->currentIndex(), 1L));
+			tokens.push_back(new_sptr<Token>(std::string(1, current), TokenType::OPERATOR, line, col, buf->currentIndex(), 1L));
 
 		}
 		

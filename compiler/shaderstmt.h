@@ -78,7 +78,7 @@ namespace caliburn
 
 			auto spv = spirvAsm.translateCLLR(codeAsm, *codeAsm.getCode());
 
-			auto out = std::make_unique<Shader>();
+			auto out = new_uptr<Shader>();
 			
 			out->type = type;
 			out->spirv = std::move(spv);

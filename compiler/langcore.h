@@ -58,6 +58,22 @@ namespace caliburn
 	auto static constexpr MIN_VECTOR_LEN = 2;
 	auto static constexpr MAX_VECTOR_LEN = 4;
 
+	enum class TypeCategory
+	{
+		VOID,
+		FLOAT,
+		INT,
+		VECTOR,
+		MATRIX,
+		ARRAY,
+		STRUCT,
+		BOOLEAN,
+		POINTER,
+		TUPLE,
+		STRING
+
+	};
+
 	enum class ShaderType
 	{
 		COMPUTE,
@@ -75,7 +91,7 @@ namespace caliburn
 		MESH
 	};
 
-	static const std::map<std::string, ShaderType> SHADER_TYPES = {
+	static const HashMap<std::string, ShaderType> SHADER_TYPES = {
 		/*
 		{"main",		ShaderType::COMPUTE},
 		*/
