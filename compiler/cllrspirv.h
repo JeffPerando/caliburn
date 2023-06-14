@@ -80,7 +80,6 @@ namespace caliburn
 			CLLR_SPIRV_IMPL(OpValueExprUnary);
 			CLLR_SPIRV_IMPL(OpValueFloatLit);
 			CLLR_SPIRV_IMPL(OpValueInit);
-			CLLR_SPIRV_IMPL(OpValueInstanceof);
 			CLLR_SPIRV_IMPL(OpValueIntLit);
 			CLLR_SPIRV_IMPL(OpValueInvokePos);
 			CLLR_SPIRV_IMPL(OpValueInvokeSize);
@@ -232,7 +231,6 @@ namespace caliburn
 				impls[(uint32_t)Opcode::VALUE_EXPR_UNARY] = spirv_impl::OpValueExprUnary;
 				impls[(uint32_t)Opcode::VALUE_FP_LIT] = spirv_impl::OpValueFloatLit;
 				impls[(uint32_t)Opcode::VALUE_INIT] = spirv_impl::OpValueInit;
-				impls[(uint32_t)Opcode::VALUE_INSTANCEOF] = spirv_impl::OpValueInstanceof;
 				impls[(uint32_t)Opcode::VALUE_INT_LIT] = spirv_impl::OpValueIntLit;
 				impls[(uint32_t)Opcode::VALUE_INVOKE_POS] = spirv_impl::OpValueInvokePos;
 				impls[(uint32_t)Opcode::VALUE_INVOKE_SIZE] = spirv_impl::OpValueInvokeSize;

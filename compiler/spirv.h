@@ -122,6 +122,8 @@ namespace caliburn
             ImageBasic =        13,
             ImageReadWrite =    14,
             ImageMipmap =       15,
+            //Got removed at some point
+            //ImageSRGB = 16
             Pipes =             17,
             Groups =            18,
             DeviceEnqueue =     19,
@@ -131,7 +133,7 @@ namespace caliburn
             TessellationPointSize = 23,
             GeometryPointSize = 24,
             ImageGatherExtended = 25,
-            //number 26 is missing???
+            //StorageImageExtendedFormats  = 26,
             StorageImageMultisample = 27,
             UniformBufferArrayDynamicIndexing = 28,
             SampledImageArrayDynamicIndexing = 29,
@@ -153,8 +155,99 @@ namespace caliburn
             SampledCubeArray = 45,
             SampledBuffer = 46,
             ImageBuffer = 47,
-            ImageMSArray = 48
-            //TODO add more
+            ImageMSArray = 48,
+            StorageImageExtendedFormats = 49,
+            ImageQuery = 50,
+            DerivativeControl = 51,
+            InterpolationFunction = 52,
+            TrasnformFeedback = 53,
+            GeometryStreams = 54,
+            StorageImageReadWithoutFormat = 55,
+            StorageImageWriteWithoutFormat = 56,
+            MultiViewport = 57,
+            SubgroupDispatch = 58,
+            NamedBarrier = 59,
+            PipeStorage = 60,
+            GroupNonUniform = 61,
+            GroupNonUniformVote = 62,
+            GroupNonUniformArithmetic = 63,
+            GroupNonUniformBallot = 64,
+            GroupNonUniformShuffle = 65,
+            GroupNonUniformShuffleRelative = 66,
+            GroupNonUniformClustered = 67,
+            GroupNonUniformQuad = 68,
+            ShaderLayer = 69,
+            ShaderViewportIndex = 70,
+            UniformDecoration = 71,
+            FragmentShadingRateKHR = 4422,
+            SubgroupBallotKHR = 4423,
+            DrawParameters = 4427,
+            WorkgroupMemoryExplicitLayoutKHR = 4428,
+            WorkgroupMemoryExplicitLayout8BitAccessKHR = 4429,
+            WorkgroupMemoryExplicitLayout16BitAccessKHR = 4430,
+            SubgroupVoteKHR = 4431,
+            StorageBuffer16BitAccess = 4433,
+            StorageUniformBufferBlock16 = 4433,//wait, hol up
+            UniformAndStorageBuffer16BitAccess = 4434,
+            StorageUniform16 = 4434,
+            StoragePushConstant16 = 4435,
+            StorageInputOutput16 = 4436,
+            DeviceGroup = 4437,
+            MultiView = 4439,
+            VariablePointersStorageBuffer = 4441,
+            VariablePointers = 4442,
+            AtomicStorageOps = 4445,
+            SampleMaskPostDepthCoverage = 4447,
+            StorageBuffer8BitAccess = 4448,
+            UniformAndStorageBuffer8BitAccess = 4449,
+            StoragePushConstant8 = 4450,
+            DenormPreserve = 4464,
+            DenormFlushToZero = 4465,
+            SignedZeroInfNanPreserve = 4466,
+            RoundingModeRTE = 4467,
+            RoundingModeRTZ = 4468,
+            RayQueryProvisionalKHR = 4471,
+            RayQueryKHR = 4472,
+            RayTraversalPrimitiveCullingKHR = 4478,
+            RayTracingKHR = 4479,
+            StencilExportEXT = 5013,
+            Int64ImageEXT = 5016,
+            ShaderClockKHR = 5055,
+            ShaderViewportIndexLayerEXT = 5254,
+            FragmentFullyCoveredEXT = 5265,
+            FragmentBarycentricKHR = 5284,
+            FragmentDensityEXT = 5291,
+            ShaderNonUniform = 5301,
+            RuntimeDescriptorArray = 5302,
+            InputAttachmentArrayDynamicIndexing = 5303,
+            UniformTexelBufferArrayDynamicIndexing = 5304,
+            StorageTexelBufferArrayDynamicIndexing = 5305,
+            UniformBufferArrayNonUniformIndexing = 5306,
+            SampledImageArrayNonUniformIndexing = 5307,
+            StorageBufferArrayNonUniformIndexing = 5308,
+            StorageImageArrayNonUniformIndexing = 5309,
+            InputAttachmentArrayNonUniformIndexing = 5310,
+            UniformTexelBufferArrayNonUniformIndexing = 5311,
+            StorageTexelBufferArrayNonUniformIndexing = 5312,
+            VulkanMemoryModel = 5345,
+            VulkanMemoryModelDeviceScope = 5346,
+            PhysicalStorageBufferAddresses = 5347,
+            RayTracingProvisionalKHR = 5353,
+            FragmentShaderSampleInterlockEXT = 5363,
+            FragmentShaderShadingRateInterlockEXT = 5372,
+            FragmentShaderPixelInterlockEXT = 5378,
+            DemoteToHelperInvocation = 5379,
+            ExpectAssumeKHR = 5629,
+            DotProductInputAll = 6016,
+            DotProductInput4x8Bit = 6017,//Oh hey, DP4a!
+            DotProductInput4x8BitPacked = 6018,
+            DotProduct = 6019,
+            RayCullMaskKHR = 6020,
+            BitInstructions = 6025,
+            GroupNonUniformRotateKHR = 6026,
+            AtomicFloat32AddEXT = 6033,
+            AtomicFloat64AddEXT = 6034,
+            GroupUniformArithmeticKHR = 6400
         };
 
         enum class AddressingModel : uint32_t
@@ -241,43 +334,22 @@ namespace caliburn
             RepeatMirrored = 4
         };
 
-        struct ImageOperand
+        enum class Scope : uint32_t
         {
-            uint32_t Bias : 1,
-                Lod : 1,
-                Grad: 1,
-                ConstOffset: 1,
-                Offset: 1,
-                ConstOffsets: 1,
-                Sample: 1,
-                MinLod: 1,
-                MakeTexelAvailable: 1,
-                MakeTexelVisible: 1,
-                NonPrivateTexel: 1,
-                VolatileTexel: 1,
-                SignExtend: 1,
-                ZeroExtend: 1;
-
-            operator uint32_t()
-            {
-                return *(uint32_t*)this;
-            }
-
+            CrossDevice = 0,
+            Device = 1,
+            Workgroup = 2,
+            Subgroup = 3,
+            Invocation = 3,
+            QueueFamily = 5,
+            ShaderCallKHR = 6
         };
 
-        struct FPFastMathMode
+        enum class GroupOp : uint32_t
         {
-            uint32_t NotNan : 1,
-                NotInf : 1,
-                NSZ : 1,
-                AllowRecip : 1,
-                Fast : 1;
-
-            operator uint32_t()
-            {
-                return *(uint32_t*)this;
-            }
-
+            Reduce = 0,
+            InclusiveScan = 1,
+            ExclusiveScan = 2
         };
 
         enum class Decoration : uint32_t
@@ -341,6 +413,122 @@ namespace caliburn
             CounterBuffer = 5634,
             UserSemantic = 5635
             //why does intel have so many decorations???
+        };
+
+        struct ImageOperand
+        {
+            uint32_t Bias : 1,
+                Lod : 1,
+                Grad : 1,
+                ConstOffset : 1,
+                Offset : 1,
+                ConstOffsets : 1,
+                Sample : 1,
+                MinLod : 1,
+                MakeTexelAvailable : 1,
+                MakeTexelVisible : 1,
+                NonPrivateTexel : 1,
+                VolatileTexel : 1,
+                SignExtend : 1,
+                ZeroExtend : 1,
+                //Version >= 1.6
+                Nontemporal : 1;
+
+            operator uint32_t()
+            {
+                return *(uint32_t*)this;
+            }
+
+        };
+
+        struct MemorySemantics
+        {
+            uint32_t Reserved : 1,
+                Acquire : 1,
+                Release : 1,
+                AcquireRelease : 1,
+                SequentiallyConsistent : 1,
+                UniformMemory : 1,
+                SubgroupMemory : 1,
+                WorkgroupMemory : 1,
+                CrossWorkgroupMemory : 1,
+                AtomicCounterMemory : 1,
+                ImageMemory : 1,
+                OutputMemory : 1,
+                MakeAvailable : 1,
+                MakeVisible : 1,
+                Volatile : 1;
+
+            operator uint32_t()
+            {
+                return *(uint32_t*)this;
+            }
+
+        };
+
+        struct MemoryOperands
+        {
+            uint32_t Volatile : 1,
+                Aligned : 1,
+                Nontemporal : 1,
+                MakePointerAvailable : 1,
+                MakePointerVisible : 1,
+                NonPrivatePointer : 1;
+
+            operator uint32_t()
+            {
+                return *(uint32_t*)this;
+            }
+
+        };
+
+        struct FPFastMathMode
+        {
+            uint32_t NotNan : 1,
+                NotInf : 1,
+                NSZ : 1,
+                AllowRecip : 1,
+                Fast : 1;
+
+            operator uint32_t()
+            {
+                return *(uint32_t*)this;
+            }
+
+        };
+
+        struct RayFlags
+        {
+            uint32_t Opaque : 1,
+                NoOpaque : 1,
+                TerminateOnFirstHit : 1,
+                SkipClosestHitShader : 1,
+                CullBackFacingTriangles : 1,
+                CullFrontFacingTriangles : 1,
+                CullOpaque : 1,
+                CullNoOpaque : 1,
+                SkipTriangles : 1,
+                SkipAABBs : 1;
+
+            operator uint32_t()
+            {
+                return *(uint32_t*)this;
+            }
+
+        };
+
+        struct FragmentShadingRate
+        {
+            uint32_t Vertical2Pixels : 1,
+                Vertical4Pixels : 1,
+                Horizontal2Pixels : 1,
+                Horizontal4Pixels : 1;
+
+            operator uint32_t()
+            {
+                return *(uint32_t*)this;
+            }
+
         };
 
         //==========================================
@@ -1086,6 +1274,30 @@ namespace caliburn
 
         //Version >= 1.4
         SPIRV_Op(OpPtrDiff, 403, 5);
+
+        //Version >= 1.6
+        SPIRV_Op(OpTerminateInvocation, 4416, 1);
+
+        //Version >= 1.6
+        SPIRV_OpVar(OpSDot, 4450, 5);
+
+        //Version >= 1.6
+        SPIRV_OpVar(OpUDot, 4451, 5);
+
+        //Version >= 1.6
+        SPIRV_OpVar(OpSUDot, 4452, 5);
+
+        //Version >= 1.6
+        SPIRV_OpVar(OpSDotAccSat, 4453, 6);
+
+        //Version >= 1.6
+        SPIRV_OpVar(OpUDotAccSat, 4454, 6);
+
+        //Version >= 1.6
+        SPIRV_OpVar(OpSUDotAccSat, 4455, 6);
+
+        //Version >= 1.6
+        SPIRV_Op(OpDemoteToHelperInvocation, 5380, 1);
 
         //Version >= 1.2
         SPIRV_OpVar(OpMemberDecorateString, 5633, 5);

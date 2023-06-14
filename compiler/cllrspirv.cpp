@@ -394,7 +394,16 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueArrayLit)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueBoolLit)
 {
-	
+	auto id = out.toSpvID(i.index);
+	auto t = out.toSpvID(i.refs[0]);
+
+	auto op = spirv::OpConstantFalse();
+
+	if (i.operands[0] != 0)
+		op = spirv::OpConstantTrue();
+
+	out.main->push(op, id, { t });
+
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueCast)//TODO get value pointers if needed
@@ -431,11 +440,6 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueFloatLit)
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueInit)
-{
-	
-}
-
-CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueInstanceof)//WHAT.
 {
 	
 }
