@@ -158,6 +158,7 @@
     <ClCompile Include="cllrasm.cpp" />
     <ClCompile Include="cllropt.cpp" />
     <ClCompile Include="cllrspirv.cpp" />
+    <ClCompile Include="cllrvalid.cpp" />
     <ClCompile Include="ctrlstmt.cpp" />
     <ClCompile Include="generics.cpp" />
     <ClCompile Include="langcore.cpp" />

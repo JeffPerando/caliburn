@@ -1000,6 +1000,7 @@ namespace caliburn
 
         SPIRV_OpVar(OpSwitch, 251, 3);
 
+        //Deprecated
         SPIRV_Op(OpKill, 252, 1);
 
         SPIRV_Op(OpReturn, 253, 1);

@@ -98,6 +98,9 @@
     <ClCompile Include="cllropt.cpp">
       <Filter>Source Files\cllr</Filter>
     </ClCompile>
+    <ClCompile Include="cllrvalid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="buffer.h">

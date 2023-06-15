@@ -1,5 +1,6 @@
 
 #include "cllrspirv.h"
+#include "syntax.h"
 
 using namespace caliburn;
 
@@ -384,7 +385,29 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpAssign)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 {
-	
+	auto id = out.toSpvID(i.index);
+	auto cllrOp = (Operator)i.operands[0];
+
+	auto cllrLHS = i.refs[0];
+	auto cllrRHS = i.refs[1];
+
+	auto lhs = out.toSpvID(cllrLHS);
+	auto rhs = out.toSpvID(cllrRHS);
+
+	auto op = spirv::OpNop();
+
+	switch (cllrOp)
+	{
+	case Operator::COMP_EQ: op = spirv::OpIEqual(); break;
+	case Operator::COMP_NEQ: op = spirv::OpINotEqual(); break;
+	case Operator::COMP_GT: op = spirv::OpSGreaterThan(); break;
+	case Operator::COMP_GTE: op = spirv::OpSGreaterThanEqual(); break;
+	case Operator::COMP_LT: op = spirv::OpSLessThan(); break;
+	case Operator::COMP_LTE: op = spirv::OpSLessThanEqual(); break;
+	}
+
+	out.main->push(op, id, { lhs, rhs });
+
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueArrayLit)
@@ -406,7 +429,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueBoolLit)
 
 }
 
-CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueCast)//TODO get value pointers if needed
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueCast)//TODO check impl
 {
 	auto lhs = out.toSpvID(i.refs[0]);
 
@@ -439,9 +462,20 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueFloatLit)
 	
 }
 
+/*
+Now, don't shoot me. DO NOT SHOOT ME.
+
+but uh
+OpConstantNull fulfills the Caliburn spec. Seemingly.
+TODO: test against the spec. Worried about arrays, vectors.
+*/
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueInit)
 {
-	
+	auto id = out.toSpvID(i.index);
+	auto t = out.toSpvID(i.refs[0]);
+
+	out.main->push(spirv::OpConstantNull(), id, { t });
+
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueIntLit)
@@ -507,6 +541,8 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpReturnValue)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpDiscard)
 {
+	//out.main->push(spirv::OpTerminateInvocation(), 0, {});
+	//I know it's deprecated, but like... eh.
 	out.main->push(spirv::OpKill(), 0, {});
 
 }
