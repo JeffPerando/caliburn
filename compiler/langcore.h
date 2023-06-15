@@ -27,12 +27,12 @@ namespace caliburn
 	Regarding whether to add a given algorithm to a given level: Consider how much extra performance is given vs. the time it takes to run.
 	If the algorithm takes ages to run and doesn't make the code much faster, add it to O3.
 	If it's near instant and makes the code much much faster, add it to O1.
-	O0 always disables every optimization, even the obvious ones. This ensures clarity between the compiler and programmer. As in, the programmer can tell what the compiler is doing, based on the changes to code in O0 vs. others.
+	DEBUG disables every optimization, even the obvious ones.
 	*/
 	enum class OptimizeLevel
 	{
-		//equivalent to O0; debug (none) level
-		NONE,
+		//equivalent to O0. just show me the raw output
+		DEBUG,
 		//equivalent to O1; just do low-hanging fruit
 		BASIC,
 		//equivalent to O2; does more optimizations

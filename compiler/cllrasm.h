@@ -19,12 +19,11 @@ namespace caliburn
 		public:
 			const ShaderType type;
 		private:
-			uint32_t nextSSA = 0;
+			uint32_t nextSSA = 1;
 			
 			InstructionVec code;
+			InstructionVec ssaToCode;
 
-			std::vector<cllr::Opcode> ssaToOpcode;
-			//InstructionVec ssaToCode;
 			std::vector<std::string> strs;
 			std::vector<uint32_t> ssaRefs;
 			
@@ -35,12 +34,12 @@ namespace caliburn
 			Assembler(ShaderType t, uint32_t initSize = 2048) : type(t)
 			{
 				code.reserve(initSize);
+				ssaToCode.reserve(initSize);
+
 				ssaRefs.reserve(initSize);
-				ssaToOpcode.reserve(initSize);
-				
 				ssaRefs.push_back(0);
 
-				ssaToOpcode.push_back(Opcode::UNKNOWN);//ID 0 is unused
+				ssaToCode.push_back(new_sptr<Instruction>());//ID 0 is unused
 
 			}
 
@@ -102,6 +101,24 @@ namespace caliburn
 			void findAll(ref<InstructionVec> result, const std::vector<Opcode> ops, size_t off = 0, size_t limit = UINT64_MAX) const;
 
 			uint32_t replace(SSA in, SSA out);
+
+			/*
+			During optimization, certain instructions may end up becoming unused, and entire SSAs go unreferred. This
+			method will remove those unused SSA indices and 'flatten' down the SSA list to eliminate bubbles. So say we
+			have this list of 5 SSAs:
+
+			SSA:	[1, 2, 3, 4, 5]
+			Refs:	[6, 9, 0, 1, 3]
+			
+			flatten() will move #4 to #3, then move #5 to #4, and so on, updating surrounding code to match these changes.
+			Running this on the example above, we get the following results:
+
+			SSA:	[1, 2, 3, 4]
+			Refs:	[6, 9, 1, 3]
+
+			Returns the number of SSAs flattened.
+			*/
+			uint32_t flatten();
 
 		};
 

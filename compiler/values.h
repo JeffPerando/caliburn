@@ -449,7 +449,8 @@ namespace caliburn
 			auto vID = val->emitValueCLLR(codeAsm);
 			auto tID = chkType->id;
 
-			return codeAsm.pushNew(cllr::Opcode::VALUE_INSTANCEOF, {}, { vID, tID, 0 });;
+			return 0;
+			//return codeAsm.pushNew(cllr::Opcode::VALUE_INSTANCEOF, {}, { vID, tID, 0 });;
 		}
 
 	};
