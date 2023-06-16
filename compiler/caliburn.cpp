@@ -18,9 +18,9 @@ void Compiler::o(OptimizeLevel lvl)
 	settings.o = lvl;
 }
 
-void caliburn::Compiler::enableValidation()
+void caliburn::Compiler::disableValidation()
 {
-	settings.validate = true;
+	settings.validate = false;
 
 }
 

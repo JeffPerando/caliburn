@@ -28,9 +28,11 @@ namespace caliburn
 		void o(OptimizeLevel lvl);
 
 		/*
-		Enables CLLR validation. Will lower compilation performance.
+		Diuables CLLR validation. Will improve compilation performance at the cost of, well...
+
+		Only disable if you know the shaders will compile correctly.
 		*/
-		void enableValidation();
+		void disableValidation();
 
 		/*
 		In Caliburn, a type can be defined as "dynamic", which means the actual

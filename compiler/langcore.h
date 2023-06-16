@@ -45,7 +45,7 @@ namespace caliburn
 	{
 		//Target output; Not applicable; Write a new method in Compiler for a new target
 		OptimizeLevel o;
-		bool validate = false;
+		bool validate = true;
 
 	};
 
