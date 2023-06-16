@@ -442,11 +442,6 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueDeref)
 	
 }
 
-CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueDescriptor)//Not needed
-{
-	
-}
-
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpr)
 {
 	
@@ -460,22 +455,6 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueFloatLit)
 {
 	
-}
-
-/*
-Now, don't shoot me. DO NOT SHOOT ME.
-
-but uh
-OpConstantNull fulfills the Caliburn spec. Seemingly.
-TODO: test against the spec. Worried about arrays, vectors.
-*/
-CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueInit)
-{
-	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.refs[0]);
-
-	out.main->push(spirv::OpConstantNull(), id, { t });
-
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueIntLit)
@@ -507,6 +486,15 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueNull)
 
 }
 
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueReadVar)
+{
+	auto outVal = out.toSpvID(i.index);
+	auto inVal = out.toSpvID(i.refs[0]);
+
+	out.main->push(spirv::OpLoad(), outVal, { inVal });
+
+}
+
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueStrLit)
 {
 	
@@ -517,9 +505,20 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueSubarray)
 	
 }
 
-CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueVariable)
+/*
+Now, don't shoot me. DO NOT SHOOT ME.
+
+but uh
+OpConstantNull fulfills the Caliburn spec. Seemingly.
+TODO: test against the spec. Worried about arrays, vectors.
+*/
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueZero)
 {
-	
+	auto id = out.toSpvID(i.index);
+	auto t = out.toSpvID(i.refs[0]);
+
+	out.main->push(spirv::OpConstantNull(), id, { t });
+
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpReturn)

@@ -34,23 +34,22 @@ bool cllr::Validator::isValue(cllr::Opcode op)
     std::vector<cllr::Opcode> ops = {
 		Opcode::CALL,
 		Opcode::COMPARE,
-		Opcode::VALUE_ARRAY_LIT,
-		Opcode::VALUE_BOOL_LIT,
 		Opcode::VALUE_CAST,
 		Opcode::VALUE_DEREF,
-		Opcode::VALUE_DESCRIPTOR,
 		Opcode::VALUE_EXPR,
 		Opcode::VALUE_EXPR_UNARY,
-		Opcode::VALUE_FP_LIT,
-		Opcode::VALUE_INIT,
-		Opcode::VALUE_INT_LIT,
 		Opcode::VALUE_INVOKE_POS,
 		Opcode::VALUE_INVOKE_SIZE,
+		Opcode::VALUE_LIT_ARRAY,
+		Opcode::VALUE_LIT_BOOL,
+		Opcode::VALUE_LIT_FP,
+		Opcode::VALUE_LIT_INT,
+		Opcode::VALUE_LIT_STR,
 		Opcode::VALUE_MEMBER,
 		Opcode::VALUE_NULL,
-		Opcode::VALUE_STR_LIT,
+		Opcode::VALUE_READ_VAR,
 		Opcode::VALUE_SUBARRAY,
-		Opcode::VALUE_VARIABLE
+		Opcode::VALUE_ZERO
 	};
 
     return std::binary_search(ops.begin(), ops.end(), op);
@@ -64,8 +63,7 @@ bool cllr::Validator::isVar(cllr::Opcode op)
 		Opcode::VAR_FUNC_ARG,
 		Opcode::VAR_SHADER_IN,
 		Opcode::VAR_SHADER_OUT,
-		Opcode::VAR_DESCRIPTOR,
-		Opcode::STRUCT_MEMBER
+		Opcode::VAR_DESCRIPTOR
 	};
 
 	return std::binary_search(ops.begin(), ops.end(), op);

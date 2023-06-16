@@ -75,19 +75,18 @@ namespace caliburn
 			CLLR_SPIRV_IMPL(OpValueBoolLit);
 			CLLR_SPIRV_IMPL(OpValueCast);
 			CLLR_SPIRV_IMPL(OpValueDeref);
-			CLLR_SPIRV_IMPL(OpValueDescriptor);
 			CLLR_SPIRV_IMPL(OpValueExpr);
 			CLLR_SPIRV_IMPL(OpValueExprUnary);
 			CLLR_SPIRV_IMPL(OpValueFloatLit);
-			CLLR_SPIRV_IMPL(OpValueInit);
 			CLLR_SPIRV_IMPL(OpValueIntLit);
 			CLLR_SPIRV_IMPL(OpValueInvokePos);
 			CLLR_SPIRV_IMPL(OpValueInvokeSize);
 			CLLR_SPIRV_IMPL(OpValueMember);
 			CLLR_SPIRV_IMPL(OpValueNull);
+			CLLR_SPIRV_IMPL(OpValueReadVar);
 			CLLR_SPIRV_IMPL(OpValueStrLit);
 			CLLR_SPIRV_IMPL(OpValueSubarray);
-			CLLR_SPIRV_IMPL(OpValueVariable);
+			CLLR_SPIRV_IMPL(OpValueZero);
 
 			CLLR_SPIRV_IMPL(OpReturn);
 			CLLR_SPIRV_IMPL(OpReturnValue);
@@ -226,19 +225,18 @@ namespace caliburn
 				impls[(uint32_t)Opcode::VALUE_BOOL_LIT] = spirv_impl::OpValueBoolLit;
 				impls[(uint32_t)Opcode::VALUE_CAST] = spirv_impl::OpValueCast;
 				impls[(uint32_t)Opcode::VALUE_DEREF] = spirv_impl::OpValueDeref;
-				impls[(uint32_t)Opcode::VALUE_DESCRIPTOR] = spirv_impl::OpValueDescriptor;
 				impls[(uint32_t)Opcode::VALUE_EXPR] = spirv_impl::OpValueExpr;
 				impls[(uint32_t)Opcode::VALUE_EXPR_UNARY] = spirv_impl::OpValueExprUnary;
 				impls[(uint32_t)Opcode::VALUE_FP_LIT] = spirv_impl::OpValueFloatLit;
-				impls[(uint32_t)Opcode::VALUE_INIT] = spirv_impl::OpValueInit;
 				impls[(uint32_t)Opcode::VALUE_INT_LIT] = spirv_impl::OpValueIntLit;
 				impls[(uint32_t)Opcode::VALUE_INVOKE_POS] = spirv_impl::OpValueInvokePos;
 				impls[(uint32_t)Opcode::VALUE_INVOKE_SIZE] = spirv_impl::OpValueInvokeSize;
 				impls[(uint32_t)Opcode::VALUE_MEMBER] = spirv_impl::OpValueMember;
 				impls[(uint32_t)Opcode::VALUE_NULL] = spirv_impl::OpValueNull;
+				impls[(uint32_t)Opcode::VALUE_READ_VAR] = spirv_impl::OpValueReadVar;
 				impls[(uint32_t)Opcode::VALUE_STR_LIT] = spirv_impl::OpValueStrLit;
 				impls[(uint32_t)Opcode::VALUE_SUBARRAY] = spirv_impl::OpValueSubarray;
-				impls[(uint32_t)Opcode::VALUE_VARIABLE] = spirv_impl::OpValueVariable;
+				impls[(uint32_t)Opcode::VALUE_ZERO] = spirv_impl::OpValueZero;
 
 				impls[(uint32_t)Opcode::RETURN] = spirv_impl::OpReturn;
 				impls[(uint32_t)Opcode::RETURN_VALUE] = spirv_impl::OpReturnValue;

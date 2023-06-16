@@ -99,7 +99,7 @@
       <Filter>Source Files\cllr</Filter>
     </ClCompile>
     <ClCompile Include="cllrvalid.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\cllr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
