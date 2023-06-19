@@ -41,10 +41,11 @@ uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(ref<cllr::Ass
 	spvMisc->push(spirv::OpMemoryModel(), 0, { (uint32_t)addrModel, (uint32_t)memModel });
 
 	//Entry points
-	for (auto const& entry : entries)
+	for (auto const& entry : shaderEntries)
 	{
 		spvMisc->push(spirv::OpEntryPoint(), 0, { (uint32_t)entry.type, entry.func });
 		spvMisc->pushRaw(entry.io);
+
 	}
 
 	//TODO insert execution modes
@@ -143,11 +144,6 @@ void cllr::SPIRVOutAssembler::setMemoryModel(spirv::AddressingModel addr, spirv:
 	memModel = mem;
 }
 
-void cllr::SPIRVOutAssembler::addEntryPoint(SSA fn, spirv::ExecutionModel type, ref<std::vector<uint32_t>> ios)
-{
-	entries.push_back(spirv::EntryPoint{fn, type, std::vector(ios)});
-}
-
 //==========================================
 //CLLR -> SPIR-V functions beyond this point
 //==========================================
@@ -172,30 +168,42 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpKernel)
 		{ShaderType::RT_INTERSECT, spirv::ExecutionModel::IntersectionKHR},
 		{ShaderType::RT_MISS, spirv::ExecutionModel::MissKHR},
 		{ShaderType::TASK, spirv::ExecutionModel::TaskEXT},
-		{ShaderType::MESH, spirv::ExecutionModel::MeshEXT},
+		{ShaderType::MESH, spirv::ExecutionModel::MeshEXT}
 	};
 	
 	auto type = (ShaderType)i.refs[0];
 	auto ex = exModels.find(type)->second;
 
 	InstructionVec cllrIns;
-	std::vector<cllr::Opcode> ops = { Opcode::VAR_SHADER_IN, Opcode::VAR_SHADER_OUT };
-
-	in.findAll(cllrIns, ops, off + 1, i.refs[1]);
-
 	std::vector<uint32_t> ios;
+	
+	in.findAll(cllrIns, { Opcode::VAR_SHADER_IN, Opcode::VAR_SHADER_OUT }, off + 1, i.refs[1]);
+
 	for (auto const& i : cllrIns)
 	{
 		ios.push_back(out.toSpvID(i->index));
 	}
 
-	out.addEntryPoint(out.toSpvID(i.index), ex, ios);
+	out.shaderEntries.push_back(spirv::EntryPoint
+	{
+		out.toSpvID(i.index),
+		ex,
+		ios
+	});
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpKernelEnd)
 {
-	
+	auto& code = *out.main.get();
+
+	auto fnId = out.toSpvID(i.refs[0]);
+	auto mainId = out.createSSA();
+
+	code.push(spirv::OpFunction(), mainId, {});
+	code.push(spirv::OpFunctionCall(), 0, {});
+	code.push(spirv::OpFunctionEnd(), 0, {});
+
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpFunction)

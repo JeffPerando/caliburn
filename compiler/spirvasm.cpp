@@ -6,13 +6,9 @@ using namespace caliburn;
 
 void spirv::CodeSection::push(spirv::SpvOp op, SSA id, std::vector<uint32_t> args)
 {
-	if (!validOps.empty())
+	if (!isValidOp(op))
 	{
-		if (!std::binary_search(validOps.begin(), validOps.end(), op))
-		{
-			return;
-		}
-
+		return;
 	}
 
 	code.push_back(op);
@@ -23,6 +19,34 @@ void spirv::CodeSection::push(spirv::SpvOp op, SSA id, std::vector<uint32_t> arg
 		spvAsm->setOpForSSA(id, op);
 
 	}
+
+	code.insert(code.end(), args.begin(), args.end());
+
+}
+
+void spirv::CodeSection::pushVal(SpvOp op, SSA type, SSA id, std::vector<uint32_t> args)
+{
+	//TODO check for valid type, maybe.
+
+	if (!isValidOp(op))
+	{
+		return;
+	}
+
+	if (type == 0)
+	{
+		return;
+	}
+
+	if (id == 0)
+	{
+		return;
+	}
+
+	code.push_back(op);
+	code.push_back(type);
+	code.push_back(id);
+	spvAsm->setOpForSSA(id, op);
 
 	code.insert(code.end(), args.begin(), args.end());
 
@@ -66,4 +90,44 @@ void spirv::CodeSection::pushStr(std::string str)
 		code.push_back(0);
 	}
 
+}
+
+spirv::SSA spirv::CodeSection::find(SpvOp op, std::vector<uint32_t> args)
+{
+	size_t i = 0;
+
+	while (i < code.size())
+	{
+		SpvOp other = SpvOp(code[i]);
+
+		bool valid = false;
+
+		if (op == other)
+		{
+			valid = false;
+		}
+		else
+		{
+			for (size_t off = 0; off < args.size(); ++off)
+			{
+				if (code[i + 2 + off] != args[off])
+				{
+					valid = false;
+					break;
+				}
+
+			}
+
+		}
+
+		if (valid)
+		{
+			return code[i + 2];
+		}
+
+		i += other.words;
+
+	}
+
+	return 0;
 }

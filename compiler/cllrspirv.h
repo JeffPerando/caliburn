@@ -122,13 +122,12 @@ namespace caliburn
 			});
 
 			uint32_t ssa = 1;
-			std::vector<spirv::SSAEntry> ssaEntries;
 			HashMap<cllr::SSA, spirv::SSA> ssaAliases;
 
+			std::vector<spirv::SSAEntry> ssaEntries;
 			std::set<spirv::Capability> capabilities;
 			std::vector<std::string> extensions;
 			std::vector<std::string> instructions{"GLSL.std.450"};//TODO reconsider
-			std::vector<spirv::EntryPoint> entries;
 
 			spirv::AddressingModel addrModel = spirv::AddressingModel::Logical;
 			spirv::MemoryModel memModel = spirv::MemoryModel::GLSL450;
@@ -136,6 +135,8 @@ namespace caliburn
 			OutImpls<SPIRVOutFn> impls = {};
 
 		public:
+			std::vector<spirv::EntryPoint> shaderEntries;
+
 			const uptr<spirv::CodeSection> decs = SPIRV_CODE_SECTION(this, SPIRVOpList{
 				spirv::OpDecorate(),
 				spirv::OpGroupDecorate(),
@@ -221,20 +222,20 @@ namespace caliburn
 				impls[(uint32_t)Opcode::ASSIGN] = spirv_impl::OpAssign;
 				impls[(uint32_t)Opcode::COMPARE] = spirv_impl::OpCompare;
 
-				impls[(uint32_t)Opcode::VALUE_ARRAY_LIT] = spirv_impl::OpValueArrayLit;
-				impls[(uint32_t)Opcode::VALUE_BOOL_LIT] = spirv_impl::OpValueBoolLit;
 				impls[(uint32_t)Opcode::VALUE_CAST] = spirv_impl::OpValueCast;
 				impls[(uint32_t)Opcode::VALUE_DEREF] = spirv_impl::OpValueDeref;
 				impls[(uint32_t)Opcode::VALUE_EXPR] = spirv_impl::OpValueExpr;
 				impls[(uint32_t)Opcode::VALUE_EXPR_UNARY] = spirv_impl::OpValueExprUnary;
-				impls[(uint32_t)Opcode::VALUE_FP_LIT] = spirv_impl::OpValueFloatLit;
-				impls[(uint32_t)Opcode::VALUE_INT_LIT] = spirv_impl::OpValueIntLit;
 				impls[(uint32_t)Opcode::VALUE_INVOKE_POS] = spirv_impl::OpValueInvokePos;
 				impls[(uint32_t)Opcode::VALUE_INVOKE_SIZE] = spirv_impl::OpValueInvokeSize;
+				impls[(uint32_t)Opcode::VALUE_LIT_ARRAY] = spirv_impl::OpValueArrayLit;
+				impls[(uint32_t)Opcode::VALUE_LIT_BOOL] = spirv_impl::OpValueBoolLit;
+				impls[(uint32_t)Opcode::VALUE_LIT_FP] = spirv_impl::OpValueFloatLit;
+				impls[(uint32_t)Opcode::VALUE_LIT_INT] = spirv_impl::OpValueIntLit;
+				impls[(uint32_t)Opcode::VALUE_LIT_STR] = spirv_impl::OpValueStrLit;
 				impls[(uint32_t)Opcode::VALUE_MEMBER] = spirv_impl::OpValueMember;
 				impls[(uint32_t)Opcode::VALUE_NULL] = spirv_impl::OpValueNull;
 				impls[(uint32_t)Opcode::VALUE_READ_VAR] = spirv_impl::OpValueReadVar;
-				impls[(uint32_t)Opcode::VALUE_STR_LIT] = spirv_impl::OpValueStrLit;
 				impls[(uint32_t)Opcode::VALUE_SUBARRAY] = spirv_impl::OpValueSubarray;
 				impls[(uint32_t)Opcode::VALUE_ZERO] = spirv_impl::OpValueZero;
 
@@ -268,8 +269,6 @@ namespace caliburn
 			SSA addGlobalVar(SSA type, spirv::StorageClass stClass, SSA init);
 
 			void setMemoryModel(spirv::AddressingModel addr, spirv::MemoryModel mem);
-
-			void addEntryPoint(SSA fn, spirv::ExecutionModel type, ref<std::vector<uint32_t>> ios);
 
 		};
 

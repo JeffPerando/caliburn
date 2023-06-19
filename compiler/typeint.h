@@ -30,7 +30,7 @@ namespace caliburn
 
 		virtual cllr::SSA emitDefaultInitValue(ref<cllr::Assembler> codeAsm)
 		{
-			return codeAsm.pushNew(cllr::Opcode::VALUE_INT_LIT, { 0 }, { this->id });
+			return codeAsm.pushNew(cllr::Opcode::VALUE_LIT_INT, { 0 }, { this->id });
 		}
 
 		TypeCompat isCompatible(Operator op, sptr<Type> rType) const override;

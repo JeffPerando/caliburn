@@ -87,23 +87,32 @@ namespace caliburn
 
             }
 
-            void push(SpvOp op, SSA id, std::initializer_list<uint32_t> args)
-            {
-                push(op, id, std::vector(args));
-            }
-
             void push(SpvOp op, SSA id, std::vector<uint32_t> args);
 
-            void pushRaw(std::initializer_list<uint32_t> args)
-            {
-                pushRaw(std::vector(args));
-            }
+            void pushVal(SpvOp op, SSA type, SSA id, std::vector<uint32_t> args);
 
             void pushRaw(std::vector<uint32_t> args);
 
             void pushStr(std::string str);
 
+            SSA find(SpvOp op, std::vector<uint32_t> args);
+
         private:
+            bool isValidOp(SpvOp op)
+            {
+                if (validOps.empty())
+                {
+                    return true;
+                }
+
+                if (std::binary_search(validOps.begin(), validOps.end(), op))
+                {
+                    return true;
+                }
+
+                return false;
+            }
+
             void dump(ref<std::vector<uint32_t>> codeOut)
             {
                 codeOut.insert(codeOut.end(), code.begin(), code.end());

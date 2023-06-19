@@ -61,7 +61,7 @@ namespace caliburn
 			//Why does it matter? I dunno
 			auto parsedLit = type->parseLiteral(lit->str);
 
-			return codeAsm.pushNew(cllr::Opcode::VALUE_INT_LIT, { (uint32_t)(parsedLit & 0xFFFFFFFF), (uint32_t)((parsedLit >> 32) & 0xFFFFFFFF) }, { type->id });
+			return codeAsm.pushNew(cllr::Opcode::VALUE_LIT_INT, { (uint32_t)(parsedLit & 0xFFFFFFFF), (uint32_t)((parsedLit >> 32) & 0xFFFFFFFF) }, { type->id });
 		}
 
 	};
@@ -116,7 +116,7 @@ namespace caliburn
 			//We defer parsing further! Great success!
 			auto sID = codeAsm.addString(lit->str.substr(0, lit->str.find_first_of('_')));
 
-			return codeAsm.pushNew(cllr::Opcode::VALUE_FP_LIT, { sID }, { type->id });
+			return codeAsm.pushNew(cllr::Opcode::VALUE_LIT_FP, { sID }, { type->id });
 		}
 
 	};
@@ -173,7 +173,7 @@ namespace caliburn
 
 			auto sID = codeAsm.addString(lit->str);
 			
-			return codeAsm.pushNew(cllr::Opcode::VALUE_STR_LIT, { sID }, { type->id });
+			return codeAsm.pushNew(cllr::Opcode::VALUE_LIT_STR, { sID }, { type->id });
 		}
 
 	};
@@ -228,7 +228,7 @@ namespace caliburn
 		{
 			type->emitDeclCLLR(codeAsm);
 
-			return codeAsm.pushNew(cllr::Opcode::VALUE_BOOL_LIT, { lit->str == "true" }, { type->id });
+			return codeAsm.pushNew(cllr::Opcode::VALUE_LIT_BOOL, { lit->str == "true" }, { type->id });
 		}
 
 	};
@@ -298,13 +298,13 @@ namespace caliburn
 
 		cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const override
 		{
-			auto id = codeAsm.pushNew(cllr::Opcode::VALUE_ARRAY_LIT, { (uint32_t)values.size() }, {});
+			auto id = codeAsm.pushNew(cllr::Opcode::VALUE_LIT_ARRAY, { (uint32_t)values.size() }, {});
 
 			for (auto const& v : values)
 			{
 				if (v != nullptr)
 				{
-					//TODO figure out VALUE_ARRAY_LIT semantics
+					//TODO figure out VALUE_LIT_ARRAY semantics
 					v->emitValueCLLR(codeAsm);
 
 				}

@@ -16,6 +16,8 @@ namespace caliburn
 
 			bool isValue(cllr::Opcode op);
 
+			bool isLValue(cllr::Opcode op);
+
 			bool isVar(cllr::Opcode op);
 
 		};

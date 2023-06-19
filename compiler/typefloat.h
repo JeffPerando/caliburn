@@ -31,7 +31,7 @@ namespace caliburn
 		{
 			auto sID = codeAsm.addString("0f");
 
-			return codeAsm.pushNew(cllr::Opcode::VALUE_FP_LIT, { }, { sID, this->id });
+			return codeAsm.pushNew(cllr::Opcode::VALUE_LIT_FP, { }, { sID, this->id });
 		}
 
 		TypeCompat isCompatible(Operator op, sptr<Type> rType) const override;

@@ -21,7 +21,7 @@ namespace caliburn
 
 		virtual cllr::SSA emitDefaultInitValue(ref<cllr::Assembler> codeAsm)
 		{
-			return codeAsm.pushNew(cllr::Opcode::VALUE_BOOL_LIT, { false }, { this->id });
+			return codeAsm.pushNew(cllr::Opcode::VALUE_LIT_BOOL, { false }, { this->id });
 		}
 
 		//void getConvertibleTypes(std::set<ConcreteType*>* types) override;

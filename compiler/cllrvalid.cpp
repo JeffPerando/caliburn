@@ -55,6 +55,18 @@ bool cllr::Validator::isValue(cllr::Opcode op)
     return std::binary_search(ops.begin(), ops.end(), op);
 }
 
+bool cllr::Validator::isLValue(cllr::Opcode op)
+{
+	std::vector<cllr::Opcode> ops = {
+		Opcode::VALUE_DEREF,
+		Opcode::VALUE_MEMBER,
+		Opcode::VALUE_READ_VAR,
+		Opcode::VALUE_SUBARRAY
+	};
+
+	return std::binary_search(ops.begin(), ops.end(), op);
+}
+
 bool cllr::Validator::isVar(cllr::Opcode op)
 {
 	std::vector<cllr::Opcode> ops = {
