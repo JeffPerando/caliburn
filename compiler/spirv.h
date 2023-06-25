@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#define SPIRV_Op(Name, ID, Count) SpvOp inline Name() {return SpvOp(Count, ID);}
-#define SPIRV_OpVar(Name, ID, Base) SpvOp inline Name(uint32_t v = 0) {return SpvOp(Base + v, ID);}
+#define SPIRV_Op(Name, ID, Count) constexpr SpvOp inline Name() {return SpvOp(Count, ID);}
+#define SPIRV_OpVar(Name, ID, Base) constexpr SpvOp inline Name(uint32_t v = 0) {return SpvOp(Base + v, ID);}
 
 //Pro-tip, future me: For whatever reason, not marking functions as inline in this particular file
 //results in linking errors. So... yeah. Fun.
@@ -29,15 +29,15 @@ namespace caliburn
             uint16_t words = 0;
             uint16_t op = 0;
 
-            SpvOp() = default;
-            SpvOp(uint32_t code)
+            constexpr SpvOp() = default;
+            constexpr SpvOp(uint32_t code)
             {
                 words = (code >> 16);
                 op = (code & 0xFFFF);
             }
-            SpvOp(uint16_t wordCount, uint16_t opcode) : words(wordCount), op(opcode) {}
+            constexpr SpvOp(uint16_t wordCount, uint16_t opcode) : words(wordCount), op(opcode) {}
 
-            operator uint32_t()
+            operator uint32_t() const
             {
                 return *(uint32_t*)this;
             }

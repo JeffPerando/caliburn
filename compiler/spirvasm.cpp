@@ -131,3 +131,110 @@ spirv::SSA spirv::CodeSection::find(SpvOp op, std::vector<uint32_t> args)
 
 	return 0;
 }
+
+spirv::SSA spirv::TypeSection::findOrMake(SpvOp op, std::vector<uint32_t> args, SSA id)
+{
+	auto fid = types->find(Type{ op, 0, args });
+
+	if (fid != types->end())
+	{
+		if (id != 0)
+		{
+			//TODO figure out this edge case
+		}
+
+		return fid->second;
+	}
+
+	if (id == 0)
+	{
+		id = spvAsm->createSSA();
+	}
+
+	types->emplace(Type{ op, id, args }, id);
+
+	return id;
+}
+
+void spirv::TypeSection::pushType(SpvOp op, SSA id, std::vector<uint32_t> args)
+{
+	if (id == 0)
+	{
+		//TODO complain
+		return;
+	}
+
+	if (types->find(Type{ op, 0, args }) != types->end())
+	{
+		//TODO complain
+		return;
+	}
+
+	types->emplace(Type { op, id, args }, id);
+
+}
+
+void spirv::TypeSection::dump(ref<CodeSection> sec) const
+{
+	for (auto& [t, id] : *types)
+	{
+		sec.push(t.opcode, id, t.operands);
+
+	}
+
+}
+
+spirv::SSA spirv::ConstSection::findOrMake(SSA t, uint32_t first, uint32_t second)
+{
+	auto key = Constant{ t, 0, first, second };
+
+	auto c = consts->find(key);
+
+	if (c != consts->end())
+	{
+		return c->second;
+	}
+
+	auto tOp = spvAsm->opFor(t);
+
+	if (tOp != spirv::OpTypeBool() && tOp != spirv::OpTypeInt() && tOp != spirv::OpTypeFloat())
+	{
+		//TODO complain
+		return 0;
+	}
+
+	auto id = spvAsm->createSSA();
+
+	consts->emplace(key, id);
+
+	return id;
+}
+
+void spirv::ConstSection::dump(ref<CodeSection> sec) const
+{
+	for (auto& [data, id] : *consts)
+	{
+		if (data.type == spirv::OpTypeBool())
+		{
+			sec.pushVal(data.lower == 0 ? spirv::OpConstantFalse() : spirv::OpConstantTrue(), data.type, id, {});
+
+		}
+		else
+		{
+			if (data.upper != 0)
+			{
+				sec.pushVal(spirv::OpConstant(2), data.type, id, { data.lower, data.upper });
+
+			}
+			else
+			{
+				sec.pushVal(spirv::OpConstant(1), data.type, id, { data.lower });
+
+			}
+			
+		}
+
+	}
+
+
+}

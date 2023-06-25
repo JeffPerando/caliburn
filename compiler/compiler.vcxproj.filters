@@ -148,7 +148,7 @@
     <ClInclude Include="spirvasm.h">
       <Filter>Header Files\spirv</Filter>
     </ClInclude>
-    <ClInclude Include="linq.h">
+    <ClInclude Include="cinq.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cllr.h">

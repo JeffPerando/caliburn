@@ -71,20 +71,20 @@ namespace caliburn
 			CLLR_SPIRV_IMPL(OpAssign);
 			CLLR_SPIRV_IMPL(OpCompare);
 
-			CLLR_SPIRV_IMPL(OpValueArrayLit);
-			CLLR_SPIRV_IMPL(OpValueBoolLit);
 			CLLR_SPIRV_IMPL(OpValueCast);
 			CLLR_SPIRV_IMPL(OpValueDeref);
 			CLLR_SPIRV_IMPL(OpValueExpr);
 			CLLR_SPIRV_IMPL(OpValueExprUnary);
-			CLLR_SPIRV_IMPL(OpValueFloatLit);
-			CLLR_SPIRV_IMPL(OpValueIntLit);
 			CLLR_SPIRV_IMPL(OpValueInvokePos);
 			CLLR_SPIRV_IMPL(OpValueInvokeSize);
+			CLLR_SPIRV_IMPL(OpValueLitArray);
+			CLLR_SPIRV_IMPL(OpValueLitBool);
+			CLLR_SPIRV_IMPL(OpValueLitFloat);
+			CLLR_SPIRV_IMPL(OpValueLitInt);
+			CLLR_SPIRV_IMPL(OpValueLitStr);
 			CLLR_SPIRV_IMPL(OpValueMember);
 			CLLR_SPIRV_IMPL(OpValueNull);
 			CLLR_SPIRV_IMPL(OpValueReadVar);
-			CLLR_SPIRV_IMPL(OpValueStrLit);
 			CLLR_SPIRV_IMPL(OpValueSubarray);
 			CLLR_SPIRV_IMPL(OpValueZero);
 
@@ -96,6 +96,7 @@ namespace caliburn
 		
 		class SPIRVOutAssembler : cllr::OutAssembler<uint32_t>
 		{
+		private:
 			const uptr<spirv::CodeSection> spvHeader = SPIRV_CODE_SECTION(this, SPIRVOpList{
 				spirv::OpCapability(),
 				spirv::OpExtension()
@@ -120,8 +121,38 @@ namespace caliburn
 			const uptr<spirv::CodeSection> spvGloVars = SPIRV_CODE_SECTION(this, SPIRVOpList{
 				spirv::OpVariable()
 			});
-
-			uint32_t ssa = 1;
+			const uptr<spirv::CodeSection> spvTypes = SPIRV_CODE_SECTION(this, SPIRVOpList{
+				spirv::OpTypeArray(),
+				spirv::OpTypeBool(),
+				spirv::OpTypeFloat(),
+				spirv::OpTypeFunction(),
+				spirv::OpTypeImage(),
+				spirv::OpTypeInt(),
+				spirv::OpTypeMatrix(),
+				spirv::OpTypeOpaque(),
+				spirv::OpTypePointer(),
+				spirv::OpTypeSampler(),
+				spirv::OpTypeStruct(),
+				spirv::OpTypeVector(),
+				spirv::OpTypeVoid(),
+				spirv::OpLine(),
+				spirv::OpNoLine()
+			});
+			const uptr<spirv::CodeSection> spvConsts = SPIRV_CODE_SECTION(this, SPIRVOpList{
+				spirv::OpConstant(),
+				spirv::OpConstantComposite(),
+				spirv::OpConstantFalse(),
+				spirv::OpConstantNull(),
+				spirv::OpConstantSampler(),
+				spirv::OpConstantTrue(),
+				spirv::OpSpecConstantComposite(),
+				spirv::OpSpecConstantFalse(),
+				spirv::OpSpecConstantOp(),
+				spirv::OpSpecConstantTrue(),
+				spirv::OpLine(),
+				spirv::OpNoLine()
+				});
+			uint32_t nextSSA = 1;
 			HashMap<cllr::SSA, spirv::SSA> ssaAliases;
 
 			std::vector<spirv::SSAEntry> ssaEntries;
@@ -145,38 +176,10 @@ namespace caliburn
 				spirv::OpMemberDecorateString(),
 				spirv::OpDecorationGroup()
 			});
-			const uptr<spirv::CodeSection> types = SPIRV_CODE_SECTION(this, SPIRVOpList{
-				spirv::OpTypeArray(),
-				spirv::OpTypeBool(),
-				spirv::OpTypeFloat(),
-				spirv::OpTypeFunction(),
-				spirv::OpTypeImage(),
-				spirv::OpTypeInt(),
-				spirv::OpTypeMatrix(),
-				spirv::OpTypeOpaque(),
-				spirv::OpTypePointer(),
-				spirv::OpTypeSampler(),
-				spirv::OpTypeStruct(),
-				spirv::OpTypeVector(),
-				spirv::OpTypeVoid(),
-				spirv::OpLine(),
-				spirv::OpNoLine()
-			});
-			const uptr<spirv::CodeSection> consts = SPIRV_CODE_SECTION(this, SPIRVOpList{
-				spirv::OpConstant(),
-				spirv::OpConstantComposite(),
-				spirv::OpConstantFalse(),
-				spirv::OpConstantNull(),
-				spirv::OpConstantSampler(),
-				spirv::OpConstantTrue(),
-				spirv::OpSpecConstantComposite(),
-				spirv::OpSpecConstantFalse(),
-				spirv::OpSpecConstantOp(),
-				spirv::OpSpecConstantTrue(),
-				spirv::OpLine(),
-				spirv::OpNoLine()
-			});
 			const uptr<spirv::CodeSection> main = SPIRV_CODE_SECTION(this, SPIRVOpList{});
+			
+			spirv::TypeSection types = spirv::TypeSection(this);
+			spirv::ConstSection consts = spirv::ConstSection(this);
 
 			SPIRVOutAssembler() : OutAssembler(Target::GPU)
 			{
@@ -221,18 +224,17 @@ namespace caliburn
 
 				impls[(uint32_t)Opcode::ASSIGN] = spirv_impl::OpAssign;
 				impls[(uint32_t)Opcode::COMPARE] = spirv_impl::OpCompare;
-
 				impls[(uint32_t)Opcode::VALUE_CAST] = spirv_impl::OpValueCast;
 				impls[(uint32_t)Opcode::VALUE_DEREF] = spirv_impl::OpValueDeref;
 				impls[(uint32_t)Opcode::VALUE_EXPR] = spirv_impl::OpValueExpr;
 				impls[(uint32_t)Opcode::VALUE_EXPR_UNARY] = spirv_impl::OpValueExprUnary;
 				impls[(uint32_t)Opcode::VALUE_INVOKE_POS] = spirv_impl::OpValueInvokePos;
 				impls[(uint32_t)Opcode::VALUE_INVOKE_SIZE] = spirv_impl::OpValueInvokeSize;
-				impls[(uint32_t)Opcode::VALUE_LIT_ARRAY] = spirv_impl::OpValueArrayLit;
-				impls[(uint32_t)Opcode::VALUE_LIT_BOOL] = spirv_impl::OpValueBoolLit;
-				impls[(uint32_t)Opcode::VALUE_LIT_FP] = spirv_impl::OpValueFloatLit;
-				impls[(uint32_t)Opcode::VALUE_LIT_INT] = spirv_impl::OpValueIntLit;
-				impls[(uint32_t)Opcode::VALUE_LIT_STR] = spirv_impl::OpValueStrLit;
+				impls[(uint32_t)Opcode::VALUE_LIT_ARRAY] = spirv_impl::OpValueLitArray;
+				impls[(uint32_t)Opcode::VALUE_LIT_BOOL] = spirv_impl::OpValueLitBool;
+				impls[(uint32_t)Opcode::VALUE_LIT_FP] = spirv_impl::OpValueLitFloat;
+				impls[(uint32_t)Opcode::VALUE_LIT_INT] = spirv_impl::OpValueLitInt;
+				impls[(uint32_t)Opcode::VALUE_LIT_STR] = spirv_impl::OpValueLitStr;
 				impls[(uint32_t)Opcode::VALUE_MEMBER] = spirv_impl::OpValueMember;
 				impls[(uint32_t)Opcode::VALUE_NULL] = spirv_impl::OpValueNull;
 				impls[(uint32_t)Opcode::VALUE_READ_VAR] = spirv_impl::OpValueReadVar;
@@ -250,7 +252,7 @@ namespace caliburn
 		private:
 			constexpr uint32_t maxSSA() const
 			{
-				return ssa + 1;
+				return nextSSA + 1;
 			}
 
 		public:
@@ -260,7 +262,11 @@ namespace caliburn
 
 			spirv::SSA toSpvID(cllr::SSA ssa);
 
+			void setSpvSSA(cllr::SSA in, spirv::SSA out);
+
 			void setOpForSSA(spirv::SSA id, spirv::SpvOp op);
+
+			spirv::SpvOp opFor(spirv::SSA id);
 
 			void addExt(std::string ext);
 

@@ -42,8 +42,8 @@ It's June 13th and I'm tired. This is the closest I can get to truly aliasing th
 
 //Great, now we're doing containers too.
 
-template<typename K, typename V>
-using HashMap = std::unordered_map<K, V>;
+template<typename K, typename V, typename H = std::hash<K>>
+using HashMap = std::unordered_map<K, V, H>;
 
 #define pass [[fallthrough]]
 

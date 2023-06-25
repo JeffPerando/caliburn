@@ -194,7 +194,7 @@
     <ClInclude Include="funcstmt.h" />
     <ClInclude Include="generics.h" />
     <ClInclude Include="langcore.h" />
-    <ClInclude Include="linq.h" />
+    <ClInclude Include="cinq.h" />
     <ClInclude Include="miscstmt.h" />
     <ClInclude Include="modstmts.h" />
     <ClInclude Include="module.h" />
