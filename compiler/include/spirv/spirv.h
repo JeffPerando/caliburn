@@ -21,7 +21,7 @@ namespace caliburn
 
         inline uint32_t SpvStrLen(std::string str)
         {
-            return (str.length() >> 2) + ((str.length() & 0x3) == 0);
+            return (uint32_t)((str.length() >> 2) + ((str.length() & 0x3) == 0));
         }
 
         struct SpvOp

@@ -57,7 +57,7 @@ uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(ref<cllr::Ass
 
 	//TODO insert debug instructions
 
-	auto codeSecs = { &spvHeader, &spvImports, &spvMisc, &decs, &spvTypes, &spvConsts, &gloVars, &main };
+	auto codeSecs = { &spvHeader, &spvImports, &spvMisc, &spvDebug, &decs, &spvTypes, &spvConsts, &gloVars, &main };
 
 	size_t len = 0;
 	for (auto const& sec : codeSecs)
