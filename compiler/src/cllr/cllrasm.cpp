@@ -17,16 +17,27 @@ uint32_t Assembler::addString(std::string str)
 SSA Assembler::createSSA(Opcode op)
 {
 	ssaRefs.push_back(0);
+	ssaToOp.push_back(op);
 	ssaToCode.push_back(nullptr);
 
 	return nextSSA++;
 }
 
-SSA Assembler::push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::array<uint32_t, 3> refs)
+Opcode Assembler::opFor(SSA id)
+{
+	return ssaToOp.at(id);
+}
+
+sptr<Instruction> Assembler::codeFor(SSA id)
+{
+	return ssaToCode.at(id);
+}
+
+SSA Assembler::push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::array<uint32_t, 3> refs, SSA type, sptr<Token> debug)
 {
 	//NOTE: ID == 0 is not an error
 
-	if (ssa != 0 && ssaToCode[ssa] != nullptr)
+	if (ssa != 0 && ssaToOp[ssa] != Opcode::UNKNOWN)
 	{
 		//TODO complain
 	}
@@ -37,10 +48,15 @@ SSA Assembler::push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::a
 	ins->op = op;
 	ins->operands = operands;
 	ins->refs = refs;
+	ins->outType = type;
+	ins->debugSym = debug;
 
 	code.push_back(ins);
 
-	if (ssa != 0) ssaToCode.push_back(ins);
+	if (ssa != 0)
+	{
+		ssaToCode[ssa] = ins;
+	}
 
 	for (auto i = 0; i < 3; ++i)
 	{
@@ -49,6 +65,11 @@ SSA Assembler::push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::a
 			ssaRefs[refs[i]] += 1;
 		}
 
+	}
+
+	if (type != 0)
+	{
+		ssaRefs[type] += 1;
 	}
 
 	return ssa;

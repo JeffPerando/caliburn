@@ -2,6 +2,7 @@
 #include "spirv/cllrspirv.h"
 
 #include "cinq.h"
+#include "langcore.h"
 #include "syntax.h"
 
 using namespace caliburn;
@@ -20,8 +21,6 @@ uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(ref<cllr::Ass
 	types.dump(*spvTypes);
 	consts.dump(*spvConsts);
 
-	auto shader = new_uptr<std::vector<uint32_t>>();
-	
 	//Magic numbers
 	spvHeader->pushRaw({ spirv::SPIRV_FILE_MAGIC_NUMBER , spirv::Version(1, 5), spirv::CALIBURN_GENERATOR_MAGIC_NUMBER, maxSSA(), 0});
 
@@ -64,6 +63,8 @@ uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(ref<cllr::Ass
 	{
 		len += (*sec)->code.size();
 	}
+
+	auto shader = new_uptr<std::vector<uint32_t>>();
 
 	shader->reserve(shader->size() + len);
 
@@ -198,15 +199,15 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpShaderStage)
 		{ShaderType::MESH, spirv::ExecutionModel::MeshEXT}
 	};
 	
-	auto type = (ShaderType)i.refs[0];
+	auto type = (ShaderType)i.operands[0];
 	auto ex = exModels.find(type)->second;
 
 	InstructionVec cllrIns;
 	
-	in.findAll(cllrIns, { Opcode::VAR_SHADER_IN, Opcode::VAR_SHADER_OUT }, off + 1, i.refs[1]);
+	in.findAll(cllrIns, { Opcode::VAR_SHADER_IN, Opcode::VAR_SHADER_OUT }, off + 1, i.operands[1]);
 
 	auto ios = cinq::map<sptr<cllr::Instruction>, spirv::SSA>(cllrIns, lambda(auto i) {
-		return out.toSpvID(i->refs[0]);
+		return out.toSpvID(i->index);
 	});
 
 	out.shaderEntries.push_back(spirv::EntryPoint
@@ -313,7 +314,12 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpVarLocal)
 
 	auto sc = spirv::StorageClass::Function;
 	
-	//TODO check operands, change storage class appropriately
+	auto mods = StmtModifiers{ i.operands[0] };
+	
+	if (mods.SHARED)
+	{
+		sc = spirv::StorageClass::Workgroup;
+	}
 
 	out.main->pushVar(t, id, sc, out.toSpvID(i.refs[1]));
 	
@@ -365,7 +371,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCall)
 {
 	auto id = out.toSpvID(i.index);
 	auto fnID = out.toSpvID(i.refs[0]);
-	auto retType = out.toSpvID(i.refs[1]);
+	auto retType = out.toSpvID(i.outType);
 
 	InstructionVec args;
 	in.findAll(args, { Opcode::CALL_ARG }, off + 1, i.operands[0]);
@@ -476,7 +482,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypePtr)
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeTuple)
 {
 	auto a = out.toSpvID(i.refs[0]);
-	auto b = out.toSpvID(i.refs[0]);
+	auto b = out.toSpvID(i.refs[1]);
 
 	auto id = out.types.findOrMake(spirv::OpTypeStruct(), { a, b });
 
@@ -592,10 +598,9 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitArray)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitBool)
 {
-	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.refs[0]);//Don't wory about find + making types in literals; it'll probably be made elsewhere
+	//Don't wory about find + making types in literals; it'll probably be made elsewhere
 
-	auto outID = out.consts.findOrMake(t, i.operands[0]);
+	auto outID = out.consts.findOrMake(out.toSpvID(i.outType), i.operands[0]);
 
 	out.setSpvSSA(i.index, outID);
 
@@ -603,10 +608,12 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitBool)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitFloat)
 {
-	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.refs[0]);
+	auto str = in.getString(i.operands[0]);
 	
-	auto outID = out.consts.findOrMake(t, i.operands[0], i.operands[1]);
+	//TODO consider a better algorithm
+	auto v = std::stof(str);
+
+	auto outID = out.consts.findOrMakeFP32(out.toSpvID(i.outType), v);
 
 	out.setSpvSSA(i.index, outID);
 
@@ -614,10 +621,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitFloat)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitInt)
 {
-	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.refs[0]);
-	
-	auto outID = out.consts.findOrMake(t, i.operands[0], i.operands[1]);
+	auto outID = out.consts.findOrMake(out.toSpvID(i.outType), i.operands[0], i.operands[1]);
 
 	out.setSpvSSA(i.index, outID);
 
@@ -636,7 +640,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueMember)
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueNull)
 {
 	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.refs[0]);
+	auto t = out.toSpvID(i.outType);
 
 	out.main->push(spirv::OpConstantNull(), id, { t });
 
@@ -646,9 +650,10 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueReadVar)
 {
 	auto outVal = out.toSpvID(i.index);
 	auto inVal = out.toSpvID(i.refs[0]);
+	auto outType = out.toSpvID(i.outType);
 
-	out.main->push(spirv::OpLoad(), outVal, { inVal });
-
+	out.main->pushTyped(spirv::OpLoad(0), outType, outVal, { inVal });
+	
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueSubarray)
@@ -666,7 +671,7 @@ TODO: test against the spec. Worried about arrays, vectors.
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueZero)
 {
 	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.refs[0]);
+	auto t = out.toSpvID(i.outType);
 
 	out.main->push(spirv::OpConstantNull(), id, { t });
 

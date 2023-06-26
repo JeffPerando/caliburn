@@ -152,7 +152,7 @@ namespace caliburn
 				spirv::OpSpecConstantTrue(),
 				spirv::OpLine(),
 				spirv::OpNoLine()
-				});
+			});
 			uint32_t nextSSA = 1;
 			HashMap<cllr::SSA, spirv::SSA> ssaAliases;
 

@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "basic.h"
+
 #include "spirv/spirv.h"
 
 namespace caliburn
@@ -69,17 +70,7 @@ namespace caliburn
         private:
             bool isValidOp(SpvOp op)
             {
-                if (validOps.empty())
-                {
-                    return true;
-                }
-
-                if (std::binary_search(validOps.begin(), validOps.end(), op))
-                {
-                    return true;
-                }
-
-                return false;
+                return std::binary_search(validOps.begin(), validOps.end(), op);
             }
 
             void dump(ref<std::vector<uint32_t>> codeOut)
@@ -222,9 +213,19 @@ namespace caliburn
         public:
             ConstSection(ptr<cllr::SPIRVOutAssembler> spv) : spvAsm(spv) {}
 
-            SSA findOrMake(SSA t, float fp)
+            SSA findOrMakeFP32(SSA t, float fp)
             {
                 return findOrMake(t, *((uint32_t*)&fp));//hacky, I know
+            }
+
+            SSA findOrMakeFP64(SSA t, double dfp)
+            {
+                auto raw = *((uint64_t*)&dfp);
+
+                uint32_t first = (raw & 0xFFFFFFFF);
+                uint32_t second = ((raw >> 32) & 0xFFFFFFFF);
+
+                return findOrMake(t, first, second);
             }
 
             SSA findOrMake(SSA t, uint32_t first, uint32_t second = 0);

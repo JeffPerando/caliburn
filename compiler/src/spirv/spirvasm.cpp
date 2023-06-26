@@ -36,11 +36,13 @@ void spirv::CodeSection::pushTyped(SpvOp op, SSA type, SSA id, std::vector<uint3
 
 	if (type == 0)
 	{
+		//TODO complain
 		return;
 	}
 
 	if (id == 0)
 	{
+		//TODO complain(?)
 		return;
 	}
 

@@ -6,21 +6,21 @@
 #include <vector>
 
 #include "langcore.h"
-
-/*
-Caliburn Low-Level Representation (CLLR [pronounced Caller]):
-
-- Low-level bytecode for Caliburn code.
-- Format: Tuples.
-  - Fixed-width instructions for easier code navigation.
-  - Instructions can define what the elements in the tuple do.
-- Represents a single compilation unit.
-- Flattened down to shader stages, functions, structs, and basic instructions.
-- Not distributed; Only used internally by compiler.
-*/
+#include "syntax.h"
 
 namespace caliburn
 {
+	/*
+	Caliburn Low-Level Representation (CLLR [pronounced Caller]):
+
+	- Low-level bytecode for Caliburn code.
+	- Format: Tuples.
+	  - Fixed-width instructions for easier code navigation.
+	  - Instructions can define what the elements in the tuple do.
+	- Represents a single compilation unit.
+	- Flattened down to shader stages, functions, structs, and basic instructions.
+	- Not distributed; Only used internally by compiler.
+	*/
 	namespace cllr
 	{
 		class Assembler;
@@ -104,24 +104,15 @@ namespace caliburn
 
 		};
 		
-		/*
-		CLLR instructions are now typed. Most will be type VOID.
-		*/
-		struct IType
-		{
-			TypeCategory cat = TypeCategory::VOID;
-			uint32_t len = 1;
-			std::array<uint32_t, 2> misc = { 0, 0 };
-
-		};
-
 		struct Instruction
 		{
 			SSA index = 0;
 			Opcode op = Opcode::UNKNOWN;
-			IType type;
 			std::array<uint32_t, 3> operands = {};
 			std::array<SSA, 3> refs = {};
+
+			SSA outType = 0;
+			sptr<Token> debugSym = nullptr;
 
 		};
 

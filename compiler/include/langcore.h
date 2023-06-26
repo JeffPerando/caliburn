@@ -12,6 +12,7 @@
 Contains necessary constants, data types, and functions necessary for parsing, interpreting,
 and compiling Caliburn code.
 */
+
 namespace caliburn
 {
 	enum class Target : uint32_t
@@ -57,7 +58,7 @@ namespace caliburn
 	auto static constexpr MIN_VECTOR_LEN = 2;
 	auto static constexpr MAX_VECTOR_LEN = 4;
 
-	enum class TypeCategory
+	enum class TypeCategory : uint32_t
 	{
 		VOID,
 		FLOAT,
@@ -145,15 +146,6 @@ namespace caliburn
 			PRIVATE : 1,
 			SHARED : 1,
 			STATIC : 1;
-
-		StmtModifiers()
-		{
-			PUBLIC = 0;
-			PROTECTED = 0;
-			PRIVATE = 0;
-			SHARED = 0;
-			STATIC = 0;
-		};
 
 	};
 

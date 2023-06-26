@@ -22,10 +22,11 @@ namespace caliburn
 			uint32_t nextSSA = 1;
 			
 			InstructionVec code;
-			InstructionVec ssaToCode;
+			InstructionVec ssaToCode{ new_sptr<Instruction>() };
+			std::vector<Opcode> ssaToOp{ Opcode::UNKNOWN };
 
 			std::vector<std::string> strs;
-			std::vector<uint32_t> ssaRefs;
+			std::vector<uint32_t> ssaRefs{ 0 };
 			
 			//keep a stack of the current loop labels so we can implement break, continue, etc.
 			std::vector<std::pair<SSA, SSA>> loops;
@@ -35,11 +36,8 @@ namespace caliburn
 			{
 				code.reserve(initSize);
 				ssaToCode.reserve(initSize);
-
+				ssaToOp.reserve(initSize);
 				ssaRefs.reserve(initSize);
-				ssaRefs.push_back(0);
-
-				ssaToCode.push_back(new_sptr<Instruction>());//ID 0 is unused
 
 			}
 
@@ -47,7 +45,11 @@ namespace caliburn
 
 			SSA createSSA(Opcode op);
 
-			SSA push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::array<SSA, 3> refs);
+			Opcode opFor(SSA id);
+
+			sptr<Instruction> codeFor(SSA id);
+
+			SSA push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::array<SSA, 3> refs, SSA type = 0, sptr<Token> debug = nullptr);
 
 			SSA pushNew(Opcode op, std::array<uint32_t, 3> operands, std::array<SSA, 3> refs)
 			{
