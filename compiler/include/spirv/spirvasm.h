@@ -56,7 +56,9 @@ namespace caliburn
 
             void push(SpvOp op, SSA id, std::vector<uint32_t> args = {});
 
-            void pushVal(SpvOp op, SSA type, SSA id, std::vector<uint32_t> args);
+            void pushTyped(SpvOp op, SSA type, SSA id, std::vector<uint32_t> args);
+
+            void pushVar(SSA type, SSA id, StorageClass sc, SSA init);
 
             void pushRaw(std::vector<uint32_t> args);
 
@@ -176,7 +178,7 @@ namespace caliburn
 
             SSA findOrMake(SpvOp op, std::vector<uint32_t> args = {}, SSA id = 0);
 
-            void pushType(SpvOp op, SSA id, std::vector<uint32_t> args = {});
+            void pushNew(SpvOp op, SSA id, std::vector<uint32_t> args = {});
 
             void dump(ref<CodeSection> sec) const;
 

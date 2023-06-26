@@ -33,15 +33,18 @@ namespace caliburn
 		{
 			UNKNOWN,
 
+			SHADER_STAGE,
+			SHADER_STAGE_END,
+			/*
 			KERNEL,
 			KERNEL_END,
-
+			*/
 			FUNCTION,
+			VAR_FUNC_ARG,
 			FUNCTION_END,
 
 			VAR_LOCAL,
 			VAR_GLOBAL,
-			VAR_FUNC_ARG,
 			VAR_SHADER_IN,
 			VAR_SHADER_OUT,
 			VAR_DESCRIPTOR,

@@ -9,6 +9,7 @@
 #include "cllr/cllrasm.h"
 #include "cllr/cllrout.h"
 #include "spirv/spirvasm.h"
+#include "spirv/spirvio.h"
 
 namespace caliburn
 {
@@ -30,15 +31,18 @@ namespace caliburn
 		{
 			CLLR_SPIRV_IMPL(OpUnknown);
 
+			CLLR_SPIRV_IMPL(OpShaderStage);
+			CLLR_SPIRV_IMPL(OpShaderStageEnd);
+			/*
 			CLLR_SPIRV_IMPL(OpKernel);
 			CLLR_SPIRV_IMPL(OpKernelEnd);
-
+			*/
 			CLLR_SPIRV_IMPL(OpFunction);
+			CLLR_SPIRV_IMPL(OpVarFuncArg);
 			CLLR_SPIRV_IMPL(OpFunctionEnd);
 
 			CLLR_SPIRV_IMPL(OpVarLocal);
 			CLLR_SPIRV_IMPL(OpVarGlobal);
-			CLLR_SPIRV_IMPL(OpVarFuncArg);
 			CLLR_SPIRV_IMPL(OpVarShaderIn);
 			CLLR_SPIRV_IMPL(OpVarShaderOut);
 			CLLR_SPIRV_IMPL(OpVarDescriptor);
@@ -118,9 +122,6 @@ namespace caliburn
 				spirv::OpMemberName(),
 				spirv::OpModuleProcessed()
 			});
-			const uptr<spirv::CodeSection> spvGloVars = SPIRV_CODE_SECTION(this, SPIRVOpList{
-				spirv::OpVariable()
-			});
 			const uptr<spirv::CodeSection> spvTypes = SPIRV_CODE_SECTION(this, SPIRVOpList{
 				spirv::OpTypeArray(),
 				spirv::OpTypeBool(),
@@ -176,24 +177,29 @@ namespace caliburn
 				spirv::OpMemberDecorateString(),
 				spirv::OpDecorationGroup()
 			});
+			const uptr<spirv::CodeSection> gloVars = SPIRV_CODE_SECTION(this, SPIRVOpList{
+				spirv::OpVariable()
+			});
 			const uptr<spirv::CodeSection> main = SPIRV_CODE_SECTION(this, SPIRVOpList{});
 			
 			spirv::TypeSection types = spirv::TypeSection(this);
 			spirv::ConstSection consts = spirv::ConstSection(this);
 
+			spirv::SpvIO builtins = spirv::SpvIO(this);
+
 			SPIRVOutAssembler() : OutAssembler(Target::GPU)
 			{
 				//here we go...
 				
-				impls[(uint32_t)Opcode::KERNEL] = spirv_impl::OpKernel;
-				impls[(uint32_t)Opcode::KERNEL_END] = spirv_impl::OpKernelEnd;
+				impls[(uint32_t)Opcode::SHADER_STAGE] = spirv_impl::OpShaderStage;
+				impls[(uint32_t)Opcode::SHADER_STAGE_END] = spirv_impl::OpShaderStageEnd;
 
 				impls[(uint32_t)Opcode::FUNCTION] = spirv_impl::OpFunction;
+				impls[(uint32_t)Opcode::VAR_FUNC_ARG] = spirv_impl::OpVarFuncArg;
 				impls[(uint32_t)Opcode::FUNCTION_END] = spirv_impl::OpFunctionEnd;
 
 				impls[(uint32_t)Opcode::VAR_LOCAL] = spirv_impl::OpVarLocal;
 				impls[(uint32_t)Opcode::VAR_GLOBAL] = spirv_impl::OpVarGlobal;
-				impls[(uint32_t)Opcode::VAR_FUNC_ARG] = spirv_impl::OpVarFuncArg;
 				impls[(uint32_t)Opcode::VAR_SHADER_IN] = spirv_impl::OpVarShaderIn;
 				impls[(uint32_t)Opcode::VAR_SHADER_OUT] = spirv_impl::OpVarShaderOut;
 				impls[(uint32_t)Opcode::VAR_DESCRIPTOR] = spirv_impl::OpVarDescriptor;
@@ -271,8 +277,6 @@ namespace caliburn
 			void addExt(std::string ext);
 
 			SSA addImport(std::string instructions);
-
-			SSA addGlobalVar(SSA type, spirv::StorageClass stClass, SSA init);
 
 			void setMemoryModel(spirv::AddressingModel addr, spirv::MemoryModel mem);
 

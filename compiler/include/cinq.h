@@ -10,7 +10,7 @@ C++ Integrated Query is a set of functions meant to integrate vector-centric fun
 namespace cinq
 {
 	template<typename In, typename Out>
-	std::vector<Out> map(std::vector<In> in, std::function<const Out&()> fn)
+	std::vector<Out> map(std::vector<In> in, std::function<Out(const In&)> fn)
 	{
 		auto out = std::vector<Out>(in.size());
 

@@ -25,7 +25,7 @@ void spirv::CodeSection::push(spirv::SpvOp op, SSA id, std::vector<uint32_t> arg
 
 }
 
-void spirv::CodeSection::pushVal(SpvOp op, SSA type, SSA id, std::vector<uint32_t> args)
+void spirv::CodeSection::pushTyped(SpvOp op, SSA type, SSA id, std::vector<uint32_t> args)
 {
 	//TODO check for valid type, maybe.
 
@@ -50,6 +50,19 @@ void spirv::CodeSection::pushVal(SpvOp op, SSA type, SSA id, std::vector<uint32_
 	spvAsm->setOpForSSA(id, op);
 
 	code.insert(code.end(), args.begin(), args.end());
+
+}
+
+void spirv::CodeSection::pushVar(SSA type, SSA id, StorageClass sc, SSA init)
+{
+	std::vector<uint32_t> args = { (uint32_t)sc };
+
+	if (init != 0)
+	{
+		args.push_back(init);
+	}
+
+	pushTyped(spirv::OpVariable(init != 0), type, id, args );
 
 }
 
@@ -141,7 +154,7 @@ spirv::SSA spirv::TypeSection::findOrMake(SpvOp op, std::vector<uint32_t> args, 
 	{
 		if (id != 0)
 		{
-			//TODO figure out this edge case
+			//TODO edge case
 		}
 
 		return fid->second;
@@ -150,6 +163,8 @@ spirv::SSA spirv::TypeSection::findOrMake(SpvOp op, std::vector<uint32_t> args, 
 	if (id == 0)
 	{
 		id = spvAsm->createSSA();
+		spvAsm->setOpForSSA(op, id);
+
 	}
 
 	types->emplace(Type{ op, id, args }, id);
@@ -157,7 +172,7 @@ spirv::SSA spirv::TypeSection::findOrMake(SpvOp op, std::vector<uint32_t> args, 
 	return id;
 }
 
-void spirv::TypeSection::pushType(SpvOp op, SSA id, std::vector<uint32_t> args)
+void spirv::TypeSection::pushNew(SpvOp op, SSA id, std::vector<uint32_t> args)
 {
 	if (id == 0)
 	{
@@ -217,19 +232,19 @@ void spirv::ConstSection::dump(ref<CodeSection> sec) const
 	{
 		if (data.type == spirv::OpTypeBool())
 		{
-			sec.pushVal(data.lower == 0 ? spirv::OpConstantFalse() : spirv::OpConstantTrue(), data.type, id, {});
+			sec.pushTyped(data.lower == 0 ? spirv::OpConstantFalse() : spirv::OpConstantTrue(), data.type, id, {});
 
 		}
 		else
 		{
 			if (data.upper != 0)
 			{
-				sec.pushVal(spirv::OpConstant(2), data.type, id, { data.lower, data.upper });
+				sec.pushTyped(spirv::OpConstant(2), data.type, id, { data.lower, data.upper });
 
 			}
 			else
 			{
-				sec.pushVal(spirv::OpConstant(1), data.type, id, { data.lower });
+				sec.pushTyped(spirv::OpConstant(1), data.type, id, { data.lower });
 
 			}
 			
