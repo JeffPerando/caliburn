@@ -110,6 +110,7 @@ namespace caliburn
 			});
 			const uptr<spirv::CodeSection> spvMisc = SPIRV_CODE_SECTION(this, SPIRVOpList{
 				spirv::OpMemoryModel(),
+				spirv::OpEntryPoint(),
 				spirv::OpExecutionMode(),
 				spirv::OpExecutionModeId()
 			});

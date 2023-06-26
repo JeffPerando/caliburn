@@ -46,10 +46,8 @@ namespace caliburn
         public:
             CodeSection(ptr<cllr::SPIRVOutAssembler> spv, std::vector<SpvOp> ops) : spvAsm(spv), validOps(ops)
             {
-                //OpNop is always valid
                 if (!validOps.empty())
                 {
-                    validOps.push_back(OpNop());
                     std::sort(validOps.begin(), validOps.end());
                 }
 
@@ -70,6 +68,17 @@ namespace caliburn
         private:
             bool isValidOp(SpvOp op)
             {
+                //OpNop is always valid
+                if (op == spirv::OpNop().op)
+                {
+                    return true;
+                }
+
+                if (validOps.empty())
+                {
+                    return true;
+                }
+
                 return std::binary_search(validOps.begin(), validOps.end(), op);
             }
 
