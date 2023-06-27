@@ -260,24 +260,8 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpUnknown)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpShaderStage)
 {
-	auto exModels = std::map<ShaderType, spirv::ExecutionModel>{
-		{ShaderType::COMPUTE, spirv::ExecutionModel::GLCompute},
-		{ShaderType::VERTEX, spirv::ExecutionModel::Vertex},
-		{ShaderType::FRAGMENT, spirv::ExecutionModel::Fragment},
-		{ShaderType::TESS_CTRL, spirv::ExecutionModel::TessellationControl},
-		{ShaderType::TESS_EVAL, spirv::ExecutionModel::TessellationEvaluation},
-		{ShaderType::GEOMETRY, spirv::ExecutionModel::Geometry},
-		{ShaderType::RT_GEN, spirv::ExecutionModel::RayGenerationKHR},
-		{ShaderType::RT_CLOSE, spirv::ExecutionModel::ClosestHitKHR},
-		{ShaderType::RT_ANY_HIT, spirv::ExecutionModel::AnyHitKHR},
-		{ShaderType::RT_INTERSECT, spirv::ExecutionModel::IntersectionKHR},
-		{ShaderType::RT_MISS, spirv::ExecutionModel::MissKHR},
-		{ShaderType::TASK, spirv::ExecutionModel::TaskEXT},
-		{ShaderType::MESH, spirv::ExecutionModel::MeshEXT}
-	};
-	
 	auto type = (ShaderType)i.operands[0];
-	auto ex = exModels.find(type)->second;
+	auto ex = SHADER_EXECUTION_MODELS.find(type)->second;
 
 	InstructionVec cllrIns;
 	
@@ -704,7 +688,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueConstruct)
 	cllr::InstructionVec cllrArgs;
 
 	in.findAll(cllrArgs, { Opcode::CONSTRUCT_ARG }, off + 1, i.operands[0]);
-	auto args = cinq::map<sptr<cllr::Instruction>, spirv::SSA>(cllrArgs, lambda(auto i) { return out.toSpvID(i->index); });
+	auto args = cinq::map<sptr<cllr::Instruction>, spirv::SSA>(cllrArgs, lambda(auto i) { return out.toSpvID(i->refs[0]); });
 
 	out.main->pushTyped(spirv::OpCompositeConstruct((uint32_t)args.size()), t, id, args);
 	//TODO consider calling constructor here. Or in the CLLR. idk.
@@ -932,12 +916,46 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueInvokePos)
 {
-	
+	//TODO adjust for non-compute shaders
+
+	auto id = out.toSpvID(i.index);
+	auto t = out.toSpvID(i.outType);
+
+	auto globalInvokeXYZ = out.builtins.getBuiltinVar(spirv::BuiltIn::GlobalInvocationId);
+
+	auto u32 = out.types.findOrMake(spirv::OpTypeInt(), { 32, 0 });
+	auto i32 = out.types.findOrMake(spirv::OpTypeInt(), { 32, 1 });
+	auto index = out.consts.findOrMake(i32, i.operands[0]);
+
+	auto ptrIn = out.types.findOrMake(spirv::OpTypePointer(), { (uint32_t)spirv::StorageClass::Input, u32 });
+
+	auto access = out.createSSA();
+
+	out.main->pushTyped(spirv::OpAccessChain(1), ptrIn, access, { globalInvokeXYZ, index });
+	out.main->pushTyped(spirv::OpLoad(), u32, id, { access });
+
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueInvokeSize)
 {
-	
+	//TODO I don't think this works in non-compute shaders
+
+	auto id = out.toSpvID(i.index);
+	auto t = out.toSpvID(i.outType);
+
+	auto globalInvokeXYZ = out.builtins.getBuiltinVar(spirv::BuiltIn::GlobalSize);
+
+	auto u32 = out.types.findOrMake(spirv::OpTypeInt(), { 32, 0 });
+	auto i32 = out.types.findOrMake(spirv::OpTypeInt(), { 32, 1 });
+	auto index = out.consts.findOrMake(i32, i.operands[0]);
+
+	auto ptrIn = out.types.findOrMake(spirv::OpTypePointer(), { (uint32_t)spirv::StorageClass::Input, u32 });
+
+	auto access = out.createSSA();
+
+	out.main->pushTyped(spirv::OpAccessChain(1), ptrIn, access, { globalInvokeXYZ, index });
+	out.main->pushTyped(spirv::OpLoad(), u32, id, { access });
+
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitArray)

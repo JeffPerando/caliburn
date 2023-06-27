@@ -29,6 +29,22 @@ namespace caliburn
 
 		namespace spirv_impl
 		{
+			static const HashMap<ShaderType, spirv::ExecutionModel, Operator> SHADER_EXECUTION_MODELS = {
+				{ShaderType::COMPUTE, spirv::ExecutionModel::GLCompute},
+				{ShaderType::VERTEX, spirv::ExecutionModel::Vertex},
+				{ShaderType::FRAGMENT, spirv::ExecutionModel::Fragment},
+				{ShaderType::TESS_CTRL, spirv::ExecutionModel::TessellationControl},
+				{ShaderType::TESS_EVAL, spirv::ExecutionModel::TessellationEvaluation},
+				{ShaderType::GEOMETRY, spirv::ExecutionModel::Geometry},
+				{ShaderType::RT_GEN, spirv::ExecutionModel::RayGenerationKHR},
+				{ShaderType::RT_CLOSE, spirv::ExecutionModel::ClosestHitKHR},
+				{ShaderType::RT_ANY_HIT, spirv::ExecutionModel::AnyHitKHR},
+				{ShaderType::RT_INTERSECT, spirv::ExecutionModel::IntersectionKHR},
+				{ShaderType::RT_MISS, spirv::ExecutionModel::MissKHR},
+				{ShaderType::TASK, spirv::ExecutionModel::TaskEXT},
+				{ShaderType::MESH, spirv::ExecutionModel::MeshEXT}
+			};
+
 			CLLR_SPIRV_IMPL(OpUnknown);
 
 			CLLR_SPIRV_IMPL(OpShaderStage);
