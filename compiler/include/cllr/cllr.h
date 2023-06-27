@@ -80,6 +80,8 @@ namespace caliburn
 			COMPARE,
 
 			VALUE_CAST,
+			VALUE_CONSTRUCT,
+			CONSTRUCT_ARG,
 			VALUE_DEREF,
 			VALUE_EXPR,
 			VALUE_EXPR_UNARY,

@@ -7,6 +7,74 @@
 
 using namespace caliburn;
 
+cllr::SPIRVOutAssembler::SPIRVOutAssembler() : OutAssembler(Target::GPU)
+{
+	//here we go...
+
+	impls[(uint32_t)Opcode::SHADER_STAGE] = spirv_impl::OpShaderStage;
+	impls[(uint32_t)Opcode::SHADER_STAGE_END] = spirv_impl::OpShaderStageEnd;
+
+	impls[(uint32_t)Opcode::FUNCTION] = spirv_impl::OpFunction;
+	impls[(uint32_t)Opcode::VAR_FUNC_ARG] = spirv_impl::OpVarFuncArg;
+	impls[(uint32_t)Opcode::FUNCTION_END] = spirv_impl::OpFunctionEnd;
+
+	impls[(uint32_t)Opcode::VAR_LOCAL] = spirv_impl::OpVarLocal;
+	impls[(uint32_t)Opcode::VAR_GLOBAL] = spirv_impl::OpVarGlobal;
+	impls[(uint32_t)Opcode::VAR_SHADER_IN] = spirv_impl::OpVarShaderIn;
+	impls[(uint32_t)Opcode::VAR_SHADER_OUT] = spirv_impl::OpVarShaderOut;
+	impls[(uint32_t)Opcode::VAR_DESCRIPTOR] = spirv_impl::OpVarDescriptor;
+
+	impls[(uint32_t)Opcode::CALL] = spirv_impl::OpCall;
+	impls[(uint32_t)Opcode::CALL_ARG] = spirv_impl::OpCallArg;
+
+	impls[(uint32_t)Opcode::TYPE_VOID] = spirv_impl::OpTypeVoid;
+	impls[(uint32_t)Opcode::TYPE_FLOAT] = spirv_impl::OpTypeFloat;
+	impls[(uint32_t)Opcode::TYPE_INT] = spirv_impl::OpTypeInt;
+	impls[(uint32_t)Opcode::TYPE_ARRAY] = spirv_impl::OpTypeArray;
+	impls[(uint32_t)Opcode::TYPE_VECTOR] = spirv_impl::OpTypeVector;
+	impls[(uint32_t)Opcode::TYPE_MATRIX] = spirv_impl::OpTypeMatrix;
+
+	impls[(uint32_t)Opcode::TYPE_STRUCT] = spirv_impl::OpTypeStruct;
+	impls[(uint32_t)Opcode::STRUCT_MEMBER] = spirv_impl::OpStructMember;
+	impls[(uint32_t)Opcode::STRUCT_END] = spirv_impl::OpStructEnd;
+
+	impls[(uint32_t)Opcode::TYPE_BOOL] = spirv_impl::OpTypeBool;
+	impls[(uint32_t)Opcode::TYPE_PTR] = spirv_impl::OpTypePtr;
+	impls[(uint32_t)Opcode::TYPE_TUPLE] = spirv_impl::OpTypeTuple;
+	impls[(uint32_t)Opcode::TYPE_STRING] = spirv_impl::OpTypeString;
+
+	impls[(uint32_t)Opcode::LABEL] = spirv_impl::OpLabel;
+	impls[(uint32_t)Opcode::JUMP] = spirv_impl::OpJump;
+	impls[(uint32_t)Opcode::JUMP_COND] = spirv_impl::OpJumpCond;
+	impls[(uint32_t)Opcode::LOOP] = spirv_impl::OpLoop;
+
+	impls[(uint32_t)Opcode::ASSIGN] = spirv_impl::OpAssign;
+	impls[(uint32_t)Opcode::COMPARE] = spirv_impl::OpCompare;
+	impls[(uint32_t)Opcode::VALUE_CAST] = spirv_impl::OpValueCast;
+	impls[(uint32_t)Opcode::VALUE_CONSTRUCT] = spirv_impl::OpValueConstruct;
+	impls[(uint32_t)Opcode::CONSTRUCT_ARG] = spirv_impl::OpConstructArg;
+	impls[(uint32_t)Opcode::VALUE_DEREF] = spirv_impl::OpValueDeref;
+	impls[(uint32_t)Opcode::VALUE_EXPR] = spirv_impl::OpValueExpr;
+	impls[(uint32_t)Opcode::VALUE_EXPR_UNARY] = spirv_impl::OpValueExprUnary;
+	impls[(uint32_t)Opcode::VALUE_INVOKE_POS] = spirv_impl::OpValueInvokePos;
+	impls[(uint32_t)Opcode::VALUE_INVOKE_SIZE] = spirv_impl::OpValueInvokeSize;
+	impls[(uint32_t)Opcode::VALUE_LIT_ARRAY] = spirv_impl::OpValueLitArray;
+	impls[(uint32_t)Opcode::VALUE_LIT_BOOL] = spirv_impl::OpValueLitBool;
+	impls[(uint32_t)Opcode::VALUE_LIT_FP] = spirv_impl::OpValueLitFloat;
+	impls[(uint32_t)Opcode::VALUE_LIT_INT] = spirv_impl::OpValueLitInt;
+	impls[(uint32_t)Opcode::VALUE_LIT_STR] = spirv_impl::OpValueLitStr;
+	impls[(uint32_t)Opcode::VALUE_MEMBER] = spirv_impl::OpValueMember;
+	impls[(uint32_t)Opcode::VALUE_NULL] = spirv_impl::OpValueNull;
+	impls[(uint32_t)Opcode::VALUE_READ_VAR] = spirv_impl::OpValueReadVar;
+	impls[(uint32_t)Opcode::VALUE_SUBARRAY] = spirv_impl::OpValueSubarray;
+	impls[(uint32_t)Opcode::VALUE_ZERO] = spirv_impl::OpValueZero;
+
+	impls[(uint32_t)Opcode::RETURN] = spirv_impl::OpReturn;
+	impls[(uint32_t)Opcode::RETURN_VALUE] = spirv_impl::OpReturnValue;
+	impls[(uint32_t)Opcode::DISCARD] = spirv_impl::OpDiscard;
+
+}
+
 uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(ref<cllr::Assembler> cllrAsm, ref<std::vector<sptr<cllr::Instruction>>> code)
 {
 	for (size_t off = 0; off < code.size(); ++off)
@@ -14,7 +82,7 @@ uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(ref<cllr::Ass
 		auto const& i = code[off];
 
 		auto fn = (impls[(uint32_t)i->op]);
-		(*fn)(target, *i, off, cllrAsm, *this);
+		(*fn)(*i, off, cllrAsm, *this);
 
 	}
 
@@ -627,6 +695,22 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueCast)//TODO check impl
 	out.main->push(spirv::OpBitcast(), out.toSpvID(i.index), { lhs });//TODO get output type
 
 }
+
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueConstruct)
+{
+	auto id = out.toSpvID(i.index);
+	auto t = out.toSpvID(i.outType);
+
+	cllr::InstructionVec cllrArgs;
+
+	in.findAll(cllrArgs, { Opcode::CONSTRUCT_ARG }, off + 1, i.operands[0]);
+	auto args = cinq::map<sptr<cllr::Instruction>, spirv::SSA>(cllrArgs, lambda(auto i) { return out.toSpvID(i->index); });
+
+	out.main->pushTyped(spirv::OpCompositeConstruct((uint32_t)args.size()), t, id, args);
+	//TODO consider calling constructor here. Or in the CLLR. idk.
+}
+
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpConstructArg) {}//search-ahead
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueDeref)
 {

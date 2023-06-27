@@ -18,11 +18,11 @@ namespace caliburn
 		class SPIRVOutAssembler;
 
 		//Function pointer type for easier usage later
-		using SPIRVOutFn = void(Target target, ref<cllr::Instruction> i, size_t off, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out);
+		using SPIRVOutFn = void(ref<cllr::Instruction> i, size_t off, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out);
 		using SPIRVOpList = std::initializer_list<spirv::SpvOp>;
 
 		//Macro shorthand for implementation signature
-		#define CLLR_SPIRV_IMPL(Name) void Name(Target target, ref<Instruction> i, size_t off, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out)
+		#define CLLR_SPIRV_IMPL(Name) void Name(ref<Instruction> i, size_t off, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out)
 		
 		//I hate how wordy modern C++ can be...
 		#define SPIRV_CODE_SECTION(...) new_uptr<spirv::CodeSection>(__VA_ARGS__)
@@ -76,6 +76,8 @@ namespace caliburn
 			CLLR_SPIRV_IMPL(OpCompare);
 
 			CLLR_SPIRV_IMPL(OpValueCast);
+			CLLR_SPIRV_IMPL(OpValueConstruct);
+			CLLR_SPIRV_IMPL(OpConstructArg);
 			CLLR_SPIRV_IMPL(OpValueDeref);
 			CLLR_SPIRV_IMPL(OpValueExpr);
 			CLLR_SPIRV_IMPL(OpValueExprUnary);
@@ -189,72 +191,7 @@ namespace caliburn
 
 			spirv::SpvIO builtins = spirv::SpvIO(this);
 
-			SPIRVOutAssembler() : OutAssembler(Target::GPU)
-			{
-				//here we go...
-				
-				impls[(uint32_t)Opcode::SHADER_STAGE] = spirv_impl::OpShaderStage;
-				impls[(uint32_t)Opcode::SHADER_STAGE_END] = spirv_impl::OpShaderStageEnd;
-
-				impls[(uint32_t)Opcode::FUNCTION] = spirv_impl::OpFunction;
-				impls[(uint32_t)Opcode::VAR_FUNC_ARG] = spirv_impl::OpVarFuncArg;
-				impls[(uint32_t)Opcode::FUNCTION_END] = spirv_impl::OpFunctionEnd;
-
-				impls[(uint32_t)Opcode::VAR_LOCAL] = spirv_impl::OpVarLocal;
-				impls[(uint32_t)Opcode::VAR_GLOBAL] = spirv_impl::OpVarGlobal;
-				impls[(uint32_t)Opcode::VAR_SHADER_IN] = spirv_impl::OpVarShaderIn;
-				impls[(uint32_t)Opcode::VAR_SHADER_OUT] = spirv_impl::OpVarShaderOut;
-				impls[(uint32_t)Opcode::VAR_DESCRIPTOR] = spirv_impl::OpVarDescriptor;
-
-				impls[(uint32_t)Opcode::CALL] = spirv_impl::OpCall;
-				impls[(uint32_t)Opcode::CALL_ARG] = spirv_impl::OpCallArg;
-
-				impls[(uint32_t)Opcode::TYPE_VOID] = spirv_impl::OpTypeVoid;
-				impls[(uint32_t)Opcode::TYPE_FLOAT] = spirv_impl::OpTypeFloat;
-				impls[(uint32_t)Opcode::TYPE_INT] = spirv_impl::OpTypeInt;
-				impls[(uint32_t)Opcode::TYPE_ARRAY] = spirv_impl::OpTypeArray;
-				impls[(uint32_t)Opcode::TYPE_VECTOR] = spirv_impl::OpTypeVector;
-				impls[(uint32_t)Opcode::TYPE_MATRIX] = spirv_impl::OpTypeMatrix;
-
-				impls[(uint32_t)Opcode::TYPE_STRUCT] = spirv_impl::OpTypeStruct;
-				impls[(uint32_t)Opcode::STRUCT_MEMBER] = spirv_impl::OpStructMember;
-				impls[(uint32_t)Opcode::STRUCT_END] = spirv_impl::OpStructEnd;
-
-				impls[(uint32_t)Opcode::TYPE_BOOL] = spirv_impl::OpTypeBool;
-				impls[(uint32_t)Opcode::TYPE_PTR] = spirv_impl::OpTypePtr;
-				impls[(uint32_t)Opcode::TYPE_TUPLE] = spirv_impl::OpTypeTuple;
-				impls[(uint32_t)Opcode::TYPE_STRING] = spirv_impl::OpTypeString;
-
-				impls[(uint32_t)Opcode::LABEL] = spirv_impl::OpLabel;
-				impls[(uint32_t)Opcode::JUMP] = spirv_impl::OpJump;
-				impls[(uint32_t)Opcode::JUMP_COND] = spirv_impl::OpJumpCond;
-				impls[(uint32_t)Opcode::LOOP] = spirv_impl::OpLoop;
-
-				impls[(uint32_t)Opcode::ASSIGN] = spirv_impl::OpAssign;
-				impls[(uint32_t)Opcode::COMPARE] = spirv_impl::OpCompare;
-				impls[(uint32_t)Opcode::VALUE_CAST] = spirv_impl::OpValueCast;
-				impls[(uint32_t)Opcode::VALUE_DEREF] = spirv_impl::OpValueDeref;
-				impls[(uint32_t)Opcode::VALUE_EXPR] = spirv_impl::OpValueExpr;
-				impls[(uint32_t)Opcode::VALUE_EXPR_UNARY] = spirv_impl::OpValueExprUnary;
-				impls[(uint32_t)Opcode::VALUE_INVOKE_POS] = spirv_impl::OpValueInvokePos;
-				impls[(uint32_t)Opcode::VALUE_INVOKE_SIZE] = spirv_impl::OpValueInvokeSize;
-				impls[(uint32_t)Opcode::VALUE_LIT_ARRAY] = spirv_impl::OpValueLitArray;
-				impls[(uint32_t)Opcode::VALUE_LIT_BOOL] = spirv_impl::OpValueLitBool;
-				impls[(uint32_t)Opcode::VALUE_LIT_FP] = spirv_impl::OpValueLitFloat;
-				impls[(uint32_t)Opcode::VALUE_LIT_INT] = spirv_impl::OpValueLitInt;
-				impls[(uint32_t)Opcode::VALUE_LIT_STR] = spirv_impl::OpValueLitStr;
-				impls[(uint32_t)Opcode::VALUE_MEMBER] = spirv_impl::OpValueMember;
-				impls[(uint32_t)Opcode::VALUE_NULL] = spirv_impl::OpValueNull;
-				impls[(uint32_t)Opcode::VALUE_READ_VAR] = spirv_impl::OpValueReadVar;
-				impls[(uint32_t)Opcode::VALUE_SUBARRAY] = spirv_impl::OpValueSubarray;
-				impls[(uint32_t)Opcode::VALUE_ZERO] = spirv_impl::OpValueZero;
-
-				impls[(uint32_t)Opcode::RETURN] = spirv_impl::OpReturn;
-				impls[(uint32_t)Opcode::RETURN_VALUE] = spirv_impl::OpReturnValue;
-				impls[(uint32_t)Opcode::DISCARD] = spirv_impl::OpDiscard;
-
-			}
-
+			SPIRVOutAssembler();
 			virtual ~SPIRVOutAssembler() {}
 
 		private:
