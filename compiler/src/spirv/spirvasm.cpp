@@ -57,6 +57,14 @@ void spirv::CodeSection::pushTyped(SpvOp op, SSA type, SSA id, std::vector<uint3
 
 void spirv::CodeSection::pushVar(SSA type, SSA id, StorageClass sc, SSA init)
 {
+	if (id == 0)
+	{
+		//TODO complain
+		return;
+	}
+
+	varMeta.emplace(id, VarData{ id, type, sc });
+
 	std::vector<uint32_t> args = { (uint32_t)sc };
 
 	if (init != 0)
@@ -146,6 +154,20 @@ spirv::SSA spirv::CodeSection::find(SpvOp op, std::vector<uint32_t> args)
 	}
 
 	return 0;
+}
+
+bool spirv::CodeSection::findVarMeta(SSA id, ref<VarData> meta)
+{
+	auto found = varMeta.find(id);
+
+	if (found == varMeta.end())
+	{
+		return false;
+	}
+
+	meta = found->second;
+
+	return true;
 }
 
 spirv::SSA spirv::TypeSection::findOrMake(SpvOp op, std::vector<uint32_t> args, SSA id)

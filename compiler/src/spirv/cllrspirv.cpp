@@ -156,12 +156,21 @@ void cllr::SPIRVOutAssembler::addExt(std::string ext)
 	extensions.push_back(ext);
 }
 
-spirv::SSA cllr::SPIRVOutAssembler::addImport(std::string instructions)
+spirv::SSA cllr::SPIRVOutAssembler::addImport(std::string ins)
 {
+	auto found = instructions.find(ins);
+
+	if (found != instructions.end())
+	{
+		return found->second;
+	}
+
 	auto id = createSSA();
 
-	spvImports->push(spirv::OpExtInstImport(spirv::SpvStrLen(instructions)), id, {});
-	spvImports->pushStr(instructions);
+	spvImports->push(spirv::OpExtInstImport(spirv::SpvStrLen(ins)), id, {});
+	spvImports->pushStr(ins);
+
+	instructions.emplace(ins, id);
 
 	return id;
 }
@@ -513,7 +522,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpJumpCond)
 	auto t = out.toSpvID(i.refs[1]);
 	auto f = out.toSpvID(i.refs[2]);
 
-	out.main->push(spirv::OpBranchConditional(1), 0, { cond, t, f });
+	out.main->push(spirv::OpBranchConditional(0), 0, { cond, t, f });
 
 }
 
@@ -531,30 +540,83 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpAssign)
 
 }
 
-CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare) //TODO finish
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 {
 	auto id = out.toSpvID(i.index);
+	auto spvOutType = out.types.findOrMake(spirv::OpTypeBool(), {});
+
 	auto cllrOp = (Operator)i.operands[0];
-
-	auto cllrLHS = i.refs[0];
-	auto cllrRHS = i.refs[1];
-
-	auto lhs = out.toSpvID(cllrLHS);
-	auto rhs = out.toSpvID(cllrRHS);
 
 	auto op = spirv::OpNop();
 
-	switch (cllrOp)
+	auto outType = in.codeFor(i.outType);
+
+	if (outType->op == Opcode::TYPE_FLOAT)
 	{
-	case Operator::COMP_EQ: op = spirv::OpIEqual(); break;
-	case Operator::COMP_NEQ: op = spirv::OpINotEqual(); break;
-	case Operator::COMP_GT: op = spirv::OpSGreaterThan(); break;
-	case Operator::COMP_GTE: op = spirv::OpSGreaterThanEqual(); break;
-	case Operator::COMP_LT: op = spirv::OpSLessThan(); break;
-	case Operator::COMP_LTE: op = spirv::OpSLessThanEqual(); break;
+		switch (cllrOp)
+		{
+		case Operator::COMP_EQ: op = spirv::OpFOrdEqual(); break;
+		case Operator::COMP_NEQ: op = spirv::OpFOrdNotEqual(); break;
+		case Operator::COMP_GT: op = spirv::OpFOrdGreaterThan(); break;
+		case Operator::COMP_GTE: op = spirv::OpFOrdGreaterThanEqual(); break;
+		case Operator::COMP_LT: op = spirv::OpFOrdLessThan(); break;
+		case Operator::COMP_LTE: op = spirv::OpFOrdLessThanEqual(); break;
+		default: return;//TODO complain
+		}
+
+	}
+	else if (outType->op == Opcode::TYPE_INT)
+	{
+		//Unsigned int
+		if (outType->operands[1] == 0)
+		{
+			switch (cllrOp)
+			{
+			case Operator::COMP_EQ: op = spirv::OpIEqual(); break;
+			case Operator::COMP_NEQ: op = spirv::OpINotEqual(); break;
+			case Operator::COMP_GT: op = spirv::OpUGreaterThan(); break;
+			case Operator::COMP_GTE: op = spirv::OpUGreaterThanEqual(); break;
+			case Operator::COMP_LT: op = spirv::OpULessThan(); break;
+			case Operator::COMP_LTE: op = spirv::OpULessThanEqual(); break;
+			default: return;//TODO complain
+			}
+
+		}
+		else //Signed int
+		{
+			switch (cllrOp)
+			{
+			case Operator::COMP_EQ: op = spirv::OpIEqual(); break;
+			case Operator::COMP_NEQ: op = spirv::OpINotEqual(); break;
+			case Operator::COMP_GT: op = spirv::OpSGreaterThan(); break;
+			case Operator::COMP_GTE: op = spirv::OpSGreaterThanEqual(); break;
+			case Operator::COMP_LT: op = spirv::OpSLessThan(); break;
+			case Operator::COMP_LTE: op = spirv::OpSLessThanEqual(); break;
+			default: return;//TODO complain
+			}
+
+		}
+
+	}
+	else if (outType->op == Opcode::TYPE_BOOL)
+	{
+		switch (cllrOp)
+		{
+		case Operator::AND: op = spirv::OpLogicalAnd(); break;
+		case Operator::OR: op = spirv::OpLogicalOr(); break;
+		default: return;//TODO complain
+		}
+
+	}
+	else
+	{
+		//TODO complain
 	}
 
-	//out.main->push(op, id, { lhs, rhs });
+	auto lhs = out.toSpvID(i.refs[0]);
+	auto rhs = out.toSpvID(i.refs[1]);
+
+	out.main->pushTyped(op, spvOutType, id, { lhs, rhs } );
 
 }
 
@@ -568,17 +630,220 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueCast)//TODO check impl
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueDeref)
 {
-	
+	auto id = out.toSpvID(i.index);
+	auto t = out.toSpvID(i.outType);
+
+	//TODO check memory operands
+	out.main->pushTyped(spirv::OpLoad(), t, id, { out.toSpvID(i.refs[0]) });
+
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpr)
 {
-	
+	auto id = out.toSpvID(i.index);
+	auto spvOutType = out.toSpvID(i.outType);
+
+	auto lhs = out.toSpvID(i.refs[0]);
+	auto rhs = out.toSpvID(i.refs[1]);
+
+	auto cllrOp = (Operator)i.operands[0];
+
+	if (cllrOp == Operator::POW)
+	{
+		auto lib = out.addImport("GLSL.std.450");
+
+		out.main->pushTyped(spirv::OpExtInst(2), spvOutType, id, { lib, (uint32_t)spirv::GLSL450Ext::Pow, lhs, rhs });
+		return;
+	}
+
+	auto op = spirv::OpNop();
+
+	auto outType = in.codeFor(i.outType);
+
+	if (outType->op == Opcode::TYPE_FLOAT)
+	{
+		switch (cllrOp)
+		{
+		case Operator::ADD: op = spirv::OpFAdd(); break;
+		case Operator::SUB: op = spirv::OpFSub(); break;
+		case Operator::MUL: op = spirv::OpFMul(); break;
+		case Operator::DIV: op = spirv::OpFDiv(); break;
+		case Operator::INTDIV: return; //TODO complain
+		case Operator::MOD: op = spirv::OpFMod(); break;
+		default: return;//TODO complain
+		}
+
+	}
+	else if (outType->op == Opcode::TYPE_INT)
+	{
+		switch (cllrOp)
+		{
+		case Operator::ADD: op = spirv::OpIAdd(); break;
+		case Operator::SUB: op = spirv::OpISub(); break;
+		case Operator::MUL: op = spirv::OpIMul(); break;
+		case Operator::BIT_AND: op = spirv::OpBitwiseAnd(); break;
+		case Operator::BIT_OR: op = spirv::OpBitwiseOr(); break;
+		case Operator::BIT_XOR: op = spirv::OpBitwiseXor(); break;
+		}
+
+		//Unsigned int
+		if (outType->operands[1] == 0)
+		{
+			switch (cllrOp)
+			{
+			case Operator::DIV: return; //TODO complain
+			case Operator::INTDIV: op = spirv::OpUDiv(); break;
+			case Operator::MOD: op = spirv::OpUMod(); break;
+			default: return;//TODO complain
+			}
+
+		}
+		else //Signed int
+		{
+			switch (cllrOp)
+			{
+			case Operator::DIV: return; //TODO complain
+			case Operator::INTDIV: op = spirv::OpSDiv(); break;
+			case Operator::MOD: op = spirv::OpSMod(); break;
+			default: return;//TODO complain
+			}
+
+		}
+
+	}
+	else
+	{
+		//TODO complain
+		return;
+	}
+
+	out.main->pushTyped(op, spvOutType, id, { lhs, rhs });
+
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 {
+	auto id = out.toSpvID(i.index);
+	auto spvOutType = out.toSpvID(i.outType);
+
+	auto lhs = out.toSpvID(i.refs[0]);
 	
+	auto cllrOp = (Operator)i.operands[0];
+
+	auto op = spirv::OpNop();
+
+	auto outType = in.codeFor(i.outType);
+	
+	if (cllrOp == Operator::ABS)
+	{
+		auto extOp = spirv::GLSL450Ext::None;
+
+		if (outType->op == Opcode::TYPE_FLOAT)
+		{
+			extOp = spirv::GLSL450Ext::FAbs;
+		}
+		else if (outType->op == Opcode::TYPE_INT)
+		{
+			extOp = spirv::GLSL450Ext::SAbs;
+		}
+		else
+		{
+			//TODO complain
+			return;
+		}
+
+		auto lib = out.addImport("GLSL.std.450");
+
+		out.main->pushTyped(spirv::OpExtInst(1), spvOutType, id, { lib, (uint32_t)extOp, lhs });
+		return;
+	}
+	else if (cllrOp == Operator::BIT_NEG)
+	{
+		if (outType->op == Opcode::TYPE_FLOAT)
+		{
+			//TODO complain
+			return;
+		}
+		
+		op = spirv::OpNot();
+
+	}
+	else if (outType->op == Opcode::TYPE_FLOAT)
+	{
+		if (cllrOp == Operator::NEG)
+		{
+			op = spirv::OpFNegate();
+
+		}
+		else
+		{
+			//TODO complain
+			return;
+		}
+
+	}
+	else if (outType->op == Opcode::TYPE_INT)
+	{
+		if (cllrOp == Operator::BIT_NEG)
+		{
+			op = spirv::OpNot();
+		}
+		else if (outType->operands[1] == 0) //Unsigned int
+		{
+			if (cllrOp == Operator::NEG)
+			{
+				op = spirv::OpSNegate();
+			}
+			else if (cllrOp == Operator::SIGN)
+			{
+				//TODO
+				return;
+			}
+			else
+			{
+				//TODO complain
+				return;
+			}
+
+		}
+		else //Signed int
+		{
+			if (cllrOp == Operator::UNSIGN)
+			{
+				//TODO
+				return;
+			}
+			else
+			{
+				//TODO complain
+				return;
+			}
+			
+		}
+
+	}
+	else if (outType->op == Opcode::TYPE_BOOL)
+	{
+		if (cllrOp == Operator::BOOL_NOT)
+		{
+			op = spirv::OpLogicalNot();
+
+		}
+		else
+		{
+			//TODO complain
+			return;
+		}
+
+	}
+	else
+	{
+		//TODO complain
+		return;
+	}
+
+	out.main->pushTyped(op, spvOutType, id, { lhs });
+
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueInvokePos)
@@ -634,7 +899,27 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitStr)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueMember)
 {
-	
+	auto id = out.toSpvID(i.index);
+	auto outT = out.toSpvID(i.outType);
+	auto v = out.toSpvID(i.refs[0]);
+
+	spirv::VarData vData;
+
+	if (!out.main->findVarMeta(v, vData) && !out.gloVars->findVarMeta(v, vData))
+	{
+		//TODO complain
+	}
+
+	auto i32 = out.types.findOrMake(spirv::OpTypeInt(), { 32, 1 });
+	auto c = out.consts.findOrMake(i32, i.operands[0]);
+
+	auto ptrType = out.types.findOrMake(spirv::OpTypePointer(), { (uint32_t)vData.strClass, outT });
+
+	auto access = out.createSSA();
+
+	out.main->pushTyped(spirv::OpAccessChain(1), ptrType, access, { v, c });
+	out.main->pushTyped(spirv::OpLoad(), outT, id, { access });
+
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueNull)
@@ -658,7 +943,35 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueReadVar)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueSubarray)
 {
-	
+	auto id = out.toSpvID(i.index);
+	auto outT = out.toSpvID(i.outType);
+	auto v = out.toSpvID(i.refs[0]);
+
+	auto index = out.toSpvID(i.refs[1]);
+	auto index2D = out.toSpvID(i.refs[2]);
+
+	spirv::VarData vData;
+
+	if (!out.main->findVarMeta(v, vData) && !out.gloVars->findVarMeta(v, vData))
+	{
+		//TODO complain
+	}
+
+	auto ptrType = out.types.findOrMake(spirv::OpTypePointer(), { (uint32_t)vData.strClass, outT });
+
+	auto access = out.createSSA();
+
+	if (index2D != 0)
+	{
+		out.main->pushTyped(spirv::OpInBoundsAccessChain(1), ptrType, access, { v, index });
+	}
+	else
+	{
+		out.main->pushTyped(spirv::OpInBoundsAccessChain(2), ptrType, access, { v, index, index2D });
+	}
+
+	out.main->pushTyped(spirv::OpLoad(), outT, id, { access });
+
 }
 
 /*

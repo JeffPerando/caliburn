@@ -33,6 +33,14 @@ namespace caliburn
             std::vector<uint32_t> io;
         };
 
+        struct VarData
+        {
+            SSA id;
+            SSA innerType;
+            StorageClass strClass;
+
+        };
+
         class CodeSection
         {
             friend class cllr::SPIRVOutAssembler;
@@ -43,6 +51,9 @@ namespace caliburn
 
             std::vector<SpvOp> validOps;
             std::vector<uint32_t> code;
+            
+            std::map<SSA, VarData> varMeta;
+
         public:
             CodeSection(ptr<cllr::SPIRVOutAssembler> spv, std::vector<SpvOp> ops) : spvAsm(spv), validOps(ops)
             {
@@ -64,6 +75,8 @@ namespace caliburn
             void pushStr(std::string str);
 
             SSA find(SpvOp op, std::vector<uint32_t> args);
+
+            bool findVarMeta(SSA id, ref<VarData> meta);
 
         private:
             bool isValidOp(SpvOp op)

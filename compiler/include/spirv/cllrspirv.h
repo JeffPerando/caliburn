@@ -160,7 +160,8 @@ namespace caliburn
 			std::vector<spirv::SSAEntry> ssaEntries;
 			std::set<spirv::Capability> capabilities;
 			std::vector<std::string> extensions;
-			std::vector<std::string> instructions{"GLSL.std.450"};//TODO reconsider
+
+			HashMap<std::string, spirv::SSA> instructions;
 
 			spirv::AddressingModel addrModel = spirv::AddressingModel::Logical;
 			spirv::MemoryModel memModel = spirv::MemoryModel::GLSL450;
