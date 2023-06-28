@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <functional>
 #include <map>
 #include <set>
 #include <vector>
@@ -29,7 +30,7 @@ namespace caliburn
 
 		namespace spirv_impl
 		{
-			static const HashMap<ShaderType, spirv::ExecutionModel, Operator> SHADER_EXECUTION_MODELS = {
+			static const HashMap<ShaderType, spirv::ExecutionModel> SHADER_EXECUTION_MODELS = {
 				{ShaderType::COMPUTE, spirv::ExecutionModel::GLCompute},
 				{ShaderType::VERTEX, spirv::ExecutionModel::Vertex},
 				{ShaderType::FRAGMENT, spirv::ExecutionModel::Fragment},
@@ -100,6 +101,7 @@ namespace caliburn
 			CLLR_SPIRV_IMPL(OpValueInvokePos);
 			CLLR_SPIRV_IMPL(OpValueInvokeSize);
 			CLLR_SPIRV_IMPL(OpValueLitArray);
+			CLLR_SPIRV_IMPL(OpLitArrayElem);
 			CLLR_SPIRV_IMPL(OpValueLitBool);
 			CLLR_SPIRV_IMPL(OpValueLitFloat);
 			CLLR_SPIRV_IMPL(OpValueLitInt);
@@ -119,20 +121,20 @@ namespace caliburn
 		class SPIRVOutAssembler : cllr::OutAssembler<uint32_t>
 		{
 		private:
-			const uptr<spirv::CodeSection> spvHeader = SPIRV_CODE_SECTION(this, SPIRVOpList{
+			const uptr<spirv::CodeSection> spvHeader = SPIRV_CODE_SECTION(spirv::SSASection::HEADER, this, SPIRVOpList{
 				spirv::OpCapability(),
 				spirv::OpExtension()
 			});
-			const uptr<spirv::CodeSection> spvImports = SPIRV_CODE_SECTION(this, SPIRVOpList{
+			const uptr<spirv::CodeSection> spvImports = SPIRV_CODE_SECTION(spirv::SSASection::IMPORT, this, SPIRVOpList{
 				spirv::OpExtInstImport()
 			});
-			const uptr<spirv::CodeSection> spvMisc = SPIRV_CODE_SECTION(this, SPIRVOpList{
+			const uptr<spirv::CodeSection> spvMisc = SPIRV_CODE_SECTION(spirv::SSASection::HEADER2, this, SPIRVOpList{
 				spirv::OpMemoryModel(),
 				spirv::OpEntryPoint(),
 				spirv::OpExecutionMode(),
 				spirv::OpExecutionModeId()
 			});
-			const uptr<spirv::CodeSection> spvDebug = SPIRV_CODE_SECTION(this, SPIRVOpList{
+			const uptr<spirv::CodeSection> spvDebug = SPIRV_CODE_SECTION(spirv::SSASection::DEBUG, this, SPIRVOpList{
 				spirv::OpString(),
 				spirv::OpSource(),
 				spirv::OpSourceExtension(),
@@ -141,7 +143,7 @@ namespace caliburn
 				spirv::OpMemberName(),
 				spirv::OpModuleProcessed()
 			});
-			const uptr<spirv::CodeSection> spvTypes = SPIRV_CODE_SECTION(this, SPIRVOpList{
+			const uptr<spirv::CodeSection> spvTypes = SPIRV_CODE_SECTION(spirv::SSASection::TYPE, this, SPIRVOpList{
 				spirv::OpTypeArray(),
 				spirv::OpTypeBool(),
 				spirv::OpTypeFloat(),
@@ -158,7 +160,7 @@ namespace caliburn
 				spirv::OpLine(),
 				spirv::OpNoLine()
 			});
-			const uptr<spirv::CodeSection> spvConsts = SPIRV_CODE_SECTION(this, SPIRVOpList{
+			const uptr<spirv::CodeSection> spvConsts = SPIRV_CODE_SECTION(spirv::SSASection::CONST, this, SPIRVOpList{
 				spirv::OpConstant(),
 				spirv::OpConstantComposite(),
 				spirv::OpConstantFalse(),
@@ -176,6 +178,7 @@ namespace caliburn
 			HashMap<cllr::SSA, spirv::SSA> ssaAliases;
 
 			std::vector<spirv::SSAEntry> ssaEntries;
+			std::vector<spirv::SSASection> ssaToSection;
 			std::set<spirv::Capability> capabilities;
 			std::vector<std::string> extensions;
 
@@ -186,10 +189,15 @@ namespace caliburn
 
 			OutImpls<SPIRVOutFn> impls = {};
 
+			constexpr uint32_t maxSSA() const
+			{
+				return nextSSA + 1;
+			}
+
 		public:
 			std::vector<spirv::EntryPoint> shaderEntries;
 
-			const uptr<spirv::CodeSection> decs = SPIRV_CODE_SECTION(this, SPIRVOpList{
+			const uptr<spirv::CodeSection> decs = SPIRV_CODE_SECTION(spirv::SSASection::DECORATION, this, SPIRVOpList{
 				spirv::OpDecorate(),
 				spirv::OpGroupDecorate(),
 				spirv::OpGroupMemberDecorate(),
@@ -197,10 +205,10 @@ namespace caliburn
 				spirv::OpMemberDecorateString(),
 				spirv::OpDecorationGroup()
 			});
-			const uptr<spirv::CodeSection> gloVars = SPIRV_CODE_SECTION(this, SPIRVOpList{
+			const uptr<spirv::CodeSection> gloVars = SPIRV_CODE_SECTION(spirv::SSASection::GLOBAL_VAR, this, SPIRVOpList{
 				spirv::OpVariable()
 			});
-			const uptr<spirv::CodeSection> main = SPIRV_CODE_SECTION(this, SPIRVOpList{});
+			const uptr<spirv::CodeSection> main = SPIRV_CODE_SECTION(spirv::SSASection::MAIN, this, SPIRVOpList{});
 			
 			spirv::TypeSection types = spirv::TypeSection(this);
 			spirv::ConstSection consts = spirv::ConstSection(this);
@@ -210,18 +218,17 @@ namespace caliburn
 			SPIRVOutAssembler();
 			virtual ~SPIRVOutAssembler() {}
 
-		private:
-			constexpr uint32_t maxSSA() const
-			{
-				return nextSSA + 1;
-			}
-
-		public:
 			uptr<std::vector<spirv::SSA>> translateCLLR(ref<cllr::Assembler> cllrAsm, ref<std::vector<sptr<cllr::Instruction>>> code) override;
+
+			void searchAheadCLLR(ref<std::vector<spirv::SSA>> outIDs, std::vector<cllr::Opcode> ops, size_t off, uint32_t count, ref<cllr::Assembler> cllrAsm, std::function<cllr::SSA(sptr<cllr::Instruction>)> filter);
 
 			spirv::SSA createSSA();
 
 			spirv::SSA toSpvID(cllr::SSA ssa);
+
+			spirv::SSASection getSection(spirv::SSA id);
+
+			void setSection(spirv::SSA id, spirv::SSASection sec);
 
 			void setSpvSSA(cllr::SSA in, spirv::SSA out);
 

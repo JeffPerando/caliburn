@@ -18,6 +18,7 @@ void spirv::CodeSection::push(spirv::SpvOp op, SSA id, std::vector<uint32_t> arg
 	{
 		code.push_back(id);
 		spvAsm->setOpForSSA(id, op);
+		spvAsm->setSection(id, section);
 
 	}
 
@@ -46,11 +47,12 @@ void spirv::CodeSection::pushTyped(SpvOp op, SSA type, SSA id, std::vector<uint3
 		return;
 	}
 
+	spvAsm->setOpForSSA(id, op);
+	spvAsm->setSection(id, section);
+
 	code.push_back(op);
 	code.push_back(type);
 	code.push_back(id);
-	spvAsm->setOpForSSA(id, op);
-
 	code.insert(code.end(), args.begin(), args.end());
 
 }
@@ -170,6 +172,20 @@ bool spirv::CodeSection::findVarMeta(SSA id, ref<VarData> meta)
 	return true;
 }
 
+bool spirv::TypeSection::findData(SSA id, ref<Type> out)
+{
+	auto found = ssaToType->find(id);
+
+	if (found == ssaToType->end())
+	{
+		return false;
+	}
+
+	out = found->second;
+
+	return true;
+}
+
 spirv::SSA spirv::TypeSection::findOrMake(SpvOp op, std::vector<uint32_t> args, SSA id)
 {
 	auto fid = types->find(Type{ op, 0, args });
@@ -179,6 +195,7 @@ spirv::SSA spirv::TypeSection::findOrMake(SpvOp op, std::vector<uint32_t> args, 
 		if (id != 0)
 		{
 			//TODO edge case
+			//just... alias them??? idk
 		}
 
 		return fid->second;
@@ -227,7 +244,6 @@ void spirv::TypeSection::dump(ref<CodeSection> sec) const
 spirv::SSA spirv::ConstSection::findOrMake(SSA t, uint32_t first, uint32_t second)
 {
 	auto key = Constant{ t, 0, first, second };
-
 	auto c = consts->find(key);
 
 	if (c != consts->end())
@@ -235,29 +251,65 @@ spirv::SSA spirv::ConstSection::findOrMake(SSA t, uint32_t first, uint32_t secon
 		return c->second;
 	}
 
-	auto tOp = spvAsm->opFor(t);
-
-	if (tOp != spirv::OpTypeBool() && tOp != spirv::OpTypeInt() && tOp != spirv::OpTypeFloat())
-	{
-		//TODO complain
-		return 0;
-	}
-
 	auto id = spvAsm->createSSA();
 
+	key.id = id;
+
 	consts->emplace(key, id);
+	spvAsm->setSection(id, spirv::SSASection::CONST);
 
 	return id;
 }
 
+spirv::SSA spirv::ConstSection::findOrMakeComposite(SSA t, std::vector<uint32_t> data)
+{
+	auto key = CompositeConst{ t, 0, data };
+
+	auto c = composites->find(key);
+
+	if (c != composites->end())
+	{
+		return c->second;
+	}
+
+	auto id = spvAsm->createSSA();
+
+	key.id = id;
+
+	composites->emplace(key, id);
+	spvAsm->setSection(id, spirv::SSASection::CONST);
+
+	return id;
+}
+
+spirv::SSA spirv::ConstSection::findOrMakeNullFor(SSA t)
+{
+	auto found = nulls->find(t);
+
+	if (found != nulls->end())
+	{
+		return found->second;
+	}
+
+	auto nID = spvAsm->createSSA();
+
+	nulls->emplace(t, nID);
+	spvAsm->setSection(nID, spirv::SSASection::CONST);
+
+}
+
 void spirv::ConstSection::dump(ref<CodeSection> sec) const
 {
+	for (auto& [typeID, nullID] : *nulls)
+	{
+		sec.pushTyped(spirv::OpConstantNull(), typeID, nullID, {});
+	}
+
 	for (auto& [data, id] : *consts)
 	{
 		if (data.type == spirv::OpTypeBool())
 		{
 			sec.pushTyped(data.lower == 0 ? spirv::OpConstantFalse() : spirv::OpConstantTrue(), data.type, id, {});
-
 		}
 		else
 		{
@@ -271,10 +323,14 @@ void spirv::ConstSection::dump(ref<CodeSection> sec) const
 				sec.pushTyped(spirv::OpConstant(1), data.type, id, { data.lower });
 
 			}
-			
+
 		}
 
 	}
 
+	for (auto& [comp, id] : *composites)
+	{
+		sec.pushTyped(spirv::OpConstantComposite((uint32_t)comp.data.size()), comp.typeID, id, comp.data);
+	}
 
 }

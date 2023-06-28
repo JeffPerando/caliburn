@@ -38,7 +38,21 @@ namespace caliburn
             SSA id;
             SSA innerType;
             StorageClass strClass;
+        };
 
+        enum class SSASection
+        {
+            INVALID,
+            UNKNOWN,
+            HEADER,
+            IMPORT,
+            HEADER2,
+            DEBUG,
+            TYPE,
+            CONST,
+            DECORATION,
+            GLOBAL_VAR,
+            MAIN
         };
 
         class CodeSection
@@ -47,6 +61,7 @@ namespace caliburn
 
             //DO NOT DELETE
             //DO NOT TRY TO TURN INTO A SMART POINTER
+            const SSASection section;
             const ptr<cllr::SPIRVOutAssembler> spvAsm;
 
             std::vector<SpvOp> validOps;
@@ -55,7 +70,7 @@ namespace caliburn
             std::map<SSA, VarData> varMeta;
 
         public:
-            CodeSection(ptr<cllr::SPIRVOutAssembler> spv, std::vector<SpvOp> ops) : spvAsm(spv), validOps(ops)
+            CodeSection(SSASection sec, ptr<cllr::SPIRVOutAssembler> spv, std::vector<SpvOp> ops) : section(sec), spvAsm(spv), validOps(ops)
             {
                 if (!validOps.empty())
                 {
@@ -183,11 +198,14 @@ namespace caliburn
         class TypeSection
         {
             const uptr<HashMap<spirv::Type, spirv::SSA, TypeHash>> types = new_uptr<HashMap<spirv::Type, spirv::SSA, TypeHash>>();
+            const uptr<HashMap<spirv::SSA, spirv::Type>> ssaToType = new_uptr<HashMap<spirv::SSA, spirv::Type>>();
 
             const ptr<cllr::SPIRVOutAssembler> spvAsm;
 
         public:
             TypeSection(ptr<cllr::SPIRVOutAssembler> spv) : spvAsm(spv) {}
+
+            bool findData(SSA id, ref<Type> out);
 
             SSA findOrMake(SpvOp op, std::vector<uint32_t> args = {}, SSA id = 0);
 
@@ -203,7 +221,7 @@ namespace caliburn
             SSA id = 0;
             uint32_t lower = 0;
             uint32_t upper = 0;
-            
+
             bool operator<(const Constant& rhs) const
             {
                 if (type < rhs.type)
@@ -214,12 +232,41 @@ namespace caliburn
                 if (id < rhs.id)
                     return true;
                 */
-
                 if (upper < rhs.upper)
                     return true;
-
                 if (lower < rhs.lower)
                     return true;
+
+                return false;
+            }
+
+        };
+
+        struct CompositeConst
+        {
+            SSA typeID = 0;
+            SSA id = 0;
+            std::vector<uint32_t> data;
+
+            bool operator<(const CompositeConst& rhs) const
+            {
+                if (typeID < rhs.typeID)
+                    return true;
+                /*
+                //Don't compare the IDs
+                //This struct will go in a map and we need to find pre-existing types
+                if (id < rhs.id)
+                    return true;
+                */
+
+                if (data.size() < rhs.data.size())
+                    return true;
+
+                for (size_t i = 0; i < rhs.data.size(); ++i)
+                {
+                    if (data[i] < rhs.data[i])
+                        return true;
+                }
 
                 return false;
             }
@@ -229,6 +276,8 @@ namespace caliburn
         class ConstSection
         {
             const uptr<std::map<Constant, spirv::SSA>> consts = new_uptr<std::map<Constant, spirv::SSA>>();
+            const uptr<std::map<CompositeConst, spirv::SSA>> composites = new_uptr<std::map<CompositeConst, spirv::SSA>>();
+            const uptr<HashMap<spirv::SSA, spirv::SSA>> nulls = new_uptr<HashMap<spirv::SSA, spirv::SSA>>();
 
             const ptr<cllr::SPIRVOutAssembler> spvAsm;
 
@@ -251,6 +300,10 @@ namespace caliburn
             }
 
             SSA findOrMake(SSA t, uint32_t first, uint32_t second = 0);
+
+            SSA findOrMakeComposite(SSA t, std::vector<uint32_t> data);
+
+            SSA findOrMakeNullFor(SSA t);
 
             void dump(ref<CodeSection> sec) const;
 
