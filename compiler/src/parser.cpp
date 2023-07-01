@@ -1376,11 +1376,8 @@ uptr<Value> Parser::parseExpr(uint32_t precedence)
 
 		if (opTkns.empty())
 		{
-			//TODO complain
-			return nullptr;
+			break;
 		}
-
-		Operator op = Operator::UNKNOWN;
 
 		/*
 		Now we take the vector of tokens from earlier, and we turn them into a single string.
@@ -1405,7 +1402,7 @@ uptr<Value> Parser::parseExpr(uint32_t precedence)
 				continue;
 			}
 
-			op = found->second;
+			Operator op = found->second;
 
 			if (op == Operator::UNKNOWN)
 			{
@@ -1416,12 +1413,12 @@ uptr<Value> Parser::parseExpr(uint32_t precedence)
 
 			if (opWeight > precedence)
 			{
-				continue;
+				return lhs;
 			}
 
 			tokens->consume(opTkns.size());
 
-			auto tkn = tokens->next();
+			auto tkn = tokens->current();
 
 			//Yes, we use *this* code to parse setters.
 			if (tkn->str == "=")
@@ -1461,6 +1458,7 @@ uptr<Value> Parser::parseExpr(uint32_t precedence)
 
 			lhs = std::move(expr);
 
+			break;
 		}
 
 	}
