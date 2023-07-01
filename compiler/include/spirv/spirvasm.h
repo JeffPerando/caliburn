@@ -40,7 +40,7 @@ namespace caliburn
             StorageClass strClass;
         };
 
-        enum class SSASection
+        enum class SSAKind
         {
             INVALID,
             UNKNOWN,
@@ -59,9 +59,9 @@ namespace caliburn
         {
             friend class cllr::SPIRVOutAssembler;
 
+            const SSAKind section;
             //DO NOT DELETE
             //DO NOT TRY TO TURN INTO A SMART POINTER
-            const SSASection section;
             const ptr<cllr::SPIRVOutAssembler> spvAsm;
 
             std::vector<SpvOp> validOps;
@@ -70,7 +70,7 @@ namespace caliburn
             std::map<SSA, VarData> varMeta;
 
         public:
-            CodeSection(SSASection sec, ptr<cllr::SPIRVOutAssembler> spv, std::vector<SpvOp> ops) : section(sec), spvAsm(spv), validOps(ops)
+            CodeSection(SSAKind sec, ptr<cllr::SPIRVOutAssembler> spv, std::vector<SpvOp> ops) : section(sec), spvAsm(spv), validOps(ops)
             {
                 if (!validOps.empty())
                 {

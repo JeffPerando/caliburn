@@ -256,7 +256,7 @@ spirv::SSA spirv::ConstSection::findOrMake(SSA t, uint32_t first, uint32_t secon
 	key.id = id;
 
 	consts->emplace(key, id);
-	spvAsm->setSection(id, spirv::SSASection::CONST);
+	spvAsm->setSection(id, spirv::SSAKind::CONST);
 
 	return id;
 }
@@ -277,7 +277,7 @@ spirv::SSA spirv::ConstSection::findOrMakeComposite(SSA t, std::vector<uint32_t>
 	key.id = id;
 
 	composites->emplace(key, id);
-	spvAsm->setSection(id, spirv::SSASection::CONST);
+	spvAsm->setSection(id, spirv::SSAKind::CONST);
 
 	return id;
 }
@@ -294,8 +294,9 @@ spirv::SSA spirv::ConstSection::findOrMakeNullFor(SSA t)
 	auto nID = spvAsm->createSSA();
 
 	nulls->emplace(t, nID);
-	spvAsm->setSection(nID, spirv::SSASection::CONST);
+	spvAsm->setSection(nID, spirv::SSAKind::CONST);
 
+	return nID;
 }
 
 void spirv::ConstSection::dump(ref<CodeSection> sec) const

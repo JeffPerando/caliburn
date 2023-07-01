@@ -1,4 +1,5 @@
 
+
 #include "parser.h"
 
 #include "ast/ctrlstmt.h"
@@ -1244,7 +1245,42 @@ uptr<Value> Parser::parseNonExpr()
 		}
 		
 	}
-	
+
+	tkn = tokens->current();
+
+	while (tkn->type == TokenType::KEYWORD)
+	{
+		if (tkn->str == "is")
+		{
+			tokens->consume();
+
+			auto isa = new_uptr<IsAValue>();
+
+			isa->val = std::move(v);
+			isa->chkPType = parseTypeName();
+
+			v = std::move(isa);
+
+		}
+		else if (tkn->str == "as")
+		{
+			tokens->consume();
+
+			auto cast = new_uptr<CastValue>();
+
+			cast->lhs = std::move(v);
+			cast->resultPType = parseTypeName();
+
+			v = std::move(cast);
+
+		}
+		else
+		{
+			break;
+		}
+
+	}
+
 	return v;
 }
 
@@ -1318,86 +1354,120 @@ uptr<Value> Parser::parseExpr(uint32_t precedence)
 
 	while (tokens->hasNext())
 	{
-		auto tkn = tokens->current();
+		std::vector<sptr<Token>> opTkns;
 
-		while (tkn->type == TokenType::KEYWORD)
+		/*
+		Caliburn operator tokens consist of individual characters. So += is two tokens: '+' and '='
+
+		So we gather the tokens into a vector for later processing
+		*/
+		for (size_t off = 0; tokens->currentIndex() + off < tokens->length(); ++off)
 		{
-			if (tkn->str == "is")
+			auto offTkn = tokens->peek(off);
+
+			if (offTkn->type == TokenType::OPERATOR)
 			{
-				tokens->consume();
-
-				auto isa = new_uptr<IsAValue>();
-
-				isa->val = std::move(lhs);
-				isa->chkPType = parseTypeName();
-
-				lhs = std::move(isa);
-
-			}
-			else if (tkn->str == "as")
-			{
-				tokens->consume();
-
-				auto cast = new_uptr<CastValue>();
-
-				cast->lhs = std::move(lhs);
-				cast->resultPType = parseTypeName();
-
-				lhs = std::move(cast);
-
-			}
-			else
-			{
-				break;
+				opTkns.push_back(offTkn);
+				continue;
 			}
 
-		}
-
-		if (tkn->type != TokenType::OPERATOR)
-		{
 			break;
 		}
 
-		auto op = INFIX_OPS.find(tkn->str);
-
-		if (op == INFIX_OPS.end())
+		if (opTkns.empty())
 		{
-			return lhs;
+			//TODO complain
+			return nullptr;
 		}
 
-		auto opWeight = OP_PRECEDENCE.at(op->second);
+		Operator op = Operator::UNKNOWN;
 
-		if (opWeight > precedence)
+		/*
+		Now we take the vector of tokens from earlier, and we turn them into a single string.
+
+		That string is then compared against the canonical map of operators. If a particular string
+		is invalid, we remove the last token and repeat the process until we find a valid operator.
+		*/
+		while (!opTkns.empty())
 		{
-			break;
+			std::stringstream ss;
+
+			for (auto const& tkn : opTkns)
+			{
+				ss << tkn->str;
+			}
+
+			auto found = INFIX_OPS.find(ss.str());
+
+			if (found == INFIX_OPS.end())
+			{
+				opTkns.pop_back();
+				continue;
+			}
+
+			op = found->second;
+
+			if (op == Operator::UNKNOWN)
+			{
+				continue;
+			}
+
+			auto opWeight = OP_PRECEDENCE.at(op);
+
+			if (opWeight > precedence)
+			{
+				continue;
+			}
+
+			tokens->consume(opTkns.size());
+
+			auto tkn = tokens->next();
+
+			//Yes, we use *this* code to parse setters.
+			if (tkn->str == "=")
+			{
+				if (OP_CATEGORIES.find(op)->second == OpCategory::LOGICAL)
+				{
+					//TODO complain
+					return nullptr;
+				}
+
+				tokens->consume();
+
+				//AND we made a dedicated class for it
+				//Why? Because memory management, that's why
+				auto set = new_uptr<SetterValue>();
+
+				set->lhs = std::move(lhs);
+				set->op = op;
+				set->rhs = parseAnyExpr();
+
+				return set;
+			}
+
+			auto expr = new_uptr<ExpressionValue>();
+
+			auto rhs = parseExpr(opWeight);//TODO suppress errors here
+
+			if (rhs == nullptr)
+			{
+				tokens->rewind(opTkns.size());
+				continue;
+			}
+
+			expr->lValue = std::move(lhs);
+			expr->op = op;
+			expr->rValue = std::move(rhs);
+
+			lhs = std::move(expr);
+
 		}
 
-		tkn = tokens->next();
+	}
 
-		//Yes, we use *this* code to parse setters.
-		if (tkn->str == "=")
-		{
-			tokens->consume();
-
-			//AND we made a dedicated class for it
-			//Why? Because memory management, that's why
-			auto set = new_uptr<SetterValue>();
-
-			set->lhs = std::move(lhs);
-			set->op = op->second;
-			set->rhs = parseAnyExpr();
-
-			return set;
-		}
-		
-		auto expr = new_uptr<ExpressionValue>();
-
-		expr->lValue = std::move(lhs);
-		expr->op = op->second;
-		expr->rValue = parseExpr(opWeight);
-
-		lhs = std::move(expr);
-
+	if (lhs->vType != ValueType::EXPRESSION)
+	{
+		//TODO complain
 	}
 
 	return lhs;

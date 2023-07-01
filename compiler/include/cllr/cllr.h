@@ -16,7 +16,7 @@ namespace caliburn
 	- Low-level bytecode for Caliburn code.
 	- Format: Tuples.
 	  - Fixed-width instructions for easier code navigation.
-	  - Instructions can define what the elements in the tuple do.
+	  - Instructions define what the elements in the tuple do.
 	- Represents a single compilation unit.
 	- Flattened down to shader stages, functions, structs, and basic instructions.
 	- Not distributed; Only used internally by compiler.

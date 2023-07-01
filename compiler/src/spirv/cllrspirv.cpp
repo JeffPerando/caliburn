@@ -1,7 +1,6 @@
 
 #include "spirv/cllrspirv.h"
 
-#include "cinq.h"
 #include "langcore.h"
 #include "syntax.h"
 
@@ -172,7 +171,7 @@ spirv::SSA cllr::SPIRVOutAssembler::createSSA()
 	++nextSSA;
 
 	ssaEntries.push_back(entry);
-	ssaToSection.push_back(spirv::SSASection::UNKNOWN);
+	ssaToSection.push_back(spirv::SSAKind::UNKNOWN);
 
 	return entry.ssa;
 }
@@ -198,15 +197,15 @@ spirv::SSA cllr::SPIRVOutAssembler::toSpvID(cllr::SSA ssa)
 	return nextSpvSSA;
 }
 
-spirv::SSASection cllr::SPIRVOutAssembler::getSection(spirv::SSA id)
+spirv::SSAKind cllr::SPIRVOutAssembler::getSection(spirv::SSA id)
 {
 	if (id >= ssaToSection.size())
-		return spirv::SSASection::UNKNOWN;
+		return spirv::SSAKind::UNKNOWN;
 
 	return ssaToSection[id];
 }
 
-void cllr::SPIRVOutAssembler::setSection(spirv::SSA id, spirv::SSASection sec)
+void cllr::SPIRVOutAssembler::setSection(spirv::SSA id, spirv::SSAKind sec)
 {
 	if (id == 0)
 		return;//TODO complain
@@ -214,7 +213,7 @@ void cllr::SPIRVOutAssembler::setSection(spirv::SSA id, spirv::SSASection sec)
 	if (id >= ssaToSection.size())
 		return;//TODO complain
 
-	if (ssaToSection[id] != spirv::SSASection::UNKNOWN)
+	if (ssaToSection[id] != spirv::SSAKind::UNKNOWN)
 	{
 		if (ssaToSection[id] != sec)
 		{
@@ -1036,7 +1035,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitArray)
 	for (auto e : elems)
 	{
 		//yes, even UNKNOWNs break the constant promise.
-		if (out.getSection(e) != spirv::SSASection::CONST)
+		if (out.getSection(e) != spirv::SSAKind::CONST)
 		{
 			isConst = false;
 			break;
