@@ -9,16 +9,17 @@ namespace caliburn
 	struct LocalVarStatement : public Statement
 	{
 		std::vector<sptr<Token>> names;
+
+		sptr<Token> start = nullptr;
+		sptr<ParsedType> typeHint = nullptr;
+		sptr<Value> initialValue = nullptr;
 		bool isConst = false;
-		uptr<ParsedType> typeHint = nullptr;
-		uptr<Value> initialValue = nullptr;
 
 	private:
 		std::vector<sptr<LocalVariable>> vars;
 
 	public:
 		LocalVarStatement() : Statement(StatementType::VARIABLE){}
-
 		virtual ~LocalVarStatement() {}
 
 		sptr<Token> firstTkn() const override
@@ -33,10 +34,14 @@ namespace caliburn
 
 		void declareSymbols(sptr<SymbolTable> table) override
 		{
+			if (!typeHint->resolve(table))
+			{
+				//TODO complain
+			}
+
 			for (auto const& name : names)
 			{
-				//TODO problematic lifetime
-				//vars.push_back(new_uptr<LocalVariable>(name, typeHint, initialValue, isConst));
+				vars.push_back(new_sptr<LocalVariable>(mods, start, name, typeHint, initialValue));
 
 			}
 
@@ -49,7 +54,10 @@ namespace caliburn
 
 		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override {}
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable>, ref<cllr::Assembler> codeAsm) override
+		{
+			return 0;
+		}
 
 	};
 

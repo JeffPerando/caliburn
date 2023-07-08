@@ -2,6 +2,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <string>
 
 #define SPIRV_Op(Name, ID, Count) constexpr SpvOp inline Name() {return SpvOp(Count, ID);}
 #define SPIRV_OpVar(Name, ID, Base) constexpr SpvOp inline Name(uint32_t v = 0) {return SpvOp(Base + v, ID);}
@@ -61,7 +62,7 @@ namespace caliburn
         public:
             Version(uint8_t maj = 1, uint8_t min = 0) : major(maj), minor(min) {}
 
-            operator uint32_t()
+            operator uint32_t() const
             {
                 return *(uint32_t*)this;
             }
@@ -83,7 +84,7 @@ namespace caliburn
                 Const = 0;
             }
 
-            operator uint32_t()
+            operator uint32_t() const
             {
                 return *(uint32_t*)this;
             }
@@ -609,7 +610,7 @@ namespace caliburn
                 //Version >= 1.6
                 Nontemporal : 1;
 
-            operator uint32_t()
+            operator uint32_t() const
             {
                 return *(uint32_t*)this;
             }
@@ -634,7 +635,7 @@ namespace caliburn
                 MakeVisible : 1,
                 Volatile : 1;
 
-            operator uint32_t()
+            operator uint32_t() const
             {
                 return *(uint32_t*)this;
             }
@@ -650,7 +651,7 @@ namespace caliburn
                 MakePointerVisible : 1,
                 NonPrivatePointer : 1;
 
-            operator uint32_t()
+            operator uint32_t() const
             {
                 return *(uint32_t*)this;
             }
@@ -665,7 +666,7 @@ namespace caliburn
                 AllowRecip : 1,
                 Fast : 1;
 
-            operator uint32_t()
+            operator uint32_t() const
             {
                 return *(uint32_t*)this;
             }
@@ -685,7 +686,7 @@ namespace caliburn
                 SkipTriangles : 1,
                 SkipAABBs : 1;
 
-            operator uint32_t()
+            operator uint32_t() const
             {
                 return *(uint32_t*)this;
             }
@@ -699,7 +700,7 @@ namespace caliburn
                 Horizontal2Pixels : 1,
                 Horizontal4Pixels : 1;
 
-            operator uint32_t()
+            operator uint32_t() const
             {
                 return *(uint32_t*)this;
             }

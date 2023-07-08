@@ -17,8 +17,8 @@ namespace caliburn
 	class Parser;
 
 	template<typename T>
-	using ParseMethod = uptr<T> (Parser::*)();
-
+	using ParseMethod = std::function<T(Parser&)>;//uptr<T> (Parser::*)();
+	
 	class Parser
 	{
 	public:
@@ -32,10 +32,13 @@ namespace caliburn
 		std::vector<uptr<CaliburnException>> errors;
 
 		template<typename T>
-		uptr<T> parseAny(std::initializer_list<ParseMethod<T>> fns);
+		uptr<T> parseAnyUnique(std::vector<ParseMethod<uptr<T>>> fns);
 
 		template<typename T>
-		uptr<T> parseBetween(std::string start, ParseMethod<T> fn, std::string end);
+		sptr<T> parseAnyShared(std::vector<ParseMethod<sptr<T>>> fns);
+
+		template<typename T>
+		T parseBetween(std::string start, ParseMethod<T> fn, std::string end);
 
 		void parseAnyBetween(std::string start, std::function<void()> fn, std::string end);
 
@@ -43,21 +46,21 @@ namespace caliburn
 
 		void parseIdentifierList(ref<std::vector<sptr<Token>>> ids);
 
-		bool parseGenericSig(ref<GenericSignature> sig);
+		sptr<GenericSignature> parseGenericSig();
 
-		bool parseGenericArgs(ref<GenericArguments> args);
+		sptr<GenericArguments> parseGenericArgs();
 
-		bool parseValueList(ref<std::vector<uptr<Value>>> values, bool commaOptional);
+		bool parseValueList(ref<std::vector<sptr<Value>>> values, bool commaOptional);
 
 		bool parseSemicolon();
 
-		bool parseScopeEnd(uptr<ScopeStatement> stmt);
+		bool parseScopeEnd(ref<uptr<ScopeStatement>> stmt);
 
-		uptr<ParsedType> parseTypeName();
+		sptr<ParsedType> parseTypeName();
 
 		StmtModifiers parseStmtMods();
 
-		uptr<ScopeStatement> parseScope(std::initializer_list<ParseMethod<Statement>> pms);
+		uptr<ScopeStatement> parseScope(std::vector<ParseMethod<uptr<Statement>>> pms);
 
 		uptr<Statement> parseDecl();
 		
@@ -81,8 +84,6 @@ namespace caliburn
 
 		uptr<Statement> parseDestructor();
 
-		//uptr<Statement> parseOp();
-
 		uptr<Statement> parseLogic();
 
 		uptr<Statement> parseControl();
@@ -99,19 +100,19 @@ namespace caliburn
 
 		uptr<Statement> parseLocalVarStmt();
 
-		uptr<Value> parseAnyValue();
+		sptr<Value> parseAnyValue();
 
-		uptr<Value> parseNonExpr();
+		sptr<Value> parseNonExpr();
 
-		uptr<Value> parseLiteral();
+		sptr<Value> parseLiteral();
 
-		uptr<Value> parseAnyExpr();
+		sptr<Value> parseAnyExpr();
 
-		uptr<Value> parseExpr(uint32_t precedence);
+		sptr<Value> parseExpr(uint32_t precedence);
 
-		uptr<Value> parseAnyFnCall();
+		sptr<Value> parseAnyFnCall();
 
-		uptr<Value> parseFnCall(uptr<Value> start);
+		sptr<Value> parseFnCall(sptr<Value> start);
 
 		sptr<Variable> parseMemberVar();
 

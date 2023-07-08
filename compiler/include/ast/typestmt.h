@@ -9,11 +9,11 @@ namespace caliburn
 	{
 		const sptr<Token> first;
 		const sptr<Token> name;
-		const uptr<ParsedType> alias;
+		const sptr<ParsedType> alias;
 
 		bool isStrong = false;
 		
-		TypedefStatement(sptr<Token> f, sptr<Token> n, uptr<ParsedType> t) : Statement(StatementType::TYPEDEF), first(f), name(n), alias(std::move(t))
+		TypedefStatement(sptr<Token> f, sptr<Token> n, sptr<ParsedType> t) : Statement(StatementType::TYPEDEF), first(f), name(n), alias(t)
 		{
 			isStrong = (first->str == "strong");
 		}
@@ -40,7 +40,7 @@ namespace caliburn
 			{
 				//I don't know what to do for an error of this kind
 				//This would've been defered to validation, but that would come with complications
-				if (std::holds_alternative<sptr<Type>>(sym))
+				if (std::holds_alternative<sptr<BaseType>>(sym))
 				{
 					//TODO complain
 				}
@@ -55,13 +55,12 @@ namespace caliburn
 			//We do a little cheating and do a little resolving here; It will probably bite me in the arse, tbh
 			//Actually I know it will since the top-level symbols won't all be here
 			//Hi present me, it's past me! Finish the declareHeader system and this will fix itself!
-			if (!alias->resolve(table))
+			/*
+			if (auto t = alias->resolve(table))
 			{
-				//TODO complain
-				return;
+				table->add(name->str, t);
 			}
-			
-			table->add(name->str, alias->real());
+			*/
 
 		}
 
@@ -70,9 +69,9 @@ namespace caliburn
 			
 		}
 
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-
+			return 0;
 		}
 
 	};

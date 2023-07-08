@@ -2,6 +2,12 @@
 #include "types/typebool.h"
 
 using namespace caliburn;
+
+cllr::SSA RealBool::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
+{
+	return codeAsm.pushNew(cllr::Opcode::TYPE_BOOL, {}, {});
+}
+
 /*
 void TypeBool::getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssembler* codeAsm)
 {
@@ -13,9 +19,8 @@ void TypeBool::getConvertibleTypes(std::set<ConcreteType*>* types, CaliburnAssem
 	}
 
 }
-*/
 
-TypeCompat TypeBool::isCompatible(Operator op, sptr<Type> rType) const
+TypeCompat TypeBool::isCompatible(Operator op, sptr<BaseType> rType) const
 {
 	if (!rType)
 	{
@@ -53,11 +58,6 @@ TypeCompat TypeBool::isCompatible(Operator op, sptr<Type> rType) const
 	return TypeCompat::INCOMPATIBLE_OP;
 }
 
-void TypeBool::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
-{
-	id = codeAsm.pushNew(cllr::Opcode::TYPE_BOOL, {}, {});
-}
-/*
 uint32_t TypeBool::mathOpSpirV(SpirVAssembler* codeAsm, uint32_t lvalueSSA, Operator op, ConcreteType* rType, uint32_t rvalueSSA, ConcreteType*& endType) const
 {
 	uint32_t lhs = lvalueSSA;

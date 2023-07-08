@@ -1,9 +1,11 @@
 cmake_minimum_required (VERSION 3.8)
+set(CMAKE_CXX_STANDARD 17)
+
 project ("caliburn" LANGUAGES CXX)
 
+set(CMAKE_GENERATOR "Ninja")
+
 #set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 file(GLOB_RECURSE CALIBURN_SOURCES CONFIGURE_DEPENDS src/*.cpp include/*.h)
 message(STATUS "YO")
@@ -21,9 +23,14 @@ else()
 	add_library(${PROJECT_NAME} SHARED)
 endif()
 
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+
 include_directories(${PROJECT_NAME} PUBLIC include)
 
 if(MSVC)
+	message(STATUS "MSVC detected")
+	target_compile_options(${PROJECT_NAME} PUBLIC "/Zc:__cplusplus")
 	target_compile_options(${PROJECT_NAME} PUBLIC "/Zi")
 	target_link_options(${PROJECT_NAME} PUBLIC "/INCREMENTAL")
+
 endif()

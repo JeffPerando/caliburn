@@ -7,9 +7,9 @@ namespace caliburn
 {
 	struct ValueStatement : public Statement
 	{
-		const uptr<Value> val;
+		const sptr<Value> val;
 
-		ValueStatement(uptr<Value> v) : Statement(StatementType::UNKNOWN), val(std::move(v)) {}
+		ValueStatement(sptr<Value> v) : Statement(StatementType::UNKNOWN), val(v) {}
 
 		sptr<Token> firstTkn() const override
 		{
@@ -23,16 +23,11 @@ namespace caliburn
 
 		void declareSymbols(sptr<SymbolTable> table) override {}
 
-		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
+
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-			val->resolveSymbols(table);
-
-		}
-
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
-		{
-			val->emitValueCLLR(codeAsm);
-
+			return val->emitValueCLLR(table, codeAsm);
 		}
 
 	};

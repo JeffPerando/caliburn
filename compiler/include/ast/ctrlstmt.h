@@ -10,7 +10,7 @@ namespace caliburn
 	{
 		sptr<Token> first = nullptr;
 
-		uptr<Value> condition = nullptr;
+		sptr<Value> condition = nullptr;
 		uptr<ScopeStatement> innerIf = nullptr;
 		uptr<ScopeStatement> innerElse = nullptr;
 		
@@ -44,7 +44,7 @@ namespace caliburn
 
 		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-			condition->resolveSymbols(table);
+			//condition->resolveSymbols(table);
 			innerIf->resolveSymbols(table, codeAsm);
 
 			if (innerElse != nullptr)
@@ -54,7 +54,7 @@ namespace caliburn
 
 		}
 
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override; //see ctrlstmt.cpp
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override; //see ctrlstmt.cpp
 
 		/*
 		ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
@@ -87,8 +87,8 @@ namespace caliburn
 		sptr<Token> first = nullptr;
 		sptr<Token> index = nullptr;
 		uptr<LocalVariable> indexVar = nullptr;
-		uptr<Value> from = nullptr;
-		uptr<Value> to = nullptr;
+		sptr<Value> from = nullptr;
+		sptr<Value> to = nullptr;
 		uptr<ScopeStatement> loop = nullptr;
 
 		ForRangeStatement() : Statement(StatementType::FOR) {}
@@ -100,7 +100,7 @@ namespace caliburn
 
 		}
 
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
 		/*
 		ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
@@ -121,7 +121,7 @@ namespace caliburn
 	{
 		sptr<Token> first = nullptr;
 
-		uptr<Value> condition = nullptr;
+		sptr<Value> condition = nullptr;
 		uptr<ScopeStatement> loop = nullptr;
 		bool doWhile = false;
 
@@ -141,12 +141,12 @@ namespace caliburn
 
 		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-			condition->resolveSymbols(table);
+			//condition->resolveSymbols(table);
 			loop->resolveSymbols(table, codeAsm);
 
 		}
 		
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
 	};
 

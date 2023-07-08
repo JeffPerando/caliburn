@@ -5,37 +5,23 @@
 
 namespace caliburn
 {
-	struct TypeInt : public Type
+	class TypeInt;
+
+	class RealInt : RealType
 	{
-	protected:
-		const uint32_t intBits;
-		const bool isSigned;
 	public:
-		TypeInt() : TypeInt(32, true) {}
-		TypeInt(uint32_t b, bool s) :
-			Type(TypeCategory::INT, std::string((s ? "int" : "uint") + b)),
-			intBits(b),
-			isSigned(s)
-		{}
+		RealInt(ptr<TypeInt> parent) : RealType((ptr<BaseType>)parent) {}
 
-		uint32_t getSizeBytes() const override
-		{
-			return intBits / 8;
-		}
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
-		uint32_t getAlignBytes() const override
-		{
-			return intBits / 8;
-		}
+	};
 
-		virtual cllr::SSA emitDefaultInitValue(ref<cllr::Assembler> codeAsm)
-		{
-			return codeAsm.pushNew(cllr::Opcode::VALUE_LIT_INT, { 0 }, { this->id });
-		}
+	class TypeInt : public PrimitiveType<RealInt>
+	{
+	public:
+		const bool isSigned;
 
-		TypeCompat isCompatible(Operator op, sptr<Type> rType) const override;
-		
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
+		TypeInt(uint32_t bits, bool sign) : PrimitiveType(TypeCategory::INT, "int" + bits, bits, new_sptr<RealInt>(this)), isSigned(sign) {}
 
 	};
 

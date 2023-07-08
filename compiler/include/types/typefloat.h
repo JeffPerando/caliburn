@@ -5,41 +5,21 @@
 
 namespace caliburn
 {
-	struct TypeFloat : public Type
+	class TypeFloat;
+
+	class RealFloat : RealType
 	{
-	protected:
-		uint32_t const floatBits;
 	public:
-		TypeFloat() : TypeFloat(32) {}
-		TypeFloat(uint32_t s) :
-			Type(TypeCategory::FLOAT, std::string("float" + s)),
-			floatBits(s)
-		{}
-		virtual ~TypeFloat() {}
+		RealFloat(ptr<TypeFloat> parent) : RealType((ptr<BaseType>)parent) {}
 
-		uint32_t getSizeBytes() const override
-		{
-			return floatBits / 8;
-		}
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
-		uint32_t getAlignBytes() const override
-		{
-			return floatBits / 8;
-		}
+	};
 
-		virtual cllr::SSA emitDefaultInitValue(ref<cllr::Assembler> codeAsm)
-		{
-			auto sID = codeAsm.addString("0f");
-
-			return codeAsm.pushNew(cllr::Opcode::VALUE_LIT_FP, { }, { sID, this->id });
-		}
-
-		TypeCompat isCompatible(Operator op, sptr<Type> rType) const override;
-		
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
-		{
-			codeAsm.push(id, cllr::Opcode::TYPE_FLOAT, { floatBits }, {});
-		}
+	class TypeFloat : public PrimitiveType<RealFloat>
+	{
+	public:
+		TypeFloat(uint32_t bits) : PrimitiveType(TypeCategory::FLOAT, "float" + bits, bits, new_sptr<RealFloat>(this)) {}
 
 	};
 

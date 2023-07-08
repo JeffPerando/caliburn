@@ -14,8 +14,7 @@ namespace caliburn
 		cllr::SSA funcID = 0;
 
 		std::vector<uptr<Variable>> args;
-		uptr<ParsedType> retPType = nullptr;
-		sptr<Type> retType = nullptr;
+		sptr<ParsedType> retType = nullptr;
 		uptr<ScopeStatement> body = nullptr;
 		
 		FunctionStatement() : Statement(StatementType::FUNCTION) {}
@@ -30,14 +29,6 @@ namespace caliburn
 			return body ? body->last : nullptr;
 		}
 		/*
-		void resolveSymbols() override
-		{
-			body->resolveSymbols();
-
-			retPType->resolve(*this);
-
-		}
-
 		ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
 		{
 			std::set<StatementType> bodyTypes = LOGIC_STMT_TYPES;
@@ -48,22 +39,14 @@ namespace caliburn
 
 			return body->validate(bodyTypes, bodyModes);
 		}
-
-		void getSSAs(ref<cllr::Assembler> codeAsm) override
-		{
-			funcID = codeAsm.createSSA(cllr::Opcode::FUNCTION);
-
-			body->getSSAs(codeAsm);
-
-		}
 		*/
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-			retType->emitDeclCLLR(codeAsm);
+			auto tID = retType->resolve(table)->emitDeclCLLR(table, codeAsm);
 
-			codeAsm.push(funcID, cllr::Opcode::FUNCTION, { (uint32_t)args.size() }, { retType->id });
+			codeAsm.push(funcID, cllr::Opcode::FUNCTION, { (uint32_t)args.size() }, { tID });
 
-			body->emitDeclCLLR(codeAsm);
+			body->emitDeclCLLR(table, codeAsm);
 
 			codeAsm.push(0, cllr::Opcode::FUNCTION_END, {}, { funcID });
 

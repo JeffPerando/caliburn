@@ -2,6 +2,14 @@
 #include "types/typeint.h"
 
 using namespace caliburn;
+
+cllr::SSA RealInt::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
+{
+	auto p = (ptr<TypeInt>)base;
+
+	return codeAsm.pushNew(cllr::Opcode::TYPE_INT, { p->width, p->isSigned }, {});
+}
+
 /*
 uint32_t TypeInt::getSizeBytes() const
 {
@@ -31,8 +39,8 @@ void TypeInt::getConvertibleTypes(std::set<ConcreteType*>& types)
 	}
 
 }
-*/
-TypeCompat TypeInt::isCompatible(Operator op, sptr<Type> rType) const
+
+TypeCompat TypeInt::isCompatible(Operator op, sptr<BaseType> rType) const
 {
 	if (rType == nullptr)
 	{
@@ -56,7 +64,7 @@ TypeCompat TypeInt::isCompatible(Operator op, sptr<Type> rType) const
 		{
 			return TypeCompat::INCOMPATIBLE_TYPE;
 		}
-		
+
 		switch (op)
 		{
 			case Operator::ADD:
@@ -94,11 +102,6 @@ TypeCompat TypeInt::isCompatible(Operator op, sptr<Type> rType) const
 	}
 
 	return TypeCompat::INCOMPATIBLE_OP;
-}
-
-void TypeInt::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
-{
-	id = codeAsm.pushNew(cllr::Opcode::TYPE_INT, { intBits, isSigned }, {});
 }
 
 /*

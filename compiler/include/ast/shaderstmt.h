@@ -17,11 +17,11 @@ namespace caliburn
 
 		ShaderType type = ShaderType::COMPUTE;
 
-		std::vector<std::pair<sptr<Token>, uptr<ParsedType>>> inputsParsed;
-		std::vector<std::pair<sptr<Token>, sptr<Type>>> inputs;
+		std::vector<std::pair<sptr<Token>, sptr<ParsedType>>> inputsParsed;
+		std::vector<std::pair<sptr<Token>, sptr<BaseType>>> inputs;
 
-		uptr<ParsedType> retTypeParsed = nullptr;
-		sptr<Type> retType = nullptr;
+		sptr<ParsedType> retTypeParsed = nullptr;
+		sptr<BaseType> retType = nullptr;
 
 		ShaderStageStatement(sptr<Token> f, sptr<Token> n) : Statement(StatementType::SHADER_STAGE), first(f), name(n)
 		{
@@ -42,9 +42,12 @@ namespace caliburn
 
 		void prettyPrint(ref<std::stringstream> ss) const override {}
 
-		void declareHeader(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) {}
+		//void declareHeader(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) {}
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		{
+			return 0;
+		}
 
 		void declareSymbols(sptr<SymbolTable> table) override
 		{
@@ -56,13 +59,13 @@ namespace caliburn
 
 		}
 
-		uptr<Shader> compile(sptr<SymbolTable> symbols, ptr<std::vector<uint32_t>> cbir, OptimizeLevel lvl)
+		uptr<Shader> compile(sptr<SymbolTable> table, ptr<std::vector<uint32_t>> cbir, OptimizeLevel lvl)
 		{
 			auto codeAsm = cllr::Assembler(type);
 			
-			code->resolveSymbols(symbols, codeAsm);
+			code->resolveSymbols(table, codeAsm);
 
-			code->emitDeclCLLR(codeAsm);
+			code->emitDeclCLLR(table, codeAsm);
 
 			cllr::optimize(lvl, codeAsm);
 
@@ -108,8 +111,8 @@ namespace caliburn
 
 		std::vector<uptr<ShaderStageStatement>> stages;
 
-		std::vector<std::pair<uptr<ParsedType>, sptr<Token>>> descriptorsParsed;
-		std::vector<std::pair<sptr<Type>, sptr<Token>>> descriptors;
+		std::vector<std::pair<sptr<ParsedType>, sptr<Token>>> descriptorsParsed;
+		std::vector<std::pair<sptr<BaseType>, sptr<Token>>> descriptors;
 
 		ShaderStatement() : Statement(StatementType::SHADER) {}
 		virtual ~ShaderStatement() {}
@@ -128,7 +131,10 @@ namespace caliburn
 
 		void declareHeader(sptr<SymbolTable> table) const override {} //We don't add shaders to the symbol table
 
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) {}
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		{
+			return 0;
+		}
 
 		void declareSymbols(sptr<SymbolTable> table) override {}
 

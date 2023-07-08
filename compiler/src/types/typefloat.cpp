@@ -1,9 +1,16 @@
-/*
-#include "allasm.h"
-#include "typefloat.h"
+
+#include "types/typefloat.h"
 
 using namespace caliburn;
 
+cllr::SSA RealFloat::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
+{
+	auto p = (ptr<TypeFloat>)base;
+
+	return codeAsm.pushNew(cllr::Opcode::TYPE_FLOAT, { p->width }, {});
+}
+
+/*
 uint32_t TypeFloat::getSizeBytes() const
 {
 	return floatBits / 8 + ((floatBits & 0b111) != 0);

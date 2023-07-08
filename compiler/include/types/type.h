@@ -19,8 +19,9 @@
 
 namespace caliburn
 {
-	struct ParsedType;
-	struct Type;
+	class BaseType;
+	class RealType;
+	class Variable;
 
 	enum class ValueType
 	{
@@ -37,10 +38,10 @@ namespace caliburn
 		DEFAULT_INIT
 	};
 
-	struct Value : public ParsedObject
+	struct Value: public ParsedObject
 	{
 		const ValueType vType;
-		sptr<Type> type = nullptr;
+		//sptr<RealType> type = nullptr;
 
 		Value(ValueType vt) : vType(vt) {}
 		virtual ~Value() {}
@@ -49,38 +50,52 @@ namespace caliburn
 
 		virtual bool isCompileTimeConst() const = 0;
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table) = 0;
+		//virtual void resolveSymbols(sptr<const SymbolTable> table) = 0;
 
-		virtual cllr::SSA emitValueCLLR(ref<cllr::Assembler> codeAsm) const = 0;
+		virtual cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const = 0;
 
 	};
 
-	struct Variable : public ParsedObject
+	class Variable : public ParsedObject
 	{
+	protected:
 		cllr::SSA id = 0;
-		StmtModifiers storeMods = {};
-		bool isConst = false;
-		sptr<Token> name = nullptr;
-		sptr<Type> type = nullptr;
 
-		uptr<ParsedType> typeHint = nullptr;
-		uptr<Value> initValue = nullptr;
+	public:
+		const StmtModifiers mods;
+		const sptr<Token> start, name;
+		const sptr<ParsedType> typeHint;
+		const sptr<Value> initValue;
 		
-		Variable() {}
-		Variable(sptr<Token> varName, uptr<ParsedType> hint, uptr<Value> init, bool isImmut) :
-			name(varName),
-			typeHint(std::move(hint)),
-			initValue(std::move(init)),
-			isConst(isImmut) {}
+		bool isConst = false;
+
+		Variable(StmtModifiers mods, const ref<sptr<Token>> name, const ref<sptr<ParsedType>> typeHint, const ref<sptr<Value>> initValue) :
+			Variable(mods, name, name, typeHint, initValue) {};
+		Variable(StmtModifiers mods, const ref<sptr<Token>> start, const ref<sptr<Token>> name, const ref<sptr<ParsedType>> typeHint, const ref<sptr<Value>> initValue) :
+			mods(mods),
+			start(start),
+			name(name),
+			typeHint(typeHint),
+			initValue(initValue) {}
 		virtual ~Variable() {}
+
+		sptr<Token> firstTkn() const override
+		{
+			return start;
+		}
+
+		sptr<Token> lastTkn() const override
+		{
+			return name;
+		}
 
 		virtual void resolveSymbols(sptr<const SymbolTable> table);
 
-		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) = 0;
+		virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) = 0;
 
-		virtual cllr::SSA emitLoadCLLR(ref<cllr::Assembler> codeAsm, cllr::SSA target) = 0;
+		virtual cllr::SSA emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target) = 0;
 
-		virtual void emitStoreCLLR(ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) = 0;
+		virtual void emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) = 0;
 
 	};
 
@@ -97,12 +112,12 @@ namespace caliburn
 	private:
 		std::string fullName = "";
 	protected:
-		sptr<Type> resultType = nullptr;
+		sptr<RealType> resultType = nullptr;
 	public:
 		const sptr<Token> name;
 		sptr<Token> lastToken = nullptr;
-		GenericArguments genericArgs;
-		std::vector<uptr<Value>> arrayDims;
+		sptr<GenericArguments> genericArgs;
+		std::vector<sptr<Value>> arrayDims;
 		
 		ParsedType() : ParsedType(sptr<Token>(nullptr)) {}
 		ParsedType(std::string name) : ParsedType(sptr<Token>(nullptr))
@@ -125,9 +140,9 @@ namespace caliburn
 				return lastToken;
 			}
 
-			if (!genericArgs.args.empty())
+			if (!genericArgs->args.empty())
 			{
-				return genericArgs.lastTkn();
+				return genericArgs->lastTkn();
 			}
 
 			return name;
@@ -146,7 +161,7 @@ namespace caliburn
 				std::stringstream s;
 
 				s << name->str;
-				genericArgs.prettyPrint(s);
+				genericArgs->prettyPrint(s);
 
 				s.str(fullName);
 
@@ -156,118 +171,67 @@ namespace caliburn
 
 		}
 
-		bool resolve(sptr<const SymbolTable> table);
-
-		sptr<Type> real()
-		{
-			return resultType;
-		}
+		sptr<RealType> resolve(sptr<const SymbolTable> table);
 
 	};
 
-	struct Type : public cllr::Emitter
+	class BaseType
 	{
-		cllr::SSA id = 0;
+		sptr<RealType> defImpl;
+	public:
 		const TypeCategory category;
 		const std::string canonName;
-		const size_t maxGenerics;
-		const size_t minGenerics;
-		const sptr<SymbolTable> memberTable = new_sptr<SymbolTable>();
 	protected:
-		sptr<Type> superType = nullptr;
-		std::vector<sptr<Type>> generics, genericDefaults;
-		std::vector<uptr<Variable>> members;
+		//sptr<BaseType> superType = nullptr;
 
-		//TODO add dirty flag to trigger a refresh. that or just control when aspects can be edited
-		std::string fullName = "";
 	public:
-		Type(TypeCategory c, std::string n, size_t genMax = 0, size_t genMin = 0) :
-			category(c), canonName(n), maxGenerics(genMax), minGenerics(genMin)
-		{
-			if (minGenerics > maxGenerics)
-			{
-				throw new_uptr<std::exception>("Invalid concrete type; More generics required than alotted");
-			}
+		BaseType(TypeCategory c, std::string n, sptr<RealType> defaultImpl) : category(c), canonName(n), defImpl(defaultImpl) {}
+		virtual ~BaseType() {}
 
-			if (maxGenerics > 0)
-			{
-				generics.reserve(maxGenerics);
-
-			}
-			
-		}
-
-		virtual ~Type() {}
-
-		//annoyed that != doesn't have a default implementation that does this
-		bool operator!=(ref<const Type> rhs) const
+		bool operator!=(ref<const BaseType> rhs) const
 		{
 			return !(*this == rhs);
 		}
 
-		bool operator==(ref<const Type> rhs) const
+		bool operator==(ref<const BaseType> rhs) const
 		{
-			if (canonName != rhs.canonName)
-			{
-				return false;
-			}
-
-			if (generics.size() != rhs.generics.size())
-			{
-				return false;
-			}
-
-			for (size_t i = 0; i < generics.size(); ++i)
-			{
-				auto const& lhsGeneric = generics[i];
-				auto const& rhsGeneric = rhs.generics[i];
-
-				if (*lhsGeneric == *rhsGeneric)
-				{
-					continue;
-				}
-
-				return false;
-			}
-
-			return true;
+			return canonName == rhs.canonName;
 		}
 
-		std::string getFullName()
+		//virtual void getConvertibleTypes(std::set<sptr<ConcreteType>>& types) = 0;
+
+		//virtual TypeCompat isCompatible(Operator op, sptr<BaseType> rType) const = 0;
+
+		virtual uint64_t parseLiteral(ref<const std::string> lit) const
 		{
-			if (maxGenerics == 0)
-			{
-				return canonName;
-			}
-
-			if (fullName.length() > 0)
-			{
-				return fullName;
-			}
-
-			std::stringstream ss;
-
-			ss << canonName;
-			ss << GENERIC_START;
-			for (uint32_t i = 0; i < generics.size(); ++i)
-			{
-				ss << generics[i]->getFullName();
-			}
-			ss << GENERIC_END;
-
-			fullName = ss.str();
-
-			return fullName;
+			throw std::exception("Cannot parse literal for type; Please only attempt parsing literals of ints or floats");
 		}
 
-		sptr<Type> getSuper()
+		virtual sptr<RealType> getImpl(sptr<GenericArguments> gArgs)
+		{
+			if (!gArgs->empty())
+			{
+				//TODO complain
+				return nullptr;
+			}
+
+			return defImpl;
+		}
+
+		virtual sptr<Variable> getMember(ref<std::string> name) const
+		{
+			return nullptr;
+		}
+
+		/* TODO reconsider inheritance
+		sptr<BaseType> getSuper()
 		{
 			return superType;
 		}
 
-		bool isSuperOf(sptr<Type> type)
+		bool isSuperOf(sptr<BaseType> type)
 		{
-			ptr<Type> head = this;
+			ptr<BaseType> head = this;
 
 			while (head)
 			{
@@ -282,43 +246,75 @@ namespace caliburn
 
 			return false;
 		}
+		*/
+	};
 
-		virtual void setGeneric(size_t index, sptr<Type> type)
+	template<typename T, typename std::enable_if<std::is_base_of<RealType, T>::value>::type* = nullptr>
+	class GenericType : public Generic<T>, public BaseType
+	{
+	public:
+		GenericType(TypeCategory c, std::string n, sptr<GenericSignature> sig) :
+			BaseType(c, n, nullptr),
+			Generic<T>(sig)
+		{}
+
+		sptr<RealType> getImpl(sptr<GenericArguments> gArgs) override
 		{
-			if (index >= maxGenerics)
+			return sptr_demote<T, RealType>(makeVariant(gArgs));
+		}
+
+	};
+
+	class RealType : cllr::Emitter
+	{
+	protected:
+		cllr::SSA id = 0;
+		std::string fullName = "";
+	public:
+		std::vector<sptr<Variable>> members;
+
+		const ptr<BaseType> base;
+		const sptr<GenericArguments> genArgs;
+		const sptr<SymbolTable> memberTable = new_sptr<SymbolTable>();
+
+		RealType(ptr<BaseType> parent, sptr<GenericArguments> gArgs = new_sptr<GenericArguments>()) : base(parent), genArgs(gArgs) {}
+		virtual ~RealType() {}
+
+		std::string getFullName()
+		{
+			if (genArgs->empty())
 			{
-				//TODO compiler error
-				throw std::exception("cannot add a generic to this type!");
+				return base->canonName;
 			}
 
-			generics[index] = type;
+			if (fullName.length() > 0)
+			{
+				return fullName;
+			}
 
+			std::stringstream ss;
+
+			ss << base->canonName;
+
+			genArgs->prettyPrint(ss);
+
+			fullName = ss.str();
+
+			return fullName;
 		}
 
-		virtual cllr::SSA emitDefaultInitValue(ref<cllr::Assembler> codeAsm) = 0;
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
-		//NOTE: because the size can depend on things like generics, members, etc., this HAS to be a method
-		virtual uint32_t getSizeBytes() const = 0;
+	};
 
-		//Conveniently, for most all primitives, alignment == size
-		virtual uint32_t getAlignBytes() const
-		{
-			return getSizeBytes();
-		}
-		
-		//virtual void getConvertibleTypes(std::set<Concreteptr<Type>>& types) = 0;
+	template<typename T>
+	class PrimitiveType : BaseType
+	{
+	public:
+		const uint32_t width;
 
-		virtual TypeCompat isCompatible(Operator op, sptr<Type> rType) const = 0;
-
-		virtual sptr<Type> makeVariant(ref<std::vector<sptr<Type>>> genArgs) const
-		{
-			throw std::exception("Cannot make variant of unspecified type");
-		}
-
-		virtual uint64_t parseLiteral(std::string lit) const
-		{
-			throw std::exception("Cannot parse literal for type; Please only attempt parsing literals of ints or floats");
-		}
+		PrimitiveType(TypeCategory c, std::string n, uint32_t bits, sptr<T> defaultImpl) : BaseType(c, n, sptr_demote<T, RealType>(defaultImpl)), width(bits) {}
+		virtual ~PrimitiveType() {}
 
 	};
 

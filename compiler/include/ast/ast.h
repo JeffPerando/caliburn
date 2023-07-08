@@ -8,9 +8,11 @@
 
 #include "basic.h"
 #include "langcore.h"
+#include "syntax.h"
+
 #include "ast/module.h"
 #include "ast/symbols.h"
-#include "syntax.h"
+
 #include "types/type.h"
 
 namespace caliburn
@@ -57,17 +59,6 @@ namespace caliburn
 		SETTER,
 		FUNC_CALL,
 
-	};
-
-	enum class ReturnMode : uint64_t
-	{
-		NONE,
-		RETURN,
-		CONTINUE,
-		BREAK,
-		PASS,
-		UNREACHABLE,
-		DISCARD
 	};
 
 	enum class ValidationStatus
@@ -132,12 +123,12 @@ namespace caliburn
 		StatementType::CONSTRUCTOR, StatementType::DESTRUCTOR,
 	};
 
-	struct Statement : public Module, public ParsedObject
+	struct Statement : public Module, public ParsedObject, public cllr::Emitter
 	{
 		const StatementType type;
 
 		StmtModifiers mods = {};
-		HashMap<std::string, uptr<ParsedType>> typeAliases;//what??? TODO review why this is here
+		HashMap<std::string, sptr<ParsedType>> typeAliases;//what??? TODO review why this is here
 
 		Statement(StatementType stmtType) : type(stmtType) {}
 		virtual ~Statement() {}
@@ -156,8 +147,6 @@ namespace caliburn
 		//Only used by top-level statements which declare symbols. The rest, like variables, should use declareSymbols() instead
 		virtual void declareHeader(sptr<SymbolTable> table) const {}
 
-		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) = 0;
-
 		void declareSymbols(sptr<SymbolTable> table) override = 0;
 
 		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override = 0;
@@ -174,7 +163,7 @@ namespace caliburn
 		sptr<SymbolTable> scopeTable = nullptr;
 
 		ReturnMode retMode = ReturnMode::NONE;
-		uptr<Value> retValue = nullptr;
+		sptr<Value> retValue = nullptr;
 
 		ScopeStatement(StatementType stmtType = StatementType::SCOPE) : Statement(stmtType) {}
 		virtual ~ScopeStatement() {}
@@ -229,11 +218,11 @@ namespace caliburn
 
 		}
 
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			for (auto const& inner : stmts)
 			{
-				inner->emitDeclCLLR(codeAsm);
+				inner->emitDeclCLLR(table, codeAsm);
 			}
 
 			switch (retMode)
@@ -243,7 +232,7 @@ namespace caliburn
 			case ReturnMode::RETURN: {
 				if (retValue != nullptr)
 				{
-					auto retID = retValue->emitValueCLLR(codeAsm);
+					auto retID = retValue->emitValueCLLR(table, codeAsm);
 
 					codeAsm.push(0, cllr::Opcode::RETURN_VALUE, {}, { retID });
 
@@ -266,16 +255,8 @@ namespace caliburn
 				codeAsm.push(0, cllr::Opcode::DISCARD, {}, {}); break;
 			}
 
+			return 0;
 		}
-
-	};
-
-	struct GenericStatement : public Statement
-	{
-		GenericSignature genSig;
-
-		GenericStatement(StatementType stmtType) : Statement(stmtType) {}
-		virtual ~GenericStatement() {}
 
 	};
 

@@ -5,30 +5,21 @@
 
 namespace caliburn
 {
-	struct TypeBool : public Type
+	class TypeBool;
+
+	class RealBool : RealType
 	{
-		TypeBool() : Type(TypeCategory::BOOLEAN, "bool"){}
+	public:
+		RealBool(ptr<TypeBool> parent) : RealType((ptr<BaseType>)parent) {}
 
-		uint32_t getSizeBytes() const override
-		{
-			return 1;
-		}
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
-		uint32_t getAlignBytes() const override
-		{
-			return 1;
-		}
+	};
 
-		virtual cllr::SSA emitDefaultInitValue(ref<cllr::Assembler> codeAsm)
-		{
-			return codeAsm.pushNew(cllr::Opcode::VALUE_LIT_BOOL, { false }, { this->id });
-		}
-
-		//void getConvertibleTypes(std::set<ConcreteType*>* types) override;
-
-		TypeCompat isCompatible(Operator op, sptr<Type> rType) const override;
-
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
+	class TypeBool : public PrimitiveType<RealBool>
+	{
+	public:
+		TypeBool() : PrimitiveType(TypeCategory::BOOLEAN, "bool", 8, new_sptr<RealBool>(this)) {}
 
 	};
 

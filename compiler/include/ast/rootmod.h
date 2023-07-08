@@ -60,7 +60,7 @@ namespace caliburn
 		std::string name;
 
 		HashMap<std::string, sptr<Variable>> vars;
-		HashMap<std::string, sptr<Type>> types;
+		HashMap<std::string, sptr<BaseType>> types;
 		HashMap<std::string, sptr<FunctionStatement>> fns;
 		HashMap<std::string, sptr<ShaderStatement>> shaders;
 

@@ -9,12 +9,12 @@
 namespace caliburn
 {
 	struct Module;
-	struct Function;
+	class Function;
 	struct Value;
-	struct Variable;
-	struct Type;
-
-	using Symbol = std::variant<nullptr_t, sptr<Module>, sptr<Function>, sptr<Value>, sptr<Variable>, sptr<Type>>;
+	class Variable;
+	class BaseType;
+	
+	using Symbol = std::variant<nullptr_t, sptr<Module>, sptr<Function>, sptr<Value>, sptr<Variable>, sptr<BaseType>>;
 
 	class SymbolTable
 	{

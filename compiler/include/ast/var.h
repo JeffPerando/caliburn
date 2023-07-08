@@ -1,80 +1,98 @@
 
 #pragma once
 
-#include "values.h"
+#include "types/type.h"
 
 namespace caliburn
 {
-	struct LocalVariable : public Variable
+	class LocalVariable;
+	class MemberVariable;
+	class GlobalVariable;
+
+	class LocalVariable : public Variable
 	{
-		LocalVariable(sptr<Token> varName, uptr<ParsedType> hint, uptr<Value> init, bool isImmut) : Variable(varName, std::move(hint), std::move(init), isImmut) {}
+	public:
+		LocalVariable(StmtModifiers mods, sptr<Token> start, sptr<Token> name, sptr<ParsedType> type, sptr<Value> initValue) :
+			Variable(mods, start, name, type, initValue) {}
 		virtual ~LocalVariable() {}
 
-		sptr<Token> firstTkn() const override
+		void prettyPrint(ref<std::stringstream> ss) const override
 		{
-			return name;
+			ss << (isConst ? "const" : "var");
+
+			if (typeHint != nullptr)
+			{
+				ss << ": ";
+				typeHint->prettyPrint(ss);
+
+			}
+
+			ss << ' ' << name->str;
+
+			if (initValue != nullptr)
+			{
+				ss << " = ";
+				initValue->prettyPrint(ss);
+			}
+
 		}
 
-		sptr<Token> lastTkn() const override
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-			return name;
+			cllr::SSA valID = 0, typeID = 0;
+
+			if (initValue == nullptr)
+			{
+				//initValue = new_sptr<ZeroValue>();
+			}
+
+			valID = initValue->emitValueCLLR(table, codeAsm);
+			
+			if (typeHint != nullptr)
+			{
+				typeID = typeHint->resolve(table)->emitDeclCLLR(table, codeAsm);
+				
+				//TODO check for compatibility with initial value
+
+			}
+
+			id = codeAsm.pushNew(cllr::Opcode::VAR_LOCAL, { (uint32_t)mods }, { typeID, valID });
+
+			return id;
 		}
 
-		void resolveSymbols(sptr<const SymbolTable> mod) override
-		{
-
-		}
-
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
-		{
-
-		}
-
-		cllr::SSA emitLoadCLLR(ref<cllr::Assembler> codeAsm, cllr::SSA target) override
+		cllr::SSA emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target) override
 		{
 			return 0;
 		}
 
-		void emitStoreCLLR(ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override
+		void emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override
 		{
 
 		}
 
 	};
 
-	struct MemberVariable : public Variable
+	class MemberVariable : public Variable
 	{
-		sptr<Type> parent = nullptr;
+	public:
+		sptr<RealType> parent = nullptr;
 		uint32_t memberIndex = 0;
 
-		MemberVariable(sptr<Token> varName, uptr<ParsedType> hint, uptr<Value> init, bool isImmut) :
-			Variable(varName, std::move(hint), std::move(init), isImmut) {}
+		MemberVariable(StmtModifiers mods, sptr<Token> start, sptr<Token> name, sptr<ParsedType> typeHint, sptr<Value> initValue) :
+			Variable(mods, start, name, typeHint, initValue) {}
 		virtual ~MemberVariable() {}
-
-		sptr<Token> firstTkn() const override
-		{
-			return name;
-		}
-
-		sptr<Token> lastTkn() const override
-		{
-			return name;
-		}
 
 		void prettyPrint(ref<std::stringstream> ss) const override
 		{
 			typeHint->prettyPrint(ss);
 
 			ss << ' ';
-
 			ss << name->str;
-
-			ss << ' ';
 
 			if (initValue != nullptr)
 			{
-				ss << "= ";
-
+				ss << " = ";
 				initValue->prettyPrint(ss);
 
 			}
@@ -83,20 +101,31 @@ namespace caliburn
 
 		}
 
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-			codeAsm.push(0, cllr::Opcode::STRUCT_MEMBER, { memberIndex }, { parent->id, type->id });
+			cllr::SSA valID = 0;
 
+			if (initValue != nullptr)
+			{
+				valID = initValue->emitValueCLLR(table, codeAsm);
+			}
+
+			auto parentID = parent->emitDeclCLLR(table, codeAsm);
+			auto typeID = typeHint->resolve(table)->emitDeclCLLR(table, codeAsm);
+
+			codeAsm.push(0, cllr::Opcode::STRUCT_MEMBER, { memberIndex }, { parentID, typeID, valID });
+
+			return 0;
 		}
 
-		cllr::SSA emitLoadCLLR(ref<cllr::Assembler> codeAsm, cllr::SSA target) override
+		cllr::SSA emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target) override
 		{
-			return codeAsm.pushNew(cllr::Opcode::VALUE_MEMBER, { memberIndex }, { target, type->id });
+			return codeAsm.pushNew(cllr::Opcode::VALUE_MEMBER, { memberIndex }, { target });
 		}
 
-		void emitStoreCLLR(ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override
+		void emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override
 		{
-			auto memberSSA = emitLoadCLLR(codeAsm, target);
+			auto memberSSA = emitLoadCLLR(table, codeAsm, target);
 
 			codeAsm.push(0, cllr::Opcode::ASSIGN, {}, { memberSSA, value });
 
@@ -104,18 +133,18 @@ namespace caliburn
 
 	};
 
-	struct GlobalVariable : public Variable
+	class GlobalVariable : public Variable
 	{
 
 	};
 
-	struct FunctionArgument : public Variable
+	class FunctionArgument : public Variable
 	{
 
 
 	};
 
-	struct ShaderIOVariable : public Variable
+	class ShaderIOVariable : public Variable
 	{
 		
 	};

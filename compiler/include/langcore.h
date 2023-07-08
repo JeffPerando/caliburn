@@ -147,6 +147,11 @@ namespace caliburn
 			SHARED : 1,
 			STATIC : 1;
 
+		operator uint32_t() const
+		{
+			return *(uint32_t*)this;
+		}
+
 	};
 
 }

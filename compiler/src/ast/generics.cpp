@@ -1,8 +1,40 @@
 
-#include "types/type.h"
+#include <string>
+
 #include "ast/generics.h"
 
+#include "types/type.h"
+
 using namespace caliburn;
+
+void GenericArguments::apply(sptr<GenericSignature> sig, sptr<SymbolTable> table) const
+{
+	for (size_t i = 0; i < args.size(); ++i)
+	{
+		auto const& name = sig->names[i].name;
+		auto const& arg = args[i];
+
+		if (auto vArg = std::get_if<sptr<Value>>(&arg))
+		{
+			table->add(name, Symbol(*vArg));
+		}
+		else if (auto tArg = std::get_if<sptr<ParsedType>>(&arg))
+		{
+			if (!(**tArg).resolve(table))
+			{
+				//TODO complain
+			}
+
+			//FIXME table->add(name->str, (**tArg).real());
+		}
+		else
+		{
+			//TODO complain
+		}
+
+	}
+
+}
 
 void GenericArguments::prettyPrint(ref<std::stringstream> ss) const
 {
@@ -44,7 +76,7 @@ void GenericSignature::prettyPrint(ref<std::stringstream> ss) const
 	{
 		auto const& name = names[i];
 
-		ss << name.type->str << ' ' << name.name->str;
+		ss << name.typeTkn->str << ' ' << name.name;
 
 		if (!std::holds_alternative<std::monostate>(name.defaultResult))
 		{
@@ -63,7 +95,7 @@ void GenericSignature::prettyPrint(ref<std::stringstream> ss) const
 
 }
 
-bool GenericSignature::canApply(ref<GenericArguments> genArgs)
+bool GenericSignature::canApply(ref<GenericArguments> genArgs) const
 {
 	auto const& args = genArgs.args;
 
@@ -82,54 +114,82 @@ bool GenericSignature::canApply(ref<GenericArguments> genArgs)
 		auto const& arg = args[i];
 		auto const& name = names[i];
 
-		//TODO long for the days of pattern matching
-
-		auto vArg = std::get_if<uptr<Value>>(&arg);
-
-		if (vArg != nullptr)
+		if (auto vArg = std::get_if<sptr<Value>>(&arg))
 		{
-			if (name.type->str != "const")
+			if (name.type == GenericSymType::CONST)
 			{
-				//TODO complain
+				continue;
 			}
 
-			continue;
+			//TODO complain
+
 		}
-
-		auto tArg = std::get_if<uptr<ParsedType>>(&arg);
-
-		if (tArg != nullptr)
+		else if (auto tArg = std::get_if<sptr<ParsedType>>(&arg))
 		{
-			if (name.type->str != "type")
+			if (name.type == GenericSymType::TYPE)
 			{
-				//TODO complain
+				continue;
 			}
 
-			continue;
+			//TODO complain
 		}
-
-		return false;
+		else return false;
 	}
 
 	return true;
 }
 
-std::string caliburn::parseGeneric(ref<const GenericResult> result)
+template<typename T>
+sptr<T> caliburn::Generic<T>::makeVariant(sptr<GenericArguments> args)
 {
-	auto vArg = std::get_if<uptr<Value>>(&result);
-
-	if (vArg != nullptr)
+	if (args == nullptr || args->empty())
 	{
-		return (*vArg)->prettyStr();
+		args = sig->makeDefaultArgs();
 	}
 
-	auto tArg = std::get_if<uptr<ParsedType>>(&result);
-
-	if (tArg != nullptr)
+	if (!sig->canApply(*args))
 	{
-		return (*tArg)->prettyStr();
+		//TODO complain
+		return nullptr;
+	}
+
+	auto found = variants->find(args);
+
+	if (found != variants->end())
+	{
+		return found->second;
+	}
+
+	auto newVar = new_sptr<T>(this, args);
+
+	variants->emplace(args, newVar);
+
+	return newVar;
+}
+
+std::string caliburn::parseGeneric(ref<const GenericResult> result)
+{
+	if (auto vArg = std::get_if<sptr<Value>>(&result))
+	{
+		return (**vArg).prettyStr();
+	}
+	else if (auto tArg = std::get_if<sptr<ParsedType>>(&result))
+	{
+		return (**tArg).prettyStr();
 	}
 
 	//TODO complain
 	return "";
+}
+
+size_t GenericArgHash::operator()(sptr<GenericArguments> args) const
+{
+	size_t hash = 0;
+
+	for (auto const& result : args->args)
+	{
+		hash ^= std::hash<std::string>{}(parseGeneric(result));
+	}
+
+	return hash;
 }

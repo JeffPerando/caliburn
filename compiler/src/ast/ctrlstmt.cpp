@@ -3,9 +3,9 @@
 
 using namespace caliburn;
 
-void IfStatement::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
+cllr::SSA IfStatement::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
 {
-	auto cID = condition->emitValueCLLR(codeAsm);
+	auto cID = condition->emitValueCLLR(table, codeAsm);
 
 	auto ifLabel = codeAsm.createSSA(cllr::Opcode::LABEL);
 	auto elseLabel = codeAsm.createSSA(cllr::Opcode::LABEL);
@@ -13,22 +13,24 @@ void IfStatement::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 
 	codeAsm.push(0, cllr::Opcode::JUMP_COND, {}, { cID, ifLabel, innerElse ? elseLabel : postLabel });
 
-	innerIf->emitDeclCLLR(codeAsm);
+	innerIf->emitDeclCLLR(table, codeAsm);
 
 	codeAsm.push(0, cllr::Opcode::JUMP, {}, { postLabel });
 
-	if (innerElse)
+	if (innerElse != nullptr)
 	{
-		innerElse->emitDeclCLLR(codeAsm);
+		innerElse->emitDeclCLLR(table, codeAsm);
 
 	}
 
 	codeAsm.push(postLabel, cllr::Opcode::LABEL, {}, {});
 
+	return ifLabel;
 }
 
-void ForRangeStatement::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
+cllr::SSA ForRangeStatement::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
 {
+	return 0;
 /*
 uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 {
@@ -94,7 +96,7 @@ uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 */
 }
 
-void WhileStatement::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
+cllr::SSA WhileStatement::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
 {
 	/*
 	Until CLLR is more fleshed out, we're just going to do the SPIR-V route of putting jumps before labels
@@ -109,13 +111,13 @@ void WhileStatement::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 	codeAsm.push(start, cllr::Opcode::LABEL, {}, {});
 	codeAsm.push(0, cllr::Opcode::LOOP, {}, { exit, cont, loopLabel });
 
-	auto cID = condition->emitValueCLLR(codeAsm);
+	auto cID = condition->emitValueCLLR(table, codeAsm);
 
 	codeAsm.push(0, cllr::Opcode::JUMP_COND, {}, { cID, loopLabel, exit });
 
 	codeAsm.setLoop(cont, exit);
 	codeAsm.push(loopLabel, cllr::Opcode::LABEL, {}, {});
-	loop->emitDeclCLLR(codeAsm);
+	loop->emitDeclCLLR(table, codeAsm);
 	codeAsm.exitLoop();
 
 	codeAsm.push(0, cllr::Opcode::JUMP, {}, { cont });
@@ -125,4 +127,5 @@ void WhileStatement::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
 
 	codeAsm.push(exit, cllr::Opcode::LABEL, {}, {});
 
+	return start;
 }

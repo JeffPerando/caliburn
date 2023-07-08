@@ -7,8 +7,8 @@ namespace caliburn
 {
 	struct SetterStatement : public Statement
 	{
-		uptr<Value> lValue = nullptr;
-		uptr<Value> rValue = nullptr;
+		sptr<Value> lValue = nullptr;
+		sptr<Value> rValue = nullptr;
 
 		SetterStatement() : Statement(StatementType::SETTER) {}
 
@@ -29,10 +29,10 @@ namespace caliburn
 
 		}
 
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-			auto lhs = lValue->emitValueCLLR(codeAsm);
-			auto rhs = rValue->emitValueCLLR(codeAsm);
+			auto lhs = lValue->emitValueCLLR(table, codeAsm);
+			auto rhs = rValue->emitValueCLLR(table, codeAsm);
 
 			codeAsm.push(0, cllr::Opcode::ASSIGN, {}, {lhs, rhs});
 

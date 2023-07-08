@@ -6,7 +6,12 @@
 #include <string>
 #include <vector>
 
+#include "basic.h"
 #include "langcore.h"
+
+#if __cplusplus < 201703L
+#error Caliburn requires C++17; also MSVC doesn't set __cplusplus correctly
+#endif
 
 namespace caliburn
 {

@@ -3,22 +3,25 @@
 
 using namespace caliburn;
 
-uint32_t TypeVector::getSizeBytes() const
+cllr::SSA RealVector::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
 {
-	return inner->getSizeBytes() * elements;
+	auto& t = genArgs->args[0];
+
+	if (auto& ptype = std::get<sptr<ParsedType>>(t))
+	{
+		if (auto type = ptype->resolve(table))
+		{
+			return codeAsm.pushNew(cllr::Opcode::TYPE_VECTOR, { ((ptr<TypeVector>)base)->elements }, { type->emitDeclCLLR(table, codeAsm) });
+		}
+
+	}
+
+	//TODO complain
+	return 0;
 }
 
-uint32_t TypeVector::getAlignBytes() const
-{
-	return inner->getAlignBytes();
-}
-
-sptr<Type> TypeVector::makeVariant(ref<std::vector<sptr<Type>>> genArgs) const
-{
-	return new_sptr<TypeVector>(elements, genArgs[0]);
-}
-
-TypeCompat TypeVector::isCompatible(Operator op, sptr<Type> rType) const
+/*
+TypeCompat TypeVector::isCompatible(Operator op, sptr<BaseType> rType) const
 {
 	if (rType == nullptr)
 	{
@@ -40,10 +43,4 @@ TypeCompat TypeVector::isCompatible(Operator op, sptr<Type> rType) const
 
 	return TypeCompat::INCOMPATIBLE_TYPE;
 }
-
-void TypeVector::emitDeclCLLR(ref<cllr::Assembler> codeAsm)
-{
-	inner->emitDeclCLLR(codeAsm);
-	id = codeAsm.pushNew(cllr::Opcode::TYPE_VECTOR, { elements }, { inner->id });
-
-}
+*/

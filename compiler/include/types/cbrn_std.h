@@ -2,16 +2,17 @@
 #pragma once
 
 #include "langcore.h"
-#include "symbols.h"
+#include "ast/symbols.h"
 
 #include "typebool.h"
 #include "typefloat.h"
 #include "typeint.h"
 #include "typevector.h"
-//#include "typevoid.h"
+#include "typevoid.h"
 
 namespace caliburn
 {
+	/*
 	class DefaultLib : public SymbolTable
 	{
 		sptr<TypeBool> boolType;
@@ -50,5 +51,5 @@ namespace caliburn
 		virtual ~DefaultLib() {}
 
 	};
-
+	*/
 }

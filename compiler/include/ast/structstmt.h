@@ -4,21 +4,22 @@
 #include <vector>
 
 #include "ast.h"
+#include "var.h"
+
 #include "types/typestruct.h"
 
 namespace caliburn
 {
-	struct StructStatement : public GenericStatement
+	struct StructStatement : public Statement
 	{
-		sptr<Token> first = nullptr;
-		sptr<Token> last = nullptr;
-
 		const sptr<Token> name;
 
-		sptr<Type> innerType = nullptr;
+		sptr<Token> first = nullptr;
+		sptr<Token> last = nullptr;
+		sptr<BaseType> innerType = nullptr;
 		std::vector<sptr<Variable>> members;
 
-		StructStatement(sptr<Token> n, StatementType type = StatementType::STRUCT) : GenericStatement(type), name(n) {}
+		StructStatement(sptr<Token> n, StatementType type = StatementType::STRUCT) : Statement(type), name(n) {}
 
 		virtual ~StructStatement() {}
 
@@ -37,7 +38,10 @@ namespace caliburn
 			//innerType = new_uptr<TypeStruct>(name->str, tNames.size() + cNames.size());
 		}
 
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override {}
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		{
+			return 0;
+		}
 
 		void declareSymbols(sptr<SymbolTable> table) override
 		{

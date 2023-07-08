@@ -33,7 +33,10 @@ namespace caliburn
 
 		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
-		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) {}
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		{
+			return 0;
+		}
 
 	};
 
@@ -58,7 +61,10 @@ namespace caliburn
 
 		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
-		virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) {}
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		{
+			return 0;
+		}
 
 	};
 

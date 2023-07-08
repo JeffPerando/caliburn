@@ -6,9 +6,11 @@
 #include <string>
 #include <vector>
 
+#include "ast/symbols.h"
+
 #include "basic.h"
-#include "langcore.h"
 #include "cllr.h"
+#include "langcore.h"
 
 namespace caliburn
 {
@@ -127,7 +129,7 @@ namespace caliburn
 		class Emitter
 		{
 		public:
-			virtual void emitDeclCLLR(ref<cllr::Assembler> codeAsm) = 0;
+			virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) = 0;
 
 		};
 

@@ -3,6 +3,7 @@
 
 #include <map>
 #include <sstream>
+#include <string_view>
 #include <vector>
 
 #include "basic.h"
@@ -106,7 +107,18 @@ namespace caliburn
 		UNARY,
 		MISC
 	};
-	
+
+	enum class ReturnMode
+	{
+		NONE,
+		RETURN,
+		CONTINUE,
+		BREAK,
+		PASS,
+		UNREACHABLE,
+		DISCARD
+	};
+
 	struct ParsedObject
 	{
 		virtual sptr<Token> firstTkn() const = 0;
@@ -174,6 +186,15 @@ namespace caliburn
 		{"<=",	Operator::COMP_LTE},
 
 		{"++",	Operator::APPEND}
+	};
+
+	static const HashMap<std::string, ReturnMode> RETURN_MODES = {
+		{"return", ReturnMode::RETURN},
+		{"continue", ReturnMode::CONTINUE},
+		{"break", ReturnMode::BREAK},
+		{"pass", ReturnMode::PASS},
+		{"unreachable", ReturnMode::UNREACHABLE},
+		{"discard", ReturnMode::DISCARD}
 	};
 
 	std::string findStrForOp(Operator op);

@@ -5,21 +5,22 @@
 
 namespace caliburn
 {
-	struct TypeVoid : public Type
+	class TypeVoid;
+
+	class RealVoid : RealType
 	{
-		TypeVoid() : Type(TypeCategory::VOID, "") {}
+	public:
+		RealVoid(ptr<TypeVoid> parent) : RealType((ptr<BaseType>)parent) {}
 
-		uint32_t getSizeBytes() const override
-		{
-			return 0;
-		}
-
-		uint32_t getAlignBytes() const override
-		{
-			return 0;
-		}
-
-		void emitDeclCLLR(ref<cllr::Assembler> codeAsm) override;
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
 	};
+
+	class TypeVoid : public PrimitiveType<RealVoid>
+	{
+	public:
+		TypeVoid() : PrimitiveType(TypeCategory::VOID, "void", 0, new_sptr<RealVoid>(this)) {}
+
+	};
+
 }
