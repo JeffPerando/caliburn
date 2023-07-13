@@ -139,7 +139,6 @@ bool GenericSignature::canApply(ref<GenericArguments> genArgs) const
 	return true;
 }
 
-/*
 template<typename T>
 sptr<T> caliburn::Generic<T>::makeVariant(sptr<GenericArguments> args)
 {
@@ -167,7 +166,7 @@ sptr<T> caliburn::Generic<T>::makeVariant(sptr<GenericArguments> args)
 
 	return newVar;
 }
-*/
+
 std::string caliburn::parseGeneric(ref<const GenericResult> result)
 {
 	if (auto vArg = std::get_if<sptr<Value>>(&result))
