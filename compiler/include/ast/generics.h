@@ -192,18 +192,44 @@ namespace caliburn
 	using GenArgMap = HashMap<sptr<GenericArguments>, sptr<T>, GenericArgHash>;
 
 	template<typename T>
-	class Generic
+	struct Generic
 	{
-	protected:
-		const sptr<GenericSignature> sig;
+		const sptr<GenericSignature> genSig;
 		
 		const uptr<GenArgMap<T>> variants = new_uptr<GenArgMap<T>>();
 
-		Generic(sptr<GenericSignature> sig) : sig(sig) {}
+		Generic(sptr<GenericSignature> sig) : genSig(sig) {}
 		virtual ~Generic() {}
 
-	public:
-		virtual sptr<T> makeVariant(sptr<GenericArguments> args);
+		virtual sptr<T> makeVariant(sptr<GenericArguments> args)
+		{
+			//NOTE to future self: DO NOT MOVE THIS TO A .CPP FILE
+			//Due to compiler weirdness, it will cause linking errors.
+
+			if (args == nullptr || args->empty())
+			{
+				args = genSig->makeDefaultArgs();
+			}
+
+			if (!genSig->canApply(*args))
+			{
+				//TODO complain
+				return nullptr;
+			}
+
+			auto found = variants->find(args);
+
+			if (found != variants->end())
+			{
+				return found->second;
+			}
+
+			auto newVar = new_sptr<T>(this, args);
+
+			variants->emplace(args, newVar);
+
+			return newVar;
+		}
 
 	};
 

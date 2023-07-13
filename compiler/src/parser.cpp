@@ -4,6 +4,7 @@
 
 #include "ast/ctrlstmt.h"
 #include "ast/fnstmt.h"
+#include "ast/generics.h"
 #include "ast/modstmts.h"
 #include "ast/shaderstmt.h"
 #include "ast/structstmt.h"

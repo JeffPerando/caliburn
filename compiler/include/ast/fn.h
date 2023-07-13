@@ -33,10 +33,9 @@ namespace caliburn
 
 	private:
 		const ptr<Function> parent;
+		const sptr<GenericArguments> genArgs;
 
 		sptr<SymbolTable> table = nullptr;
-
-		const sptr<GenericArguments> genArgs;
 
 	public:
 		cllr::SSA id = 0;
@@ -70,8 +69,6 @@ namespace caliburn
 
 		FunctionName() = default;
 		virtual ~FunctionName() {}
-
-
 
 	};
 

@@ -1,4 +1,3 @@
-#include "spirvtype.h"
 
 #include "spirv/spirvtype.h"
 

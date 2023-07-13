@@ -1,6 +1,4 @@
 
-#include <string>
-
 #include "ast/generics.h"
 
 #include "types/type.h"
@@ -137,34 +135,6 @@ bool GenericSignature::canApply(ref<GenericArguments> genArgs) const
 	}
 
 	return true;
-}
-
-template<typename T>
-sptr<T> caliburn::Generic<T>::makeVariant(sptr<GenericArguments> args)
-{
-	if (args == nullptr || args->empty())
-	{
-		args = sig->makeDefaultArgs();
-	}
-
-	if (!sig->canApply(*args))
-	{
-		//TODO complain
-		return nullptr;
-	}
-
-	auto found = variants->find(args);
-
-	if (found != variants->end())
-	{
-		return found->second;
-	}
-
-	auto newVar = new_sptr<T>(this, args);
-
-	variants->emplace(args, newVar);
-
-	return newVar;
 }
 
 std::string caliburn::parseGeneric(ref<const GenericResult> result)

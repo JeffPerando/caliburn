@@ -15,7 +15,7 @@ cllr::SSA RealStruct::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler>
 	auto memberTable = new_sptr<SymbolTable>(table);
 
 	//populate table with generics and members
-	genArgs->apply(parent->sig, memberTable);
+	genArgs->apply(parent->genSig, memberTable);
 
 	for (auto const& v : parent->memberVars)
 	{
