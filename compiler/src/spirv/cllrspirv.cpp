@@ -40,7 +40,7 @@ cllr::SPIRVOutAssembler::SPIRVOutAssembler() : OutAssembler(Target::GPU)
 	impls[(uint32_t)Opcode::TYPE_BOOL] = spirv_impl::OpTypeBool;
 	impls[(uint32_t)Opcode::TYPE_PTR] = spirv_impl::OpTypePtr;
 	impls[(uint32_t)Opcode::TYPE_TUPLE] = spirv_impl::OpTypeTuple;
-	impls[(uint32_t)Opcode::TYPE_STRING] = spirv_impl::OpTypeString;
+	//impls[(uint32_t)Opcode::TYPE_STRING] = spirv_impl::OpTypeString;
 
 	impls[(uint32_t)Opcode::LABEL] = spirv_impl::OpLabel;
 	impls[(uint32_t)Opcode::JUMP] = spirv_impl::OpJump;
@@ -66,7 +66,9 @@ cllr::SPIRVOutAssembler::SPIRVOutAssembler() : OutAssembler(Target::GPU)
 	impls[(uint32_t)Opcode::VALUE_MEMBER] = spirv_impl::OpValueMember;
 	impls[(uint32_t)Opcode::VALUE_NULL] = spirv_impl::OpValueNull;
 	impls[(uint32_t)Opcode::VALUE_READ_VAR] = spirv_impl::OpValueReadVar;
+	impls[(uint32_t)Opcode::VALUE_SIGN] = spirv_impl::OpValueSign;
 	impls[(uint32_t)Opcode::VALUE_SUBARRAY] = spirv_impl::OpValueSubarray;
+	impls[(uint32_t)Opcode::VALUE_UNSIGN] = spirv_impl::OpValueUnsign;
 	impls[(uint32_t)Opcode::VALUE_ZERO] = spirv_impl::OpValueZero;
 
 	impls[(uint32_t)Opcode::RETURN] = spirv_impl::OpReturn;
@@ -596,10 +598,12 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeTuple)
 
 }
 
+/*
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeString)
 {
 	//TODO figure out strings in SPIR-V
 }
+*/
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpLabel)
 {
@@ -903,11 +907,6 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 			{
 				op = spirv::OpSNegate();
 			}
-			else if (cllrOp == Operator::SIGN)
-			{
-				//TODO
-				return;
-			}
 			else
 			{
 				//TODO complain
@@ -917,16 +916,8 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 		}
 		else //Signed int
 		{
-			if (cllrOp == Operator::UNSIGN)
-			{
-				//TODO
-				return;
-			}
-			else
-			{
-				//TODO complain
-				return;
-			}
+			//TODO complain
+			return;
 			
 		}
 
@@ -1144,6 +1135,49 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueReadVar)
 	
 }
 
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueSign)
+{
+	auto inValue = out.toSpvID(i.refs[0]);
+
+	auto width = in.codeFor(i.outType)->operands[0];
+	auto words = (width / 32);
+
+	auto uint = out.types.findOrMake(spirv::OpTypeInt(), { width, 0 });
+	auto sint = out.types.findOrMake(spirv::OpTypeInt(), { width, 1 });
+
+	spirv::SSA bigInt = 0;
+
+	if (words == 1)
+	{
+		bigInt = out.consts.findOrMake(uint, 0x7FFFFFFFF);
+	}
+	else if (words == 2)
+	{
+		bigInt = out.consts.findOrMake(uint, 0xFFFFFFFF, 0x7FFFFFFFF);
+	}
+	else
+	{
+		std::vector<uint32_t> bigIntLits;
+		bigIntLits.assign(words, 0xFFFFFFFF);
+
+		bigIntLits[bigIntLits.size() - 1] = 0x7FFFFFFF;
+
+		bigInt = out.createSSA();
+		//TODO consider making the constant page able to use any width of constant (currently restricted to 64-bit)
+		out.main->pushTyped(spirv::OpConstant((uint32_t)(bigIntLits.size() - 1)), uint, bigInt, bigIntLits);
+
+	}
+	
+	auto lib = out.addImport("GLSL.std.450");
+
+	auto tmp = out.createSSA();
+	auto outValue = out.toSpvID(i.index);
+
+	out.main->pushTyped(spirv::OpExtInst(2), uint, tmp, { lib, (uint32_t)spirv::GLSL450Ext::UMin, inValue, bigInt });
+	out.main->pushTyped(spirv::OpBitcast(), sint, outValue, { tmp });
+
+}
+
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueSubarray)
 {
 	auto id = out.toSpvID(i.index);
@@ -1175,6 +1209,56 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueSubarray)
 
 	out.main->pushTyped(spirv::OpLoad(), outT, id, { access });
 
+}
+
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueUnsign)
+{
+	auto width = in.codeFor(i.outType)->operands[0];
+
+	auto inValue = out.toSpvID(i.refs[0]);
+
+	auto uint = out.types.findOrMake(spirv::OpTypeInt(), { width, 0 });
+	auto sint = out.types.findOrMake(spirv::OpTypeInt(), { width, 1 });
+
+	auto zero = out.consts.findOrMake(sint, 0);
+
+	auto lib = out.addImport("GLSL.std.450");
+
+	auto tmp = out.createSSA();
+	auto outValue = out.toSpvID(i.index);
+
+	out.main->pushTyped(spirv::OpExtInst(2), sint, tmp, { lib, (uint32_t)spirv::GLSL450Ext::SMax, inValue, zero });
+	out.main->pushTyped(spirv::OpBitcast(), uint, outValue, { tmp });
+
+	/* I'm gonna leave the old version here for posterity's sake. And maybe use it if performance for an OpExtInst call is bad enough
+	auto boolType = out.types.findOrMake(spirv::OpTypeBool());
+
+	auto cmp = out.createSSA();
+	auto ltLabel = out.createSSA();
+	auto ltResult = out.createSSA();
+	auto gteLabel = out.createSSA();
+	auto gteResult = out.createSSA();
+	auto endLabel = out.createSSA();
+	auto outValue = out.toSpvID(i.index);
+
+	//The code below should translate to:
+	//if (x < 0) {
+	//	  0
+	//} else {
+	//	  (uint32_t)x
+	//}
+
+	out.main->pushTyped(spirv::OpSLessThan(), boolType, cmp, { inValue, zero });
+	out.main->push(spirv::OpBranchConditional(), 0, { cmp, ltLabel, gteLabel });
+	out.main->push(spirv::OpLabel(), ltLabel);
+	out.main->pushTyped(spirv::OpConstant(), uint, ltResult, { 0 }); //DO NOT USE THE CONSTANT SECTION FOR THIS
+	out.main->push(spirv::OpBranch(), 0, { endLabel });
+	out.main->push(spirv::OpLabel(), gteLabel);
+	out.main->pushTyped(spirv::OpBitcast(), uint, gteResult, { inValue });
+	out.main->push(spirv::OpBranch(), 0, { endLabel });
+	out.main->push(spirv::OpLabel(), endLabel);
+	out.main->pushTyped(spirv::OpPhi(4), uint, outValue, { ltResult, ltLabel, gteResult, gteLabel });
+	*/
 }
 
 /*

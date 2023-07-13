@@ -79,7 +79,7 @@ namespace caliburn
 			CLLR_SPIRV_IMPL(OpTypeBool);
 			CLLR_SPIRV_IMPL(OpTypePtr);
 			CLLR_SPIRV_IMPL(OpTypeTuple);
-			CLLR_SPIRV_IMPL(OpTypeString);
+			//CLLR_SPIRV_IMPL(OpTypeString);
 
 			CLLR_SPIRV_IMPL(OpStructMember);
 			CLLR_SPIRV_IMPL(OpStructEnd);
@@ -109,7 +109,9 @@ namespace caliburn
 			CLLR_SPIRV_IMPL(OpValueMember);
 			CLLR_SPIRV_IMPL(OpValueNull);
 			CLLR_SPIRV_IMPL(OpValueReadVar);
+			CLLR_SPIRV_IMPL(OpValueSign);
 			CLLR_SPIRV_IMPL(OpValueSubarray);
+			CLLR_SPIRV_IMPL(OpValueUnsign);
 			CLLR_SPIRV_IMPL(OpValueZero);
 
 			CLLR_SPIRV_IMPL(OpReturn);

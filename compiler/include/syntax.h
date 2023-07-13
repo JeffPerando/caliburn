@@ -95,7 +95,7 @@ namespace caliburn
 		APPEND,
 
 		//Unary ops
-		ABS, NEG, BIT_NEG, BOOL_NOT, SIGN, UNSIGN
+		ABS, NEG, BIT_NEG, BOOL_NOT
 
 	};
 

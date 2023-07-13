@@ -69,7 +69,7 @@ namespace caliburn
 			TYPE_BOOL,
 			TYPE_PTR,
 			TYPE_TUPLE,
-			TYPE_STRING,
+			//TYPE_STRING,
 
 			LABEL,
 			JUMP,
@@ -96,7 +96,9 @@ namespace caliburn
 			VALUE_MEMBER,
 			VALUE_NULL,
 			VALUE_READ_VAR,
+			VALUE_SIGN,
 			VALUE_SUBARRAY,
+			VALUE_UNSIGN,
 			VALUE_ZERO,
 
 			RETURN,

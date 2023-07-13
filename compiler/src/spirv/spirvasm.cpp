@@ -241,9 +241,9 @@ void spirv::TypeSection::dump(ref<CodeSection> sec) const
 
 }
 
-spirv::SSA spirv::ConstSection::findOrMake(SSA t, uint32_t first, uint32_t second)
+spirv::SSA spirv::ConstSection::findOrMake(SSA t, uint32_t low, uint32_t high)
 {
-	auto key = Constant{ t, 0, first, second };
+	auto key = Constant{ t, 0, low, high };
 	auto c = consts->find(key);
 
 	if (c != consts->end())

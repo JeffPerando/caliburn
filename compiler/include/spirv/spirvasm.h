@@ -293,13 +293,13 @@ namespace caliburn
             {
                 auto raw = *((uint64_t*)&dfp);
 
-                uint32_t first = (raw & 0xFFFFFFFF);
-                uint32_t second = ((raw >> 32) & 0xFFFFFFFF);
+                uint32_t low = (raw & 0xFFFFFFFF);
+                uint32_t high = ((raw >> 32) & 0xFFFFFFFF);
 
-                return findOrMake(t, first, second);
+                return findOrMake(t, low, high);
             }
 
-            SSA findOrMake(SSA t, uint32_t first, uint32_t second = 0);
+            SSA findOrMake(SSA t, uint32_t low, uint32_t high = 0);
 
             SSA findOrMakeComposite(SSA t, std::vector<uint32_t> data);
 
