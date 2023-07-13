@@ -2,41 +2,45 @@
 #pragma once
 
 #include <map>
-#include <stdint.h>
+#include <set>
 #include <string>
 #include <vector>
-
-#include "ast/symbols.h"
 
 #include "basic.h"
 #include "cllr.h"
 #include "langcore.h"
 
+#include "ast/symbols.h"
+
 namespace caliburn
 {
 	namespace cllr
 	{
-		class Assembler
+		struct Assembler
 		{
 		public:
 			const ShaderType type;
 		private:
 			uint32_t nextSSA = 1;
 			
-			InstructionVec code;
+			const sptr<InstructionVec> code = new_sptr<InstructionVec>();
+
 			InstructionVec ssaToCode{ new_sptr<Instruction>() };
 			std::vector<Opcode> ssaToOp{ Opcode::UNKNOWN };
 
 			std::vector<std::string> strs;
 			std::vector<uint32_t> ssaRefs{ 0 };
 			
+			std::set<std::string> ioNames;
+			std::map<std::string, SSA> inputs, outputs;
+
 			//keep a stack of the current loop labels so we can implement break, continue, etc.
 			std::vector<std::pair<SSA, SSA>> loops;
 
 		public:
 			Assembler(ShaderType t, uint32_t initSize = 2048) : type(t)
 			{
-				code.reserve(initSize);
+				code->reserve(initSize);
 				ssaToCode.reserve(initSize);
 				ssaToOp.reserve(initSize);
 				ssaRefs.reserve(initSize);
@@ -51,12 +55,23 @@ namespace caliburn
 
 			sptr<Instruction> codeFor(SSA id);
 
-			SSA push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::array<SSA, 3> refs, SSA type = 0, sptr<Token> debug = nullptr);
+			SSA push(sptr<Instruction> ins, bool generateSSA = true);
+
+			void pushAll(std::vector<sptr<Instruction>> code);
 
 			SSA pushNew(Opcode op, std::array<uint32_t, 3> operands, std::array<SSA, 3> refs)
 			{
 				return push(createSSA(op), op, operands, refs);
 			}
+
+			SSA push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::array<SSA, 3> refs, SSA type = 0, sptr<Token> debug = nullptr)
+			{
+				return push(new_sptr<Instruction>(op, ssa, operands, refs, 0), false);
+			}
+
+			std::pair<SSA, uint32_t> pushInput(std::string name, SSA type);
+
+			std::pair<SSA, uint32_t> pushOutput(std::string name, SSA type);
 
 			uint32_t addString(std::string str);
 
@@ -65,9 +80,9 @@ namespace caliburn
 				return strs.at(index);
 			}
 			
-			uptr<InstructionVec> getCode()
+			sptr<const InstructionVec> getCode()
 			{
-				return new_uptr<InstructionVec>(code);
+				return code;
 			}
 			
 			void setLoop(SSA start, SSA end)
@@ -77,11 +92,21 @@ namespace caliburn
 
 			SSA getLoopStart()
 			{
+				if (loops.empty())
+				{
+					return 0;
+				}
+
 				return loops.back().first;
 			}
 
 			SSA getLoopEnd()
 			{
+				if (loops.empty())
+				{
+					return 0;
+				}
+
 				return loops.back().second;
 			}
 
@@ -94,16 +119,14 @@ namespace caliburn
 
 			}
 
-			void findRefs(SSA id, ref<InstructionVec> result, size_t off = 0) const;
+			void addIOName(std::string name);
 
-			void findPattern(ref<InstructionVec> result,
-				Opcode opcode,
-				std::array<bool, 3> ops, std::array<uint32_t, 3> opValues,
-				std::array<bool, 3> ids, std::array<SSA, 3> idValues, size_t off = 0,
-				size_t limit = UINT64_MAX) const;
+			/*
+			Replaces all references to 'in' with 'out'. This includes output types.
 
-			void findAll(ref<InstructionVec> result, const std::vector<Opcode> ops, size_t off = 0, size_t limit = UINT64_MAX) const;
+			This is not an aliasing method; This will change instructions.
 
+			*/
 			uint32_t replace(SSA in, SSA out);
 
 			/*
@@ -123,6 +146,9 @@ namespace caliburn
 			Returns the number of SSAs flattened.
 			*/
 			uint32_t flatten();
+			
+		private:
+			void doBookkeeping(const ref<sptr<Instruction>> i);
 
 		};
 

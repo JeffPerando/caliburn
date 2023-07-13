@@ -3,7 +3,7 @@
 #include "parser.h"
 
 #include "ast/ctrlstmt.h"
-#include "ast/fn.h"
+#include "ast/fnstmt.h"
 #include "ast/modstmts.h"
 #include "ast/shaderstmt.h"
 #include "ast/structstmt.h"
@@ -752,7 +752,7 @@ uptr<Statement> Parser::parseShader()
 
 			tkn = tokens->next();
 
-			shader->descriptorsParsed.push_back(std::pair(type, name));
+			shader->descriptors.push_back(std::pair(type, name));
 
 			if (tkn->type == TokenType::COMMA)
 			{
@@ -771,7 +771,7 @@ uptr<Statement> Parser::parseShader()
 
 		}
 
-		if (shader->descriptorsParsed.empty())
+		if (shader->descriptors.empty())
 		{
 			//TODO complain?
 		}
@@ -874,14 +874,14 @@ uptr<Statement> Parser::parseStruct()
 
 uptr<Statement> Parser::parseFunction()
 {
-	auto tkn = tokens->current();
+	auto first = tokens->current();
 
-	if (tkn->type != TokenType::KEYWORD || tkn->str != "def")
+	if (first->type != TokenType::KEYWORD || first->str != "def")
 	{
 		return nullptr;
 	}
 
-	tkn = tokens->next();
+	auto tkn = tokens->next();
 
 	std::vector<sptr<Token>> gpuThreadData;
 	//parse GPU threading data
@@ -903,8 +903,7 @@ uptr<Statement> Parser::parseFunction()
 
 	}
 
-	std::string name = tokens->current()->str;
-
+	auto name = tokens->current();
 	tokens->consume();
 
 	auto genSig = parseGenericSig();
@@ -921,9 +920,38 @@ uptr<Statement> Parser::parseFunction()
 		return nullptr;
 	}
 
-	//TODO parse arg list
-
 	tkn = tokens->next();
+
+	std::vector<sptr<FnArgVariable>> args;
+
+	uint32_t argIndex = 0;
+
+	while (tokens->hasNext())
+	{
+		auto argType = parseTypeName();
+
+		if (argType == nullptr)
+		{
+			break;
+		}
+
+		auto argName = tokens->current();
+
+		if (argName->type != TokenType::IDENTIFIER)
+		{
+			//TODO complain
+			break;
+		}
+
+		auto arg = new_sptr<FnArgVariable>(argIndex++);
+
+		arg->start = argType->firstTkn();
+		arg->nameTkn = argName;
+		arg->typeHint = argType;
+		
+		args.push_back(arg);
+
+	}
 
 	if (tkn->str != ")")
 	{
@@ -933,28 +961,31 @@ uptr<Statement> Parser::parseFunction()
 
 	tkn = tokens->next();
 
+	sptr<ParsedType> type = nullptr;
+
 	if (tkn->type == TokenType::ARROW)
 	{
 		tokens->consume();
-		sptr<ParsedType> type = parseTypeName();
+		type = parseTypeName();
 	}
 
-	uptr<Statement> body = parseLogic();
+	auto body = parseScope({&Parser::parseLogic});
 
 	if (!body)
 	{
 		return nullptr;
 	}
-	/*
-	uptr<Statement> func = new_uptr<FunctionStatement>();
+	
+	auto func = new_uptr<FunctionStatement>();
 
-	func->type = type;
+	func->first = first;
 	func->name = name;
-	func->funcBody = body;
-	//TODO finish
+	func->genSig = genSig;
+	func->retType = type;
+	func->args = args;
+	func->body = std::move(body);
 
-	return func;*/
-	return nullptr;
+	return func;
 }
 
 uptr<Statement> Parser::parseMethod()
@@ -1263,11 +1294,11 @@ sptr<Value> Parser::parseNonExpr()
 			}
 			else if (tkn->str == "sign")
 			{
-				v = new_sptr<UnaryValue>(tkn, Operator::SIGN, parseNonExpr());
+				v = new_sptr<SignValue>(tkn, parseNonExpr());
 			}
 			else if (tkn->str == "unsign")
 			{
-				v = new_sptr<UnaryValue>(tkn, Operator::UNSIGN, parseNonExpr());
+				v = new_sptr<UnsignValue>(tkn, parseNonExpr());
 			}
 			else
 			{
@@ -1691,7 +1722,15 @@ sptr<Variable> Parser::parseMemberVar()
 		initVal = parseAnyValue();
 
 	}
+
+	auto v = new_sptr<MemberVariable>();
+
+	v->mods = mods;
+	v->start = start;
+	v->nameTkn = name;
+	v->typeHint = type;
+	v->initValue = initVal;
+	v->isConst = isConst;
 	
-	//		MemberVariable(StmtModifiers mods, sptr<Token> start, sptr<Token> name, sptr<Type> type, sptr<Value> initValue, bool isConst) :
-	return new_sptr<MemberVariable>(mods, start, name, type, initVal);
+	return v;
 }

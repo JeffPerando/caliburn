@@ -5,9 +5,15 @@ using namespace caliburn;
 
 cllr::SSA RealFloat::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
 {
-	auto p = (ptr<TypeFloat>)base;
+	if (id == 0)
+	{
+		auto p = (ptr<TypeFloat>)base;
 
-	return codeAsm.pushNew(cllr::Opcode::TYPE_FLOAT, { p->width }, {});
+		id = codeAsm.pushNew(cllr::Opcode::TYPE_FLOAT, { p->width }, {});
+
+	}
+
+	return id;
 }
 
 /*

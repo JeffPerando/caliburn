@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "ast.h"
-#include "funcstmt.h"
+#include "fn.h"
 #include "module.h"
 #include "shaderstmt.h"
 
@@ -61,7 +61,7 @@ namespace caliburn
 
 		HashMap<std::string, sptr<Variable>> vars;
 		HashMap<std::string, sptr<BaseType>> types;
-		HashMap<std::string, sptr<FunctionStatement>> fns;
+		HashMap<std::string, sptr<Function>> fns;
 		HashMap<std::string, sptr<ShaderStatement>> shaders;
 
 		CompiledModule() {}

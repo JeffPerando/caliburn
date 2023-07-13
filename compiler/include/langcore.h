@@ -1,4 +1,9 @@
 
+/*
+Contains necessary constants, data types, and functions necessary for parsing, interpreting,
+and compiling Caliburn code.
+*/
+
 #pragma once
 
 #include <map>
@@ -7,11 +12,6 @@
 #include <vector>
 
 #include "basic.h"
-
-/*
-Contains necessary constants, data types, and functions necessary for parsing, interpreting,
-and compiling Caliburn code.
-*/
 
 namespace caliburn
 {
@@ -92,25 +92,19 @@ namespace caliburn
 	};
 
 	static const HashMap<std::string, ShaderType> SHADER_TYPES = {
-		/*
-		{"main",		ShaderType::COMPUTE},
-		*/
+		//{"main",		ShaderType::COMPUTE},
 		{"vertex",		ShaderType::VERTEX},
 		{"frag",		ShaderType::FRAGMENT},
-		/*
-		{"tessCtrl",	ShaderType::TESS_CTRL},
-		{"tessEval",	ShaderType::TESS_EVAL},
-		*/
+		//{"tessCtrl",	ShaderType::TESS_CTRL},
+		//{"tessEval",	ShaderType::TESS_EVAL},
 		{"geom", 		ShaderType::GEOMETRY},
-		/*
-		{"rayGen",   	ShaderType::RT_GEN},
-		{"rayClose",	ShaderType::RT_CLOSE},
-		{"rayHit",		ShaderType::RT_ANY_HIT},
-		{"rayInt",		ShaderType::RT_INTERSECT},
-		{"rayMiss",		ShaderType::RT_MISS},
-		{"task",		ShaderType::TASK},
-		{"mesh",		ShaderType::MESH}
-		*/
+		//{"rayGen",   	ShaderType::RT_GEN},
+		//{"rayClose",	ShaderType::RT_CLOSE},
+		//{"rayHit",		ShaderType::RT_ANY_HIT},
+		//{"rayInt",		ShaderType::RT_INTERSECT},
+		//{"rayMiss",		ShaderType::RT_MISS},
+		//{"task",		ShaderType::TASK},
+		//{"mesh",		ShaderType::MESH}
 	};
 
 	struct DescriptorSet

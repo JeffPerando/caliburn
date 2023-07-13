@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "funcstmt.h"
+#include "fnstmt.h"
 #include "structstmt.h"
 
 namespace caliburn
@@ -10,13 +10,6 @@ namespace caliburn
 	{
 		ClassStatement(sptr<Token> f) : StructStatement(f, StatementType::CLASS) {}
 		virtual ~ClassStatement() {}
-
-	};
-
-	struct MemberFunctionStatement : public FunctionStatement
-	{
-		MemberFunctionStatement() : FunctionStatement() {}
-		virtual ~MemberFunctionStatement() {}
 
 	};
 

@@ -34,20 +34,29 @@ namespace caliburn
 
 		void declareSymbols(sptr<SymbolTable> table) override
 		{
-			if (!typeHint->resolve(table))
+			if (vars.empty())
 			{
-				//TODO complain
+				for (auto const& name : names)
+				{
+					//mods, start, name, typeHint, initialValue
+					auto v = new_sptr<LocalVariable>();
+
+					v->mods = mods;
+					v->start = start;
+					v->nameTkn = name;
+					v->typeHint = typeHint;
+					v->initValue = initialValue;
+					v->isConst = isConst;
+
+					vars.push_back(v);
+
+				}
+
 			}
-
-			for (auto const& name : names)
-			{
-				vars.push_back(new_sptr<LocalVariable>(mods, start, name, typeHint, initialValue));
-
-			}
-
+			
 			for (auto const& v : vars)
 			{
-				table->add(v->name->str, v);
+				table->add(v->nameTkn->str, v);
 			}
 
 		}

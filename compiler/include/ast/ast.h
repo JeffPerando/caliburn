@@ -128,7 +128,6 @@ namespace caliburn
 		const StatementType type;
 
 		StmtModifiers mods = {};
-		HashMap<std::string, sptr<ParsedType>> typeAliases;//what??? TODO review why this is here
 
 		Statement(StatementType stmtType) : type(stmtType) {}
 		virtual ~Statement() {}
@@ -145,11 +144,11 @@ namespace caliburn
 		void prettyPrint(ref<std::stringstream> ss) const override {}
 
 		//Only used by top-level statements which declare symbols. The rest, like variables, should use declareSymbols() instead
-		virtual void declareHeader(sptr<SymbolTable> table) const {}
+		virtual void declareHeader(sptr<SymbolTable> table) {}
 
 		void declareSymbols(sptr<SymbolTable> table) override = 0;
 
-		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override = 0;
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
 	};
 
@@ -232,9 +231,9 @@ namespace caliburn
 			case ReturnMode::RETURN: {
 				if (retValue != nullptr)
 				{
-					auto retID = retValue->emitValueCLLR(table, codeAsm);
+					auto ret = retValue->emitValueCLLR(table, codeAsm);
 
-					codeAsm.push(0, cllr::Opcode::RETURN_VALUE, {}, { retID });
+					codeAsm.push(0, cllr::Opcode::RETURN_VALUE, {}, { ret.value });
 
 				}
 				else

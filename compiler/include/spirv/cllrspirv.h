@@ -11,6 +11,8 @@
 #include "cllr/cllrout.h"
 #include "spirv/spirvasm.h"
 #include "spirv/spirvio.h"
+#include "spirv/spirvtype.h"
+#include "spirv/spirvconst.h"
 
 namespace caliburn
 {
@@ -220,9 +222,7 @@ namespace caliburn
 			SPIRVOutAssembler();
 			virtual ~SPIRVOutAssembler() {}
 
-			uptr<std::vector<spirv::SSA>> translateCLLR(ref<cllr::Assembler> cllrAsm, ref<std::vector<sptr<cllr::Instruction>>> code) override;
-
-			void searchAheadCLLR(ref<std::vector<spirv::SSA>> outIDs, std::vector<cllr::Opcode> ops, size_t off, uint32_t count, ref<cllr::Assembler> cllrAsm, std::function<cllr::SSA(sptr<cllr::Instruction>)> filter);
+			uptr<std::vector<spirv::SSA>> translateCLLR(ref<cllr::Assembler> cllrAsm) override;
 
 			spirv::SSA createSSA();
 
@@ -243,6 +243,16 @@ namespace caliburn
 			SSA addImport(std::string instructions);
 
 			void setMemoryModel(spirv::AddressingModel addr, spirv::MemoryModel mem);
+
+			spirv::EntryPoint& getCurrentEntry()
+			{
+				if (shaderEntries.empty())
+				{
+					//TODO complain
+				}
+
+				return shaderEntries.back();
+			}
 
 		};
 

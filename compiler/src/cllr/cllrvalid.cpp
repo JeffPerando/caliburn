@@ -23,7 +23,7 @@ bool cllr::Validator::isType(cllr::Opcode op)
 		Opcode::TYPE_BOOL,
 		Opcode::TYPE_PTR,
 		Opcode::TYPE_TUPLE,
-		Opcode::TYPE_STRING
+		//Opcode::TYPE_STRING
 	};
 
 	return std::binary_search(ops.begin(), ops.end(), op);

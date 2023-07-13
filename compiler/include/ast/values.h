@@ -6,12 +6,11 @@
 
 #include "cllr/cllr.h"
 
-#include "ast/fn.h"
 #include "types/type.h"
 
 namespace caliburn
 {
-	struct IntLiteralValue : public Value
+	struct IntLiteralValue : Value
 	{
 		const sptr<Token> lit;
 
@@ -27,10 +26,7 @@ namespace caliburn
 			return lit;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			ss << lit->str;
-		}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -42,29 +38,11 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
-		{
-			auto pType = ParsedType(lit->str.substr(lit->str.find_first_of('_') + 1));
-			
-			if (auto t = pType.resolve(table))
-			{
-				//Integer literals parse immediately since there's no loss in precision;
-				//Float literals defer parsing since they can lose precision during parsing
-				//Why does it matter? I dunno
-				uint64_t parsedLit = t->base->parseLiteral(lit->str);
-
-				auto tID = t->emitDeclCLLR(table, codeAsm);
-
-				return codeAsm.pushNew(cllr::Opcode::VALUE_LIT_INT, { (uint32_t)(parsedLit & 0xFFFFFFFF), (uint32_t)((parsedLit >> 32) & 0xFFFFFFFF) }, { tID });
-			}
-
-			//TODO complain
-			return 0;
-		}
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct FloatLiteralValue : public Value
+	struct FloatLiteralValue : Value
 	{
 		const sptr<Token> lit;
 
@@ -80,10 +58,7 @@ namespace caliburn
 			return lit;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			ss << lit->str;
-		}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -95,24 +70,11 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
-		{
-			//We defer parsing further! Great success!
-			auto sID = codeAsm.addString(lit->str.substr(0, lit->str.find_first_of('_')));
-			auto pType = ParsedType(lit->str.substr(lit->str.find_first_of('_') + 1));
-			
-			if (auto t = pType.resolve(table))
-			{
-				return codeAsm.pushNew(cllr::Opcode::VALUE_LIT_FP, { sID }, { t->emitDeclCLLR(table, codeAsm) });
-			}
-
-			//TODO complain
-			return 0;
-		}
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct StringLitValue : public Value
+	struct StringLitValue : Value
 	{
 		const sptr<Token> lit;
 
@@ -128,10 +90,7 @@ namespace caliburn
 			return lit;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			ss << lit->str;
-		}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -143,24 +102,11 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
-		{
-			auto pType = ParsedType("string");
-
-			if (auto t = pType.resolve(table))
-			{
-				auto sID = codeAsm.addString(lit->str);
-
-				return codeAsm.pushNew(cllr::Opcode::VALUE_LIT_STR, { sID }, { t->emitDeclCLLR(table, codeAsm) });
-			}
-
-			//TODO complain
-			return 0;
-		}
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct BoolLitValue : public Value
+	struct BoolLitValue : Value
 	{
 		const sptr<Token> lit;
 		
@@ -176,10 +122,7 @@ namespace caliburn
 			return lit;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			ss << lit->str;
-		}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -191,22 +134,11 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
-		{
-			auto pType = ParsedType("bool");
-
-			if (auto t = pType.resolve(table))
-			{
-				return codeAsm.pushNew(cllr::Opcode::VALUE_LIT_BOOL, { lit->str == "true" }, { t->emitDeclCLLR(table, codeAsm) });
-			}
-
-			//TODO complain
-			return 0;
-		}
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct ArrayLitValue : public Value
+	struct ArrayLitValue : Value
 	{
 		sptr<Token> start = nullptr;
 		std::vector<sptr<Value>> values;
@@ -225,24 +157,7 @@ namespace caliburn
 			return end;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			ss << '[';
-
-			for (size_t i = 0; i < values.size(); ++i)
-			{
-				values[i]->prettyPrint(ss);
-
-				if (i + 1 < values.size())
-				{
-					ss << ", ";
-				}
-
-			}
-
-			ss << ']';
-
-		}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -254,25 +169,11 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
-		{
-			auto id = codeAsm.pushNew(cllr::Opcode::VALUE_LIT_ARRAY, { (uint32_t)values.size() }, {});
-
-			for (uint32_t i = 0; i < values.size(); ++i)
-			{
-				auto const& v = values[i];
-				auto vID = v->emitValueCLLR(table, codeAsm);
-
-				codeAsm.pushNew(cllr::Opcode::LIT_ARRAY_ELEM, { i }, { vID });
-
-			}
-
-			return id;
-		}
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct ExpressionValue : public Value
+	struct ExpressionValue : Value
 	{
 		sptr<Value> lValue = nullptr;
 		sptr<Value> rValue = nullptr;
@@ -290,25 +191,7 @@ namespace caliburn
 			return rValue->lastTkn();
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			const auto cat = OP_CATEGORIES.find(op)->second;
-
-			if (cat == OpCategory::UNARY)
-			{
-				//TODO complain
-				return;
-			}
-
-			const auto& opStr = findStrForOp(op);
-
-			lValue->prettyPrint(ss);
-
-			ss << ' ' << opStr << ' ';
-				
-			rValue->prettyPrint(ss);
-			
-		}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -320,26 +203,11 @@ namespace caliburn
 			return lValue->isCompileTimeConst() && rValue->isCompileTimeConst();
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
-		{
-			auto lhs = lValue->emitValueCLLR(table, codeAsm);
-			auto rhs = rValue->emitValueCLLR(table, codeAsm);
-
-			auto cllrOp = cllr::Opcode::VALUE_EXPR;
-
-			auto opType = OP_CATEGORIES.at(op);
-
-			if (opType == OpCategory::LOGICAL)
-			{
-				cllrOp = cllr::Opcode::COMPARE;
-			}
-
-			return codeAsm.pushNew(cllrOp, { (uint32_t)op }, { lhs, rhs });
-		}
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct IsAValue : public Value
+	struct IsAValue : Value
 	{
 		sptr<Value> val = nullptr;
 		sptr<ParsedType> chkType = nullptr;
@@ -357,15 +225,7 @@ namespace caliburn
 			return chkType->lastTkn();
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			val->prettyPrint(ss);
-
-			ss << " is ";
-
-			chkType->prettyPrint(ss);
-
-		}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -377,24 +237,11 @@ namespace caliburn
 			return val->isCompileTimeConst();
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
-		{
-			/*
-			chkType->emitDeclCLLR(table, codeAsm);
-			auto vID = val->emitValueCLLR(table, codeAsm);
-			auto tID = chkType->id;
-
-			TODO:
-			Emit the bool literal of whether or not type A is an instance of type B.
-
-			*/
-			return 0;
-			//return codeAsm.pushNew(cllr::Opcode::VALUE_INSTANCEOF, {}, { vID, tID, 0 });;
-		}
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct SubArrayValue : public Value
+	struct SubArrayValue : Value
 	{
 		sptr<Value> array = nullptr;
 		sptr<Value> index = nullptr;
@@ -412,17 +259,7 @@ namespace caliburn
 			return last;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			array->prettyPrint(ss);
-
-			ss << '[';
-
-			index->prettyPrint(ss);
-
-			ss << ']';
-
-		}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -434,19 +271,11 @@ namespace caliburn
 			return array->isCompileTimeConst() && index->isCompileTimeConst();
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
-		{
-			auto aID = array->emitValueCLLR(table, codeAsm);
-			auto iID = index->emitValueCLLR(table, codeAsm);
-
-			auto loadID = codeAsm.pushNew(cllr::Opcode::VALUE_SUBARRAY, {}, { aID, iID });
-
-			return loadID;
-		}
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct CastValue : public Value
+	struct CastValue : Value
 	{
 		sptr<Value> lhs = nullptr;
 		sptr<ParsedType> castTarget = nullptr;
@@ -464,15 +293,7 @@ namespace caliburn
 			return castTarget->lastTkn();
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			lhs->prettyPrint(ss);
-
-			ss << " as ";
-
-			castTarget->prettyPrint(ss);
-
-		}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -484,25 +305,11 @@ namespace caliburn
 			return lhs->isCompileTimeConst();
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
-		{
-			if (auto t = castTarget->resolve(table))
-			{
-				auto vID = lhs->emitValueCLLR(table, codeAsm);
-				auto tID = t->emitDeclCLLR(table, codeAsm);
-
-				auto loadID = codeAsm.pushNew(cllr::Opcode::VALUE_CAST, {}, { vID, tID, 0 });
-
-				return loadID;
-			}
-
-			//TODO complain
-			return 0;
-		}
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct VarReadValue : public Value
+	struct VarReadValue : Value
 	{
 		const sptr<Token> varTkn;
 
@@ -519,10 +326,7 @@ namespace caliburn
 			return varTkn;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			ss << varTkn->str;
-		}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		//FIXME this got broken by a recent update which removed resolveSymbols()
 		bool isLValue() const override
@@ -535,27 +339,11 @@ namespace caliburn
 			return false;
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
-		{
-			auto v = table->find(varTkn->str);
-
-			if (auto varRes = std::get_if<sptr<Variable>>(&v))
-			{
-				return (*varRes)->emitLoadCLLR(table, codeAsm, 0);
-			}
-			
-			if (auto valRes = std::get_if<sptr<Value>>(&v))
-			{
-				return (*valRes)->emitValueCLLR(table, codeAsm);
-			}
-
-			//TODO complain
-			return 0;
-		}
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct MemberReadValue : public Value
+	struct MemberReadValue : Value
 	{
 		sptr<Value> target = nullptr;
 		sptr<Token> memberName = nullptr;
@@ -573,19 +361,11 @@ namespace caliburn
 			return memberName;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			target->prettyPrint(ss);
-
-			ss << '.';
-
-			ss << memberName->str;
-
-		}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
-			return false;
+			return true;
 		}
 
 		bool isCompileTimeConst() const override
@@ -593,22 +373,11 @@ namespace caliburn
 			return false;
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
-		{
-			auto targetID = target->emitValueCLLR(table, codeAsm);
-
-			if (auto v = std::get_if<sptr<Variable>>(&table->find(memberName->str)))
-			{
-				return (*v)->emitLoadCLLR(table, codeAsm, targetID);
-			}
-
-			//TODO complain
-			return 0;
-		}
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 	
-	struct UnaryValue : public Value
+	struct UnaryValue : Value
 	{
 		Operator op = Operator::UNKNOWN;
 		sptr<Token> start = nullptr;
@@ -631,23 +400,7 @@ namespace caliburn
 			return end;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			ss << start->str;
-
-			if (op == Operator::SIGN || op == Operator::UNSIGN)
-			{
-				ss << ' ';
-			}
-
-			val->prettyPrint(ss);
-
-			if (end != nullptr)
-			{
-				ss << end->str;
-			}
-
-		}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -659,14 +412,13 @@ namespace caliburn
 			return val->isCompileTimeConst();
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
-		{
-			return codeAsm.pushNew(cllr::Opcode::VALUE_EXPR_UNARY, { (uint32_t)op }, { val->emitValueCLLR(table, codeAsm) });
-		}
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct FnCallValue : public Value
+	struct FunctionImpl;
+
+	struct FnCallValue : Value
 	{
 		sptr<Token> name = nullptr;
 		sptr<FunctionImpl> fnImpl = nullptr;
@@ -691,39 +443,7 @@ namespace caliburn
 			return end;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			if (target != nullptr)
-			{
-				target->prettyPrint(ss);
-
-				ss << '.';
-
-			}
-
-			ss << name->str;
-
-			genArgs->prettyPrint(ss);
-
-			ss << '(';
-
-			for (size_t i = 0; i < args.size(); ++i)
-			{
-				const auto& arg = args[i];
-
-				arg->prettyPrint(ss);
-
-				if (i + 1 < args.size())
-				{
-					ss << ", ";
-
-				}
-
-			}
-
-			ss << ')';
-
-		}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -735,20 +455,11 @@ namespace caliburn
 			return false;
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
-		{
-			if (auto fn = std::get_if<sptr<Function>>(&table->find(name->str)))
-			{
-				return fnImpl->call(table, codeAsm, args);
-			}
-
-			//TODO complain
-			return 0;
-		}
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct SetterValue : public Value
+	struct SetterValue : Value
 	{
 		sptr<Value> lhs = nullptr;
 		sptr<Value> rhs = nullptr;
@@ -767,23 +478,7 @@ namespace caliburn
 			return rhs->firstTkn();
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			lhs->prettyPrint(ss);
-
-			ss << ' ';
-
-			if (op != Operator::UNKNOWN)
-			{
-				ss << findStrForOp(op);
-
-			}
-
-			ss << "= ";
-
-			rhs->prettyPrint(ss);
-
-		}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -795,34 +490,11 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
-		{
-			auto lVal = lhs->emitValueCLLR(table, codeAsm);
-			auto rVal = rhs->emitValueCLLR(table, codeAsm);
-
-			if (op != Operator::UNKNOWN)
-			{
-				auto cllrOp = cllr::Opcode::VALUE_EXPR;
-
-				auto opType = OP_CATEGORIES.at(op);
-
-				if (opType == OpCategory::LOGICAL)
-				{
-					cllrOp = cllr::Opcode::COMPARE;
-				}
-
-				rVal = codeAsm.pushNew(cllrOp, { (uint32_t)op }, { lVal, rVal });
-
-			}
-
-			codeAsm.push(0, cllr::Opcode::ASSIGN, {}, { lVal, rVal });
-
-			return 0;
-		}
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct NullValue : public Value
+	struct NullValue : Value
 	{
 		const sptr<Token> lit;//I don't even know what to do with this
 
@@ -839,10 +511,7 @@ namespace caliburn
 			return lit;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			ss << "null";
-		}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -854,15 +523,11 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
-		{
-			//TODO out type
-			return codeAsm.pushNew(cllr::Opcode::VALUE_NULL, {}, {});
-		}
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct ZeroValue : public Value
+	struct ZeroValue : Value
 	{
 		ZeroValue() : Value(ValueType::UNKNOWN) {}
 		virtual ~ZeroValue() {}
@@ -877,7 +542,7 @@ namespace caliburn
 			return nullptr;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override {}
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -889,10 +554,73 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::SSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
+
+	};
+
+	struct SignValue : Value
+	{
+		const sptr<Token> first;
+		const sptr<Value> target;
+
+		SignValue(sptr<Token> f, sptr<Value> v) : Value(ValueType::UNKNOWN), first(f), target(v) {}
+
+		sptr<Token> firstTkn() const override
 		{
-			return codeAsm.pushNew(cllr::Opcode::VALUE_ZERO, {}, {});
+			return first;
 		}
+
+		sptr<Token> lastTkn() const override
+		{
+			return target->lastTkn();
+		}
+
+		void prettyPrint(ref<std::stringstream> ss) const override;
+
+		bool isLValue() const override
+		{
+			return false;
+		}
+
+		bool isCompileTimeConst() const override
+		{
+			return target->isCompileTimeConst();
+		}
+
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
+
+	};
+
+	struct UnsignValue : Value
+	{
+		const sptr<Token> first;
+		const sptr<Value> target;
+
+		UnsignValue(sptr<Token> f, sptr<Value> v) : Value(ValueType::UNKNOWN), first(f), target(v) {}
+
+		sptr<Token> firstTkn() const override
+		{
+			return first;
+		}
+
+		sptr<Token> lastTkn() const override
+		{
+			return target->lastTkn();
+		}
+
+		void prettyPrint(ref<std::stringstream> ss) const override;
+
+		bool isLValue() const override
+		{
+			return false;
+		}
+
+		bool isCompileTimeConst() const override
+		{
+			return target->isCompileTimeConst();
+		}
+
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
 
 	};
 

@@ -5,7 +5,12 @@ using namespace caliburn;
 
 cllr::SSA RealBool::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
 {
-	return codeAsm.pushNew(cllr::Opcode::TYPE_BOOL, {}, {});
+	if (id == 0)
+	{
+		id = codeAsm.pushNew(cllr::Opcode::TYPE_BOOL, {}, {});
+	}
+
+	return id;
 }
 
 /*

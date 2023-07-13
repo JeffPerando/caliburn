@@ -5,7 +5,9 @@ This header only exists to help make C++ syntax less goofy
 
 #pragma once
 
+#include <atomic>
 #include <memory>
+#include <stdint.h>
 #include <unordered_map>
 
 template<typename T>
@@ -40,16 +42,13 @@ It's June 13th and I'm tired. This is the closest I can get to truly aliasing th
 #define new_sptr std::make_shared
 #define new_uptr std::make_unique
 
-template<typename In, typename Out, typename std::enable_if<std::is_base_of<Out, In>::value>::type* = nullptr>
-sptr<Out> inline constexpr sptr_demote(sptr<In> in) noexcept
-{
-	return *(sptr<Out>*)&in;
-}
-
 //Great, now we're doing containers too.
 
 template<typename K, typename V, typename H = std::hash<K>>
 using HashMap = std::unordered_map<K, V, H>;
+
+template<typename T>
+using atom = std::atomic<T>;
 
 #define pass [[fallthrough]]
 

@@ -6,6 +6,7 @@
 #include "ast.h"
 #include "var.h"
 
+#include "types/type.h"
 #include "types/typestruct.h"
 
 namespace caliburn
@@ -17,7 +18,10 @@ namespace caliburn
 		sptr<Token> first = nullptr;
 		sptr<Token> last = nullptr;
 		sptr<BaseType> innerType = nullptr;
+		sptr<GenericSignature> genSig = nullptr;
+
 		std::vector<sptr<Variable>> members;
+		std::vector<sptr<Function>> constructors, destructors;
 
 		StructStatement(sptr<Token> n, StatementType type = StatementType::STRUCT) : Statement(type), name(n) {}
 
@@ -33,34 +37,25 @@ namespace caliburn
 			return last;
 		}
 
-		virtual void declareHeader(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
+		void declareHeader(sptr<SymbolTable> table) override
 		{
-			//innerType = new_uptr<TypeStruct>(name->str, tNames.size() + cNames.size());
+			if (innerType == nullptr)
+			{
+				innerType = new_sptr<TypeStruct>(name->str, genSig);
+			}
+
+			table->add(name->str, innerType);
+
 		}
 
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-			return 0;
+			return 0;//Do not implement. We let the innermost RealType declare itself
 		}
 
-		void declareSymbols(sptr<SymbolTable> table) override
-		{
-			for (auto const& mem : members)
-			{
-				
-			}
+		void declareSymbols(sptr<SymbolTable> table) override {}
 
-		}
-
-		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
-		{
-			for (auto const& mem : members)
-			{
-				mem->resolveSymbols(table);
-
-			}
-
-		}
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
 	};
 

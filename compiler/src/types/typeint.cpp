@@ -5,9 +5,15 @@ using namespace caliburn;
 
 cllr::SSA RealInt::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
 {
-	auto p = (ptr<TypeInt>)base;
+	if (id == 0)
+	{
+		auto p = (ptr<TypeInt>)base;
 
-	return codeAsm.pushNew(cllr::Opcode::TYPE_INT, { p->width, p->isSigned }, {});
+		id = codeAsm.pushNew(cllr::Opcode::TYPE_INT, { p->width, p->isSigned }, {});
+
+	}
+
+	return id;
 }
 
 /*

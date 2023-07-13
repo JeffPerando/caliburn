@@ -5,20 +5,18 @@
 
 namespace caliburn
 {
-	class TypeBool;
+	struct TypeBool;
 
-	class RealBool : RealType
+	struct RealBool : RealType
 	{
-	public:
 		RealBool(ptr<TypeBool> parent) : RealType((ptr<BaseType>)parent) {}
 
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
 	};
 
-	class TypeBool : public PrimitiveType<RealBool>
+	struct TypeBool : PrimitiveType
 	{
-	public:
 		TypeBool() : PrimitiveType(TypeCategory::BOOLEAN, "bool", 8, new_sptr<RealBool>(this)) {}
 
 	};

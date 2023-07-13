@@ -3,9 +3,9 @@
 
 #include "spirv/cllrspirv.h"
 
-using namespace caliburn;
+using namespace caliburn::spirv;
 
-void spirv::CodeSection::push(spirv::SpvOp op, SSA id, std::vector<uint32_t> args)
+void CodeSection::push(SpvOp op, SSA id, std::vector<uint32_t> args)
 {
 	if (!isValidOp(op))
 	{
@@ -26,7 +26,7 @@ void spirv::CodeSection::push(spirv::SpvOp op, SSA id, std::vector<uint32_t> arg
 
 }
 
-void spirv::CodeSection::pushTyped(SpvOp op, SSA type, SSA id, std::vector<uint32_t> args)
+void CodeSection::pushTyped(SpvOp op, SSA type, SSA id, std::vector<uint32_t> args)
 {
 	//TODO check for valid type, maybe.
 
@@ -57,7 +57,7 @@ void spirv::CodeSection::pushTyped(SpvOp op, SSA type, SSA id, std::vector<uint3
 
 }
 
-void spirv::CodeSection::pushVar(SSA type, SSA id, StorageClass sc, SSA init)
+void CodeSection::pushVar(SSA type, SSA id, StorageClass sc, SSA init)
 {
 	if (id == 0)
 	{
@@ -74,20 +74,20 @@ void spirv::CodeSection::pushVar(SSA type, SSA id, StorageClass sc, SSA init)
 		args.push_back(init);
 	}
 
-	pushTyped(spirv::OpVariable(init != 0), type, id, args );
+	pushTyped(OpVariable(init != 0), type, id, args );
 
 }
 
-void spirv::CodeSection::pushRaw(std::vector<uint32_t> args)
+void CodeSection::pushRaw(std::vector<uint32_t> args)
 {
 	code.insert(code.end(), args.begin(), args.end());
 
 }
 
 //Do NOT try to replace this with a memcpy
-void spirv::CodeSection::pushStr(std::string str)
+void CodeSection::pushStr(std::string str)
 {
-	code.reserve(code.size() + spirv::SpvStrLen(str));
+	code.reserve(code.size() + SpvStrLen(str));
 
 	auto iter = str.begin();
 
@@ -118,7 +118,19 @@ void spirv::CodeSection::pushStr(std::string str)
 
 }
 
-spirv::SSA spirv::CodeSection::find(SpvOp op, std::vector<uint32_t> args)
+void CodeSection::decorate(SSA target, Decoration d, std::vector<uint32_t> args)
+{
+	push(spirv::OpDecorate((uint32_t)args.size()), 0, { target, (uint32_t)d });
+	pushRaw(args);
+}
+
+void CodeSection::decorateMember(SSA target, uint32_t member, Decoration d, std::vector<uint32_t> args)
+{
+	push(spirv::OpMemberDecorate((uint32_t)args.size()), 0, { target, member, (uint32_t)d });
+	pushRaw(args);
+}
+
+SSA CodeSection::find(SpvOp op, std::vector<uint32_t> args)
 {
 	size_t i = 0;
 
@@ -158,7 +170,7 @@ spirv::SSA spirv::CodeSection::find(SpvOp op, std::vector<uint32_t> args)
 	return 0;
 }
 
-bool spirv::CodeSection::findVarMeta(SSA id, ref<VarData> meta)
+bool CodeSection::findVarMeta(SSA id, ref<VarData> meta)
 {
 	auto found = varMeta.find(id);
 
@@ -170,168 +182,4 @@ bool spirv::CodeSection::findVarMeta(SSA id, ref<VarData> meta)
 	meta = found->second;
 
 	return true;
-}
-
-bool spirv::TypeSection::findData(SSA id, ref<Type> out)
-{
-	auto found = ssaToType->find(id);
-
-	if (found == ssaToType->end())
-	{
-		return false;
-	}
-
-	out = found->second;
-
-	return true;
-}
-
-spirv::SSA spirv::TypeSection::findOrMake(SpvOp op, std::vector<uint32_t> args, SSA id)
-{
-	auto fid = types->find(Type{ op, 0, args });
-
-	if (fid != types->end())
-	{
-		if (id != 0)
-		{
-			//TODO edge case
-			//just... alias them??? idk
-		}
-
-		return fid->second;
-	}
-
-	if (id == 0)
-	{
-		id = spvAsm->createSSA();
-		spvAsm->setOpForSSA(op, id);
-
-	}
-
-	types->emplace(Type{ op, id, args }, id);
-
-	return id;
-}
-
-void spirv::TypeSection::pushNew(SpvOp op, SSA id, std::vector<uint32_t> args)
-{
-	if (id == 0)
-	{
-		//TODO complain
-		return;
-	}
-
-	if (types->find(Type{ op, 0, args }) != types->end())
-	{
-		//TODO complain
-		return;
-	}
-
-	types->emplace(Type { op, id, args }, id);
-
-}
-
-void spirv::TypeSection::dump(ref<CodeSection> sec) const
-{
-	for (auto& [t, id] : *types)
-	{
-		sec.push(t.opcode, id, t.operands);
-
-	}
-
-}
-
-spirv::SSA spirv::ConstSection::findOrMake(SSA t, uint32_t low, uint32_t high)
-{
-	auto key = Constant{ t, 0, low, high };
-	auto c = consts->find(key);
-
-	if (c != consts->end())
-	{
-		return c->second;
-	}
-
-	auto id = spvAsm->createSSA();
-
-	key.id = id;
-
-	consts->emplace(key, id);
-	spvAsm->setSection(id, spirv::SSAKind::CONST);
-
-	return id;
-}
-
-spirv::SSA spirv::ConstSection::findOrMakeComposite(SSA t, std::vector<uint32_t> data)
-{
-	auto key = CompositeConst{ t, 0, data };
-
-	auto c = composites->find(key);
-
-	if (c != composites->end())
-	{
-		return c->second;
-	}
-
-	auto id = spvAsm->createSSA();
-
-	key.id = id;
-
-	composites->emplace(key, id);
-	spvAsm->setSection(id, spirv::SSAKind::CONST);
-
-	return id;
-}
-
-spirv::SSA spirv::ConstSection::findOrMakeNullFor(SSA t)
-{
-	auto found = nulls->find(t);
-
-	if (found != nulls->end())
-	{
-		return found->second;
-	}
-
-	auto nID = spvAsm->createSSA();
-
-	nulls->emplace(t, nID);
-	spvAsm->setSection(nID, spirv::SSAKind::CONST);
-
-	return nID;
-}
-
-void spirv::ConstSection::dump(ref<CodeSection> sec) const
-{
-	for (auto& [typeID, nullID] : *nulls)
-	{
-		sec.pushTyped(spirv::OpConstantNull(), typeID, nullID, {});
-	}
-
-	for (auto& [data, id] : *consts)
-	{
-		if (data.type == spirv::OpTypeBool())
-		{
-			sec.pushTyped(data.lower == 0 ? spirv::OpConstantFalse() : spirv::OpConstantTrue(), data.type, id, {});
-		}
-		else
-		{
-			if (data.upper != 0)
-			{
-				sec.pushTyped(spirv::OpConstant(2), data.type, id, { data.lower, data.upper });
-
-			}
-			else
-			{
-				sec.pushTyped(spirv::OpConstant(1), data.type, id, { data.lower });
-
-			}
-
-		}
-
-	}
-
-	for (auto& [comp, id] : *composites)
-	{
-		sec.pushTyped(spirv::OpConstantComposite((uint32_t)comp.data.size()), comp.typeID, id, comp.data);
-	}
-
 }

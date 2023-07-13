@@ -25,8 +25,9 @@ cllr::SSA FunctionImpl::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assemble
 	}
 
 	auto retType = retTypeP->resolve(fnTable);
+	auto retTID = retType->emitDeclCLLR(table, codeAsm);
 
-	id = codeAsm.pushNew(cllr::Opcode::FUNCTION, { (uint32_t)sig->args.size() }, { retType->emitDeclCLLR(table, codeAsm) });
+	id = codeAsm.pushNew(cllr::Opcode::FUNCTION, { (uint32_t)sig->args.size() }, { retTID });
 
 	for (auto const& arg : sig->args)
 	{
@@ -40,9 +41,11 @@ cllr::SSA FunctionImpl::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assemble
 	return id;
 }
 
-cllr::SSA FunctionImpl::call(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, ref<const std::vector<sptr<Value>>> args)
+cllr::TypedSSA FunctionImpl::call(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, ref<const std::vector<sptr<Value>>> args)
 {
-	auto fnID = emitDeclCLLR(table, codeAsm);;
+	auto fnID = emitDeclCLLR(table, codeAsm);
+
+	auto tID = codeAsm.codeFor(fnID)->refs[0];
 
 	auto callID = codeAsm.pushNew(cllr::Opcode::CALL, { (uint32_t)args.size() }, { fnID });
 
@@ -50,7 +53,7 @@ cllr::SSA FunctionImpl::call(sptr<SymbolTable> table, ref<cllr::Assembler> codeA
 
 	for (auto& arg : args)
 	{
-		auto argID = arg->emitValueCLLR(table, codeAsm);
+		auto argID = arg->emitValueCLLR(table, codeAsm).value;
 
 		codeAsm.push(0, cllr::Opcode::CALL_ARG, { index }, { argID });
 
@@ -58,5 +61,5 @@ cllr::SSA FunctionImpl::call(sptr<SymbolTable> table, ref<cllr::Assembler> codeA
 
 	}
 
-	return callID;
+	return cllr::TypedSSA(parent->sig->returnType->resolve(table), callID, tID);
 }

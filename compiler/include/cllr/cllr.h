@@ -10,6 +10,8 @@
 
 namespace caliburn
 {
+	struct RealType;
+
 	/*
 	Caliburn Low-Level Representation (CLLR [pronounced Caller]):
 
@@ -23,11 +25,27 @@ namespace caliburn
 	*/
 	namespace cllr
 	{
-		class Assembler;
+		struct Assembler;
+		
 		struct Instruction;
+		using InstructionVec = std::vector<sptr<Instruction>>;
 
 		using SSA = uint32_t;
-		using InstructionVec = std::vector<sptr<Instruction>>;
+		struct TypedSSA
+		{
+			sptr<RealType> typePtr = nullptr;
+			SSA type = 0;
+			SSA value = 0;
+
+			TypedSSA() = default;
+			TypedSSA(sptr<RealType> tPtr, SSA t, SSA v) : typePtr(tPtr), type(t), value(v) {}
+
+			bool operator==(const TypedSSA& other) const
+			{
+				return type == other.type && value == other.value;
+			}
+
+		};
 
 		enum class Opcode : uint32_t
 		{
@@ -117,7 +135,11 @@ namespace caliburn
 			std::array<SSA, 3> refs = {};
 
 			SSA outType = 0;
-			sptr<Token> debugSym = nullptr;
+			sptr<ParsedObject> debugObj = nullptr;
+
+			Instruction() {}
+			Instruction(Opcode op, SSA id = 0, std::array<uint32_t, 3> ops = {}, std::array<SSA, 3> rs = {}, SSA out = 0) :
+				index(id), op(op), operands(ops), refs(rs), outType(out) {}
 
 		};
 

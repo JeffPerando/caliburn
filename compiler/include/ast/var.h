@@ -5,148 +5,112 @@
 
 namespace caliburn
 {
-	class LocalVariable;
-	class MemberVariable;
-	class GlobalVariable;
-
-	class LocalVariable : public Variable
+	struct LocalVariable : Variable
 	{
-	public:
-		LocalVariable(StmtModifiers mods, sptr<Token> start, sptr<Token> name, sptr<ParsedType> type, sptr<Value> initValue) :
-			Variable(mods, start, name, type, initValue) {}
+		LocalVariable() : Variable() {}
 		virtual ~LocalVariable() {}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			ss << (isConst ? "const" : "var");
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
-			if (typeHint != nullptr)
-			{
-				ss << ": ";
-				typeHint->prettyPrint(ss);
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
-			}
+		cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target) override;
 
-			ss << ' ' << name->str;
-
-			if (initValue != nullptr)
-			{
-				ss << " = ";
-				initValue->prettyPrint(ss);
-			}
-
-		}
-
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
-		{
-			cllr::SSA valID = 0, typeID = 0;
-
-			if (initValue == nullptr)
-			{
-				//initValue = new_sptr<ZeroValue>();
-			}
-
-			valID = initValue->emitValueCLLR(table, codeAsm);
-			
-			if (typeHint != nullptr)
-			{
-				typeID = typeHint->resolve(table)->emitDeclCLLR(table, codeAsm);
-				
-				//TODO check for compatibility with initial value
-
-			}
-
-			id = codeAsm.pushNew(cllr::Opcode::VAR_LOCAL, { (uint32_t)mods }, { typeID, valID });
-
-			return id;
-		}
-
-		cllr::SSA emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target) override
-		{
-			return 0;
-		}
-
-		void emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override
-		{
-
-		}
+		void emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override;
 
 	};
 
-	class MemberVariable : public Variable
+	struct MemberVariable : Variable
 	{
-	public:
 		sptr<RealType> parent = nullptr;
 		uint32_t memberIndex = 0;
 
-		MemberVariable(StmtModifiers mods, sptr<Token> start, sptr<Token> name, sptr<ParsedType> typeHint, sptr<Value> initValue) :
-			Variable(mods, start, name, typeHint, initValue) {}
+		MemberVariable() : Variable() {}
 		virtual ~MemberVariable() {}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
-		{
-			typeHint->prettyPrint(ss);
+		void prettyPrint(ref<std::stringstream> ss) const override;
 
-			ss << ' ';
-			ss << name->str;
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
-			if (initValue != nullptr)
-			{
-				ss << " = ";
-				initValue->prettyPrint(ss);
+		cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target) override;
 
-			}
-
-			ss << ';';
-
-		}
-
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
-		{
-			cllr::SSA valID = 0;
-
-			if (initValue != nullptr)
-			{
-				valID = initValue->emitValueCLLR(table, codeAsm);
-			}
-
-			auto parentID = parent->emitDeclCLLR(table, codeAsm);
-			auto typeID = typeHint->resolve(table)->emitDeclCLLR(table, codeAsm);
-
-			codeAsm.push(0, cllr::Opcode::STRUCT_MEMBER, { memberIndex }, { parentID, typeID, valID });
-
-			return 0;
-		}
-
-		cllr::SSA emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target) override
-		{
-			return codeAsm.pushNew(cllr::Opcode::VALUE_MEMBER, { memberIndex }, { target });
-		}
-
-		void emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override
-		{
-			auto memberSSA = emitLoadCLLR(table, codeAsm, target);
-
-			codeAsm.push(0, cllr::Opcode::ASSIGN, {}, { memberSSA, value });
-
-		}
+		void emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override;
 
 	};
 
-	class GlobalVariable : public Variable
+	struct GlobalVariable : Variable
 	{
+		GlobalVariable() : Variable() {}
+		virtual ~GlobalVariable() {}
+
+		void prettyPrint(ref<std::stringstream> ss) const override;
+
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
+
+		cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target) override;
+
+		void emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override;
 
 	};
 
-	class FunctionArgument : public Variable
+	struct FnArgVariable : Variable
 	{
+		const uint32_t argIndex;
 
+		FnArgVariable(uint32_t i) : Variable(), argIndex(i) {}
+		virtual ~FnArgVariable() {}
+
+		void prettyPrint(ref<std::stringstream> ss) const override;
+
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
+
+		cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target) override;
+
+		void emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override;
 
 	};
 
-	class ShaderIOVariable : public Variable
+	enum class ShaderIOVarType
 	{
-		
+		UNKNOWN,
+		INPUT,
+		OUTPUT
+	};
+
+	struct ShaderIOVariable : Variable
+	{
+	private:
+		ShaderIOVarType ioType = ShaderIOVarType::UNKNOWN;
+		uint32_t ioIndex = 0;
+
+	public:
+		const std::string name;
+
+		ShaderIOVariable(std::string n) : name(n) {}
+		ShaderIOVariable(sptr<Token> n) : name(n->str)
+		{
+			nameTkn = n;
+		}
+		virtual ~ShaderIOVariable() {}
+
+		ShaderIOVarType getIOType()
+		{
+			return ioType;
+		}
+
+		uint32_t getIndex()
+		{
+			return ioIndex;
+		}
+
+		void prettyPrint(ref<std::stringstream> ss) const override;
+
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
+
+		cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target) override;
+
+		void emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override;
+
 	};
 
 }

@@ -1,94 +1,232 @@
 
 #include "spirv/spirvio.h"
 
+#include "spirv/spirvtype.h"
 #include "spirv/cllrspirv.h"
 
-using namespace caliburn;
+using namespace caliburn::spirv;
 
-spirv::SSA spirv::SpvIO::typeInt32()
-{
-	return spvAsm->types.findOrMake(spirv::OpTypeInt(), { 32, 1 });
-}
-
-spirv::SSA spirv::SpvIO::typeUInt32()
-{
-	return spvAsm->types.findOrMake(spirv::OpTypeInt(), { 32, 0 });
-}
-
-spirv::SSA spirv::SpvIO::typeFP32()
-{
-	return spvAsm->types.findOrMake(spirv::OpTypeFloat(), { 32 });
-}
-
-spirv::SSA spirv::SpvIO::typeVec(uint32_t len, spirv::SSA inner)
-{
-	return spvAsm->types.findOrMake(spirv::OpTypeVector(), { inner, len });
-}
-
-spirv::SSA spirv::SpvIO::typeArray(uint32_t len, spirv::SSA inner)
-{
-	return spvAsm->types.findOrMake(spirv::OpTypeArray(), { inner, len });
-}
-
-spirv::SSA spirv::SpvIO::typeStruct(std::vector<uint32_t> members, std::vector<spirv::BuiltIn> decs)
-{
-	auto id = spvAsm->types.findOrMake(spirv::OpTypeStruct((uint32_t)members.size()), members);
-
-	if (!decs.empty())
-	{
-		for (uint32_t index = 0; index < decs.size(); ++index)
-		{
-			spvAsm->decs->pushRaw({spirv::OpMemberDecorate(), id, index, (uint32_t)spirv::Decoration::BuiltIn, (uint32_t)decs[index]});
-		}
-
-	}
-
-	return id;
-}
-
-spirv::SSA spirv::SpvIO::typePtr(spirv::SSA inner, spirv::StorageClass sc)
-{
-	return spvAsm->types.findOrMake(spirv::OpTypePointer(), { (uint32_t)sc, inner });
-}
-
-spirv::SSA spirv::SpvIO::makeVar(spirv::SSA type, spirv::StorageClass sc)
+SSA SpvIO::makeVar(SSA type, StorageClass sc)
 {
 	auto id = spvAsm->createSSA();
-	spvAsm->main->push(spirv::OpVariable(), id, { type, (uint32_t)sc });
+	spvAsm->gloVars->pushVar(type, id, sc, 0);
 	return id;
+}
+
+SSA SpvIO::makeInVar(SSA type)
+{
+	return makeVar(spvAsm->types.typeInPtr(type), spirv::StorageClass::Input);
+}
+
+SSA SpvIO::makeOutVar(SSA type)
+{
+	return makeVar(spvAsm->types.typeOutPtr(type), spirv::StorageClass::Output);
 }
 
 //See https://www.khronos.org/opengl/wiki/Built-in_Variable_(GLSL)
-spirv::SSA spirv::SpvIO::getBuiltinVar(spirv::BuiltIn builtin)
+SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 {
-	auto found = builtinIOs.find(builtin);
+	auto found = builtinIOs.find(b);
 
 	if (found != builtinIOs.end())
 	{
 		return found->second;
 	}
 
-	spirv::SSA type = 0;
-	spirv::StorageClass sClass = spirv::StorageClass::UniformConstant;//idk man
+	auto& t = spvAsm->types;
+	auto& d = *spvAsm->decs;
 
-	switch (builtin)
+	spirv::SSA id = 0;
+
+	auto i32 = t.typeInt32();
+	auto u32 = t.typeUInt32();
+
+	bool normalDecorate = true;
+
+	switch (b)
 	{
-	case BuiltIn::VertexIndex: {
-		type = typeInt32();
-		sClass = spirv::StorageClass::Input;
-	}
+	case BuiltIn::Position: pass;
+	case BuiltIn::PointSize: pass;
+	case BuiltIn::ClipDistance: pass; //TODO this seems to be used by frag shaders as well
+	case BuiltIn::CullDistance: { //vertex
+		//TODO this struct is used by multiple kinds of IO. It's also inside arrays.
+		auto f32 = t.typeFP32();
+		auto v4_f32 = t.typeVec(4, f32);
+
+		/*
+		out gl_PerVertex {
+			vec4 gl_Position;
+			float gl_PointSize;
+			float gl_ClipDistance[];
+			float gl_ClipDistance[];
+		};
+		*/
+		auto gl_PerVertex = t.typeStruct({ v4_f32, f32, f32, f32 }, { BuiltIn::Position, BuiltIn::PointSize, BuiltIn::ClipDistance, BuiltIn::CullDistance });
+
+		id = makeOutVar(gl_PerVertex);
+		normalDecorate = false;
+
+	}; break;
+	case BuiltIn::VertexId: { //vertex
+		id = makeInVar(i32);
+	}; break;
+	case BuiltIn::InstanceId: { //vertex
+		id = makeInVar(i32);
+	}; break;
+	case BuiltIn::PrimitiveId: { //tess control
+		//Note to future self: This is a barrier from making SPIR-V and CLLR assemblers contain multiple shaders.
+		StorageClass sc = (model == ExecutionModel::Geometry ? StorageClass::Output : StorageClass::Input);
+		id = makeVar(t.typePtr(i32, sc), sc);
+	}; break;
+	case BuiltIn::InvocationId: { //tess control
+		id = makeInVar(i32);
+	}; break;
+	case BuiltIn::Layer: { //geometry
+		id = makeOutVar(i32);
+	}; break;
+	case BuiltIn::ViewportIndex: { //geometry
+		id = makeOutVar(i32);
+	}; break;
+	case BuiltIn::TessLevelOuter: { //tess control
+		auto f32 = t.typeFP32();
+		auto fa4 = t.typeArray(4, f32);
+
+		id = makeOutVar(fa4);
+	}; break;
+	case BuiltIn::TessLevelInner: { //tess control
+		auto f32 = t.typeFP32();
+		auto fa2 = t.typeArray(2, f32);
+
+		id = makeOutVar(fa2);
+	}; break;
+	case BuiltIn::TessCoord: { //tess eval
+		auto v3 = t.typeVec(3);
+		id = makeInVar(t.typeInPtr(v3));
+	}; break;
+	case BuiltIn::PatchVertices: { //tess control
+		id = makeInVar(i32);
+	}; break;
+	case BuiltIn::FragCoord: { //frag
+		auto v4 = t.typeVec(4);
+		id = makeInVar(v4);
+	}; break;
+	case BuiltIn::PointCoord: { //frag
+		auto v2 = t.typeVec(2);
+		id = makeInVar(v2);
+	}; break;
+	case BuiltIn::FrontFacing: { //frag
+		auto boolType = t.typeBool();
+		id = makeInVar(boolType);
+	}; break;
+	case BuiltIn::SampleId: { //frag
+		id = makeInVar(i32);
+	}; break;
+	case BuiltIn::SamplePosition: { //frag
+		auto v2 = t.typeVec(2);
+		id = makeInVar(v2);
+	}; break;
+	case BuiltIn::SampleMask: {}; break; //FIXME this seems to be a runtime array.
+	case BuiltIn::FragDepth: { //frag
+		id = makeOutVar(t.typeFP32());
+	}; break;
+	case BuiltIn::HelperInvocation: {}; break;
+	case BuiltIn::NumWorkgroups: { //GLCompute
+		id = makeInVar(t.typeVec(3, u32));
+	}; break;
+	case BuiltIn::WorkgroupSize: { //GLCompute
+		//FIXME this is a compile-time constant, not a variable
+		id = makeInVar(t.typeVec(3, u32));
+	}; break;
+	case BuiltIn::WorkgroupId: { //GLCompute
+		id = makeInVar(t.typeVec(3, u32));
+	}; break;
+	case BuiltIn::LocalInvocationId: { //GLCompute
+		id = makeInVar(t.typeVec(3, u32));
+	}; break;
+	case BuiltIn::GlobalInvocationId: { //GLCompute
+		id = makeInVar(t.typeVec(3, u32));
+	}; break;
+	case BuiltIn::LocalInvocationIndex: { //GLCompute
+		id = makeInVar(u32);
+	}; break;
+	case BuiltIn::WorkDim: {}; break;
+	case BuiltIn::GlobalSize: {}; break;
+	case BuiltIn::EnqueuedWorkgroupSize: {}; break;
+	case BuiltIn::GlobalOffset: {}; break;
+	case BuiltIn::GlobalLinearId: {}; break;
+	case BuiltIn::SubgroupSize: {}; break;
+	case BuiltIn::SubgroupMaxSize: {}; break;
+	case BuiltIn::NumSubgroups: {}; break;
+	case BuiltIn::NumEnqueuedSubgroups: {}; break;
+	//see https://github.com/KhronosGroup/GLSL/blob/master/extensions/khr/GL_KHR_shader_subgroup.txt
+	case BuiltIn::SubgroupId: {
+		id = makeInVar(u32);
+	}; break;
+	case BuiltIn::SubgroupLocalInvocationId: {
+		id = makeInVar(u32);
+	}; break;
+	case BuiltIn::VertexIndex: { //vertex
+		//see https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VertexIndex.html
+		id = makeInVar(u32);
+	}; break;
+	case BuiltIn::InstanceIndex: { //vertex
+		//see https://registry.khronos.org/VulkanSC/specs/1.0-extensions/man/html/InstanceIndex.html
+		id = makeInVar(u32);
+	}; break;
+	//see https://github.com/KhronosGroup/GLSL/blob/master/extensions/khr/GL_KHR_shader_subgroup.txt
+	case BuiltIn::SubgroupEqMask: {
+		id = makeInVar(t.typeVec(4, u32));
+	}; break;
+	case BuiltIn::SubgroupGeMask: {
+		id = makeInVar(t.typeVec(4, u32));
+	}; break;
+	case BuiltIn::SubgroupGtMask: {
+		id = makeInVar(t.typeVec(4, u32));
+	}; break;
+	case BuiltIn::SubgroupLeMask: {
+		id = makeInVar(t.typeVec(4, u32));
+	}; break;
+	case BuiltIn::SubgroupLtMask: {
+		id = makeInVar(t.typeVec(4, u32));
+	}; break;
+	case BuiltIn::BaseVertex: { //vertex
+		//see https://registry.khronos.org/VulkanSC/specs/1.0-extensions/man/html/BaseVertex.html
+		id = makeInVar(u32);
+	}; break;
+	case BuiltIn::BaseInstance: { //vertex
+		//see https://registry.khronos.org/VulkanSC/specs/1.0-extensions/man/html/BaseInstance.html
+		id = makeInVar(u32);
+	}; break;
+	case BuiltIn::DrawIndex: { //vertex
+		//see https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/DrawIndex.html
+		id = makeInVar(u32);
+	}; break;
+	case BuiltIn::PrimitiveShadingRateKHR: { //vertex/geometry(??????)
+		//see https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/PrimitiveShadingRateKHR.html
+		id = makeOutVar(u32);
+		/*
+		The variable decorated with PrimitiveShadingRateKHR within the MeshEXT Execution Model must also be decorated with the PerPrimitiveEXT decoration
+
+		see also https://github.com/KhronosGroup/Vulkan-Docs/blob/main/proposals/VK_EXT_mesh_shader.adoc
+
+		Can't find the decoration in the official SPIR-V documentation so I'll just
+		*/
+		//FIXME
+	}; break;
 	default: break;//TODO complain
 	}
 
-	auto id = makeVar(type, sClass);
-	spvAsm->decs->pushRaw({ spirv::OpDecorate(1), id, (uint32_t)Decoration::BuiltIn, (uint32_t)builtin });
+	builtinIOs.emplace(b, id);
 
-	builtinIOs.emplace(builtin, id);
+	if (normalDecorate)
+	{
+		d.decorateBuiltIn(id, b);
+	}
 
 	return id;
 }
 
-spirv::SSA spirv::SpvIO::getOutputFor(spirv::ExecutionModel type, ref<spirv::SSA> outType, uint32_t loc)
+SSA SpvIO::getOutputFor(ExecutionModel type, ref<SSA> outType, uint32_t loc)
 {
 	auto found = shaderOuts.find(type);
 
@@ -97,46 +235,25 @@ spirv::SSA spirv::SpvIO::getOutputFor(spirv::ExecutionModel type, ref<spirv::SSA
 		return found->second;
 	}
 
-	spirv::SSA outID = 0;
+	auto& code = *spvAsm->main.get();
+	auto& t = spvAsm->types;
+	auto& d = spvAsm->decs;
+
+	SSA outID = 0;
 
 	if (type == ExecutionModel::Vertex)
 	{
-		auto& code = *spvAsm->main.get();
-		auto& types = spvAsm->types;
+		auto v4 = t.typeVec(4);
 
-		auto fp = typeFP32();
-		auto v4_fp = typeVec(4, fp);
-
-		auto i32 = typeInt32();
-		auto a1_32 = typeArray(1, i32);
-
-		/*
-		out gl_PerVertex
-		{
-			vec4 gl_Position;
-			float gl_PointSize;
-			int gl_ClipDistance[];
-			int gl_ClipDistance[];
-		};
-		*/
-
-		auto glPerVertex = typeStruct(
-			{ v4_fp,				fp,					a1_32,					a1_32 },
-			{ BuiltIn::Position,	BuiltIn::PointSize, BuiltIn::ClipDistance,	BuiltIn::CullDistance }
-		);
-
-		spvAsm->decs->pushRaw({ spirv::OpDecorate(1), glPerVertex, (uint32_t)Decoration::Block });
-
-		outType = v4_fp;
-		outID = makeVar(typePtr(glPerVertex, StorageClass::Output), StorageClass::Output);
+		outID = getBuiltinVar(type, BuiltIn::Position);
 
 	}
 	else if (type == ExecutionModel::Fragment)
 	{
-		outType = typeVec(4, typeFP32());
-		outID = makeVar(typePtr(outType, StorageClass::Output), StorageClass::Output);
+		outType = t.typeVec(4, t.typeFP32());
+		outID = makeOutVar(t.typeOutPtr(outType));
 
-		spvAsm->decs->pushRaw({ spirv::OpDecorate(2), outID, (uint32_t)Decoration::Location, loc });
+		d->decorate(outID, Decoration::Location, { loc });
 
 	}
 

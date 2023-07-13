@@ -16,16 +16,16 @@ void GenericArguments::apply(sptr<GenericSignature> sig, sptr<SymbolTable> table
 
 		if (auto vArg = std::get_if<sptr<Value>>(&arg))
 		{
-			table->add(name, Symbol(*vArg));
+			table->add(name, *vArg);
 		}
 		else if (auto tArg = std::get_if<sptr<ParsedType>>(&arg))
 		{
-			if (!(**tArg).resolve(table))
+			if (auto t = (**tArg).resolve(table))
 			{
-				//TODO complain
+				table->add(name, t);
 			}
 
-			//FIXME table->add(name->str, (**tArg).real());
+			//TODO complain
 		}
 		else
 		{
@@ -139,6 +139,7 @@ bool GenericSignature::canApply(ref<GenericArguments> genArgs) const
 	return true;
 }
 
+/*
 template<typename T>
 sptr<T> caliburn::Generic<T>::makeVariant(sptr<GenericArguments> args)
 {
@@ -166,7 +167,7 @@ sptr<T> caliburn::Generic<T>::makeVariant(sptr<GenericArguments> args)
 
 	return newVar;
 }
-
+*/
 std::string caliburn::parseGeneric(ref<const GenericResult> result)
 {
 	if (auto vArg = std::get_if<sptr<Value>>(&result))

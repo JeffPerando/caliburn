@@ -3,8 +3,9 @@
 
 #include <string>
 
+#include "symbols.h"
+
 #include "cllr/cllr.h"
-#include "ast/symbols.h"
 
 namespace caliburn
 {

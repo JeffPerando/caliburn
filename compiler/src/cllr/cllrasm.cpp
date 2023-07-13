@@ -33,8 +33,15 @@ sptr<Instruction> Assembler::codeFor(SSA id)
 	return ssaToCode.at(id);
 }
 
-SSA Assembler::push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::array<uint32_t, 3> refs, SSA type, sptr<Token> debug)
+SSA Assembler::push(sptr<Instruction> ins, bool generateSSA)
 {
+	if (generateSSA)
+	{
+		ins->index = createSSA(ins->op);
+	}
+
+	auto ssa = ins->index;
+
 	//NOTE: ID == 0 is not an error
 
 	if (ssa != 0 && ssaToOp[ssa] != Opcode::UNKNOWN)
@@ -42,140 +49,87 @@ SSA Assembler::push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::a
 		//TODO complain
 	}
 
-	auto ins = new_sptr<Instruction>();
+	code->push_back(ins);
 
-	ins->index = ssa;
-	ins->op = op;
-	ins->operands = operands;
-	ins->refs = refs;
-	ins->outType = type;
-	ins->debugSym = debug;
-
-	code.push_back(ins);
-
-	if (ssa != 0)
-	{
-		ssaToCode[ssa] = ins;
-	}
-
-	for (auto i = 0; i < 3; ++i)
-	{
-		if (refs[i] != 0)
-		{
-			ssaRefs[refs[i]] += 1;
-		}
-
-	}
-
-	if (type != 0)
-	{
-		ssaRefs[type] += 1;
-	}
+	doBookkeeping(ins);
 
 	return ssa;
 }
 
-void Assembler::findRefs(SSA id, ref<InstructionVec> result, size_t off) const
+void Assembler::pushAll(std::vector<sptr<Instruction>> ins)
 {
-	for (size_t i = off; i < code.size(); ++i)
+	code->insert(code->end(), ins.begin(), ins.end());
+
+	for (auto& i : ins)
 	{
-		auto const& op = code[i];
-		for (size_t i = 0; i < 3; ++i)
-		{
-			if (op->refs[i] == id)
-			{
-				result.push_back(op);
-				break;
-			}
-
-		}
-
+		doBookkeeping(i);
 	}
 
 }
 
-void Assembler::findPattern(ref<InstructionVec> result,
-	Opcode opcode,
-	std::array<bool, 3> opFlags, std::array<uint32_t, 3> ops,
-	std::array<bool, 3> refFlags, std::array<SSA, 3> refs,
-	size_t off, size_t limit) const
+std::pair<SSA, uint32_t> Assembler::pushInput(std::string name, SSA type)
 {
-	size_t count = 0;
-
-	for (size_t i = off; i < code.size(); ++i)
+	if (ioNames.find(name) == ioNames.end())
 	{
-		auto const& ins = code[i];
-		if (count == limit)
-		{
-			break;
-		}
-
-		//we treat UNKNOWN as a wildcard value
-		if (opcode != Opcode::UNKNOWN && ins->op != opcode)
-		{
-			continue;
-		}
-
-		bool match = true;
-
-		for (auto i = 0; i < 3; ++i)
-		{
-			if (opFlags[i])
-			{
-				if (ins->operands[i] != ops[i])
-				{
-					match = false;
-					break;
-				}
-
-			}
-
-			if (refFlags[i])
-			{
-				if (ins->refs[i] != refs[i])
-				{
-					match = false;
-					break;
-				}
-
-			}
-
-		}
-
-		if (match)
-		{
-			result.push_back(ins);
-			++count;
-		}
-
+		//TODO complain
+		return std::pair(0, 0);
 	}
 
+	if (outputs.find(name) != outputs.end())
+	{
+		//TODO complain
+		return std::pair(0, 0);
+	}
+
+	if (inputs.find(name) != inputs.end())
+	{
+		//TODO complain
+		return std::pair(0, 0);
+	}
+
+	uint32_t index = (uint32_t)inputs.size();
+	SSA nextIn = pushNew(Opcode::VAR_SHADER_IN, { index }, { type });
+	
+	inputs.emplace(name, nextIn);
+
+	return std::pair(nextIn, index);
 }
 
-void Assembler::findAll(ref<InstructionVec> result, const std::vector<Opcode> ops, size_t off, size_t limit) const
+std::pair<SSA, uint32_t> Assembler::pushOutput(std::string name, SSA type)
 {
-	if (limit == 0)
+	if (ioNames.find(name) == ioNames.end())
 	{
-		return;
+		//TODO complain
+		return std::pair(0, 0);
 	}
 
-	size_t count = 0;
-
-	for (size_t i = off; i < code.size(); ++i)
+	if (inputs.find(name) != inputs.end())
 	{
-		auto const& in = code[i];
-		if (std::binary_search(ops.begin(), ops.end(), in->op))
-		{
-			result.push_back(in);
-			++count;
+		//TODO complain
+		return std::pair(0, 0);
+	}
 
-			if (count == limit)
-			{
-				break;
-			}
+	if (outputs.find(name) != outputs.end())
+	{
+		//TODO complain
+		return std::pair(0, 0);
+	}
 
-		}
+	uint32_t index = (uint32_t)outputs.size();
+	SSA nextOut = pushNew(Opcode::VAR_SHADER_OUT, { index }, { type });
+	
+	outputs.emplace(name, nextOut);
 
+	return std::pair(nextOut, index);
+}
+
+void Assembler::addIOName(std::string name)
+{
+	auto& [itr, success] = ioNames.insert(name);
+
+	if (!success)
+	{
+		//TODO complain
 	}
 
 }
@@ -197,7 +151,7 @@ uint32_t Assembler::replace(SSA in, SSA out)
 		return 0;
 	}
 
-	for (auto const& op : code)
+	for (auto const& op : *code)
 	{
 		for (size_t i = 0; i < 3; ++i)
 		{
@@ -208,6 +162,17 @@ uint32_t Assembler::replace(SSA in, SSA out)
 
 			}
 
+		}
+
+		if (count == limit)
+		{
+			break;
+		}
+
+		if (op->outType == in)
+		{
+			op->outType = out;
+			++count;
 		}
 
 		if (count == limit)
@@ -269,4 +234,29 @@ uint32_t Assembler::flatten()
 	}
 
 	return replaced;
+}
+
+void Assembler::doBookkeeping(const ref<sptr<Instruction>> ins)
+{
+	if (ins->index != 0)
+	{
+		ssaToCode[ins->index] = ins;
+	}
+
+	for (auto i = 0; i < 3; ++i)
+	{
+		auto refID = ins->refs[i];
+
+		if (refID != 0)
+		{
+			ssaRefs[refID] += 1;
+		}
+
+	}
+
+	if (ins->outType != 0)
+	{
+		ssaRefs[ins->outType] += 1;
+	}
+
 }

@@ -5,20 +5,18 @@
 
 namespace caliburn
 {
-	class TypeFloat;
+	struct TypeFloat;
 
-	class RealFloat : RealType
+	struct RealFloat : RealType
 	{
-	public:
 		RealFloat(ptr<TypeFloat> parent) : RealType((ptr<BaseType>)parent) {}
 
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
 	};
 
-	class TypeFloat : public PrimitiveType<RealFloat>
+	struct TypeFloat : PrimitiveType
 	{
-	public:
 		TypeFloat(uint32_t bits) : PrimitiveType(TypeCategory::FLOAT, "float" + bits, bits, new_sptr<RealFloat>(this)) {}
 
 	};

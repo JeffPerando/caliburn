@@ -27,7 +27,7 @@ namespace caliburn
 
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-			return val->emitValueCLLR(table, codeAsm);
+			return val->emitValueCLLR(table, codeAsm).value;
 		}
 
 	};

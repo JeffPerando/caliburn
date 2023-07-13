@@ -5,9 +5,9 @@
 
 namespace caliburn
 {
-	class TypeVoid;
+	struct TypeVoid;
 
-	class RealVoid : RealType
+	struct RealVoid : RealType
 	{
 	public:
 		RealVoid(ptr<TypeVoid> parent) : RealType((ptr<BaseType>)parent) {}
@@ -16,7 +16,7 @@ namespace caliburn
 
 	};
 
-	class TypeVoid : public PrimitiveType<RealVoid>
+	struct TypeVoid : PrimitiveType
 	{
 	public:
 		TypeVoid() : PrimitiveType(TypeCategory::VOID, "void", 0, new_sptr<RealVoid>(this)) {}

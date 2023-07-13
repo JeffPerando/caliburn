@@ -9,12 +9,13 @@
 namespace caliburn
 {
 	struct Module;
-	class Function;
+	struct Function;
 	struct Value;
-	class Variable;
-	class BaseType;
+	struct Variable;
+	struct BaseType;
+	struct RealType;
 	
-	using Symbol = std::variant<nullptr_t, sptr<Module>, sptr<Function>, sptr<Value>, sptr<Variable>, sptr<BaseType>>;
+	using Symbol = std::variant<std::monostate, sptr<Module>, sptr<Function>, sptr<Value>, sptr<Variable>, sptr<BaseType>, sptr<RealType>>;
 
 	class SymbolTable
 	{
@@ -53,7 +54,7 @@ namespace caliburn
 				return parent->find(symName);
 			}
 
-			return nullptr;
+			return Symbol();
 		}
 
 	};

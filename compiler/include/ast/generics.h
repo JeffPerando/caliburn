@@ -173,6 +173,7 @@ namespace caliburn
 
 			defaultArgs = new_sptr<GenericArguments>(defArgs);
 
+			return defaultArgs;
 		}
 
 		//void set(uint32_t index, )
@@ -202,7 +203,33 @@ namespace caliburn
 		virtual ~Generic() {}
 
 	public:
-		virtual sptr<T> makeVariant(sptr<GenericArguments> args);
+		virtual sptr<T> makeVariant(sptr<GenericArguments> args)
+		{
+			if (args == nullptr || args->empty())
+			{
+				args = sig->makeDefaultArgs();
+			}
+
+			if (!sig->canApply(*args))
+			{
+				//TODO complain
+				return nullptr;
+			}
+
+			auto found = variants->find(args);
+
+			if (found != variants->end())
+			{
+				return found->second;
+			}
+
+			auto newVar = new_sptr<T>(this, args);
+
+			variants->emplace(args, newVar);
+
+			return newVar;
+		}
+
 
 	};
 

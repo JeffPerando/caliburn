@@ -460,7 +460,7 @@ namespace caliburn
             ViewportIndex = 10,
             TessLevelOuter = 11,
             TessLevelInner = 12,
-            TesCoord = 13,
+            TessCoord = 13,
             PatchVertices = 14,
             FragCoord = 15,
             PointCoord = 16,

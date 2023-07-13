@@ -5,19 +5,24 @@ using namespace caliburn;
 
 cllr::SSA RealVector::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
 {
-	auto& t = genArgs->args[0];
-
-	if (auto& ptype = std::get<sptr<ParsedType>>(t))
+	if (id == 0)
 	{
-		if (auto type = ptype->resolve(table))
+		auto& t = genArgs->args[0];
+
+		if (auto& ptype = std::get<sptr<ParsedType>>(t))
 		{
-			return codeAsm.pushNew(cllr::Opcode::TYPE_VECTOR, { ((ptr<TypeVector>)base)->elements }, { type->emitDeclCLLR(table, codeAsm) });
+			if (auto type = ptype->resolve(table))
+			{
+				id = codeAsm.pushNew(cllr::Opcode::TYPE_VECTOR, { ((ptr<TypeVector>)base)->elements }, { type->emitDeclCLLR(table, codeAsm) });
+				return id;
+			}
+
 		}
 
+		//TODO complain
 	}
 
-	//TODO complain
-	return 0;
+	return id;
 }
 
 /*

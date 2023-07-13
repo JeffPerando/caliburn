@@ -6,30 +6,32 @@
 #include "basic.h"
 #include "langcore.h"
 
-#include "ast/generics.h"
-#include "ast/symbols.h"
-#include "ast/var.h"
+#include "ast.h"
+#include "generics.h"
+#include "symbols.h"
+#include "var.h"
 
 #include "cllr/cllrasm.h"
 
 namespace caliburn
 {
 	class Parser;
-	struct ScopeStatement;
-
+	struct Function;
+	
 	struct FunctionSignature
 	{
-		std::vector<sptr<Variable>> args;
+		std::vector<sptr<FnArgVariable>> args;
 		sptr<GenericSignature> genSig;
 		sptr<ParsedType> returnType;
 
 	};
 
-	class FunctionImpl : public cllr::Emitter
+	struct FunctionImpl : cllr::Emitter
 	{
 		friend class Parser;
-		friend class Function;
+		friend struct Function;
 
+	private:
 		const ptr<Function> parent;
 
 		sptr<SymbolTable> table = nullptr;
@@ -39,27 +41,37 @@ namespace caliburn
 	public:
 		cllr::SSA id = 0;
 
-		FunctionImpl(ptr<Function> parent, sptr<GenericArguments> gArgs) : parent(parent), genArgs(gArgs) {}
+		FunctionImpl(ptr<Generic<FunctionImpl>> parent, sptr<GenericArguments> gArgs) : parent((ptr<Function>)parent), genArgs(gArgs) {}
 		virtual ~FunctionImpl() {}
 
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
-		virtual cllr::SSA call(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, ref<const std::vector<sptr<Value>>> args);
+		virtual cllr::TypedSSA call(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, ref<const std::vector<sptr<Value>>> args);
 
 	};
 
-	class Function : public Generic<FunctionImpl>
+	struct Function : Generic<FunctionImpl>
 	{
 		friend class Parser;
-		friend class FunctionImpl;
+		friend struct FunctionImpl;
 
 		const sptr<FunctionSignature> sig;
 
 		uptr<ScopeStatement> code = nullptr;
 
-	public:
 		Function(sptr<FunctionSignature> sig) : Generic(sig->genSig), sig(sig) {}
 		virtual ~Function() {}
+
+	};
+
+	struct FunctionName
+	{
+		std::map<sptr<FunctionSignature>, sptr<Function>> fns;
+
+		FunctionName() = default;
+		virtual ~FunctionName() {}
+
+
 
 	};
 

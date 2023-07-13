@@ -5,7 +5,10 @@ using namespace caliburn;
 
 cllr::SSA IfStatement::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
 {
-	auto cID = condition->emitValueCLLR(table, codeAsm);
+	auto cond = condition->emitValueCLLR(table, codeAsm);
+
+	//TODO type check
+	auto cID = cond.value;
 
 	auto ifLabel = codeAsm.createSSA(cllr::Opcode::LABEL);
 	auto elseLabel = codeAsm.createSSA(cllr::Opcode::LABEL);
@@ -111,7 +114,10 @@ cllr::SSA WhileStatement::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assemb
 	codeAsm.push(start, cllr::Opcode::LABEL, {}, {});
 	codeAsm.push(0, cllr::Opcode::LOOP, {}, { exit, cont, loopLabel });
 
-	auto cID = condition->emitValueCLLR(table, codeAsm);
+	auto cond = condition->emitValueCLLR(table, codeAsm);
+
+	//TODO type check
+	auto cID = cond.value;
 
 	codeAsm.push(0, cllr::Opcode::JUMP_COND, {}, { cID, loopLabel, exit });
 

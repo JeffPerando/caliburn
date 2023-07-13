@@ -5,5 +5,10 @@ using namespace caliburn;
 
 cllr::SSA RealVoid::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
 {
-	return codeAsm.pushNew(cllr::Opcode::TYPE_VOID, {}, {});
+	if (id == 0)
+	{
+		id = codeAsm.pushNew(cllr::Opcode::TYPE_VOID, {}, {});
+	}
+
+	return id;
 }

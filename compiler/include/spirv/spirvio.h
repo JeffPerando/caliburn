@@ -22,26 +22,16 @@ namespace caliburn
 
 			const ptr<cllr::SPIRVOutAssembler> spvAsm;
 
-			spirv::SSA typeInt32();
-
-			spirv::SSA typeUInt32();
-
-			spirv::SSA typeFP32();
-
-			spirv::SSA typeVec(uint32_t len, spirv::SSA inner);
-
-			spirv::SSA typeArray(uint32_t len, spirv::SSA inner);
-
-			spirv::SSA typeStruct(std::vector<uint32_t> members, std::vector<spirv::BuiltIn> decs );
-
-			spirv::SSA typePtr(spirv::SSA inner, spirv::StorageClass sc);
-
 			spirv::SSA makeVar(spirv::SSA type, spirv::StorageClass sc);
+
+			spirv::SSA makeInVar(spirv::SSA type);
+
+			spirv::SSA makeOutVar(spirv::SSA type);
 
 		public:
 			SpvIO(ptr<cllr::SPIRVOutAssembler> spv) : spvAsm(spv) {}
 			
-			spirv::SSA getBuiltinVar(spirv::BuiltIn builtin);
+			spirv::SSA getBuiltinVar(spirv::ExecutionModel model, spirv::BuiltIn builtin);
 
 			spirv::SSA getOutputFor(spirv::ExecutionModel model, ref<spirv::SSA> outType, uint32_t loc = 0);
 

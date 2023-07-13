@@ -2,7 +2,7 @@
 #pragma once
 
 #include "ast.h"
-#include "structstmt.h"
+#include "fn.h"
 
 namespace caliburn
 {
@@ -10,10 +10,8 @@ namespace caliburn
 	{
 		sptr<Token> first = nullptr;
 		sptr<Token> name = nullptr;
-
-		cllr::SSA funcID = 0;
-
-		std::vector<uptr<Variable>> args;
+		sptr<GenericSignature> genSig = nullptr;
+		std::vector<sptr<FnArgVariable>> args;
 		sptr<ParsedType> retType = nullptr;
 		uptr<ScopeStatement> body = nullptr;
 		
@@ -26,8 +24,27 @@ namespace caliburn
 
 		sptr<Token> lastTkn() const override
 		{
-			return body ? body->last : nullptr;
+			return body->lastTkn();
 		}
+
+		void declareHeader(sptr<SymbolTable> table) override {}
+
+		void declareSymbols(sptr<SymbolTable> table) override
+		{
+			auto sig = new_sptr<FunctionSignature>();
+
+			sig->args = args;
+			sig->genSig = genSig;
+			sig->returnType = retType;
+
+			auto fn = new_sptr<Function>(sig);
+
+			fn->code = std::move(body);
+
+			table->add(name->str, fn);
+
+		}
+
 		/*
 		ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
 		{
@@ -42,14 +59,7 @@ namespace caliburn
 		*/
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
-			auto tID = retType->resolve(table)->emitDeclCLLR(table, codeAsm);
-
-			codeAsm.push(funcID, cllr::Opcode::FUNCTION, { (uint32_t)args.size() }, { tID });
-
-			body->emitDeclCLLR(table, codeAsm);
-
-			codeAsm.push(0, cllr::Opcode::FUNCTION_END, {}, { funcID });
-
+			return 0;
 		}
 
 	};

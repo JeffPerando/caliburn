@@ -1,7 +1,41 @@
-/*
+
 #include "types/typestruct.h"
 
 using namespace caliburn;
+
+cllr::SSA RealStruct::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
+{
+	if (id != 0)
+	{
+		return id;
+	}
+	
+	auto const& parent = static_cast<ptr<TypeStruct>>(base);
+
+	auto memberTable = new_sptr<SymbolTable>(table);
+
+	//populate table with generics and members
+	genArgs->apply(parent->sig, memberTable);
+
+	for (auto const& v : parent->memberVars)
+	{
+		memberTable->add(v->nameTkn->str, v);
+	}
+
+	id = codeAsm.pushNew(cllr::Opcode::TYPE_STRUCT, { (uint32_t)parent->memberVars.size() }, {});
+
+	for (auto const& v : parent->memberVars)
+	{
+		v->emitDeclCLLR(memberTable, codeAsm);
+	}
+
+	codeAsm.push(0, cllr::Opcode::STRUCT_END, {}, { id });
+
+	return id;
+}
+
+
+/*
 
 uint32_t TypeStruct::getSizeBytes() const
 {
