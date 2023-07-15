@@ -6,7 +6,7 @@
 
 namespace caliburn
 {
-	struct ShaderStageStatement : public Statement
+	struct ShaderStageStatement : Statement
 	{
 		const sptr<Token> first;
 		const sptr<Token> name;
@@ -56,7 +56,7 @@ namespace caliburn
 
 	};
 
-	struct ShaderStatement : public Statement
+	struct ShaderStatement : Statement
 	{
 		sptr<Token> first = nullptr;
 		sptr<Token> name = nullptr;

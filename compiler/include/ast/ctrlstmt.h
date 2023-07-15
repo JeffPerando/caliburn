@@ -6,7 +6,7 @@
 
 namespace caliburn
 {
-	struct IfStatement : public Statement
+	struct IfStatement : Statement
 	{
 		sptr<Token> first = nullptr;
 
@@ -54,7 +54,7 @@ namespace caliburn
 
 		}
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override; //see ctrlstmt.cpp
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
 		/*
 		ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
@@ -82,7 +82,7 @@ namespace caliburn
 
 	};
 
-	struct ForRangeStatement : public Statement
+	struct ForRangeStatement : Statement
 	{
 		sptr<Token> first = nullptr;
 		sptr<Token> index = nullptr;
@@ -117,7 +117,7 @@ namespace caliburn
 
 	};
 
-	struct WhileStatement : public Statement
+	struct WhileStatement : Statement
 	{
 		sptr<Token> first = nullptr;
 

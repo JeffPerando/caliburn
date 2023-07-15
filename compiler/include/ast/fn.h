@@ -15,9 +15,18 @@
 
 namespace caliburn
 {
-	class Parser;
 	struct Function;
 	
+	enum class FnType : uint32_t
+	{
+		FUNCTION,
+		CONSTRUCTOR,
+		DESTRUCTOR,
+		CONVERTER,
+		OP_OVERLOAD,
+		MEMBER_FN,
+	};
+
 	struct FunctionSignature
 	{
 		std::vector<sptr<FnArgVariable>> args;
@@ -28,17 +37,8 @@ namespace caliburn
 
 	struct FunctionImpl : cllr::Emitter
 	{
-		friend class Parser;
-		friend struct Function;
-
-	private:
 		const ptr<Function> parent;
 		const sptr<GenericArguments> genArgs;
-
-		sptr<SymbolTable> table = nullptr;
-
-	public:
-		cllr::SSA id = 0;
 
 		FunctionImpl(ptr<Generic<FunctionImpl>> parent, sptr<GenericArguments> gArgs) : parent((ptr<Function>)parent), genArgs(gArgs) {}
 		virtual ~FunctionImpl() {}
@@ -47,15 +47,17 @@ namespace caliburn
 
 		virtual cllr::TypedSSA call(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, ref<const std::vector<sptr<Value>>> args);
 
+	private:
+		sptr<SymbolTable> fnImplTable = nullptr;
+		cllr::SSA id = 0;
+
 	};
 
 	struct Function : Generic<FunctionImpl>
 	{
-		friend class Parser;
-		friend struct FunctionImpl;
-
 		const sptr<FunctionSignature> sig;
 
+		sptr<Token> name = nullptr;
 		uptr<ScopeStatement> code = nullptr;
 
 		Function(sptr<FunctionSignature> sig) : Generic(sig->genSig), sig(sig) {}
@@ -69,6 +71,15 @@ namespace caliburn
 
 		FunctionName() = default;
 		virtual ~FunctionName() {}
+
+	};
+
+	struct Method : Function
+	{
+		Method(sptr<FunctionSignature> sig) : Function(sig)
+		{
+
+		}
 
 	};
 

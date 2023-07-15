@@ -33,14 +33,9 @@ sptr<Instruction> Assembler::codeFor(SSA id)
 	return ssaToCode.at(id);
 }
 
-SSA Assembler::push(sptr<Instruction> ins, bool generateSSA)
+SSA Assembler::push(ref<Instruction> ins)
 {
-	if (generateSSA)
-	{
-		ins->index = createSSA(ins->op);
-	}
-
-	auto ssa = ins->index;
+	auto ssa = ins.index;
 
 	//NOTE: ID == 0 is not an error
 
@@ -49,20 +44,25 @@ SSA Assembler::push(sptr<Instruction> ins, bool generateSSA)
 		//TODO complain
 	}
 
-	code->push_back(ins);
+	auto ins_sptr = new_sptr<Instruction>(ins);
 
-	doBookkeeping(ins);
+	code->push_back(ins_sptr);
+
+	doBookkeeping(ins_sptr);
 
 	return ssa;
 }
 
-void Assembler::pushAll(std::vector<sptr<Instruction>> ins)
+void Assembler::pushAll(std::vector<Instruction> ins)
 {
-	code->insert(code->end(), ins.begin(), ins.end());
+	code->reserve(code->size() + ins.size());
 
 	for (auto& i : ins)
 	{
-		doBookkeeping(i);
+		auto ins = new_sptr<Instruction>(i);
+		code->push_back(ins);
+		doBookkeeping(ins);
+
 	}
 
 }
@@ -88,7 +88,7 @@ std::pair<SSA, uint32_t> Assembler::pushInput(std::string name, SSA type)
 	}
 
 	uint32_t index = (uint32_t)inputs.size();
-	SSA nextIn = pushNew(Opcode::VAR_SHADER_IN, { index }, { type });
+	SSA nextIn = pushNew(Instruction(Opcode::VAR_SHADER_IN, { index }, { type }));
 	
 	inputs.emplace(name, nextIn);
 
@@ -116,7 +116,7 @@ std::pair<SSA, uint32_t> Assembler::pushOutput(std::string name, SSA type)
 	}
 
 	uint32_t index = (uint32_t)outputs.size();
-	SSA nextOut = pushNew(Opcode::VAR_SHADER_OUT, { index }, { type });
+	SSA nextOut = pushNew(Instruction(Opcode::VAR_SHADER_OUT, { index }, { type }));
 	
 	outputs.emplace(name, nextOut);
 

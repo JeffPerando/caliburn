@@ -55,19 +55,15 @@ namespace caliburn
 
 			sptr<Instruction> codeFor(SSA id);
 
-			SSA push(sptr<Instruction> ins, bool generateSSA = true);
+			SSA push(ref<Instruction> ins);
 
-			void pushAll(std::vector<sptr<Instruction>> code);
-
-			SSA pushNew(Opcode op, std::array<uint32_t, 3> operands, std::array<SSA, 3> refs)
+			SSA pushNew(ref<Instruction> ins)
 			{
-				return push(createSSA(op), op, operands, refs);
+				ins.index = createSSA(ins.op);
+				return push(ins);
 			}
 
-			SSA push(SSA ssa, Opcode op, std::array<uint32_t, 3> operands, std::array<SSA, 3> refs, SSA type = 0, sptr<Token> debug = nullptr)
-			{
-				return push(new_sptr<Instruction>(op, ssa, operands, refs, 0), false);
-			}
+			void pushAll(std::vector<Instruction> code);
 
 			std::pair<SSA, uint32_t> pushInput(std::string name, SSA type);
 

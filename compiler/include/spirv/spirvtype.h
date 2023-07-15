@@ -11,7 +11,7 @@ namespace caliburn
 {
     namespace cllr
     {
-        class SPIRVOutAssembler;
+        struct SPIRVOutAssembler;
     }
 
 	namespace spirv

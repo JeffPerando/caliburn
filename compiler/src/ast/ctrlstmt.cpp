@@ -14,11 +14,11 @@ cllr::SSA IfStatement::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler
 	auto elseLabel = codeAsm.createSSA(cllr::Opcode::LABEL);
 	auto postLabel = codeAsm.createSSA(cllr::Opcode::LABEL);
 
-	codeAsm.push(0, cllr::Opcode::JUMP_COND, {}, { cID, ifLabel, innerElse ? elseLabel : postLabel });
+	codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP_COND, {}, { cID, ifLabel, innerElse ? elseLabel : postLabel }));
 
 	innerIf->emitDeclCLLR(table, codeAsm);
 
-	codeAsm.push(0, cllr::Opcode::JUMP, {}, { postLabel });
+	codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP, {}, { postLabel }));
 
 	if (innerElse != nullptr)
 	{
@@ -26,7 +26,7 @@ cllr::SSA IfStatement::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler
 
 	}
 
-	codeAsm.push(postLabel, cllr::Opcode::LABEL, {}, {});
+	codeAsm.push(cllr::Instruction(postLabel, cllr::Opcode::LABEL));
 
 	return ifLabel;
 }
@@ -110,28 +110,30 @@ cllr::SSA WhileStatement::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assemb
 	auto loopLabel = codeAsm.createSSA(cllr::Opcode::LABEL);
 	auto exit = codeAsm.createSSA(cllr::Opcode::LABEL);
 
-	codeAsm.push(0, cllr::Opcode::JUMP, {}, { doWhile ? loopLabel : start });
-	codeAsm.push(start, cllr::Opcode::LABEL, {}, {});
-	codeAsm.push(0, cllr::Opcode::LOOP, {}, { exit, cont, loopLabel });
+	codeAsm.pushAll({
+		cllr::Instruction(cllr::Opcode::JUMP, {}, { doWhile ? loopLabel : start }),
+		cllr::Instruction(start, cllr::Opcode::LABEL),
+		cllr::Instruction(cllr::Opcode::LOOP, {}, { exit, cont, loopLabel }),
+	});
 
 	auto cond = condition->emitValueCLLR(table, codeAsm);
 
 	//TODO type check
 	auto cID = cond.value;
 
-	codeAsm.push(0, cllr::Opcode::JUMP_COND, {}, { cID, loopLabel, exit });
+	codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP_COND, {}, { cID, loopLabel, exit }));
 
 	codeAsm.setLoop(cont, exit);
-	codeAsm.push(loopLabel, cllr::Opcode::LABEL, {}, {});
+	codeAsm.push(cllr::Instruction(loopLabel, cllr::Opcode::LABEL));
 	loop->emitDeclCLLR(table, codeAsm);
 	codeAsm.exitLoop();
 
-	codeAsm.push(0, cllr::Opcode::JUMP, {}, { cont });
-
-	codeAsm.push(cont, cllr::Opcode::LABEL, {}, {});
-	codeAsm.push(0, cllr::Opcode::JUMP, {}, { start });
-
-	codeAsm.push(exit, cllr::Opcode::LABEL, {}, {});
+	codeAsm.pushAll({
+		cllr::Instruction(cllr::Opcode::JUMP, {}, { cont }),
+		cllr::Instruction(cont, cllr::Opcode::LABEL),
+		cllr::Instruction(cllr::Opcode::JUMP, {}, { start }),
+		cllr::Instruction(exit, cllr::Opcode::LABEL)
+	});
 
 	return start;
 }

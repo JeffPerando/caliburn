@@ -9,7 +9,7 @@ cllr::SSA RealFloat::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> 
 	{
 		auto p = (ptr<TypeFloat>)base;
 
-		id = codeAsm.pushNew(cllr::Opcode::TYPE_FLOAT, { p->width }, {});
+		id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::TYPE_FLOAT, { p->width }));
 
 	}
 

@@ -2,14 +2,17 @@
 #pragma once
 
 #include "basic.h"
+
 #include "cllrasm.h"
 
 namespace caliburn
 {
 	namespace cllr
 	{
-		class Validator
+		struct Validator
 		{
+			Validator() = default;
+
 			void validate(ref<InstructionVec> is);
 
 			bool isType(cllr::Opcode op);

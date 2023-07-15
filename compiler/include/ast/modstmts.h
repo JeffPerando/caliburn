@@ -5,7 +5,7 @@
 
 namespace caliburn
 {
-	struct ImportStatement : public Statement
+	struct ImportStatement : Statement
 	{
 		const sptr<Token> first;
 		sptr<Token> name = nullptr;
@@ -40,7 +40,7 @@ namespace caliburn
 
 	};
 
-	struct ModuleStatement : public Statement
+	struct ModuleStatement : Statement
 	{
 		const sptr<Token> first, name;
 

@@ -21,9 +21,11 @@ namespace caliburn
 		SPECIAL
 	};
 
-	class Tokenizer
+	struct Tokenizer
 	{
-		ptr<buffer<char>> buf = nullptr;
+	private:
+		std::string text;
+		Buffer<char> buf;
 		uint64_t line = 1;
 		uint64_t col = 1;
 
@@ -32,7 +34,9 @@ namespace caliburn
 		CharType asciiTypes[128]{};
 
 	public:
-		Tokenizer()
+		//TODO use 32-bit wide chars for UTF-8 support
+		//or, y'know, find a UTF-8 library (NOT BOOST)
+		Tokenizer(ref<std::string> str) : text(str), buf(std::vector<char>(str.begin(), str.end()))
 		{
 			//I'm so sorry for this.
 
@@ -89,7 +93,7 @@ namespace caliburn
 
 		virtual ~Tokenizer() {}
 
-		void tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> tokens);
+		std::vector<sptr<Token>> tokenize();
 
 		void enableSignificantWhitespace()
 		{

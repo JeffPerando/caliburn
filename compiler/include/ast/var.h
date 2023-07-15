@@ -40,7 +40,10 @@ namespace caliburn
 
 	struct GlobalVariable : Variable
 	{
-		GlobalVariable() : Variable() {}
+		GlobalVariable() : Variable()
+		{
+			isConst = true;
+		}
 		virtual ~GlobalVariable() {}
 
 		void prettyPrint(ref<std::stringstream> ss) const override;

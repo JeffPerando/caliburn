@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <vector>
+#include <map>
 
 #include "ast.h"
 #include "var.h"
@@ -11,19 +11,20 @@
 
 namespace caliburn
 {
-	struct StructStatement : public Statement
+	struct StructStatement : Statement
 	{
 		const sptr<Token> name;
+		const bool isConst;
 
 		sptr<Token> first = nullptr;
 		sptr<Token> last = nullptr;
-		sptr<BaseType> innerType = nullptr;
+		sptr<TypeStruct> innerType = nullptr;
 		sptr<GenericSignature> genSig = nullptr;
 
-		std::vector<sptr<Variable>> members;
-		std::vector<sptr<Function>> constructors, destructors;
+		std::map<std::string, Member> members;
 
-		StructStatement(sptr<Token> n, StatementType type = StatementType::STRUCT) : Statement(type), name(n) {}
+		StructStatement(sptr<Token> n, StatementType type = StatementType::STRUCT) : Statement(type),
+			name(n), isConst(type == StatementType::UNKNOWN) {}
 
 		virtual ~StructStatement() {}
 
@@ -41,7 +42,8 @@ namespace caliburn
 		{
 			if (innerType == nullptr)
 			{
-				innerType = new_sptr<TypeStruct>(name->str, genSig);
+				innerType = new_sptr<TypeStruct>(name->str, genSig, members);
+
 			}
 
 			table->add(name->str, innerType);

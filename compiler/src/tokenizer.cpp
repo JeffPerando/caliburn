@@ -17,13 +17,13 @@ std::string Tokenizer::findStr(char delim)
 {
 	std::stringstream ss;
 
-	while (buf->hasNext())
+	while (buf.hasNext())
 	{
-		char current = buf->current();
+		char current = buf.current();
 
 		if (current == delim)
 		{
-			buf->consume();
+			buf.consume();
 			++col;
 			break;
 		}
@@ -33,9 +33,9 @@ std::string Tokenizer::findStr(char delim)
 			++line;
 			col = 1;
 
-			while (buf->hasNext())
+			while (buf.hasNext())
 			{
-				char ws = buf->next();
+				char ws = buf.next();
 
 				if (getType(ws) != CharType::WHITESPACE)
 					break;
@@ -56,7 +56,7 @@ std::string Tokenizer::findStr(char delim)
 		}
 
 		ss << current;
-		buf->consume();
+		buf.consume();
 		++col;
 
 	}
@@ -86,31 +86,31 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 		return std::binary_search(validIntChars->begin(), validIntChars->end(), chr);
 	};
 
-	char first = buf->current();
+	char first = buf.current();
 
 	if (!isDecInt(first))
 	{
 		return "";
 	}
 
-	size_t startIndex = buf->currentIndex();
+	size_t startIndex = buf.currentIndex();
 	bool isPrefixed = true;
 	bool isFloat = false;
 	
 	std::stringstream ss;
 
 	//find either a hex, binary, or octal integer
-	if (first == '0' && buf->remaining() > 2)
+	if (first == '0' && buf.remaining() > 2)
 	{
-		char litType = buf->peek();
+		char litType = buf.peek();
 
 		switch (litType)
 		{
-		case 'x':
+		case 'x': pass;
 		case 'X': validIntChars = &hexInts; break;
-		case 'b':
+		case 'b': pass;
 		case 'B': validIntChars = &binInts; break;
-		case 'c':
+		case 'c': pass;
 		case 'C': validIntChars = &octInts; break;
 		default: isPrefixed = false;
 		}
@@ -120,7 +120,7 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 			ss << first;
 			ss << litType;
 
-			buf->consume(2);
+			buf.consume(2);
 
 		}
 
@@ -128,13 +128,13 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 	else isPrefixed = false;
 
 	//get the actual numerical digits
-	while (buf->hasNext())
+	while (buf.hasNext())
 	{
-		char current = buf->current();
+		char current = buf.current();
 		
 		if (current == '_')
 		{
-			buf->consume();
+			buf.consume();
 			continue;
 		}
 
@@ -144,7 +144,7 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 			if (current > 96)
 				current -= 32;
 			ss << current;
-			buf->consume();
+			buf.consume();
 
 		}
 		else break;
@@ -155,16 +155,16 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 	if (!isPrefixed)
 	{
 		//find the fractional component
-		if (buf->remaining() >= 2)
+		if (buf.remaining() >= 2)
 		{
-			if (buf->current() == '.')
+			if (buf.current() == '.')
 			{
 				ss << '.';
 				isFloat = true;
 
 				do
 				{
-					char dec = buf->next();
+					char dec = buf.next();
 
 					if (isDecInt(dec))
 					{
@@ -172,33 +172,33 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 					}
 					else break;
 
-				} while (buf->hasNext());
+				} while (buf.hasNext());
 
 			}
 
 		}
 
 		//find an exponent
-		if (buf->remaining() >= 2)
+		if (buf.remaining() >= 2)
 		{
-			char exp = buf->current();
+			char exp = buf.current();
 
 			if (exp == 'e' || exp == 'E')
 			{
 				ss << exp;
 				
-				char sign = buf->next();
+				char sign = buf.next();
 
 				if (sign == '+' || sign == '-')
 				{
 					ss << sign;
-					buf->consume();
+					buf.consume();
 				}
 
-				while (buf->hasNext() && isValidInt(buf->current()))
+				while (buf.hasNext() && isValidInt(buf.current()))
 				{
-					ss << buf->current();
-					buf->consume();
+					ss << buf.current();
+					buf.consume();
 				}
 
 			}
@@ -211,10 +211,10 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 	auto width = 32;
 
 	//find suffix
-	if (buf->hasNext())
+	if (buf.hasNext())
 	{
-		char suffix = buf->current();
-		buf->consume();
+		char suffix = buf.current();
+		buf.consume();
 
 		if (suffix > 96)
 			suffix -= 32;
@@ -222,8 +222,8 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 		if (suffix == 'U')
 		{
 			typeSuffix = "uint";
-			suffix = buf->current();
-			buf->consume();
+			suffix = buf.current();
+			buf.consume();
 		}
 
 		switch (suffix)
@@ -231,7 +231,7 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 		case 'D': width = 64; pass;
 		case 'F': isFloat = true; break;
 		case 'L': width = 64; break;
-		default: buf->rewind();
+		default: buf.rewind();
 		}
 
 	}
@@ -247,11 +247,11 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 	ss << typeSuffix;
 	ss << width;
 
-	offset = (buf->currentIndex() - startIndex);
+	offset = (buf.currentIndex() - startIndex);
 	type = isFloat ? TokenType::LITERAL_FLOAT : TokenType::LITERAL_INT;
 	//we've been using the buffer this whole time to help track this stuff.
 	//So we revert it so we don't need to change any code.
-	buf->revertTo(startIndex);
+	buf.revertTo(startIndex);
 
 	return ss.str();
 }
@@ -260,9 +260,9 @@ size_t Tokenizer::findIdentifierLen()
 {
 	size_t offset = 0;
 
-	while (buf->inRange(offset))
+	while (buf.inRange(offset))
 	{
-		char chrAtOff = buf->peek(offset);
+		char chrAtOff = buf.peek(offset);
 		if (getType(chrAtOff) != CharType::IDENTIFIER &&
 			getType(chrAtOff) != CharType::INT)
 		{
@@ -274,21 +274,16 @@ size_t Tokenizer::findIdentifierLen()
 	return offset;
 }
 
-//TODO use 32-bit wide chars for UTF-8 support
-//or, y'know, find a UTF-8 library (NOT BOOST)
-void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> tokens)
+std::vector<sptr<Token>> Tokenizer::tokenize()
 {
-	
-	auto vec = std::vector<char>(text.begin(), text.end());
-	auto back = buffer<char>(&vec);
-	buf = &back;
+	std::vector<sptr<Token>> tokens;
 
 	line = 1;
 	col = 1;
 
-	while (buf->hasNext())
+	while (buf.hasNext())
 	{
-		char current = buf->current();
+		char current = buf.current();
 
 		CharType type = getType(current);
 
@@ -303,16 +298,16 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 			if (current == '\r')
 			{
 				//don't increment col, just pretend we didn't see it
-				buf->consume();
+				buf.consume();
 				continue;
 			}
 
 			if (significantWhitespace)
 			{
-				tokens.push_back(new_sptr<Token>(std::string(1, current), TokenType::UNKNOWN, line, col, buf->currentIndex(), buf->currentIndex() + 1L));
+				tokens.push_back(new_sptr<Token>(std::string(1, current), TokenType::UNKNOWN, line, col, buf.currentIndex(), buf.currentIndex() + 1L));
 			}
 
-			buf->consume();
+			buf.consume();
 
 			if (current == '\n')
 			{
@@ -354,7 +349,7 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 			//literals like 0f or 0xDEADBEEF are correctly identified.
 			if (idOffset > intOffset)
 			{
-				auto idStr = text.substr(buf->currentIndex(), idOffset);
+				auto idStr = text.substr(buf.currentIndex(), idOffset);
 				auto idType = TokenType::IDENTIFIER;
 
 				if (std::binary_search(KEYWORDS.begin(), KEYWORDS.end(), idStr))
@@ -372,17 +367,17 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 
 				}
 
-				tokens.push_back(new_sptr<Token>(idStr, idType, line, col, buf->currentIndex(), idOffset));
+				tokens.push_back(new_sptr<Token>(idStr, idType, line, col, buf.currentIndex(), idOffset));
 
-				buf->consume(idOffset);
+				buf.consume(idOffset);
 				col += idOffset;
 				
 			}
 			else
 			{
-				tokens.push_back(new_sptr<Token>(intLit, intType, line, col, buf->currentIndex(), intOffset));
+				tokens.push_back(new_sptr<Token>(intLit, intType, line, col, buf.currentIndex(), intOffset));
 
-				buf->consume(intOffset);
+				buf.consume(intOffset);
 				col += intOffset;
 				
 			}
@@ -392,11 +387,11 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 
 		if (type == CharType::COMMENT)
 		{
-			while (buf->hasNext())
+			while (buf.hasNext())
 			{
 				++col;
 
-				if (buf->next() == '\n')
+				if (buf.next() == '\n')
 					break;
 
 			}
@@ -406,11 +401,11 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 
 		if (type == CharType::STRING_DELIM)
 		{
-			auto start = buf->currentIndex();
+			auto start = buf.currentIndex();
 			auto str = findStr(current);
 
 			//findStr should offset col and line
-			tokens.push_back(new_sptr<Token>(str, TokenType::LITERAL_STR, line, col, start, start - buf->currentIndex()));
+			tokens.push_back(new_sptr<Token>(str, TokenType::LITERAL_STR, line, col, start, start - buf.currentIndex()));
 			continue;
 		}
 
@@ -420,7 +415,7 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 
 			if (specialType != CHAR_TOKEN_TYPES.end())
 			{
-				tokens.push_back(new_sptr<Token>(std::string(1, current), specialType->second, line, col, buf->currentIndex(), 1L));
+				tokens.push_back(new_sptr<Token>(std::string(1, current), specialType->second, line, col, buf.currentIndex(), 1L));
 			}
 
 		}
@@ -428,33 +423,32 @@ void Tokenizer::tokenize(ref<std::string> text, ref<std::vector<sptr<Token>>> to
 		{
 			size_t off;
 
-			for (off = 1; off < buf->remaining(); ++off)
+			for (off = 1; off < buf.remaining(); ++off)
 			{
-				if (getType(buf->peek(off)) != CharType::OPERATOR)
+				if (getType(buf.peek(off)) != CharType::OPERATOR)
 					break;
 			}
 
-			auto fullOp = text.substr(buf->currentIndex(), off);
+			auto fullOp = text.substr(buf.currentIndex(), off);
 			auto meaning = SPECIAL_OPS.find(fullOp);
 
 			if (meaning == SPECIAL_OPS.end())
 			{
-				tokens.push_back(new_sptr<Token>(fullOp, meaning->second, line, col, buf->currentIndex(), off));
-				buf->consume(off);
+				tokens.push_back(new_sptr<Token>(fullOp, meaning->second, line, col, buf.currentIndex(), off));
+				buf.consume(off);
 				col += off;
 				continue;
 			}
 
-			tokens.push_back(new_sptr<Token>(std::string(1, current), TokenType::OPERATOR, line, col, buf->currentIndex(), 1L));
+			tokens.push_back(new_sptr<Token>(std::string(1, current), TokenType::OPERATOR, line, col, buf.currentIndex(), 1L));
 
 		}
 		
 		//if all else fails, skip it.
-		buf->consume();
+		buf.consume();
 		++col;
 		
 	}
 
-	buf = nullptr;
-	
+	return tokens;
 }

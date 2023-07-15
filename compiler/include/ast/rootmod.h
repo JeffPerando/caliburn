@@ -12,7 +12,7 @@
 
 namespace caliburn
 {
-	struct RootModule : public Module
+	struct RootModule : Module
 	{
 		std::vector<std::pair<std::string, std::string>> modRequests;
 		HashMap<std::string, sptr<Module>> modules;
@@ -55,7 +55,7 @@ namespace caliburn
 
 	};
 
-	struct CompiledModule : public Module
+	struct CompiledModule : Module
 	{
 		std::string name;
 

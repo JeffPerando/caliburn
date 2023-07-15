@@ -9,7 +9,7 @@ cllr::SSA RealInt::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> co
 	{
 		auto p = (ptr<TypeInt>)base;
 
-		id = codeAsm.pushNew(cllr::Opcode::TYPE_INT, { p->width, p->isSigned }, {});
+		id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::TYPE_INT, { p->width, p->isSigned }));
 
 	}
 

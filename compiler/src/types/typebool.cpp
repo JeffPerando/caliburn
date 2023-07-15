@@ -7,7 +7,7 @@ cllr::SSA RealBool::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> c
 {
 	if (id == 0)
 	{
-		id = codeAsm.pushNew(cllr::Opcode::TYPE_BOOL, {}, {});
+		id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::TYPE_BOOL));
 	}
 
 	return id;

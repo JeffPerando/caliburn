@@ -61,7 +61,7 @@ cllr::SSA LocalVariable::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembl
 		//TODO complain
 	}
 
-	id = codeAsm.pushNew(cllr::Opcode::VAR_LOCAL, { (uint32_t)mods }, { typeID, v.value });
+	id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VAR_LOCAL, { (uint32_t)mods }, { typeID, v.value }));
 
 	return id;
 }
@@ -74,7 +74,7 @@ cllr::TypedSSA LocalVariable::emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::As
 	{
 		auto tID = t->emitDeclCLLR(table, codeAsm);
 
-		auto vID = codeAsm.pushNew(cllr::Opcode::VALUE_READ_VAR, {}, { id });
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_READ_VAR, {}, { id }));
 
 		return cllr::TypedSSA(t, tID, vID);
 	}
@@ -85,7 +85,7 @@ cllr::TypedSSA LocalVariable::emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::As
 
 void LocalVariable::emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value)
 {
-	codeAsm.push(0, cllr::Opcode::ASSIGN, {}, { emitDeclCLLR(table, codeAsm), value });
+	codeAsm.push(cllr::Instruction(cllr::Opcode::ASSIGN, {}, { emitDeclCLLR(table, codeAsm), value }));
 
 }
 
@@ -128,7 +128,7 @@ cllr::SSA MemberVariable::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assemb
 	if (auto t = typeHint->resolve(table))
 	{
 		auto typeID = t->emitDeclCLLR(table, codeAsm);
-		id = codeAsm.pushNew(cllr::Opcode::STRUCT_MEMBER, { memberIndex }, { parentID, typeID, init.value });
+		id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::STRUCT_MEMBER, { memberIndex }, { parentID, typeID, init.value }));
 		return id;
 	}
 
@@ -141,7 +141,7 @@ cllr::TypedSSA MemberVariable::emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::A
 	if (auto t = typeHint->resolve(table))
 	{
 		auto tID = t->emitDeclCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Opcode::VALUE_MEMBER, { memberIndex }, { target });
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { memberIndex }, { target }));
 
 		return cllr::TypedSSA(t, tID, vID);
 	}
@@ -154,7 +154,7 @@ void MemberVariable::emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler>
 {
 	auto memberLoad = emitLoadCLLR(table, codeAsm, target);
 
-	codeAsm.push(0, cllr::Opcode::ASSIGN, {}, { memberLoad.value, value });
+	codeAsm.push(cllr::Instruction(cllr::Opcode::ASSIGN, {}, { memberLoad.value, value }));
 
 }
 
@@ -203,7 +203,7 @@ cllr::SSA FnArgVariable::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembl
 	{
 		auto tID = t->emitDeclCLLR(table, codeAsm);
 
-		id = codeAsm.pushNew(cllr::Opcode::VAR_FUNC_ARG, { argIndex }, { tID });
+		id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VAR_FUNC_ARG, { argIndex }, { tID }));
 
 		return id;
 	}
@@ -289,7 +289,7 @@ cllr::TypedSSA ShaderIOVariable::emitLoadCLLR(sptr<SymbolTable> table, ref<cllr:
 		auto tID = t->emitDeclCLLR(table, codeAsm);
 
 		//TODO outType
-		auto vID = codeAsm.pushNew(cllr::Opcode::VALUE_READ_VAR, {}, { id });
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_READ_VAR, {}, { id }));
 
 		return cllr::TypedSSA(t, tID, vID);
 	}
@@ -308,6 +308,6 @@ void ShaderIOVariable::emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assemble
 
 	ioType = ShaderIOVarType::OUTPUT;
 
-	codeAsm.push(0, cllr::Opcode::ASSIGN, {}, { emitDeclCLLR(table, codeAsm), value });
+	codeAsm.push(cllr::Instruction(cllr::Opcode::ASSIGN, {}, { emitDeclCLLR(table, codeAsm), value }));
 
 }

@@ -10,6 +10,8 @@
 
 namespace caliburn
 {
+	struct FunctionImpl;
+
 	struct IntLiteralValue : Value
 	{
 		const sptr<Token> lit;
@@ -166,6 +168,16 @@ namespace caliburn
 
 		bool isCompileTimeConst() const override
 		{
+			/* TODO consider
+			for (auto& v : values)
+			{
+				if (!v->isCompileTimeConst())
+				{
+					return false;
+				}
+
+			}
+			*/
 			return true;
 		}
 
@@ -416,12 +428,9 @@ namespace caliburn
 
 	};
 
-	struct FunctionImpl;
-
 	struct FnCallValue : Value
 	{
 		sptr<Token> name = nullptr;
-		sptr<FunctionImpl> fnImpl = nullptr;
 		sptr<Value> target = nullptr;
 		sptr<GenericArguments> genArgs = nullptr;
 		sptr<Token> end = nullptr;

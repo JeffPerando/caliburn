@@ -5,7 +5,7 @@
 
 namespace caliburn
 {
-	struct SetterStatement : public Statement
+	struct SetterStatement : Statement
 	{
 		sptr<Value> lValue = nullptr;
 		sptr<Value> rValue = nullptr;
@@ -22,19 +22,14 @@ namespace caliburn
 			return rValue->lastTkn();
 		}
 
-		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
-		{
-			lValue->resolveSymbols(table);
-			rValue->resolveSymbols(table);
-
-		}
+		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			auto lhs = lValue->emitValueCLLR(table, codeAsm);
 			auto rhs = rValue->emitValueCLLR(table, codeAsm);
 
-			codeAsm.push(0, cllr::Opcode::ASSIGN, {}, {lhs, rhs});
+			codeAsm.push(cllr::Instruction(cllr::Opcode::ASSIGN, {}, { lhs.value, rhs.value }));
 
 		}
 

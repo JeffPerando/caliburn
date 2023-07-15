@@ -13,6 +13,8 @@
 #include "ast/module.h"
 #include "ast/symbols.h"
 
+#include "cllr/cllrasm.h"
+
 #include "types/type.h"
 
 namespace caliburn
@@ -123,7 +125,7 @@ namespace caliburn
 		StatementType::CONSTRUCTOR, StatementType::DESTRUCTOR,
 	};
 
-	struct Statement : public Module, public ParsedObject, public cllr::Emitter
+	struct Statement : Module, ParsedObject, cllr::Emitter
 	{
 		const StatementType type;
 
@@ -152,7 +154,7 @@ namespace caliburn
 
 	};
 
-	struct ScopeStatement : public Statement
+	struct ScopeStatement : Statement
 	{
 		sptr<Token> first = nullptr;
 		sptr<Token> last = nullptr;
@@ -233,25 +235,25 @@ namespace caliburn
 				{
 					auto ret = retValue->emitValueCLLR(table, codeAsm);
 
-					codeAsm.push(0, cllr::Opcode::RETURN_VALUE, {}, { ret.value });
+					codeAsm.push(cllr::Instruction(cllr::Opcode::RETURN_VALUE, {}, { ret.value }));
 
 				}
 				else
 				{
-					codeAsm.push(0, cllr::Opcode::RETURN, {}, {});
+					codeAsm.push(cllr::Instruction(cllr::Opcode::RETURN));
 
 				}
 				break;
 			};
 			case ReturnMode::CONTINUE:
-				codeAsm.push(0, cllr::Opcode::JUMP, {}, { codeAsm.getLoopStart() }); break;
+				codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP, {}, { codeAsm.getLoopStart() })); break;
 			case ReturnMode::BREAK:
-				codeAsm.push(0, cllr::Opcode::JUMP, {}, { codeAsm.getLoopEnd() }); break;
+				codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP, {}, { codeAsm.getLoopEnd() })); break;
 			case ReturnMode::PASS:
 				//TODO implement
 				break;
 			case ReturnMode::DISCARD:
-				codeAsm.push(0, cllr::Opcode::DISCARD, {}, {}); break;
+				codeAsm.push(cllr::Instruction(cllr::Opcode::DISCARD)); break;
 			}
 
 			return 0;

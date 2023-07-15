@@ -6,56 +6,30 @@
 
 namespace caliburn
 {
-	struct LocalVarStatement : public Statement
+	struct VariableStatement : Statement
 	{
-		std::vector<sptr<Token>> names;
-
-		sptr<Token> start = nullptr;
-		sptr<ParsedType> typeHint = nullptr;
-		sptr<Value> initialValue = nullptr;
-		bool isConst = false;
-
-	private:
-		std::vector<sptr<LocalVariable>> vars;
+		sptr<Token> first = nullptr;
+		std::vector<sptr<Variable>> vars;
 
 	public:
-		LocalVarStatement() : Statement(StatementType::VARIABLE){}
-		virtual ~LocalVarStatement() {}
+		VariableStatement() : Statement(StatementType::VARIABLE) {}
+		virtual ~VariableStatement() {}
 
 		sptr<Token> firstTkn() const override
 		{
-			return nullptr;
+			return first;
 		}
 
 		sptr<Token> lastTkn() const override
 		{
-			return nullptr;
+			return vars.back()->lastTkn();
 		}
 
 		void declareSymbols(sptr<SymbolTable> table) override
 		{
-			if (vars.empty())
-			{
-				for (auto const& name : names)
-				{
-					//mods, start, name, typeHint, initialValue
-					auto v = new_sptr<LocalVariable>();
-
-					v->mods = mods;
-					v->start = start;
-					v->nameTkn = name;
-					v->typeHint = typeHint;
-					v->initValue = initialValue;
-					v->isConst = isConst;
-
-					vars.push_back(v);
-
-				}
-
-			}
-			
 			for (auto const& v : vars)
 			{
+				v->mods = mods;
 				table->add(v->nameTkn->str, v);
 			}
 

@@ -6,7 +6,7 @@
 
 namespace caliburn
 {
-	struct ClassStatement : public StructStatement
+	struct ClassStatement : StructStatement
 	{
 		ClassStatement(sptr<Token> f) : StructStatement(f, StatementType::CLASS) {}
 		virtual ~ClassStatement() {}

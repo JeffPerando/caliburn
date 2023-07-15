@@ -138,8 +138,58 @@ namespace caliburn
 			sptr<ParsedObject> debugObj = nullptr;
 
 			Instruction() {}
-			Instruction(Opcode op, SSA id = 0, std::array<uint32_t, 3> ops = {}, std::array<SSA, 3> rs = {}, SSA out = 0) :
+
+			Instruction(Opcode op, std::array<uint32_t, 3> ops = {}, std::array<SSA, 3> rs = {}, SSA out = 0) :
+				op(op), operands(ops), refs(rs), outType(out) {}
+
+			Instruction(SSA id, Opcode op, std::array<uint32_t, 3> ops = {}, std::array<SSA, 3> rs = {}, SSA out = 0) :
 				index(id), op(op), operands(ops), refs(rs), outType(out) {}
+
+			Instruction(const Instruction& old)
+			{
+				index = old.index;
+				op = old.op;
+				operands = old.operands;
+				refs = old.refs;
+				outType = old.outType;
+				debugObj = old.debugObj;
+			}
+
+			ptr<Instruction> debug(sptr<ParsedObject> obj)
+			{
+				debugObj = obj;
+				return this;
+			}
+
+			bool operator==(const Instruction& other) const
+			{
+				if (index != other.index)
+				{
+					return false;
+				}
+
+				if (op != other.op)
+				{
+					return false;
+				}
+
+				if (operands != other.operands)
+				{
+					return false;
+				}
+
+				if (refs != other.refs)
+				{
+					return false;
+				}
+
+				if (outType != other.outType)
+				{
+					return false;
+				}
+
+				return true;
+			}
 
 		};
 

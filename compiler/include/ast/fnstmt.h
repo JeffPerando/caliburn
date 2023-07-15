@@ -6,15 +6,12 @@
 
 namespace caliburn
 {
-	struct FunctionStatement : public Statement
+	struct FunctionStatement : Statement
 	{
 		sptr<Token> first = nullptr;
 		sptr<Token> name = nullptr;
-		sptr<GenericSignature> genSig = nullptr;
-		std::vector<sptr<FnArgVariable>> args;
-		sptr<ParsedType> retType = nullptr;
-		uptr<ScopeStatement> body = nullptr;
-		
+		sptr<Function> fn = nullptr;
+
 		FunctionStatement() : Statement(StatementType::FUNCTION) {}
 
 		sptr<Token> firstTkn() const override
@@ -24,23 +21,13 @@ namespace caliburn
 
 		sptr<Token> lastTkn() const override
 		{
-			return body->lastTkn();
+			return fn->code->lastTkn();
 		}
 
 		void declareHeader(sptr<SymbolTable> table) override {}
 
 		void declareSymbols(sptr<SymbolTable> table) override
 		{
-			auto sig = new_sptr<FunctionSignature>();
-
-			sig->args = args;
-			sig->genSig = genSig;
-			sig->returnType = retType;
-
-			auto fn = new_sptr<Function>(sig);
-
-			fn->code = std::move(body);
-
 			table->add(name->str, fn);
 
 		}

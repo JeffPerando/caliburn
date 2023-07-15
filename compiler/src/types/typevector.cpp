@@ -13,7 +13,7 @@ cllr::SSA RealVector::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler>
 		{
 			if (auto type = ptype->resolve(table))
 			{
-				id = codeAsm.pushNew(cllr::Opcode::TYPE_VECTOR, { ((ptr<TypeVector>)base)->elements }, { type->emitDeclCLLR(table, codeAsm) });
+				id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::TYPE_VECTOR, { ((ptr<TypeVector>)base)->elements }, { type->emitDeclCLLR(table, codeAsm) }));
 				return id;
 			}
 

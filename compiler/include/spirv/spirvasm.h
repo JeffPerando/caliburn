@@ -15,7 +15,7 @@ namespace caliburn
 {
     namespace cllr
     {
-        class SPIRVOutAssembler;
+        struct SPIRVOutAssembler;
     }
 
     namespace spirv
@@ -55,10 +55,11 @@ namespace caliburn
             MAIN
         };
 
-        class CodeSection
+        struct CodeSection
         {
-            friend class cllr::SPIRVOutAssembler;
+            friend struct cllr::SPIRVOutAssembler;
 
+        private:
             const SSAKind section;
             //DO NOT DELETE
             //DO NOT TRY TO TURN INTO A SMART POINTER
@@ -106,7 +107,7 @@ namespace caliburn
             bool isValidOp(SpvOp op)
             {
                 //OpNop is always valid
-                if (op == OpNop().op)
+                if (op == OpNop())
                 {
                     return true;
                 }

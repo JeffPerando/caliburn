@@ -40,7 +40,7 @@ namespace caliburn
 		DEFAULT_INIT
 	};
 
-	struct Value: public ParsedObject
+	struct Value : ParsedObject
 	{
 		const ValueType vType;
 		//sptr<RealType> type = nullptr;
@@ -102,7 +102,7 @@ namespace caliburn
 		INCOMPATIBLE_OP
 	};
 
-	struct ParsedType : public ParsedObject
+	struct ParsedType : ParsedObject
 	{
 	private:
 		std::string fullName = "";
@@ -147,7 +147,7 @@ namespace caliburn
 
 	};
 
-	using Member = std::variant<std::monostate, sptr<Variable>, sptr<Function>, sptr<Value>>;
+	using Member = std::variant<std::monostate, sptr<Variable>, sptr<Function>, sptr<Value>>;//Values are also members so TypeVector can swizzle
 
 	struct BaseType
 	{
@@ -195,9 +195,9 @@ namespace caliburn
 
 		virtual Member getMember(ref<const std::string> name) const = 0;
 
-		virtual sptr<Function> getConstructor(ref<std::vector<RealType>> args) const = 0;
+		virtual cllr::TypedSSA callConstructor(ref<cllr::Assembler> codeAsm, ref<std::vector<Value>> args) const = 0;
 
-		virtual sptr<Function> getDestructor() const = 0;
+		virtual void callDestructor(cllr::SSA val) const = 0;
 
 		/* TODO reconsider inheritance
 		sptr<BaseType> getSuper()
@@ -296,16 +296,6 @@ namespace caliburn
 		Member getMember(ref<const std::string> name) const override
 		{
 			return Member();
-		}
-
-		sptr<Function> getConstructor(ref<std::vector<RealType>> args) const override
-		{
-			return nullptr;
-		}
-
-		sptr<Function> getDestructor() const override
-		{
-			return nullptr;
 		}
 
 	};

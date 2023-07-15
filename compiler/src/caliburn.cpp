@@ -37,15 +37,11 @@ bool Compiler::parseText(std::string text)
 		throw std::exception("Caliburn: parsing method called a second time");
 	}
 
-	std::vector<sptr<Token>> tokens;
-	
 	//Parse the text into tokens (duh)
-	Tokenizer t;
-	t.tokenize(text, tokens);
+	auto tokens = Tokenizer(text).tokenize();
 
 	//Build the initial AST (ok)
-	Parser p;
-	p.parse(tokens, ast);
+	auto ast = Parser(tokens).parse();
 
 	//Validate AST
 	for (auto const& stmt : ast)

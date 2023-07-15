@@ -5,7 +5,7 @@
 
 namespace caliburn
 {
-	struct ValueStatement : public Statement
+	struct ValueStatement : Statement
 	{
 		const sptr<Value> val;
 

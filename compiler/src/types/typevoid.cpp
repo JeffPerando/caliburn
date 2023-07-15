@@ -7,7 +7,7 @@ cllr::SSA RealVoid::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> c
 {
 	if (id == 0)
 	{
-		id = codeAsm.pushNew(cllr::Opcode::TYPE_VOID, {}, {});
+		id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::TYPE_VOID));
 	}
 
 	return id;

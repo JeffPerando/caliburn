@@ -1,8 +1,6 @@
 
 #include "ast/fn.h"
 
-#include "ast/ast.h"
-
 using namespace caliburn;
 
 cllr::SSA FunctionImpl::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
@@ -16,27 +14,29 @@ cllr::SSA FunctionImpl::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assemble
 	auto& genSig = sig->genSig;
 	auto& retTypeP = sig->returnType;
 
-	sptr<SymbolTable> fnTable = table;
-
-	if (!genSig->empty())
+	if (fnImplTable == nullptr)
 	{
-		fnTable = new_sptr<SymbolTable>(table);
-		genArgs->apply(genSig, fnTable);
+		fnImplTable = new_sptr<SymbolTable>();
+
+		genArgs->apply(genSig, fnImplTable);
+
 	}
 
-	auto retType = retTypeP->resolve(fnTable);
+	fnImplTable->reparent(table);
+
+	auto retType = retTypeP->resolve(fnImplTable);
 	auto retTID = retType->emitDeclCLLR(table, codeAsm);
 
-	id = codeAsm.pushNew(cllr::Opcode::FUNCTION, { (uint32_t)sig->args.size() }, { retTID });
+	id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::FUNCTION, { (uint32_t)sig->args.size() }, { retTID }));
 
 	for (auto const& arg : sig->args)
 	{
-		arg->emitDeclCLLR(fnTable, codeAsm);
+		arg->emitDeclCLLR(fnImplTable, codeAsm);
 	}
 
-	parent->code->emitDeclCLLR(fnTable, codeAsm);
+	parent->code->emitDeclCLLR(fnImplTable, codeAsm);
 
-	codeAsm.push(0, cllr::Opcode::FUNCTION_END, {}, { id });
+	codeAsm.push(cllr::Instruction(cllr::Opcode::FUNCTION_END, {}, { id }));
 
 	return id;
 }
@@ -45,21 +45,28 @@ cllr::TypedSSA FunctionImpl::call(sptr<SymbolTable> table, ref<cllr::Assembler> 
 {
 	auto fnID = emitDeclCLLR(table, codeAsm);
 
-	auto tID = codeAsm.codeFor(fnID)->refs[0];
+	fnImplTable->reparent(table);
 
-	auto callID = codeAsm.pushNew(cllr::Opcode::CALL, { (uint32_t)args.size() }, { fnID });
-
-	uint32_t index = 0;
-
-	for (auto& arg : args)
+	if (auto t = parent->sig->returnType->resolve(fnImplTable))
 	{
-		auto argID = arg->emitValueCLLR(table, codeAsm).value;
+		auto tID = t->emitDeclCLLR(fnImplTable, codeAsm);
+		auto callID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::CALL, { (uint32_t)args.size() }, { fnID }));
 
-		codeAsm.push(0, cllr::Opcode::CALL_ARG, { index }, { argID });
+		uint32_t index = 0;
 
-		++index;
+		for (auto& arg : args)
+		{
+			auto argID = arg->emitValueCLLR(fnImplTable, codeAsm).value;
 
+			codeAsm.push(cllr::Instruction(cllr::Opcode::CALL_ARG, { index }, { argID }));
+
+			++index;
+
+		}
+
+		return cllr::TypedSSA(t, tID, callID);
 	}
 
-	return cllr::TypedSSA(parent->sig->returnType->resolve(table), callID, tID);
+	//TODO complain
+	return cllr::TypedSSA();
 }

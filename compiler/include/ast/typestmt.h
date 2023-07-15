@@ -5,7 +5,7 @@
 
 namespace caliburn
 {
-	struct TypedefStatement : public Statement
+	struct TypedefStatement : Statement
 	{
 		const sptr<Token> first;
 		const sptr<Token> name;

@@ -34,7 +34,7 @@ namespace caliburn
 
 	std::string parseGeneric(ref<const GenericResult> result);
 
-	struct GenericArguments : public ParsedObject
+	struct GenericArguments : ParsedObject
 	{
 		sptr<Token> first = nullptr;
 		sptr<Token> last = nullptr;
@@ -88,7 +88,7 @@ namespace caliburn
 
 	};
 
-	struct GenericSignature : public ParsedObject
+	struct GenericSignature : ParsedObject
 	{
 		sptr<Token> first = nullptr;
 		sptr<Token> last = nullptr;

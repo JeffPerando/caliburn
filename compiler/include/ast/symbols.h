@@ -17,13 +17,13 @@ namespace caliburn
 	
 	using Symbol = std::variant<std::monostate, sptr<Module>, sptr<Function>, sptr<Value>, sptr<Variable>, sptr<BaseType>, sptr<RealType>>;
 
-	class SymbolTable
+	struct SymbolTable
 	{
+	private:
 		HashMap<std::string, Symbol> symbols;
-		
-	public:
-		const sptr<const SymbolTable> parent;
+		sptr<const SymbolTable> parent;
 
+	public:
 		SymbolTable() : parent(nullptr) {}
 		SymbolTable(sptr<SymbolTable> p) : parent(p) {}
 		virtual ~SymbolTable() {}
@@ -55,6 +55,11 @@ namespace caliburn
 			}
 
 			return Symbol();
+		}
+
+		void reparent(sptr<SymbolTable> p)
+		{
+			parent = p;
 		}
 
 	};

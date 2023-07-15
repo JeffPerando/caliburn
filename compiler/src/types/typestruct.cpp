@@ -17,19 +17,26 @@ cllr::SSA RealStruct::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler>
 	//populate table with generics and members
 	genArgs->apply(parent->genSig, memberTable);
 
-	for (auto const& v : parent->memberVars)
+	std::vector<sptr<Variable>> memberVars;
+
+	for (auto const& [name, mem] : parent->members)
 	{
-		memberTable->add(v->nameTkn->str, v);
+		if (auto v = std::get_if<sptr<Variable>>(&mem))
+		{
+			memberVars.push_back(*v);
+
+		}
+
 	}
 
-	id = codeAsm.pushNew(cllr::Opcode::TYPE_STRUCT, { (uint32_t)parent->memberVars.size() }, {});
+	id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::TYPE_STRUCT, { (uint32_t)memberVars.size() }));
 
-	for (auto const& v : parent->memberVars)
+	for (auto const& v : memberVars)
 	{
 		v->emitDeclCLLR(memberTable, codeAsm);
 	}
 
-	codeAsm.push(0, cllr::Opcode::STRUCT_END, {}, { id });
+	codeAsm.push(cllr::Instruction(cllr::Opcode::STRUCT_END, {}, { id }));
 
 	return id;
 }

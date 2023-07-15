@@ -4,7 +4,7 @@
 #include <functional>
 
 #include "ast/ast.h"
-#include "ast/generics.h"
+#include "ast/var.h"
 
 #include "types/type.h"
 
@@ -14,21 +14,23 @@
 
 namespace caliburn
 {
-	class Parser;
+	struct GenericArguments;
+	struct GenericSignature;
+	struct StructStatement;
+	struct Parser;
 
 	template<typename T>
-	using ParseMethod = std::function<T(Parser&)>;//uptr<T> (Parser::*)();
+	using ParseMethod = std::function<T(Parser&)>;
 	
-	class Parser
+	struct Parser
 	{
-	public:
-		Parser() {}
+		Parser(std::vector<sptr<Token>> tokenVec) : tokens(tokenVec) {}
 		virtual ~Parser() {}
 
-		void parse(ref<std::vector<sptr<Token>>> tokenList, ref<std::vector<uptr<Statement>>> ast);
+		std::vector<uptr<Statement>> parse();
 
 	private:
-		ptr<buffer<sptr<Token>>> tokens = nullptr;
+		Buffer<sptr<Token>> tokens;
 		std::vector<uptr<CaliburnException>> errors;
 
 		template<typename T>
@@ -74,15 +76,17 @@ namespace caliburn
 
 		uptr<Statement> parseStruct();
 
-		//uptr<Statement> parseClass();
-		
-		uptr<Statement> parseFunction();
+		uptr<Statement> parseFnStmt();
 
-		uptr<Statement> parseMethod();
+		sptr<Function> parseFunction();
 
-		uptr<Statement> parseConstructor();
+		void parseMember(ref<StructStatement> stmt);
 
-		uptr<Statement> parseDestructor();
+		sptr<Function> parseMethod();
+
+		sptr<Function> parseConstructor();
+
+		sptr<Function> parseDestructor();
 
 		uptr<Statement> parseLogic();
 
@@ -97,6 +101,8 @@ namespace caliburn
 		uptr<Statement> parseDoWhile();
 
 		uptr<Statement> parseValueStmt();
+
+		uptr<Statement> parseGlobalVarStmt();
 
 		uptr<Statement> parseLocalVarStmt();
 
@@ -114,7 +120,13 @@ namespace caliburn
 
 		sptr<Value> parseFnCall(sptr<Value> start);
 
+		bool parseLocalVars(ref<std::vector<sptr<Variable>>> vars);
+
+		sptr<Variable> parseGlobalVar();
+
 		sptr<Variable> parseMemberVar();
+
+		std::vector<sptr<FnArgVariable>> parseFnArgs();
 
 	};
 

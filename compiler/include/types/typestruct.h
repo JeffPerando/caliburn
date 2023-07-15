@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <map>
+
 #include "ast/fn.h"
 
 #include "types/type.h"
@@ -19,39 +21,29 @@ namespace caliburn
 
 	struct TypeStruct : GenericType<RealStruct>
 	{
-		friend struct RealStruct;
-
-		std::vector<sptr<Variable>> memberVars;
+		std::map<std::string, Member> members;
 		std::vector<sptr<Function>> constructors;
-		//std::vector<sptr<Function>> memberFns;
-
-		TypeStruct(std::string name, sptr<GenericSignature> gSig) : GenericType(TypeCategory::STRUCT, name, gSig) {}
+		sptr<Function> destructor = nullptr;
+		
+		TypeStruct(ref<const std::string> name, sptr<GenericSignature> gSig, ref<std::map<std::string, Member>> members)
+			: GenericType(TypeCategory::STRUCT, name, gSig), members(members) {}
+		virtual ~TypeStruct() {}
 
 		virtual Member getMember(ref<const std::string> name) const
 		{
-			for (auto const& v : memberVars)
-			{
-				if (v->nameTkn->str == name)
-				{
-					return v;
-				}
-
-			}
-			
-			return Member();
+			return members.at(name);
 		}
 
-		virtual sptr<Function> getConstructor(ref<std::vector<RealType>> args) const
+		cllr::TypedSSA callConstructor(ref<cllr::Assembler> codeAsm, ref<std::vector<Value>> args) const override
 		{
-			//TODO implement constructor finder
-			return nullptr;
+			return cllr::TypedSSA();
 		}
 
-		virtual sptr<Function> getDestructor() const
+		void callDestructor(cllr::SSA val) const override
 		{
-			return nullptr;
-		}
 
+		}
+		
 	};
 
 }

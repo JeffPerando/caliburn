@@ -21,7 +21,7 @@ cllr::TypedSSA IntLiteralValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr:
 		uint64_t parsedLit = t->base->parseLiteral(lit->str);
 
 		auto tID = t->emitDeclCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Opcode::VALUE_LIT_INT, { (uint32_t)(parsedLit & 0xFFFFFFFF), (uint32_t)((parsedLit >> 32) & 0xFFFFFFFF) }, { tID });
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_INT, { (uint32_t)(parsedLit & 0xFFFFFFFF), (uint32_t)((parsedLit >> 32) & 0xFFFFFFFF) }, { tID }));
 
 		return cllr::TypedSSA(t, tID, vID);
 	}
@@ -44,7 +44,7 @@ cllr::TypedSSA FloatLiteralValue::emitValueCLLR(sptr<SymbolTable> table, ref<cll
 	if (auto t = pType.resolve(table))
 	{
 		auto tID = t->emitDeclCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Opcode::VALUE_LIT_FP, { sID }, { tID });
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_FP, { sID }, { tID }));
 
 		return cllr::TypedSSA(t, tID, vID);
 	}
@@ -66,7 +66,7 @@ cllr::TypedSSA StringLitValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::
 	{
 		auto sID = codeAsm.addString(lit->str);
 		auto tID = t->emitDeclCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Opcode::VALUE_LIT_STR, { sID }, { tID });
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_STR, { sID }, { tID }));
 
 		return cllr::TypedSSA(t, tID, vID);
 	}
@@ -87,7 +87,7 @@ cllr::TypedSSA BoolLitValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::As
 	if (auto t = pType.resolve(table))
 	{
 		auto tID = t->emitDeclCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Opcode::VALUE_LIT_BOOL, { lit->str == "true" }, { tID });
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_BOOL, { lit->str == "true" }, { tID }));
 
 		return cllr::TypedSSA(t, tID, vID);
 	}
@@ -117,21 +117,20 @@ void ArrayLitValue::prettyPrint(ref<std::stringstream> ss) const
 
 cllr::TypedSSA ArrayLitValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
 {
-	auto vID = codeAsm.pushNew(cllr::Opcode::VALUE_LIT_ARRAY, { (uint32_t)values.size() }, {});
+	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_ARRAY, { (uint32_t)values.size() }));
 
 	for (uint32_t i = 0; i < values.size(); ++i)
 	{
 		auto const& v = values[i];
 		auto& [elemTypeID, elemType, elemID] = v->emitValueCLLR(table, codeAsm);
 
-		codeAsm.pushNew(cllr::Opcode::LIT_ARRAY_ELEM, { i }, { vID, elemID });
+		codeAsm.pushNew(cllr::Instruction(cllr::Opcode::LIT_ARRAY_ELEM, { i }, { vID, elemID }));
 
 	}
 
 	//FIXME
 	return cllr::TypedSSA(nullptr, 0, vID);
 }
-
 
 void ExpressionValue::prettyPrint(ref<std::stringstream> ss) const
 {
@@ -167,7 +166,7 @@ cllr::TypedSSA ExpressionValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr:
 		cllrOp = cllr::Opcode::COMPARE;
 	}
 
-	auto vID = codeAsm.pushNew(cllrOp, { (uint32_t)op }, { lhs.value, rhs.value });
+	auto vID = codeAsm.pushNew(cllr::Instruction(cllrOp, { (uint32_t)op }, { lhs.value, rhs.value }));
 
 	//FIXME
 	return cllr::TypedSSA(lhs.typePtr, lhs.type, vID);
@@ -217,7 +216,7 @@ cllr::TypedSSA SubArrayValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::A
 
 	//FIXME check array type
 	auto outType = codeAsm.codeFor(aID)->refs[0];
-	auto vID = codeAsm.pushNew(cllr::Opcode::VALUE_SUBARRAY, {}, { aID, iID });
+	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_SUBARRAY, {}, { aID, iID }));
 
 	//FIXME
 	return cllr::TypedSSA(nullptr, outType, vID);
@@ -240,7 +239,7 @@ cllr::TypedSSA CastValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assem
 		auto& [inType, inTypeID, inID] = lhs->emitValueCLLR(table, codeAsm);
 		auto tID = t->emitDeclCLLR(table, codeAsm);
 
-		auto vID = codeAsm.pushNew(cllr::Opcode::VALUE_CAST, {}, { inID, tID, 0 });
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_CAST, {}, { inID, tID, 0 }));
 
 		return cllr::TypedSSA(t, tID, vID);
 	}
@@ -312,7 +311,7 @@ cllr::TypedSSA UnaryValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Asse
 {
 	//TODO sanity check output types
 	auto in = val->emitValueCLLR(table, codeAsm);
-	auto outID = codeAsm.pushNew(cllr::Opcode::VALUE_EXPR_UNARY, { (uint32_t)op }, {  });
+	auto outID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_EXPR_UNARY, { (uint32_t)op }, { in.value }, in.type));
 
 	return cllr::TypedSSA(in.typePtr, in.type, outID);
 }
@@ -353,10 +352,21 @@ void FnCallValue::prettyPrint(ref<std::stringstream> ss) const
 
 cllr::TypedSSA FnCallValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
 {
-	if (auto fn = std::get_if<sptr<Function>>(&table->find(name->str)))
+	auto sym = table->find(name->str);
+
+	if (auto fn = std::get_if<sptr<Function>>(&sym))
 	{
+		auto fnImpl = (**fn).makeVariant(genArgs);
+
 		return fnImpl->call(table, codeAsm, args);
 	}
+	/*
+	else if (auto t = std::get_if<sptr<BaseType>>(&sym))
+	{
+		auto tReal = (**t).getImpl(genArgs);
+		auto tID = tReal->emitDeclCLLR(table, codeAsm);
+	}
+	*/
 
 	//TODO complain
 	return cllr::TypedSSA();
@@ -387,11 +397,12 @@ cllr::TypedSSA SetterValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Ass
 
 	if (op != Operator::UNKNOWN)
 	{
-		rvalue = cllr::TypedSSA(rvalue.typePtr, rvalue.type, codeAsm.pushNew(cllr::Opcode::VALUE_EXPR, { (uint32_t)op }, { lvalue.value, rvalue.value }));
+		auto rvID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_EXPR, { (uint32_t)op }, { lvalue.value, rvalue.value }));
+		rvalue = cllr::TypedSSA(rvalue.typePtr, rvalue.type, rvID);
 
 	}
 
-	codeAsm.push(0, cllr::Opcode::ASSIGN, {}, { lvalue.value, rvalue.value });
+	codeAsm.push(cllr::Instruction(cllr::Opcode::ASSIGN, {}, { lvalue.value, rvalue.value }));
 
 	return cllr::TypedSSA();
 }
@@ -404,14 +415,14 @@ void NullValue::prettyPrint(ref<std::stringstream> ss) const
 cllr::TypedSSA NullValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
 {
 	//TODO figure out typing
-	return cllr::TypedSSA(nullptr, 0, codeAsm.pushNew(cllr::Opcode::VALUE_NULL, {}, {}));
+	return cllr::TypedSSA(nullptr, 0, codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_NULL)));
 }
 
 void ZeroValue::prettyPrint(ref<std::stringstream> ss) const {}
 
 cllr::TypedSSA ZeroValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
 {
-	return cllr::TypedSSA(nullptr, 0, codeAsm.pushNew(cllr::Opcode::VALUE_ZERO, {}, {}));
+	return cllr::TypedSSA(nullptr, 0, codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_ZERO)));
 }
 
 void SignValue::prettyPrint(ref<std::stringstream> ss) const

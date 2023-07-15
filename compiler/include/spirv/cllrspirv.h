@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "basic.h"
+
 #include "cllr/cllrasm.h"
 #include "cllr/cllrout.h"
 #include "spirv/spirvasm.h"
@@ -18,7 +19,7 @@ namespace caliburn
 {
 	namespace cllr
 	{
-		class SPIRVOutAssembler;
+		struct SPIRVOutAssembler;
 
 		//Function pointer type for easier usage later
 		using SPIRVOutFn = void(ref<cllr::Instruction> i, size_t off, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out);
@@ -122,7 +123,7 @@ namespace caliburn
 
 		}
 		
-		class SPIRVOutAssembler : cllr::OutAssembler<uint32_t>
+		struct SPIRVOutAssembler : cllr::OutAssembler<uint32_t>
 		{
 		private:
 			const uptr<spirv::CodeSection> spvHeader = SPIRV_CODE_SECTION(spirv::SSAKind::HEADER, this, SPIRVOpList{

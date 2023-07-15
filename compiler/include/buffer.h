@@ -9,41 +9,49 @@ namespace caliburn
 {
 	//A buffer in this case is a read-only container used to maintain an index to a vector.
 	template<typename T>
-	class buffer
+	struct Buffer
 	{
 	private:
-		const ptr<std::vector<T>> vec;
+		const std::vector<T> vec;
 		size_t index = 0;
 	public:
-		buffer(ptr<std::vector<T>> backend) : vec(backend) {}
+		Buffer(ref<std::vector<T>> backend) : vec(backend) {}
 
-		bool hasNext() const
+		bool hasNext(size_t count = 1) const
 		{
-			return (index + 1) < vec->size();
+			return (index + count) < vec.size();
 		}
 
 		//fetch current
 		T current() const
 		{
-			return vec->at(index);
+			return vec.at(index);
 		}
 
 		//increment and fetch
 		T next()
 		{
 			++index;
-			return vec->at(index);
+			return vec.at(index);
 		}
 
+		//decrement and fetch
 		T prev(size_t off = 1)
 		{
-			return vec->at(index - off);
+			index -= off;
+			return vec.at(index);
 		}
 
 		//fetch upcoming
-		T peek(size_t offset = 1) const
+		T peek(size_t off = 1) const
 		{
-			return vec->at(index + offset);
+			return vec.at(index + off);
+		}
+
+		//fetch previous
+		T peekBack(size_t off = 1)
+		{
+			return vec.at(index - off);
 		}
 
 		//increment
@@ -60,7 +68,7 @@ namespace caliburn
 
 		size_t length() const
 		{
-			return vec->size();
+			return vec.size();
 		}
 
 		size_t remaining() const

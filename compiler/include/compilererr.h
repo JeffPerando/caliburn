@@ -56,21 +56,21 @@ namespace caliburn
 
 	};
 
-	struct ParseException : public CaliburnException
+	struct ParseException : CaliburnException
 	{
 		ParseException(std::string m, sptr<Token> tkn) :
 			CaliburnException(CompileStage::PARSER, m, tkn) {}
 
 	};
 
-	struct CompilerException : public CaliburnException
+	struct CompilerException : CaliburnException
 	{
 		CompilerException(std::string m, sptr<Token> tkn) :
 			CaliburnException(CompileStage::COMPILER, m, tkn) {}
 
 	};
 
-	struct InvalidDeclException : public ParseException
+	struct InvalidDeclException : ParseException
 	{
 		InvalidDeclException(sptr<Token> invalid) :
 			ParseException((std::stringstream() << "invalid declaration: \"" << invalid->str << '\"').str(),
@@ -80,7 +80,7 @@ namespace caliburn
 
 	//USE THIS SPARINGLY
 	//Please use a more descriptive exception when possible
-	struct UnexpectedTokenException : public ParseException
+	struct UnexpectedTokenException : ParseException
 	{
 		UnexpectedTokenException(sptr<Token> current, char expected) :
 			ParseException(
