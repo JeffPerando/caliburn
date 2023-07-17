@@ -23,33 +23,33 @@ namespace caliburn
 		}
 
 		//fetch current
-		T current() const
+		const T& current() const
 		{
 			return vec.at(index);
 		}
 
 		//increment and fetch
-		T next()
+		const T& next()
 		{
 			++index;
 			return vec.at(index);
 		}
 
 		//decrement and fetch
-		T prev(size_t off = 1)
+		const T& prev(size_t off = 1)
 		{
 			index -= off;
 			return vec.at(index);
 		}
 
 		//fetch upcoming
-		T peek(size_t off = 1) const
+		const T& peek(size_t off = 1) const
 		{
 			return vec.at(index + off);
 		}
 
 		//fetch previous
-		T peekBack(size_t off = 1)
+		const T& peekBack(size_t off = 1)
 		{
 			return vec.at(index - off);
 		}
