@@ -125,10 +125,13 @@ namespace caliburn
 
 	struct Shader
 	{
-		ShaderType type = ShaderType::COMPUTE;
+		const ShaderType type;
+
 		uptr<std::vector<uint32_t>> spirv;
 		std::vector<VertexInputAttribute> inputs;
 		std::vector<DescriptorSet> sets;
+
+		Shader(ShaderType t, ref<uptr<std::vector<uint32_t>>> spv) : type(t), spirv(std::move(spv)) {}
 
 	};
 

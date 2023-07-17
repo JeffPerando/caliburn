@@ -43,19 +43,17 @@ namespace caliburn
 
 		void prettyPrint(ref<std::stringstream> ss) const override {}
 
-		//void declareHeader(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
+		void declareSymbols(sptr<SymbolTable> table) override
+		{
+			code->declareSymbols(table);
+		}
 
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			return 0;
 		}
 
-		void declareSymbols(sptr<SymbolTable> table) override
-		{
-			code->declareSymbols(table);
-		}
-
-		uptr<Shader> compile(sptr<SymbolTable> table, OptimizeLevel lvl);
+		uptr<Shader> compile(sptr<SymbolTable> table, ref<const CompilerSettings> settings, ref<std::vector<sptr<Error>>> allErrs);
 
 	};
 

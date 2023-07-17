@@ -25,7 +25,7 @@ namespace caliburn
 	
 	struct Parser
 	{
-		const sptr<ErrorHandler> errors = new_sptr<ErrorHandler>(CompileStage::PARSER);
+		const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::PARSER);
 
 		Parser(std::vector<sptr<Token>> tokenVec) : tokens(tokenVec) {}
 		virtual ~Parser() {}

@@ -8,6 +8,7 @@
 
 #include "basic.h"
 #include "cllr.h"
+#include "error.h"
 #include "langcore.h"
 
 #include "ast/symbols.h"
@@ -38,6 +39,8 @@ namespace caliburn
 			std::vector<std::pair<SSA, SSA>> loops;
 
 		public:
+			const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::CLLR_EMIT);
+
 			Assembler(ShaderType t, uint32_t initSize = 2048) : type(t)
 			{
 				code->reserve(initSize);

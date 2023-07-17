@@ -9,7 +9,7 @@
 namespace caliburn
 {
 	static const std::vector<std::string> COMPILE_STAGES =
-		{"Tokenizer", "Parsing", "AST Validation", "Cond. Compilation", "CLLR Generation", "CLLR Validation", "Target Compilation"};
+		{"Unknown", "Tokenizer", "Parsing", "AST Validation", "Cond. Compilation", "CLLR Generation", "CLLR Validation", "Target Compilation"};
 
 	enum class CompileStage
 	{
@@ -19,8 +19,7 @@ namespace caliburn
 		AST_VALIDATION,
 		CONDITIONAL_COMPILATION,
 		CLLR_EMIT,
-		CLLR_VALID,
-		CLLR_OPTIMIZE,
+		CLLR_VALIDATION,
 		OUT_EMIT
 	};
 
@@ -38,7 +37,7 @@ namespace caliburn
 			suggestions.push_back(idea);
 		}
 
-		void prettyPrint(ref<const TextDoc> txt, ref<std::stringstream> ss);
+		void prettyPrint(ref<const TextDoc> txt, ref<std::stringstream> ss) const;
 
 	};
 

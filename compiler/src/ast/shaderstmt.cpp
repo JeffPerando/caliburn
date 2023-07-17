@@ -3,6 +3,7 @@
 
 #include "cllr/cllrasm.h"
 #include "cllr/cllropt.h"
+#include "cllr/cllrvalid.h"
 
 #include "spirv/cllrspirv.h"
 
@@ -10,24 +11,36 @@
 
 using namespace caliburn;
 
-uptr<Shader> ShaderStageStatement::compile(sptr<SymbolTable> table, OptimizeLevel lvl)
+uptr<Shader> ShaderStageStatement::compile(sptr<SymbolTable> table, ref<const CompilerSettings> settings, ref<std::vector<sptr<Error>>> allErrs)
 {
 	auto codeAsm = cllr::Assembler(type);
 
 	code->emitDeclCLLR(table, codeAsm);
 
-	//TODO validate
+	if (settings.validate)
+	{
+		auto v = cllr::Validator(settings);
 
+		if (!v.validate(codeAsm.getCode()))
+		{
+			v.errors->dump(allErrs);
+			return nullptr;
+		}
+
+	}
+	
 	//TODO emit CBIR
 
-	cllr::optimize(lvl, codeAsm);
+	auto op = cllr::Optimizer(settings);
+	op.optimize(codeAsm);
 
-	cllr::SPIRVOutAssembler spirvAsm;
+	auto spirvAsm = cllr::SPIRVOutAssembler();
 
-	auto out = new_uptr<Shader>();
+	auto out = new_uptr<Shader>(type, spirvAsm.translateCLLR(codeAsm));
 
-	out->type = type;
-	out->spirv = spirvAsm.translateCLLR(codeAsm);
+	spirvAsm.errors->dump(allErrs);
+
+	//TODO add descriptor sets
 
 	if (type == ShaderType::VERTEX)
 	{

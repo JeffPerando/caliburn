@@ -3,7 +3,7 @@
 
 using namespace caliburn;
 
-void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss)
+void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss) const
 {
 	/*
 	TODO:

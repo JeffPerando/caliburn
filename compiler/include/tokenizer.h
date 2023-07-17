@@ -34,7 +34,7 @@ namespace caliburn
 		CharType asciiTypes[128]{};
 
 	public:
-		const sptr<ErrorHandler> errors = new_sptr<ErrorHandler>(CompileStage::TOKENIZER);
+		const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::TOKENIZER);
 
 		TextDoc doc;
 

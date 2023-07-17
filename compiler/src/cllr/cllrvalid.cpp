@@ -5,9 +5,9 @@
 
 using namespace caliburn;
 
-void cllr::Validator::validate(ref<InstructionVec> is)
+bool cllr::Validator::validate(sptr<const InstructionVec> is)
 {
-
+	return true;
 }
 
 bool cllr::Validator::isType(cllr::Opcode op)

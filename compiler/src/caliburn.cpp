@@ -42,11 +42,20 @@ bool Compiler::parseText(std::string text)
 	auto t = Tokenizer(text);
 	auto tokens = t.tokenize();
 
+	t.errors->dump(allErrors);
+
 	//Build the initial AST (ok)
 	auto p = Parser(tokens);
 	auto ast = p.parse();
 
+	p.errors->dump(allErrors);
+
 	//Validate AST
+	if (!settings.validate)
+	{
+		return !ast.empty();
+	}
+
 	auto astErrs = new_sptr<ErrorHandler>(CompileStage::AST_VALIDATION);
 	for (auto const& stmt : ast)
 	{
@@ -65,19 +74,28 @@ bool Compiler::parseText(std::string text)
 		*/
 	}
 
+	astErrs->dump(allErrors);
+
 	return !ast.empty();
 }
 
+/*
 bool Compiler::parseCBIR(ref<std::vector<uint32_t>> cbir)
 {
 	return false;
 }
+*/
 
 bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shader>>> shaders)
 {
 	if (ast.empty())
 	{
 		throw std::exception("Caliburn: parsing method not called!");
+	}
+
+	if (shaderName.length() == 0)
+	{
+		throw std::exception("Caliburn: passed shader name is empty!");
 	}
 
 	/*
@@ -236,7 +254,7 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 	
 	for (auto const& stage : shaderStmt->stages)
 	{
-		auto result = stage->compile(table, settings.o);
+		auto result = stage->compile(table, settings, allErrors);
 
 		uint32_t d = 0;
 
@@ -251,4 +269,9 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 	}
 
 	return !shaders.empty();
+}
+
+ref<const std::vector<sptr<Error>>> Compiler::getErrors() const
+{
+	return allErrors;
 }

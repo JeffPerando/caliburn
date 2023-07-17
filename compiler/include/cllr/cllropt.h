@@ -10,7 +10,15 @@ namespace caliburn
 	{
 		#define CLLR_OPTIMIZE_PASS(Name) void Name(ref<cllr::Assembler> codeAsm)
 
-		void optimize(OptimizeLevel o, ref<cllr::Assembler> cllrAsm);
+		struct Optimizer
+		{
+			const CompilerSettings settings;
+
+			Optimizer(ref<const CompilerSettings> cs) : settings(cs) {}
+
+			void optimize(ref<cllr::Assembler> cllrAsm);
+
+		};
 
 	}
 

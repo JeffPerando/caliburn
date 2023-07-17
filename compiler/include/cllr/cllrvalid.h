@@ -12,11 +12,12 @@ namespace caliburn
 	{
 		struct Validator
 		{
-			const sptr<ErrorHandler> errors = new_sptr<ErrorHandler>(CompileStage::CLLR_VALID);
+			const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::CLLR_VALIDATION);
+			const CompilerSettings settings;
 
-			Validator() = default;
+			Validator(ref<const CompilerSettings> cs) : settings(cs) {}
 
-			void validate(ref<InstructionVec> is);
+			bool validate(sptr<const InstructionVec> is);
 
 			bool isType(cllr::Opcode op);
 

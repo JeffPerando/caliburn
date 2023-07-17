@@ -23,6 +23,7 @@ namespace caliburn
 	private:
 		CompilerSettings settings;
 		HashMap<std::string, std::string> dynTypes;
+		std::vector<sptr<Error>> allErrors;
 		std::vector<uptr<Statement>> ast;
 		
 	public:
@@ -59,8 +60,9 @@ namespace caliburn
 		the format recommended for redistribution.
 
 		Returns whether the CBIR produced an AST or not
-		*/
+		
 		bool parseCBIR(ref<std::vector<uint32_t>> cbir);
+		*/
 
 		/*
 		Parses source code text into an internal AST.
@@ -86,6 +88,8 @@ namespace caliburn
 		*/
 		bool compileShaders(std::string shaderName, ref<std::vector<uptr<Shader>>> shaderDest);
 
+		ref<const std::vector<sptr<Error>>> getErrors() const;
+		
 	};
 
 }
