@@ -20,8 +20,6 @@
 
 namespace caliburn
 {
-	struct Statement;
-
 	enum class StatementType
 	{
 		UNKNOWN,
@@ -64,66 +62,54 @@ namespace caliburn
 
 	};
 
-	enum class ValidationStatus
-	{
-		VALID,
-		INVALID_STATEMENT,
-		INVALID_RET_MODE
-	};
-
-	struct ValidationData
-	{
-		ValidationStatus status;
-		//ptr<const Statement> stmt;
-		ReturnMode retMode;
-		/*
-		static ValidationData valid()
-		{
-			return ValidationData{ ValidationStatus::VALID, nullptr, ReturnMode::NONE };
-		}
-
-		static ValidationData badStmt(ptr<const Statement> stmt)
-		{
-			return ValidationData{ ValidationStatus::INVALID_STATEMENT, stmt, ReturnMode::NONE };
-		}
-
-		static ValidationData badRetMode(ptr<const Statement> stmt, ReturnMode mode)
-		{
-			return ValidationData{ ValidationStatus::INVALID_RET_MODE, stmt, mode };
-		}
-		*/
-	};
-
 	constexpr auto TOP_STMT_TYPES = {
 		StatementType::VARIABLE,
-		StatementType::IF, //conditional compilation
+		//StatementType::IF, //conditional compilation
 		StatementType::MODULE, StatementType::IMPORT,
 		StatementType::FUNCTION,
 		StatementType::SHADER,
 		StatementType::STRUCT, StatementType::RECORD, StatementType::CLASS,
-		StatementType::ENUM,
+		//StatementType::ENUM,
 	};
 
-	constexpr auto LOGIC_STMT_TYPES = {
-		StatementType::VARIABLE,
-		StatementType::IF,
-		StatementType::FOR, StatementType::FORALL,
-		StatementType::WHILE, StatementType::DOWHILE,
-		//Switch is not supported yet in any way; must revisit the concept
-		StatementType::SETTER, StatementType::FUNC_CALL,
-	};
+	struct Annotation : ParsedObject
+	{
+		sptr<Token> first = nullptr;
+		sptr<Token> name = nullptr;
+		sptr<Token> last = nullptr;
+		std::vector<sptr<Token>> contents;
 
-	constexpr auto CLASS_STMT_TYPES = {
-		StatementType::VARIABLE,
-		StatementType::IF, //conditional compilation
-		StatementType::METHOD,
-		StatementType::CONSTRUCTOR, StatementType::DESTRUCTOR,
-	};
+		Annotation() = default;
 
-	constexpr auto STRUCT_STMT_TYPES = {
-		StatementType::VARIABLE,
-		StatementType::IF, //conditional compilation
-		StatementType::CONSTRUCTOR, StatementType::DESTRUCTOR,
+		sptr<Token> firstTkn() const override
+		{
+			return first;
+		}
+
+		sptr<Token> lastTkn() const override
+		{
+			return last;
+		}
+
+		void prettyPrint(ref<std::stringstream> ss) const override
+		{
+			ss << '@' << name->str << '(';
+
+			for (auto const& tkn : contents)
+			{
+				ss << tkn->str;
+
+				if (tkn != contents.back())
+				{
+					ss << ' ';
+				}
+
+			}
+
+			ss << ')';
+
+		}
+
 	};
 
 	struct Statement : Module, ParsedObject, cllr::Emitter
@@ -131,6 +117,7 @@ namespace caliburn
 		const StatementType type;
 
 		StmtModifiers mods = {};
+		std::vector<uptr<Annotation>> annotations;
 
 		Statement(StatementType stmtType) : type(stmtType) {}
 		virtual ~Statement() {}
@@ -177,7 +164,7 @@ namespace caliburn
 		{
 			return last;
 		}
-		/* TODO low priority
+
 		void prettyPrint(ref<std::stringstream> ss) const override
 		{
 			ss << "{\n";
@@ -185,12 +172,13 @@ namespace caliburn
 			for (auto const& stmt : stmts)
 			{
 				stmt->prettyPrint(ss);
+				ss << ';\n';
 			}
 
 			ss << "}";
 
 		}
-		*/
+		
 		void declareSymbols(sptr<SymbolTable> table) override
 		{
 			if (scopeTable != nullptr)
@@ -210,9 +198,11 @@ namespace caliburn
 
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
+			scopeTable->reparent(table);
+
 			for (auto const& inner : stmts)
 			{
-				inner->emitDeclCLLR(table, codeAsm);
+				inner->emitDeclCLLR(scopeTable, codeAsm);
 			}
 
 			switch (retMode)
@@ -222,7 +212,7 @@ namespace caliburn
 			case ReturnMode::RETURN: {
 				if (retValue != nullptr)
 				{
-					auto ret = retValue->emitValueCLLR(table, codeAsm);
+					auto ret = retValue->emitValueCLLR(scopeTable, codeAsm);
 
 					codeAsm.push(cllr::Instruction(cllr::Opcode::RETURN_VALUE, {}, { ret.value }));
 

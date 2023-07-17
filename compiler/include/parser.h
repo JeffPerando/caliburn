@@ -128,6 +128,10 @@ namespace caliburn
 
 		std::vector<sptr<FnArgVariable>> parseFnArgs();
 
+		std::vector<uptr<Annotation>> parseAllAnnotations();
+
+		uptr<Annotation> parseAnnotation();
+
 	};
 
 }

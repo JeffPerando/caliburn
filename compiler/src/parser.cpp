@@ -530,21 +530,21 @@ uptr<ScopeStatement> Parser::parseScope(std::vector<ParseMethod<uptr<Statement>>
 
 sptr<ParsedType> Parser::parseTypeName()
 {
-	auto tkn = tokens.current();
+	auto first = tokens.current();
 
-	if (tkn->type != TokenType::IDENTIFIER)
+	if (first->type != TokenType::IDENTIFIER)
 	{
-		//postParseException(new_uptr<ParseException>("Expected identifier; this is NOT a valid identifier.", tkn));
+		//TODO complain
 		return nullptr;
 	}
 
 	tokens.consume();
 
-	sptr<ParsedType> type = new_sptr<ParsedType>(tkn);
+	sptr<ParsedType> type = new_sptr<ParsedType>(first);
 
 	type->genericArgs = parseGenericArgs();
 
-	tkn = tokens.current();
+	auto tkn = tokens.current();
 
 	while (tokens.hasNext() && tkn->type == TokenType::START_BRACKET)
 	{
@@ -577,6 +577,7 @@ sptr<ParsedType> Parser::parseTypeName()
 
 uptr<Statement> Parser::parseDecl()
 {
+	auto annotations = parseAllAnnotations();
 	auto mods = parseStmtMods();
 
 	std::vector<ParseMethod<uptr<Statement>>> methods = {
@@ -587,22 +588,23 @@ uptr<Statement> Parser::parseDecl()
 		&Parser::parseFnStmt,
 		&Parser::parseShader,
 		&Parser::parseStruct,
-		&Parser::parseLogic
+		//&Parser::parseLogic
 	};
 
 	uptr<Statement> stmt = parseAnyUnique(methods);
 
 	if (stmt == nullptr)
 	{
-		//postParseException(new_uptr<ParseException>("Invalid start to declaration:", tokens.current()));
+		//TODO complain
 		return stmt;
 	}
 
+	stmt->annotations = annotations;
 	stmt->mods = mods;
 
 	if (!parseSemicolon())
 	{
-		//postParseException(new_uptr<ParseException>("All declarations must end with a semicolon", tokens.current()));
+		//TODO complain
 	}
 
 	return stmt;
@@ -1080,6 +1082,8 @@ uptr<Statement> Parser::parseLogic()
 
 uptr<Statement> Parser::parseControl()
 {
+	auto as = parseAllAnnotations();
+
 	auto tkn = tokens.current();
 
 	if (tkn->type != TokenType::KEYWORD)
@@ -1095,7 +1099,14 @@ uptr<Statement> Parser::parseControl()
 		//&Parser::parseSwitch
 	};
 
-	return parseAnyUnique(methods);
+	auto ctrl = parseAnyUnique(methods);
+
+	if (ctrl != nullptr)
+	{
+		ctrl->annotations = as;
+	}
+
+	return ctrl;
 }
 
 uptr<Statement> Parser::parseIf()
@@ -1927,4 +1938,91 @@ std::vector<sptr<FnArgVariable>> Parser::parseFnArgs()
 	}
 
 	return fnArgs;
+}
+
+std::vector<uptr<Annotation>> caliburn::Parser::parseAllAnnotations()
+{
+	auto vec = std::vector<uptr<Annotation>>();
+
+	while (tokens.hasNext())
+	{
+		auto a = parseAnnotation();
+
+		if (a == nullptr)
+		{
+			break;
+		}
+
+		vec.push_back(std::move(a));
+
+	}
+
+	return vec;
+}
+
+uptr<Annotation> Parser::parseAnnotation()
+{
+	auto first = tokens.current();
+
+	if (first->str != "@")
+	{
+		return nullptr;
+	}
+
+	auto name = tokens.next();
+
+	if (name->type != TokenType::IDENTIFIER)
+	{
+		//TODO complain
+		return nullptr;
+	}
+
+	std::vector<sptr<Token>> content;
+	
+	if (tokens.peek()->type == TokenType::START_PAREN)
+	{
+		tokens.consume();
+		int closingParenNeeded = 1;
+
+		while (tokens.hasNext())
+		{
+			auto tkn = tokens.next();
+
+			if (tkn->type == TokenType::END_PAREN)
+			{
+				--closingParenNeeded;
+
+				if (closingParenNeeded == 0)
+				{
+					break;
+				}
+
+			}
+			else
+			{
+				if (tkn->type == TokenType::START_PAREN)
+				{
+					++closingParenNeeded;
+				}
+
+				content.push_back(tkn);
+			}
+
+		}
+
+		if (closingParenNeeded != 0)
+		{
+			//TODO complain
+		}
+
+	}
+
+	auto a = new_uptr<Annotation>();
+
+	a->first = first;
+	a->name = name;
+	a->last = tokens.current();
+	a->contents = content;
+	
+	return a;
 }
