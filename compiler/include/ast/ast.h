@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "basic.h"
+#include "error.h"
 #include "langcore.h"
 #include "syntax.h"
 
@@ -134,7 +135,7 @@ namespace caliburn
 		Statement(StatementType stmtType) : type(stmtType) {}
 		virtual ~Statement() {}
 
-		bool validateModule() const override
+		bool validate(sptr<ErrorHandler> errors) const
 		{
 			return false;
 		}
@@ -149,8 +150,6 @@ namespace caliburn
 		virtual void declareHeader(sptr<SymbolTable> table) {}
 
 		void declareSymbols(sptr<SymbolTable> table) override = 0;
-
-		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
 	};
 
@@ -204,16 +203,6 @@ namespace caliburn
 			for (auto const& stmt : stmts)
 			{
 				stmt->declareSymbols(scopeTable);
-
-			}
-
-		}
-
-		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
-		{
-			for (auto const& stmt : stmts)
-			{
-				stmt->resolveSymbols(scopeTable, codeAsm);
 
 			}
 

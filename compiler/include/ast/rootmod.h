@@ -43,16 +43,6 @@ namespace caliburn
 
 		}
 
-		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
-		{
-
-		}
-
-		bool validateModule() const override
-		{
-			return false;
-		}
-
 	};
 
 	struct CompiledModule : Module
@@ -70,16 +60,6 @@ namespace caliburn
 		void declareSymbols(sptr<SymbolTable> table) override
 		{
 
-		}
-
-		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
-		{
-
-		}
-
-		bool validateModule() const override
-		{
-			return false;
 		}
 
 	};

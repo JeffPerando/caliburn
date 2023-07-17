@@ -1,5 +1,4 @@
 
-
 #include "parser.h"
 
 #include "ast/ctrlstmt.h"
@@ -14,12 +13,6 @@
 #include "ast/varstmt.h"
 
 using namespace caliburn;
-
-void Parser::postParseException(uptr<CaliburnException> e)
-{
-	errors.push_back(std::move(e));
-
-}
 
 std::vector<uptr<Statement>> Parser::parse()
 {
@@ -36,7 +29,7 @@ std::vector<uptr<Statement>> Parser::parse()
 		}
 		else
 		{
-			postParseException(new_uptr<InvalidDeclException>(start));
+			//postParseException(new_uptr<InvalidDeclException>(start));
 			break;
 		}
 
@@ -148,8 +141,10 @@ void Parser::parseAnyBetween(std::string start, std::function<void()> fn, std::s
 
 }
 
-void Parser::parseIdentifierList(ref<std::vector<sptr<Token>>> ids)
+std::vector<sptr<Token>> Parser::parseIdentifierList()
 {
+	std::vector<sptr<Token>> ids;
+
 	while (tokens.hasNext())
 	{
 		auto tkn = tokens.current();
@@ -171,6 +166,7 @@ void Parser::parseIdentifierList(ref<std::vector<sptr<Token>>> ids)
 
 	}
 
+	return ids;
 }
 
 sptr<GenericSignature> Parser::parseGenericSig()
@@ -538,7 +534,7 @@ sptr<ParsedType> Parser::parseTypeName()
 
 	if (tkn->type != TokenType::IDENTIFIER)
 	{
-		postParseException(new_uptr<ParseException>("Expected identifier; this is NOT a valid identifier.", tkn));
+		//postParseException(new_uptr<ParseException>("Expected identifier; this is NOT a valid identifier.", tkn));
 		return nullptr;
 	}
 
@@ -598,7 +594,7 @@ uptr<Statement> Parser::parseDecl()
 
 	if (stmt == nullptr)
 	{
-		postParseException(new_uptr<ParseException>("Invalid start to declaration:", tokens.current()));
+		//postParseException(new_uptr<ParseException>("Invalid start to declaration:", tokens.current()));
 		return stmt;
 	}
 
@@ -606,7 +602,7 @@ uptr<Statement> Parser::parseDecl()
 
 	if (!parseSemicolon())
 	{
-		postParseException(new_uptr<ParseException>("All declarations must end with a semicolon", tokens.current()));
+		//postParseException(new_uptr<ParseException>("All declarations must end with a semicolon", tokens.current()));
 	}
 
 	return stmt;
@@ -850,12 +846,21 @@ uptr<Statement> Parser::parseStruct()
 			break;
 		}
 
+		auto& [name, mem] = parseMember(stmt->isConst);
+
+		if (name == nullptr)
+		{
+			//TODO complain
+		}
+
+		stmt->members.emplace(name->str, mem);
+
 	}
 
 	return stmt;
 }
 
-uptr<Statement> caliburn::Parser::parseFnStmt()
+uptr<Statement> Parser::parseFnStmt()
 {
 	auto first = tokens.current();
 	auto fn = parseFunction();
@@ -933,7 +938,7 @@ sptr<Function> Parser::parseFunction()
 
 	if (tkn->str != "(")
 	{
-		postParseException(new_uptr<UnexpectedTokenException>(tokens.current(), '('));
+		//postParseException(new_uptr<UnexpectedTokenException>(tokens.current(), '('));
 		return nullptr;
 	}
 
@@ -945,7 +950,7 @@ sptr<Function> Parser::parseFunction()
 
 	if (tkn->str != ")")
 	{
-		postParseException(new_uptr<UnexpectedTokenException>(tkn, ')'));
+		//postParseException(new_uptr<UnexpectedTokenException>(tkn, ')'));
 		return nullptr;
 	}
 
@@ -977,7 +982,7 @@ sptr<Function> Parser::parseFunction()
 	return fn;
 }
 
-void Parser::parseMember(ref<StructStatement> stmt)
+std::pair<sptr<Token>, Member> Parser::parseMember(bool isConst)
 {
 	while (tokens.hasNext())
 	{
@@ -988,7 +993,7 @@ void Parser::parseMember(ref<StructStatement> stmt)
 		{
 			mem = v;
 			nameTkn = v->nameTkn;
-			v->isConst = stmt.isConst;
+			v->isConst = isConst;
 
 		}
 		else if (auto fn = parseMethod())
@@ -1008,10 +1013,10 @@ void Parser::parseMember(ref<StructStatement> stmt)
 			//TODO complain
 		}
 
-		stmt.members.emplace(nameTkn->str, mem);
-
+		return std::pair(nameTkn, mem);
 	}
 
+	return std::pair(nullptr, Member());
 }
 
 sptr<Function> Parser::parseMethod()
@@ -1027,12 +1032,24 @@ sptr<Function> Parser::parseMethod()
 
 sptr<Function> Parser::parseConstructor()
 {
-	auto tkn = tokens.current();
+	auto first = tokens.current();
 
-	if (tkn->type != TokenType::KEYWORD || tkn->str != "construct")
+	if (first->type != TokenType::KEYWORD || first->str != "construct")
 	{
 		return nullptr;
 	}
+
+	auto tkn = tokens.next();
+
+	if (tkn->type != TokenType::START_PAREN)
+	{
+		//TODO complain
+		return nullptr;
+	}
+
+	tokens.consume();
+
+	
 
 	return nullptr;
 }
@@ -1718,14 +1735,13 @@ bool Parser::parseLocalVars(ref<std::vector<sptr<Variable>>> vars)
 
 	}
 
-	std::vector<sptr<Token>> names;
-	parseIdentifierList(names);
+	std::vector<sptr<Token>> names = parseIdentifierList();
 
 	tkn = tokens.current();
 
 	if (tkn->str == ":")
 	{
-		postParseException(new_uptr<ParseException>("That's not how type hints work in Caliburn. Type hints go before the variable name, not after. So var: int x is valid. var x: int isn't.", tkn));
+		//postParseException(new_uptr<ParseException>("That's not how type hints work in Caliburn. Type hints go before the variable name, not after. So var: int x is valid. var x: int isn't.", tkn));
 		return nullptr;
 	}
 
@@ -1741,7 +1757,7 @@ bool Parser::parseLocalVars(ref<std::vector<sptr<Variable>>> vars)
 	}
 	else if (type == nullptr)
 	{
-		postParseException(new_uptr<ParseException>("Implicitly-typed variable must be manually initialized", tkn));
+		//postParseException(new_uptr<ParseException>("Implicitly-typed variable must be manually initialized", tkn));
 		return false;
 	}
 
@@ -1872,7 +1888,7 @@ sptr<Variable> Parser::parseMemberVar()
 	return v;
 }
 
-std::vector<sptr<FnArgVariable>> caliburn::Parser::parseFnArgs()
+std::vector<sptr<FnArgVariable>> Parser::parseFnArgs()
 {
 	std::vector<sptr<FnArgVariable>> fnArgs;
 

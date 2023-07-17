@@ -8,7 +8,63 @@
 
 using namespace caliburn;
 
-CharType Tokenizer::getType(char chr)
+Tokenizer::Tokenizer(ref<std::string> str) : text(str), doc(text), buf(std::vector<char>(str.begin(), str.end()))
+{
+	//I'm so sorry for this.
+
+	//Initialize array; Can't find an idiomatic C/C++ way to do this without memset.
+	for (auto i = 0; i < 128; ++i)
+	{
+		asciiTypes[i] = CharType::UNKNOWN;
+	}
+
+	for (auto i = 0; i <= 32; ++i)
+	{
+		asciiTypes[i] = CharType::WHITESPACE;
+	}
+
+	for (auto c = '0'; c <= '9'; ++c)
+	{
+		asciiTypes[c] = CharType::INT;
+	}
+
+	for (auto l = 'A'; l <= 'Z'; ++l)
+	{
+		asciiTypes[l] = CharType::IDENTIFIER;
+		//'a' - 'z'
+		asciiTypes[l + 32] = CharType::IDENTIFIER;
+	}
+
+	for (auto i = 0; i < OPERATOR_CHARS.length(); ++i)
+	{
+		asciiTypes[OPERATOR_CHARS[i]] = CharType::OPERATOR;
+
+	}
+
+	asciiTypes['#'] = CharType::COMMENT;
+	asciiTypes[','] = CharType::SPECIAL;
+	asciiTypes['('] = CharType::SPECIAL;
+	asciiTypes[')'] = CharType::SPECIAL;
+	asciiTypes['{'] = CharType::SPECIAL;
+	asciiTypes['}'] = CharType::SPECIAL;
+	asciiTypes['['] = CharType::SPECIAL;
+	asciiTypes[']'] = CharType::SPECIAL;
+	asciiTypes['\''] = CharType::STRING_DELIM;
+	asciiTypes['\"'] = CharType::STRING_DELIM;
+
+	//character 127 (DEL) is a reserved UNKNOWN
+	for (auto i = 0; i < 127; ++i)
+	{
+		if (asciiTypes[i] == CharType::UNKNOWN)
+		{
+			asciiTypes[i] = CharType::SPECIAL;
+		}
+
+	}
+
+}
+
+CharType Tokenizer::getType(char chr) const
 {
 	return asciiTypes[chr];
 }
@@ -16,22 +72,33 @@ CharType Tokenizer::getType(char chr)
 std::string Tokenizer::findStr(char delim)
 {
 	std::stringstream ss;
+	//copy the start in case we don't find the delimiter
+	auto start = pos;
+	bool foundDelim = false;
 
 	while (buf.hasNext())
 	{
 		char current = buf.current();
 
+		if (current == '\\')
+		{
+			buf.consume(2);
+			pos.move(2);
+			continue;
+		}
+
 		if (current == delim)
 		{
 			buf.consume();
-			++col;
+			pos.move();
+			foundDelim = true;
 			break;
 		}
 
 		if (current == '\n')
 		{
-			++line;
-			col = 1;
+			pos.newline();
+			doc.startLine(buf.currentIndex() + 1);
 
 			while (buf.hasNext())
 			{
@@ -42,12 +109,13 @@ std::string Tokenizer::findStr(char delim)
 
 				if (ws == '\n')
 				{
-					++line;
-					col = 1;
+					pos.newline();
+					doc.startLine(buf.currentIndex());
+
 				}
 				else
 				{
-					++col;
+					pos.move();
 				}
 
 			}
@@ -57,8 +125,14 @@ std::string Tokenizer::findStr(char delim)
 
 		ss << current;
 		buf.consume();
-		++col;
+		pos.move();
 
+	}
+
+	if (!foundDelim)
+	{
+		errors->err("Unescaped string", start);
+		return "";
 	}
 
 	return ss.str();
@@ -278,12 +352,17 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 {
 	std::vector<sptr<Token>> tokens;
 
-	line = 1;
-	col = 1;
-
 	while (buf.hasNext())
 	{
 		char current = buf.current();
+
+		if (current > 127)
+		{
+			errors->err("Unidentifiable character", pos);
+			buf.consume();
+			pos.move();
+			continue;
+		}
 
 		CharType type = getType(current);
 
@@ -297,31 +376,31 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 		{
 			if (current == '\r')
 			{
-				//don't increment col, just pretend we didn't see it
+				//don't increment pos, just pretend we didn't see it
 				buf.consume();
 				continue;
 			}
 
 			if (significantWhitespace)
 			{
-				tokens.push_back(new_sptr<Token>(std::string(1, current), TokenType::UNKNOWN, line, col, buf.currentIndex(), buf.currentIndex() + 1L));
+				tokens.push_back(new_sptr<Token>(std::string(1, current), TokenType::WHITESPACE, pos, buf.currentIndex(), buf.currentIndex() + 1L));
 			}
 
 			buf.consume();
 
 			if (current == '\n')
 			{
-				++line;
-				col = 1;
+				pos.newline();
+				doc.startLine(buf.currentIndex());
 			}
 			else if (current == '\t')
 			{
 				//Yes, we're assuming tabs are 4-wide.
-				col += 4;
+				pos.move(4);
 			}
 			else
 			{
-				++col;
+				pos.move();
 			}
 
 			continue;
@@ -367,18 +446,18 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 				}
 
-				tokens.push_back(new_sptr<Token>(idStr, idType, line, col, buf.currentIndex(), idOffset));
+				tokens.push_back(new_sptr<Token>(idStr, idType, pos, buf.currentIndex(), idOffset));
 
 				buf.consume(idOffset);
-				col += idOffset;
+				pos.move(idOffset);
 				
 			}
 			else
 			{
-				tokens.push_back(new_sptr<Token>(intLit, intType, line, col, buf.currentIndex(), intOffset));
+				tokens.push_back(new_sptr<Token>(intLit, intType, pos, buf.currentIndex(), intOffset));
 
 				buf.consume(intOffset);
-				col += intOffset;
+				pos.move(intOffset);
 				
 			}
 
@@ -389,7 +468,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 		{
 			while (buf.hasNext())
 			{
-				++col;
+				pos.move();
 
 				if (buf.next() == '\n')
 					break;
@@ -405,7 +484,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			auto str = findStr(current);
 
 			//findStr should offset col and line
-			tokens.push_back(new_sptr<Token>(str, TokenType::LITERAL_STR, line, col, start, start - buf.currentIndex()));
+			tokens.push_back(new_sptr<Token>(str, TokenType::LITERAL_STR, pos, start, start - buf.currentIndex()));
 			continue;
 		}
 
@@ -415,7 +494,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 			if (specialType != CHAR_TOKEN_TYPES.end())
 			{
-				tokens.push_back(new_sptr<Token>(std::string(1, current), specialType->second, line, col, buf.currentIndex(), 1L));
+				tokens.push_back(new_sptr<Token>(std::string(1, current), specialType->second, pos, buf.currentIndex(), 1L));
 			}
 
 		}
@@ -434,19 +513,19 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 			if (meaning == SPECIAL_OPS.end())
 			{
-				tokens.push_back(new_sptr<Token>(fullOp, meaning->second, line, col, buf.currentIndex(), off));
+				tokens.push_back(new_sptr<Token>(fullOp, meaning->second, pos, buf.currentIndex(), off));
 				buf.consume(off);
-				col += off;
+				pos.move(off);
 				continue;
 			}
 
-			tokens.push_back(new_sptr<Token>(std::string(1, current), TokenType::OPERATOR, line, col, buf.currentIndex(), 1L));
+			tokens.push_back(new_sptr<Token>(std::string(1, current), TokenType::OPERATOR, pos, buf.currentIndex(), 1L));
 
 		}
 		
 		//if all else fails, skip it.
 		buf.consume();
-		++col;
+		pos.move();
 		
 	}
 

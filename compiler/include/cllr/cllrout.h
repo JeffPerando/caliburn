@@ -1,9 +1,11 @@
 
 #pragma once
 
-#include "basic.h"
-#include "langcore.h"
 #include "cllr.h"
+
+#include "basic.h"
+#include "error.h"
+#include "langcore.h"
 
 namespace caliburn
 {
@@ -23,9 +25,9 @@ namespace caliburn
 		Caliburn code.
 		*/
 		template<typename OutCode>
-		class OutAssembler
+		struct OutAssembler
 		{
-		public:
+			const sptr<ErrorHandler> errors = new_sptr<ErrorHandler>(CompileStage::OUT_EMIT);
 			const Target target;
 
 			OutAssembler(Target t) : target(t) {}

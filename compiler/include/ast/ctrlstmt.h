@@ -42,18 +42,6 @@ namespace caliburn
 
 		}
 
-		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
-		{
-			//condition->resolveSymbols(table);
-			innerIf->resolveSymbols(table, codeAsm);
-
-			if (innerElse != nullptr)
-			{
-				innerElse->resolveSymbols(table, codeAsm);
-			}
-
-		}
-
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
 		/*
@@ -95,11 +83,6 @@ namespace caliburn
 
 		void declareSymbols(sptr<SymbolTable> table) override {}
 
-		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
-		{
-
-		}
-
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
 		/*
@@ -139,13 +122,6 @@ namespace caliburn
 
 		void declareSymbols(sptr<SymbolTable> table) override {}
 
-		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override
-		{
-			//condition->resolveSymbols(table);
-			loop->resolveSymbols(table, codeAsm);
-
-		}
-		
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
 	};

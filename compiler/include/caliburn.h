@@ -1,28 +1,30 @@
 
 #pragma once
 
+#if __cplusplus < 201703L
+#error Caliburn requires C++17; also MSVC doesn't set __cplusplus correctly, so check that if you're using it
+#else
+
 #include <map>
 #include <stdint.h>
 #include <string>
 #include <vector>
 
 #include "basic.h"
+#include "error.h"
 #include "langcore.h"
-
-#if __cplusplus < 201703L
-#error Caliburn requires C++17; also MSVC doesn't set __cplusplus correctly
-#endif
 
 namespace caliburn
 {
 	struct Statement;
 
-	class Compiler
+	struct Compiler
 	{
 	private:
 		CompilerSettings settings;
 		HashMap<std::string, std::string> dynTypes;
 		std::vector<uptr<Statement>> ast;
+		
 	public:
 		Compiler() = default;
 		virtual ~Compiler() {}
@@ -87,3 +89,5 @@ namespace caliburn
 	};
 
 }
+
+#endif

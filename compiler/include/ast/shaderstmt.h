@@ -4,10 +4,13 @@
 #include "ast.h"
 #include "var.h"
 
+#include "error.h"
+
 namespace caliburn
 {
 	struct ShaderStageStatement : Statement
 	{
+		const sptr<ErrorHandler> errors;
 		const sptr<Token> first;
 		const sptr<Token> name;
 
@@ -19,11 +22,13 @@ namespace caliburn
 
 		sptr<ParsedType> retType = nullptr;
 
-		ShaderStageStatement(sptr<Token> f, sptr<Token> n) : Statement(StatementType::SHADER_STAGE), first(f), name(n)
+		ShaderStageStatement(sptr<ErrorHandler> err, sptr<Token> f, sptr<Token> n) : Statement(StatementType::SHADER_STAGE),
+			errors(err), first(f), name(n)
 		{
 			type = SHADER_TYPES.find(n->str)->second;
 		}
-		ShaderStageStatement(ShaderType t) : Statement(StatementType::SHADER_STAGE), type(t), first(nullptr), name(nullptr) {}
+		ShaderStageStatement(ShaderType t) : Statement(StatementType::SHADER_STAGE),
+			type(t), first(nullptr), name(nullptr) {}
 		virtual ~ShaderStageStatement() {}
 
 		sptr<Token> firstTkn() const override
@@ -50,9 +55,7 @@ namespace caliburn
 			code->declareSymbols(table);
 		}
 
-		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
-
-		uptr<Shader> compile(sptr<SymbolTable> table, ptr<std::vector<uint32_t>> cbir, OptimizeLevel lvl);
+		uptr<Shader> compile(sptr<SymbolTable> table, OptimizeLevel lvl);
 
 	};
 
@@ -89,8 +92,6 @@ namespace caliburn
 		{
 			return 0;
 		}
-
-		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
 
 	};
 

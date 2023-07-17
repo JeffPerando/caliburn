@@ -112,7 +112,7 @@ namespace caliburn
 	{
 		const sptr<Token> lit;
 		
-		BoolLitValue(sptr<Token> v) : Value(ValueType::STR_LITERAL), lit(v)  {}
+		BoolLitValue(sptr<Token> v) : Value(ValueType::BOOL_LITERAL), lit(v)  {}
 
 		sptr<Token> firstTkn() const override
 		{
@@ -146,7 +146,7 @@ namespace caliburn
 		std::vector<sptr<Value>> values;
 		sptr<Token> end = nullptr;
 
-		ArrayLitValue() : Value(ValueType::UNKNOWN) {}
+		ArrayLitValue() : Value(ValueType::ARRAY_LITERAL) {}
 		virtual ~ArrayLitValue() {}
 
 		sptr<Token> firstTkn() const override
@@ -224,7 +224,7 @@ namespace caliburn
 		sptr<Value> val = nullptr;
 		sptr<ParsedType> chkType = nullptr;
 
-		IsAValue() : Value(ValueType::UNKNOWN) {}
+		IsAValue() : Value(ValueType::INHERITANCE_CHECK) {}
 		virtual ~IsAValue() {}
 
 		sptr<Token> firstTkn() const override
@@ -325,7 +325,7 @@ namespace caliburn
 	{
 		const sptr<Token> varTkn;
 
-		VarReadValue(sptr<Token> v) : Value(ValueType::UNKNOWN), varTkn(v) {}
+		VarReadValue(sptr<Token> v) : Value(ValueType::VAR_READ), varTkn(v) {}
 		virtual ~VarReadValue() {}
 
 		sptr<Token> firstTkn() const override

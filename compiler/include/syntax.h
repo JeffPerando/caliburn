@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "basic.h"
+#include "strhelp.h"
 
 namespace caliburn
 {
@@ -35,6 +36,7 @@ namespace caliburn
 	enum class TokenType : uint64_t
 	{
 		UNKNOWN,
+		WHITESPACE,
 		IDENTIFIER,
 		LITERAL_STR,
 		LITERAL_INT,
@@ -59,21 +61,21 @@ namespace caliburn
 	{
 		const std::string str;
 		const TokenType type;
-		const uint64_t line, column;
+		const TextPos pos;
 		
 		/*
 		These represent the start and end of this token within the file itself.
 		Since a file is just a string, we can index directly into it.
-		ALSO: The end field would be redundant, EXCEPT some tokens can be shortened, e.g. int literals
+		ALSO: textEnd would be redundant, EXCEPT some tokens can be shortened, e.g. int literals
 		So, since it's not a 1:1 text to token translation, we need to include the start AND end.
 		*/
 		const uint64_t textStart, textEnd;
 
 		Token(std::string t,
 			TokenType id = TokenType::IDENTIFIER,
-			uint64_t l = 0, uint64_t c = 0,
+			TextPos p = TextPos(),
 			uint64_t s = 0, uint64_t off = 0) :
-			str(t), type(id), line(l), column(c), textStart(s), textEnd(s + off) {}
+			str(t), type(id), pos(p), textStart(s), textEnd(s + off) {}
 
 	};
 
@@ -124,6 +126,19 @@ namespace caliburn
 		virtual sptr<Token> firstTkn() const = 0;
 
 		virtual sptr<Token> lastTkn() const = 0;
+
+		virtual size_t totalParsedSize() const
+		{
+			auto first = firstTkn();
+			auto last = lastTkn();
+
+			if (first == nullptr || last == nullptr)
+			{
+				return 0;
+			}
+
+			return last->textEnd - first->textStart;
+		}
 
 		virtual void prettyPrint(ref<std::stringstream> ss) const = 0;
 

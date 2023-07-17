@@ -2,15 +2,16 @@
 #pragma once
 
 #include <functional>
+#include <utility>
+
+#include "buffer.h"
+#include "error.h"
+#include "syntax.h"
 
 #include "ast/ast.h"
 #include "ast/var.h"
 
 #include "types/type.h"
-
-#include "buffer.h"
-#include "compilererr.h"
-#include "syntax.h"
 
 namespace caliburn
 {
@@ -24,6 +25,8 @@ namespace caliburn
 	
 	struct Parser
 	{
+		const sptr<ErrorHandler> errors = new_sptr<ErrorHandler>(CompileStage::PARSER);
+
 		Parser(std::vector<sptr<Token>> tokenVec) : tokens(tokenVec) {}
 		virtual ~Parser() {}
 
@@ -31,8 +34,7 @@ namespace caliburn
 
 	private:
 		Buffer<sptr<Token>> tokens;
-		std::vector<uptr<CaliburnException>> errors;
-
+		
 		template<typename T>
 		uptr<T> parseAnyUnique(std::vector<ParseMethod<uptr<T>>> fns);
 
@@ -44,9 +46,7 @@ namespace caliburn
 
 		void parseAnyBetween(std::string start, std::function<void()> fn, std::string end);
 
-		void postParseException(uptr<CaliburnException> ex);
-
-		void parseIdentifierList(ref<std::vector<sptr<Token>>> ids);
+		std::vector<sptr<Token>> parseIdentifierList();
 
 		sptr<GenericSignature> parseGenericSig();
 
@@ -80,7 +80,7 @@ namespace caliburn
 
 		sptr<Function> parseFunction();
 
-		void parseMember(ref<StructStatement> stmt);
+		std::pair<sptr<Token>, Member> parseMember(bool isConst = false);
 
 		sptr<Function> parseMethod();
 

@@ -1,6 +1,7 @@
 
 #include "caliburn.h"
 
+#include "error.h"
 #include "parser.h"
 #include "tokenizer.h"
 
@@ -38,25 +39,28 @@ bool Compiler::parseText(std::string text)
 	}
 
 	//Parse the text into tokens (duh)
-	auto tokens = Tokenizer(text).tokenize();
+	auto t = Tokenizer(text);
+	auto tokens = t.tokenize();
 
 	//Build the initial AST (ok)
-	auto ast = Parser(tokens).parse();
+	auto p = Parser(tokens);
+	auto ast = p.parse();
 
 	//Validate AST
+	auto astErrs = new_sptr<ErrorHandler>(CompileStage::AST_VALIDATION);
 	for (auto const& stmt : ast)
 	{
 		std::set<StatementType> topStmts = TOP_STMT_TYPES;
 
 		if (topStmts.find(stmt->type) == topStmts.end())
 		{
-			//TODO throw compiler error
+			//TODO complain
 			continue;
 		}
 		/*
 		if (!stmt->validate(topStmts))
 		{
-			//TODO throw compiler error
+			//TODO complain
 		}
 		*/
 	}
@@ -87,6 +91,7 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 
 	//Conditional compilation
 	/*
+	error->stage = CompileStage::CONDITIONAL_COMPILATION;
 	auto sortAST = lambda() {
 		std::sort(ast.begin(), ast.end(), lambda(const uptr<Statement> a, const uptr<Statement> b)
 			{
@@ -151,6 +156,7 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 	ptr<ShaderStatement> shaderStmt = nullptr;
 
 	//COMPILE
+	//error->stage = CompileStage::CLLR_EMIT;
 	for (auto const& stmt : ast)
 	{
 		//import x;
@@ -230,7 +236,7 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 	
 	for (auto const& stage : shaderStmt->stages)
 	{
-		auto result = stage->compile(table, nullptr, settings.o);
+		auto result = stage->compile(table, settings.o);
 
 		uint32_t d = 0;
 

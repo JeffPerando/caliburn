@@ -10,21 +10,15 @@
 
 using namespace caliburn;
 
-uptr<Shader> ShaderStageStatement::compile(sptr<SymbolTable> table, ptr<std::vector<uint32_t>> cbir, OptimizeLevel lvl)
+uptr<Shader> ShaderStageStatement::compile(sptr<SymbolTable> table, OptimizeLevel lvl)
 {
 	auto codeAsm = cllr::Assembler(type);
 
-	code->resolveSymbols(table, codeAsm);
-
 	code->emitDeclCLLR(table, codeAsm);
 
+	//TODO validate
+
 	//TODO emit CBIR
-	/*
-	if (cbir)
-	{
-		code->emitCBIR(cbir);
-	}
-	*/
 
 	cllr::optimize(lvl, codeAsm);
 

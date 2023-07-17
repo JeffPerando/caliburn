@@ -4,6 +4,7 @@
 #include "basic.h"
 
 #include "cllrasm.h"
+#include "error.h"
 
 namespace caliburn
 {
@@ -11,6 +12,8 @@ namespace caliburn
 	{
 		struct Validator
 		{
+			const sptr<ErrorHandler> errors = new_sptr<ErrorHandler>(CompileStage::CLLR_VALID);
+
 			Validator() = default;
 
 			void validate(ref<InstructionVec> is);

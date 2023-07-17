@@ -135,7 +135,7 @@ namespace caliburn
 			std::array<SSA, 3> refs = {};
 
 			SSA outType = 0;
-			sptr<ParsedObject> debugObj = nullptr;
+			sptr<Token> debugTkn = nullptr;
 
 			Instruction() {}
 
@@ -152,13 +152,13 @@ namespace caliburn
 				operands = old.operands;
 				refs = old.refs;
 				outType = old.outType;
-				debugObj = old.debugObj;
+				debugTkn = old.debugTkn;
 			}
 
-			ptr<Instruction> debug(sptr<ParsedObject> obj)
+			Instruction& debug(sptr<Token> tkn)
 			{
-				debugObj = obj;
-				return this;
+				debugTkn = tkn;
+				return *this;
 			}
 
 			bool operator==(const Instruction& other) const
