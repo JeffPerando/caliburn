@@ -27,6 +27,11 @@ namespace caliburn
 			return (index + count) < vec.size();
 		}
 
+		bool hasRem() const
+		{
+			return remaining() > 0;
+		}
+
 		//fetch current
 		const T& current() const
 		{

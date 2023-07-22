@@ -1082,18 +1082,21 @@ uptr<Statement> Parser::parseLogic()
 
 uptr<Statement> Parser::parseControl()
 {
+	auto start = tokens.currentIndex();
+
 	auto as = parseAllAnnotations();
 
-	auto tkn = tokens.current();
+	auto const& tkn = tokens.current();
 
 	if (tkn->type != TokenType::KEYWORD)
 	{
+		tokens.revertTo(start);
 		return nullptr;
 	}
 	
 	std::vector<ParseMethod<uptr<Statement>>> methods = {
 		&Parser::parseIf,
-		&Parser::parseFor,
+		//&Parser::parseFor,
 		&Parser::parseWhile,
 		&Parser::parseDoWhile,
 		//&Parser::parseSwitch
@@ -1101,7 +1104,13 @@ uptr<Statement> Parser::parseControl()
 
 	auto ctrl = parseAnyUnique(methods);
 
-	if (ctrl != nullptr)
+	if (ctrl == nullptr)
+	{
+		tokens.revertTo(start);
+		return nullptr;
+	}
+
+	if (!as.empty())
 	{
 		ctrl->annotations = std::move(as);
 	}
@@ -1111,19 +1120,20 @@ uptr<Statement> Parser::parseControl()
 
 uptr<Statement> Parser::parseIf()
 {
-	auto tkn = tokens.current();
+	auto const& first = tokens.current();
 
-	if (tkn->type != TokenType::KEYWORD || tkn->str != "if")
+	if (first->type != TokenType::KEYWORD || first->str != "if")
 	{
 		return nullptr;
 	}
 
 	tokens.consume();
 
-	auto parsed = new_uptr<IfStatement>();
+	auto stmt = new_uptr<IfStatement>();
 
-	parsed->condition = parseBetween("(", ParseMethod<sptr<Value>>(&Parser::parseAnyValue), ")");
-	parsed->innerIf = parseScope({&Parser::parseDecl});
+	stmt->first = first;
+	stmt->condition = parseBetween("(", ParseMethod<sptr<Value>>(&Parser::parseAnyValue), ")");
+	stmt->innerIf = parseScope({&Parser::parseDecl});
 
 	if (tokens.current()->str == "else")
 	{
@@ -1133,20 +1143,20 @@ uptr<Statement> Parser::parseIf()
 
 		if (innerElseStmt != nullptr)
 		{
-			parsed->innerElse = new_uptr<ScopeStatement>();
+			stmt->innerElse = new_uptr<ScopeStatement>();
 
-			parsed->innerElse->stmts.push_back(std::move(innerElseStmt));
+			stmt->innerElse->stmts.push_back(std::move(innerElseStmt));
 
 		}
 		else
 		{
-			parsed->innerElse = parseScope({&Parser::parseDecl});
+			stmt->innerElse = parseScope({&Parser::parseDecl});
 
 		}
 
 	}
 
-	return parsed;
+	return stmt;
 }
 
 uptr<Statement> Parser::parseFor() //FIXME
@@ -1156,9 +1166,9 @@ uptr<Statement> Parser::parseFor() //FIXME
 
 uptr<Statement> Parser::parseWhile()
 {
-	auto tkn = tokens.current();
+	auto const& first = tokens.current();
 
-	if (tkn->type != TokenType::KEYWORD || tkn->str != "while")
+	if (first->type != TokenType::KEYWORD || first->str != "while")
 	{
 		return nullptr;
 	}
@@ -1167,7 +1177,7 @@ uptr<Statement> Parser::parseWhile()
 
 	auto stmt = new_uptr<WhileStatement>();
 	
-	stmt->first = tkn;
+	stmt->first = first;
 	stmt->condition = cond;
 	stmt->loop = parseScope({ &Parser::parseLogic });
 
@@ -1293,33 +1303,31 @@ sptr<Value> Parser::parseAnyValue()
 
 sptr<Value> Parser::parseNonExpr()
 {
-	auto tkn = tokens.current();
+	std::vector<ParseMethod<sptr<Value>>> initParsers =
+		{ &Parser::parseLiteral, &Parser::parseAnyAccess, &Parser::parseAnyFnCall };
 
-	std::vector<ParseMethod<sptr<Value>>> methods = { &Parser::parseLiteral, &Parser::parseAnyFnCall };
-
-	auto v = parseAnyShared(methods);
+	auto v = parseAnyShared(initParsers);
 
 	if (v == nullptr)
 	{
-		if (tkn->type == TokenType::START_PAREN)
+		auto const& first = tokens.current();
+
+		if (first->type == TokenType::START_PAREN)
 		{
+			tokens.consume();
 			v = parseBetween("(", ParseMethod<sptr<Value>>(&Parser::parseAnyExpr), ")");
 		}
-		else if (tkn->type == TokenType::KEYWORD)
+		else if (first->type == TokenType::KEYWORD)
 		{
 			tokens.consume();
 
-			if (tkn->str == "this")
+			if (first->str == "sign")
 			{
-				v = new_sptr<VarReadValue>(tkn);
+				v = new_sptr<SignValue>(first, parseNonExpr());
 			}
-			else if (tkn->str == "sign")
+			else if (first->str == "unsign")
 			{
-				v = new_sptr<SignValue>(tkn, parseNonExpr());
-			}
-			else if (tkn->str == "unsign")
-			{
-				v = new_sptr<UnsignValue>(tkn, parseNonExpr());
+				v = new_sptr<UnsignValue>(first, parseNonExpr());
 			}
 			else
 			{
@@ -1328,26 +1336,19 @@ sptr<Value> Parser::parseNonExpr()
 			}
 
 		}
-		else if (tkn->type == TokenType::OPERATOR)
+		else if (first->type == TokenType::OPERATOR)
 		{
 			Operator uOp = Operator::UNKNOWN;
-			bool isUnary = true;
-
-			switch (tkn->str[0])
+			
+			switch (first->str[0])
 			{
-			case '|': uOp = Operator::ABS; break;
-			case '-': uOp = Operator::NEG; break;
-			case '~': uOp = Operator::BIT_NEG; break;
-			case '!': uOp = Operator::BOOL_NOT; break;
-			default: {
-				isUnary = false;
-				break;
-			};
-			}
-
-			if (!isUnary)
-			{
-				return nullptr;
+				case '|': uOp = Operator::ABS; break;
+				case '-': uOp = Operator::NEG; break;
+				case '~': uOp = Operator::BIT_NEG; break;
+				case '!': uOp = Operator::BOOL_NOT; break;
+				default: {
+					return nullptr;
+				};
 			}
 
 			tokens.consume();
@@ -1355,7 +1356,7 @@ sptr<Value> Parser::parseNonExpr()
 			auto unary = new_sptr<UnaryValue>();
 
 			unary->op = uOp;
-			unary->val = parseNonExpr();
+			unary->val = parseAnyExpr();
 
 			if (uOp == Operator::ABS)
 			{
@@ -1365,6 +1366,8 @@ sptr<Value> Parser::parseNonExpr()
 					return nullptr;
 				}
 
+				unary->end = tokens.current();
+
 				tokens.consume();
 
 			}
@@ -1372,26 +1375,33 @@ sptr<Value> Parser::parseNonExpr()
 			v = unary;
 
 		}
-		else
+		
+		if (v == nullptr)
 		{
 			return nullptr;
 		}
 
 	}
 
-	if (v == nullptr)
-	{
-		return nullptr;
-	}
-	
 	while (tokens.hasNext())
 	{
-		tkn = tokens.current();
+		auto const& tkn = tokens.current();
 
-		if (tkn->type == TokenType::START_BRACKET)
+		if (tkn->type == TokenType::PERIOD && tokens.peek()->type == TokenType::IDENTIFIER)
+		{
+			tokens.consume();
+			v = parseAccess(v);
+		}
+		else if (tkn->type == TokenType::START_BRACKET)
 		{
 			auto i = parseBetween("[", ParseMethod<sptr<Value>>(&Parser::parseAnyValue), "]");//enables for expressions inside of array access
 			
+			if (i == nullptr)
+			{
+				//TODO complain
+				return nullptr;
+			}
+
 			auto subA = new_sptr<SubArrayValue>();
 
 			subA->array = v;
@@ -1401,45 +1411,32 @@ sptr<Value> Parser::parseNonExpr()
 			v = subA;
 
 		}
-		else if (tkn->type == TokenType::PERIOD && tokens.peek()->type == TokenType::IDENTIFIER)
-		{
-			tkn = tokens.next();
-			auto pk = tokens.peek();
-
-			if (pk->type == TokenType::START_PAREN || pk->str == GENERIC_START)
-			{
-				v = parseFnCall(v);
-
-			}
-			else
-			{
-				auto memRead = new_sptr<MemberReadValue>();
-
-				memRead->target = v;
-				memRead->memberName = tkn;
-
-				v = memRead;
-
-				tokens.consume();
-
-			}
-
-		}
 		else
 		{
+			break;
+		}
+
+		if (v == nullptr)
+		{
+			//TODO complain
 			break;
 		}
 		
 	}
 
-	tkn = tokens.current();
-
-	while (tkn->type == TokenType::KEYWORD)
+	while (tokens.hasNext())
 	{
+		auto const& tkn = tokens.current();
+
+		if (tkn->type != TokenType::KEYWORD)
+		{
+			break;
+		}
+
+		tokens.consume();
+
 		if (tkn->str == "is")
 		{
-			tokens.consume();
-
 			auto isa = new_sptr<IsAValue>();
 
 			isa->val = v;
@@ -1450,8 +1447,6 @@ sptr<Value> Parser::parseNonExpr()
 		}
 		else if (tkn->str == "as")
 		{
-			tokens.consume();
-
 			auto cast = new_sptr<CastValue>();
 
 			cast->lhs = v;
@@ -1462,6 +1457,7 @@ sptr<Value> Parser::parseNonExpr()
 		}
 		else
 		{
+			tokens.rewind();
 			break;
 		}
 
@@ -1472,52 +1468,61 @@ sptr<Value> Parser::parseNonExpr()
 
 sptr<Value> Parser::parseLiteral()
 {
-	auto tkn = tokens.current();
+	auto const& first = tokens.current();
 
-	if (tkn->type == TokenType::KEYWORD)
+	if (first->type == TokenType::KEYWORD)
 	{
-		if (tkn->str == "this")
+		if (first->str == "this")
 		{
-			return new_sptr<VarReadValue>(tkn);
+			return new_sptr<VarReadValue>(first);
 		}
-		else if (tkn->str == "null")
+		else if (first->str == "null")
 		{
-			return new_sptr<NullValue>(tkn);
+			return new_sptr<NullValue>(first);
 		}
 
+		return nullptr;
 	}
 
-	switch (tkn->type)
+	switch (first->type)
 	{
-	case TokenType::LITERAL_INT: return new_sptr<IntLiteralValue>(tkn);
-	case TokenType::LITERAL_FLOAT: return new_sptr<FloatLiteralValue>(tkn);
-	case TokenType::LITERAL_BOOL: return new_sptr<BoolLitValue>(tkn);
-	case TokenType::LITERAL_STR: return new_sptr<StringLitValue>(tkn);
+		case TokenType::LITERAL_INT: return new_sptr<IntLiteralValue>(first);
+		case TokenType::LITERAL_FLOAT: return new_sptr<FloatLiteralValue>(first);
+		case TokenType::LITERAL_BOOL: return new_sptr<BoolLitValue>(first);
+		case TokenType::LITERAL_STR: return new_sptr<StringLitValue>(first);
 	}
 
-	if (tkn->str == "[")
+	if (first->type == TokenType::START_BRACKET)
 	{
 		auto arrLit = new_sptr<ArrayLitValue>();
 
-		arrLit->start = tkn;
+		arrLit->start = first;
 
 		while (tokens.hasNext())
 		{
-			tkn = tokens.next();
+			auto const& tkn = tokens.next();
 
-			if (tkn->str == ",")
+			if (tkn->type == TokenType::COMMA)
 			{
 				continue;
 			}
 
-			if (tkn->str == "]")
+			if (tkn->type == TokenType::END_BRACKET)
 			{
 				arrLit->end = tkn;
 				tokens.consume();
 				break;
 			}
 
-			arrLit->values.push_back(parseAnyValue());
+			auto v = parseAnyValue();
+
+			if (v == nullptr)
+			{
+				//TODO complain
+				break;
+			}
+
+			arrLit->values.push_back(v);
 
 		}
 
@@ -1525,6 +1530,82 @@ sptr<Value> Parser::parseLiteral()
 	}
 
 	return nullptr;
+}
+
+sptr<Value> Parser::parseAnyAccess()
+{
+	return parseAccess(nullptr);
+}
+
+sptr<Value> Parser::parseAccess(sptr<Value> target)
+{
+	auto const& first = tokens.current();
+
+	if (first->type != TokenType::IDENTIFIER)
+	{
+		return target;
+	}
+
+	if (!tokens.hasNext() || tokens.peek()->type != TokenType::PERIOD)
+	{
+		if (target != nullptr)
+		{
+			auto mem = new_sptr<MemberReadValue>();
+
+			mem->memberName = first;
+			mem->target = target;
+
+			return mem;
+		}
+
+		return new_sptr<VarReadValue>(first);
+	}
+
+	auto access = new_sptr<VarChainValue>();
+
+	access->target = target;
+
+	while (tokens.hasNext())
+	{
+		auto const& dot = tokens.next();
+
+		if (dot->type != TokenType::PERIOD)
+		{
+			break;
+		}
+
+		auto const& name = tokens.next();
+
+		if (name->type != TokenType::IDENTIFIER)
+		{
+			//TODO complain
+			break;
+		}
+
+		auto const& peek = tokens.peek();
+		
+		//check for method call
+		if (peek->str == GENERIC_START || peek->type == TokenType::START_PAREN)
+		{
+			if (auto fnCall = parseFnCall(access))
+			{
+				return fnCall;
+			}
+
+			//NO COMPLAINING HERE
+			break;
+		}
+
+		access->chain.push_back(name);
+
+	}
+
+	if (access->chain.empty())
+	{
+		return target;
+	}
+
+	return access;
 }
 
 sptr<Value> Parser::parseAnyExpr()
@@ -1544,18 +1625,20 @@ sptr<Value> Parser::parseExpr(uint32_t precedence)
 		Caliburn operator tokens consist of individual characters. So += is two tokens: '+' and '='
 
 		So we gather the tokens into a vector for later processing
+
+		We also do NOT consume the tokens as a cautionary measure
 		*/
 		for (size_t off = 0; tokens.currentIndex() + off < tokens.length(); ++off)
 		{
-			auto offTkn = tokens.peek(off);
+			auto const& offTkn = tokens.peek(off);
 
-			if (offTkn->type == TokenType::OPERATOR)
+			if (offTkn->type != TokenType::OPERATOR)
 			{
-				opTkns.push_back(offTkn);
-				continue;
+				break;
 			}
 
-			break;
+			opTkns.push_back(offTkn);
+
 		}
 
 		if (opTkns.empty())
@@ -1596,14 +1679,16 @@ sptr<Value> Parser::parseExpr(uint32_t precedence)
 
 			auto opWeight = OP_PRECEDENCE.at(op);
 
+			//TODO this is dubious
 			if (opWeight > precedence)
 			{
 				return lhs;
 			}
 
+			//Now we know we'll use the tokens, so we consume them
 			tokens.consume(opTkns.size());
 
-			auto tkn = tokens.current();
+			auto const& tkn = tokens.current();
 
 			//Yes, we use *this* code to parse setters.
 			if (tkn->str == "=")
@@ -1616,8 +1701,6 @@ sptr<Value> Parser::parseExpr(uint32_t precedence)
 
 				tokens.consume();
 
-				//AND we made a dedicated class for it
-				//Why? Because memory management, that's why
 				auto set = new_sptr<SetterValue>();
 
 				set->lhs = lhs;
@@ -1651,11 +1734,6 @@ sptr<Value> Parser::parseExpr(uint32_t precedence)
 			//TODO complain
 		}
 
-	}
-
-	if (lhs->vType != ValueType::EXPRESSION)
-	{
-		//TODO complain
 	}
 
 	return lhs;

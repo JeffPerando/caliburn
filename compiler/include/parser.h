@@ -25,6 +25,9 @@ namespace caliburn
 	
 	struct Parser
 	{
+	private:
+		Buffer<sptr<Token>> tokens;
+	public:
 		const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::PARSER);
 
 		Parser(std::vector<sptr<Token>> tokenVec) : tokens(tokenVec) {}
@@ -32,9 +35,6 @@ namespace caliburn
 
 		std::vector<uptr<Statement>> parse();
 
-	private:
-		Buffer<sptr<Token>> tokens;
-		
 		template<typename T>
 		uptr<T> parseAnyUnique(std::vector<ParseMethod<uptr<T>>> fns);
 
@@ -111,6 +111,10 @@ namespace caliburn
 		sptr<Value> parseNonExpr();
 
 		sptr<Value> parseLiteral();
+
+		sptr<Value> parseAnyAccess();
+
+		sptr<Value> parseAccess(sptr<Value> target);
 
 		sptr<Value> parseAnyExpr();
 

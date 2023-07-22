@@ -389,6 +389,42 @@ namespace caliburn
 
 	};
 	
+	struct VarChainValue : Value
+	{
+		sptr<Value> target = nullptr;
+		std::vector<sptr<Token>> chain;
+
+		sptr<Token> firstTkn() const override
+		{
+			if (target != nullptr)
+			{
+				return target->firstTkn();
+			}
+
+			return chain.front();
+		}
+
+		sptr<Token> lastTkn() const override
+		{
+			return chain.back();
+		}
+
+		void prettyPrint(ref<std::stringstream> ss) const override;
+
+		bool isLValue() const override
+		{
+			return true;
+		}
+
+		bool isCompileTimeConst() const override
+		{
+			return false;
+		}
+
+		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const override;
+
+	};
+
 	struct UnaryValue : Value
 	{
 		Operator op = Operator::UNKNOWN;

@@ -294,6 +294,93 @@ cllr::TypedSSA MemberReadValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr:
 	return cllr::TypedSSA();
 }
 
+void VarChainValue::prettyPrint(ref<std::stringstream> ss) const
+{
+	if (target != nullptr)
+	{
+		target->prettyPrint(ss);
+		ss << '.';
+	}
+
+	for (size_t i = 0; i < (chain.size() - 1); ++i)
+	{
+		ss << chain[i]->str << '.';
+	}
+
+	ss << chain.back()->str;
+
+}
+
+cllr::TypedSSA VarChainValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+{
+	size_t start = 0;
+	auto finalVal = cllr::TypedSSA();
+
+	if (target != nullptr)
+	{
+		finalVal = target->emitValueCLLR(table, codeAsm);
+	}
+	else
+	{
+		sptr<SymbolTable> tbl = table;
+
+		for (size_t i = 0; i < chain.size(); ++i)
+		{
+			Symbol sym = tbl->find(chain[i]->str);
+
+			if (std::holds_alternative<std::monostate>(sym))
+			{
+				//TODO complain
+				return finalVal;
+			}
+			if (auto m = std::get_if<sptr<Module>>(&sym))
+			{
+				//TODO get symbol table from module
+				++start;
+				return finalVal;
+			}
+
+			if (auto v = std::get_if<sptr<Variable>>(&sym))
+			{
+				finalVal = (*v)->emitLoadCLLR(table, codeAsm, 0);
+				++start;
+				break;
+			}
+
+		}
+
+	}
+
+	for (size_t i = start; i < chain.size(); ++i)
+	{
+		auto const& tkn = chain[i];
+
+		auto mem = finalVal.typePtr->base->getMember(tkn->str);
+
+		if (auto v = std::get_if<sptr<Variable>>(&mem))
+		{
+			finalVal = (*v)->emitLoadCLLR(table, codeAsm, finalVal.value);
+		}
+		else if (auto val = std::get_if<sptr<Value>>(&mem))
+		{
+			finalVal = (*val)->emitValueCLLR(table, codeAsm);
+		}
+		else
+		{
+			//TODO complain
+			break;
+		}
+
+	}
+
+	if (finalVal.value == 0)
+	{
+		//TODO complain
+	}
+
+	return finalVal;
+}
+
 void UnaryValue::prettyPrint(ref<std::stringstream> ss) const
 {
 	ss << start->str;

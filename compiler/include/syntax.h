@@ -27,7 +27,7 @@ namespace caliburn
 		"shader", "shared", "sign", "strong", "struct", "switch",
 		"this", "true", "type",
 		"unreachable", "unsign", "uses",
-		"var",
+		"var", "void",
 		"while", "where", "wrapped"
 	};
 
@@ -76,6 +76,12 @@ namespace caliburn
 			TextPos p = TextPos(),
 			uint64_t s = 0, uint64_t off = 0) :
 			str(t), type(id), pos(p), textStart(s), textEnd(s + off) {}
+
+		//TODO decide what looks good for a token
+		void prettyPrint(std::stringstream ss)
+		{
+			ss << str;
+		}
 
 	};
 
