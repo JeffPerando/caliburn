@@ -532,7 +532,7 @@ sptr<ParsedType> Parser::parseTypeName()
 {
 	auto first = tokens.current();
 
-	if (first->type != TokenType::IDENTIFIER)
+	if (first->type != TokenType::IDENTIFIER && first->str != "dynamic")
 	{
 		//TODO complain
 		return nullptr;
@@ -588,7 +588,7 @@ uptr<Statement> Parser::parseDecl()
 		&Parser::parseFnStmt,
 		&Parser::parseShader,
 		&Parser::parseStruct,
-		//&Parser::parseLogic
+		&Parser::parseIf
 	};
 
 	uptr<Statement> stmt = parseAnyUnique(methods);
@@ -599,7 +599,7 @@ uptr<Statement> Parser::parseDecl()
 		return stmt;
 	}
 
-	stmt->annotations = annotations;
+	stmt->annotations = std::move(annotations);
 	stmt->mods = mods;
 
 	if (!parseSemicolon())
@@ -1103,7 +1103,7 @@ uptr<Statement> Parser::parseControl()
 
 	if (ctrl != nullptr)
 	{
-		ctrl->annotations = as;
+		ctrl->annotations = std::move(as);
 	}
 
 	return ctrl;
@@ -1940,9 +1940,9 @@ std::vector<sptr<FnArgVariable>> Parser::parseFnArgs()
 	return fnArgs;
 }
 
-std::vector<uptr<Annotation>> caliburn::Parser::parseAllAnnotations()
+std::vector<uptr<Annotation>> Parser::parseAllAnnotations()
 {
-	auto vec = std::vector<uptr<Annotation>>();
+	std::vector<uptr<Annotation>> vec;
 
 	while (tokens.hasNext())
 	{
@@ -1957,7 +1957,7 @@ std::vector<uptr<Annotation>> caliburn::Parser::parseAllAnnotations()
 
 	}
 
-	return vec;
+	return std::move(vec);
 }
 
 uptr<Annotation> Parser::parseAnnotation()
@@ -2023,6 +2023,8 @@ uptr<Annotation> Parser::parseAnnotation()
 	a->name = name;
 	a->last = tokens.current();
 	a->contents = content;
+
+	tokens.consume();
 	
 	return a;
 }

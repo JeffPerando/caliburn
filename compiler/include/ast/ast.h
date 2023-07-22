@@ -80,6 +80,7 @@ namespace caliburn
 		std::vector<sptr<Token>> contents;
 
 		Annotation() = default;
+		~Annotation() {}
 
 		sptr<Token> firstTkn() const override
 		{
