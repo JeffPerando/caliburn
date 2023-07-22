@@ -100,6 +100,7 @@ namespace caliburn
 			CLLR_SPIRV_IMPL(OpValueConstruct);
 			CLLR_SPIRV_IMPL(OpConstructArg);
 			CLLR_SPIRV_IMPL(OpValueDeref);
+			CLLR_SPIRV_IMPL(OpValueExpand);
 			CLLR_SPIRV_IMPL(OpValueExpr);
 			CLLR_SPIRV_IMPL(OpValueExprUnary);
 			CLLR_SPIRV_IMPL(OpValueInvokePos);

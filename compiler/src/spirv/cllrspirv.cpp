@@ -31,7 +31,8 @@ cllr::SPIRVOutAssembler::SPIRVOutAssembler() : OutAssembler(Target::GPU)
 
 	impls[(uint32_t)Opcode::TYPE_VOID] = spirv_impl::OpTypeVoid;
 	impls[(uint32_t)Opcode::TYPE_FLOAT] = spirv_impl::OpTypeFloat;
-	impls[(uint32_t)Opcode::TYPE_INT] = spirv_impl::OpTypeInt;
+	impls[(uint32_t)Opcode::TYPE_INT_SIGN] = spirv_impl::OpTypeIntSign;
+	impls[(uint32_t)Opcode::TYPE_INT_UNSIGN] = spirv_impl::OpTypeIntUnsign;
 	impls[(uint32_t)Opcode::TYPE_ARRAY] = spirv_impl::OpTypeArray;
 	impls[(uint32_t)Opcode::TYPE_VECTOR] = spirv_impl::OpTypeVector;
 	impls[(uint32_t)Opcode::TYPE_MATRIX] = spirv_impl::OpTypeMatrix;
@@ -56,6 +57,7 @@ cllr::SPIRVOutAssembler::SPIRVOutAssembler() : OutAssembler(Target::GPU)
 	impls[(uint32_t)Opcode::VALUE_CONSTRUCT] = spirv_impl::OpValueConstruct;
 	impls[(uint32_t)Opcode::CONSTRUCT_ARG] = spirv_impl::OpConstructArg;
 	impls[(uint32_t)Opcode::VALUE_DEREF] = spirv_impl::OpValueDeref;
+	impls[(uint32_t)Opcode::VALUE_EXPAND] = spirv_impl::OpValueExpand;
 	impls[(uint32_t)Opcode::VALUE_EXPR] = spirv_impl::OpValueExpr;
 	impls[(uint32_t)Opcode::VALUE_EXPR_UNARY] = spirv_impl::OpValueExprUnary;
 	impls[(uint32_t)Opcode::VALUE_INVOKE_POS] = spirv_impl::OpValueInvokePos;
@@ -760,6 +762,36 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueDeref)
 
 	//TODO check memory operands
 	out.main->pushTyped(spirv::OpLoad(), t, id, { out.toSpvID(i.refs[0]) });
+
+}
+
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpand)
+{
+	auto id = out.toSpvID(i.index);
+	auto inID = out.toSpvID(i.refs[0]);
+	auto t = in.codeFor(i.outType);
+
+	auto spvOp = spirv::OpNop();
+
+	if (t->op == cllr::Opcode::TYPE_INT_SIGN)
+	{
+		spvOp = spirv::OpSConvert();
+	}
+	else if (t->op == cllr::Opcode::TYPE_INT_UNSIGN)
+	{
+		spvOp = spirv::OpUConvert();
+	}
+	else if (t->op == cllr::Opcode::TYPE_FLOAT)
+	{
+		spvOp = spirv::OpFConvert();
+	}
+	else
+	{
+		//TODO complain
+		return;
+	}
+
+	out.main->pushTyped(spvOp, t->index, id, { inID });
 
 }
 

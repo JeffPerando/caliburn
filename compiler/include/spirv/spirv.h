@@ -831,15 +831,13 @@ namespace caliburn
 
         SPIRV_OpVar(OpAccessChain, 65, 4);
 
-        //Execute opcode 66
-        SPIRV_OpVar(OpInBoundsAccessChain, 66, 4);
+        SPIRV_OpVar(OpInBoundsAccessChain, 66, 4);//Execute opcode 66
 
         SPIRV_OpVar(OpPtrAccessChain, 67, 5);
 
         SPIRV_Op(OpArrayLength, 68, 5);
 
-        //nice
-        SPIRV_Op(OpGenericPtrMemSemantics, 69, 4);
+        SPIRV_Op(OpGenericPtrMemSemantics, 69, 4);//nice
 
         SPIRV_OpVar(OpInBoundsPtrAccessChain, 70, 5);
 
