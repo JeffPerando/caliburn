@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <array>
 #include <string>
 
 #include "basic.h"
@@ -25,13 +26,12 @@ namespace caliburn
 	struct Tokenizer
 	{
 	private:
-		std::string text;
 		Buffer<char> buf;
 		TextPos pos;
 
 		bool significantWhitespace = false;
 
-		CharType asciiTypes[128]{};
+		std::array<CharType, 128> asciiTypes;
 
 	public:
 		const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::TOKENIZER);
@@ -40,7 +40,7 @@ namespace caliburn
 
 		//TODO use 32-bit wide chars for UTF-8 support
 		//or, y'know, find a UTF-8 library (NOT BOOST)
-		Tokenizer(ref<std::string> str);
+		Tokenizer(ref<const std::string> str);
 
 		virtual ~Tokenizer() {}
 
@@ -56,9 +56,9 @@ namespace caliburn
 
 		std::string findStr(char delim);
 
-		std::string findIntLiteral(ref<TokenType> type, ref<uint64_t> offset);
+		size_t findIntLiteral(ref<TokenType> type, ref<std::string> offset);
 
-		size_t findIdentifierLen();
+		size_t findIdentifierLen(size_t off);
 
 	};
 

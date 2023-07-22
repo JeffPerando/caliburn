@@ -17,6 +17,11 @@ namespace caliburn
 	public:
 		Buffer(ref<std::vector<T>> backend) : vec(backend) {}
 
+		const T& operator[](size_t i) const
+		{
+			return vec.at(i);
+		}
+
 		bool hasNext(size_t count = 1) const
 		{
 			return (index + count) < vec.size();

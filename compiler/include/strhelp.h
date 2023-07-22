@@ -46,7 +46,7 @@ namespace caliburn
 
 		std::vector<size_t> lineOffsets{0};
 
-		TextDoc(ref<std::string> str) : text(str) {}
+		TextDoc(ref<const std::string> str) : text(str) {}
 
 		void startLine(size_t off)
 		{

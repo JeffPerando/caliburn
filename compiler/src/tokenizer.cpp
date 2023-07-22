@@ -8,16 +8,12 @@
 
 using namespace caliburn;
 
-Tokenizer::Tokenizer(ref<std::string> str) : text(str), doc(text), buf(std::vector<char>(str.begin(), str.end()))
+Tokenizer::Tokenizer(ref<const std::string> str) : doc(str), buf(std::vector<char>(str.begin(), str.end()))
 {
 	//I'm so sorry for this.
 
-	//Initialize array; Can't find an idiomatic C/C++ way to do this without memset.
-	for (auto i = 0; i < 128; ++i)
-	{
-		asciiTypes[i] = CharType::UNKNOWN;
-	}
-
+	asciiTypes.fill(CharType::UNKNOWN);
+	
 	for (auto i = 0; i <= 32; ++i)
 	{
 		asciiTypes[i] = CharType::WHITESPACE;
@@ -35,10 +31,9 @@ Tokenizer::Tokenizer(ref<std::string> str) : text(str), doc(text), buf(std::vect
 		asciiTypes[l + 32] = CharType::IDENTIFIER;
 	}
 
-	for (auto i = 0; i < OPERATOR_CHARS.length(); ++i)
+	for (auto ch : OPERATOR_CHARS)
 	{
-		asciiTypes[OPERATOR_CHARS[i]] = CharType::OPERATOR;
-
+		asciiTypes[ch] = CharType::OPERATOR;
 	}
 
 	asciiTypes['#'] = CharType::COMMENT;
@@ -138,7 +133,7 @@ std::string Tokenizer::findStr(char delim)
 	return ss.str();
 }
 
-std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
+size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 {
 	std::vector<char> decInts =
 	{ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
@@ -148,12 +143,7 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 	std::vector<char> binInts = { '0', '1' };
 	std::vector<char> octInts = { '0', '1', '2', '3', '4', '5', '6', '7' };
 
-	std::vector<char>* validIntChars = &decInts;
-
-	auto isDecInt = lambda(char chr)
-	{
-		return std::binary_search(decInts.begin(), decInts.end(), chr);
-	};
+	auto validIntChars = &decInts;
 
 	auto isValidInt = lambda(char chr)
 	{
@@ -162,9 +152,9 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 
 	char first = buf.current();
 
-	if (!isDecInt(first))
+	if (!isValidInt(first))
 	{
-		return "";
+		return 0;
 	}
 
 	size_t startIndex = buf.currentIndex();
@@ -180,13 +170,13 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 
 		switch (litType)
 		{
-		case 'x': pass;
-		case 'X': validIntChars = &hexInts; break;
-		case 'b': pass;
-		case 'B': validIntChars = &binInts; break;
-		case 'c': pass;
-		case 'C': validIntChars = &octInts; break;
-		default: isPrefixed = false;
+			case 'x': pass;
+			case 'X': validIntChars = &hexInts; break;
+			case 'b': pass;
+			case 'B': validIntChars = &binInts; break;
+			case 'c': pass;
+			case 'C': validIntChars = &octInts; break;
+			default: isPrefixed = false;
 		}
 
 		if (isPrefixed)
@@ -240,7 +230,7 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 				{
 					char dec = buf.next();
 
-					if (isDecInt(dec))
+					if (isValidInt(dec))
 					{
 						ss << dec;
 					}
@@ -302,10 +292,10 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 
 		switch (suffix)
 		{
-		case 'D': width = 64; pass;
-		case 'F': isFloat = true; break;
-		case 'L': width = 64; break;
-		default: buf.rewind();
+			case 'D': width = 64; pass;
+			case 'F': isFloat = true; break;
+			case 'L': width = 64; break;
+			default: buf.rewind();
 		}
 
 	}
@@ -321,31 +311,25 @@ std::string Tokenizer::findIntLiteral(ref<TokenType> type, ref<uint64_t> offset)
 	ss << typeSuffix;
 	ss << width;
 
-	offset = (buf.currentIndex() - startIndex);
+	lit = ss.str();
 	type = isFloat ? TokenType::LITERAL_FLOAT : TokenType::LITERAL_INT;
-	//we've been using the buffer this whole time to help track this stuff.
-	//So we revert it so we don't need to change any code.
-	buf.revertTo(startIndex);
-
-	return ss.str();
+	
+	return (buf.currentIndex() - startIndex);
 }
 
-size_t Tokenizer::findIdentifierLen()
+size_t Tokenizer::findIdentifierLen(size_t off)
 {
-	size_t offset = 0;
-
-	while (buf.inRange(offset))
+	for (size_t i = off; i < buf.length(); ++i)
 	{
-		char chrAtOff = buf.peek(offset);
-		if (getType(chrAtOff) != CharType::IDENTIFIER &&
-			getType(chrAtOff) != CharType::INT)
+		auto type = getType(buf[off]);
+
+		if (type != CharType::IDENTIFIER && type != CharType::INT)
 		{
-			break;
+			return (i - off);
 		}
-		++offset;
 	}
 
-	return offset;
+	return 0;
 }
 
 std::vector<sptr<Token>> Tokenizer::tokenize()
@@ -409,26 +393,20 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 		//Identifiers can start with a number
 		if (type == CharType::IDENTIFIER || type == CharType::INT)
 		{
+			auto offset = buf.currentIndex();
 			std::string intLit = "";
-			size_t intOffset = 0;
 			TokenType intType = TokenType::UNKNOWN;
 
-			if (type == CharType::INT)
-			{
-				intLit = findIntLiteral(intType, intOffset);
+			size_t intOffset = findIntLiteral(intType, intLit);
+			size_t idOffset = findIdentifierLen(offset);
 
-			}
-
-			size_t idOffset = findIdentifierLen();
-
-			
 			//So the idea is simple: We try to make an identifier token, and we try
 			//to make an integer token. Whichever is longer is the one we go with. BUT
 			//if they're the same length, we go with the integer literal. That way,
 			//literals like 0f or 0xDEADBEEF are correctly identified.
 			if (idOffset > intOffset)
 			{
-				auto idStr = text.substr(buf.currentIndex(), idOffset);
+				auto idStr = doc.text.substr(buf.currentIndex(), idOffset);
 				auto idType = TokenType::IDENTIFIER;
 
 				if (std::binary_search(KEYWORDS.begin(), KEYWORDS.end(), idStr))
@@ -508,7 +486,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 					break;
 			}
 
-			auto fullOp = text.substr(buf.currentIndex(), off);
+			auto fullOp = doc.text.substr(buf.currentIndex(), off);
 			auto meaning = SPECIAL_OPS.find(fullOp);
 
 			if (meaning == SPECIAL_OPS.end())
