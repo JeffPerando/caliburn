@@ -116,4 +116,25 @@ namespace caliburn
 
 	};
 
+	struct DescriptorVariable : Variable
+	{
+		const std::string name;
+
+		DescriptorVariable(std::string n) : name(n) {}
+		DescriptorVariable(sptr<Token> n) : name(n->str)
+		{
+			nameTkn = n;
+		}
+		virtual ~DescriptorVariable() {}
+
+		void prettyPrint(ref<std::stringstream> ss) const override;
+
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
+
+		cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target) override;
+
+		void emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override;
+
+	};
+
 }
