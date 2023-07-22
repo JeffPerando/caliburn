@@ -73,7 +73,8 @@ namespace caliburn
 
 			CLLR_SPIRV_IMPL(OpTypeVoid);
 			CLLR_SPIRV_IMPL(OpTypeFloat);
-			CLLR_SPIRV_IMPL(OpTypeInt);
+			CLLR_SPIRV_IMPL(OpTypeIntSign);
+			CLLR_SPIRV_IMPL(OpTypeIntUnsign);
 			CLLR_SPIRV_IMPL(OpTypeArray);
 			CLLR_SPIRV_IMPL(OpTypeVector);
 			CLLR_SPIRV_IMPL(OpTypeMatrix);

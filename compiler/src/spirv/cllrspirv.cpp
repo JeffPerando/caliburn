@@ -515,11 +515,19 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeFloat)
 
 }
 
-CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeInt)
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeIntSign)
 {
 	auto id = out.toSpvID(i.index);
 
-	out.types.pushNew(spirv::OpTypeInt(), id, { i.operands[0], i.operands[1] });
+	out.types.pushNew(spirv::OpTypeInt(), id, { i.operands[0], 1 });
+
+}
+
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeIntUnsign)
+{
+	auto id = out.toSpvID(i.index);
+
+	out.types.pushNew(spirv::OpTypeInt(), id, { i.operands[0], 0 });
 
 }
 
@@ -660,37 +668,20 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 	{
 		switch (cllrOp)
 		{
-		case Operator::COMP_EQ: op = spirv::OpFOrdEqual(); break;
-		case Operator::COMP_NEQ: op = spirv::OpFOrdNotEqual(); break;
-		case Operator::COMP_GT: op = spirv::OpFOrdGreaterThan(); break;
-		case Operator::COMP_GTE: op = spirv::OpFOrdGreaterThanEqual(); break;
-		case Operator::COMP_LT: op = spirv::OpFOrdLessThan(); break;
-		case Operator::COMP_LTE: op = spirv::OpFOrdLessThanEqual(); break;
-		default: return;//TODO complain
+			case Operator::COMP_EQ: op = spirv::OpFOrdEqual(); break;
+			case Operator::COMP_NEQ: op = spirv::OpFOrdNotEqual(); break;
+			case Operator::COMP_GT: op = spirv::OpFOrdGreaterThan(); break;
+			case Operator::COMP_GTE: op = spirv::OpFOrdGreaterThanEqual(); break;
+			case Operator::COMP_LT: op = spirv::OpFOrdLessThan(); break;
+			case Operator::COMP_LTE: op = spirv::OpFOrdLessThanEqual(); break;
+			default: return;//TODO complain
 		}
 
 	}
-	else if (outType->op == Opcode::TYPE_INT)
+	else if (outType->op == Opcode::TYPE_INT_SIGN)
 	{
-		//Unsigned int
-		if (outType->operands[1] == 0)
+		switch (cllrOp)
 		{
-			switch (cllrOp)
-			{
-			case Operator::COMP_EQ: op = spirv::OpIEqual(); break;
-			case Operator::COMP_NEQ: op = spirv::OpINotEqual(); break;
-			case Operator::COMP_GT: op = spirv::OpUGreaterThan(); break;
-			case Operator::COMP_GTE: op = spirv::OpUGreaterThanEqual(); break;
-			case Operator::COMP_LT: op = spirv::OpULessThan(); break;
-			case Operator::COMP_LTE: op = spirv::OpULessThanEqual(); break;
-			default: return;//TODO complain
-			}
-
-		}
-		else //Signed int
-		{
-			switch (cllrOp)
-			{
 			case Operator::COMP_EQ: op = spirv::OpIEqual(); break;
 			case Operator::COMP_NEQ: op = spirv::OpINotEqual(); break;
 			case Operator::COMP_GT: op = spirv::OpSGreaterThan(); break;
@@ -698,8 +689,20 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 			case Operator::COMP_LT: op = spirv::OpSLessThan(); break;
 			case Operator::COMP_LTE: op = spirv::OpSLessThanEqual(); break;
 			default: return;//TODO complain
-			}
+		}
 
+	}
+	else if (outType->op == Opcode::TYPE_INT_UNSIGN)
+	{
+		switch (cllrOp)
+		{
+			case Operator::COMP_EQ: op = spirv::OpIEqual(); break;
+			case Operator::COMP_NEQ: op = spirv::OpINotEqual(); break;
+			case Operator::COMP_GT: op = spirv::OpUGreaterThan(); break;
+			case Operator::COMP_GTE: op = spirv::OpUGreaterThanEqual(); break;
+			case Operator::COMP_LT: op = spirv::OpULessThan(); break;
+			case Operator::COMP_LTE: op = spirv::OpULessThanEqual(); break;
+			default: return;//TODO complain
 		}
 
 	}
@@ -707,9 +710,9 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 	{
 		switch (cllrOp)
 		{
-		case Operator::AND: op = spirv::OpLogicalAnd(); break;
-		case Operator::OR: op = spirv::OpLogicalOr(); break;
-		default: return;//TODO complain
+			case Operator::AND: op = spirv::OpLogicalAnd(); break;
+			case Operator::OR: op = spirv::OpLogicalOr(); break;
+			default: return;//TODO complain
 		}
 
 	}
@@ -782,58 +785,58 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpr)
 
 	auto outType = in.codeFor(i.outType);
 
-	if (outType->op == Opcode::TYPE_FLOAT)
+	switch (outType->op)
 	{
-		switch (cllrOp)
-		{
-		case Operator::ADD: op = spirv::OpFAdd(); break;
-		case Operator::SUB: op = spirv::OpFSub(); break;
-		case Operator::MUL: op = spirv::OpFMul(); break;
-		case Operator::DIV: op = spirv::OpFDiv(); break;
-		case Operator::INTDIV: return; //TODO complain
-		case Operator::MOD: op = spirv::OpFMod(); break;
-		default: return;//TODO complain
-		}
-
-	}
-	else if (outType->op == Opcode::TYPE_INT)
-	{
-		switch (cllrOp)
-		{
-		case Operator::ADD: op = spirv::OpIAdd(); break;
-		case Operator::SUB: op = spirv::OpISub(); break;
-		case Operator::MUL: op = spirv::OpIMul(); break;
-		case Operator::BIT_AND: op = spirv::OpBitwiseAnd(); break;
-		case Operator::BIT_OR: op = spirv::OpBitwiseOr(); break;
-		case Operator::BIT_XOR: op = spirv::OpBitwiseXor(); break;
-		}
-
-		//Unsigned int
-		if (outType->operands[1] == 0)
-		{
+		case Opcode::TYPE_VOID:
+		case Opcode::TYPE_FLOAT: {
 			switch (cllrOp)
 			{
-			case Operator::DIV: return; //TODO complain
-			case Operator::INTDIV: op = spirv::OpUDiv(); break;
-			case Operator::MOD: op = spirv::OpUMod(); break;
-			default: return;//TODO complain
+				case Operator::ADD: op = spirv::OpFAdd(); break;
+				case Operator::SUB: op = spirv::OpFSub(); break;
+				case Operator::MUL: op = spirv::OpFMul(); break;
+				case Operator::DIV: op = spirv::OpFDiv(); break;
+				case Operator::MOD: op = spirv::OpFMod(); break;
 			}
-
-		}
-		else //Signed int
-		{
+		}; break;
+		case Opcode::TYPE_INT_SIGN: {
 			switch (cllrOp)
 			{
-			case Operator::DIV: return; //TODO complain
-			case Operator::INTDIV: op = spirv::OpSDiv(); break;
-			case Operator::MOD: op = spirv::OpSMod(); break;
-			default: return;//TODO complain
+				case Operator::ADD: op = spirv::OpIAdd(); break;
+				case Operator::SUB: op = spirv::OpISub(); break;
+				case Operator::MUL: op = spirv::OpIMul(); break;
+				case Operator::INTDIV: op = spirv::OpSDiv(); break;
+				case Operator::MOD: op = spirv::OpSMod(); break;
+				case Operator::BIT_AND: op = spirv::OpBitwiseAnd(); break;
+				case Operator::BIT_OR: op = spirv::OpBitwiseOr(); break;
+				case Operator::BIT_XOR: op = spirv::OpBitwiseXor(); break;
 			}
-
-		}
-
+		}; break;
+		case Opcode::TYPE_INT_UNSIGN: {
+			switch (cllrOp)
+			{
+				case Operator::ADD: op = spirv::OpIAdd(); break;
+				case Operator::SUB: op = spirv::OpISub(); break;
+				case Operator::MUL: op = spirv::OpIMul(); break;
+				case Operator::INTDIV: op = spirv::OpUDiv(); break;
+				case Operator::MOD: op = spirv::OpUMod(); break;
+				case Operator::BIT_AND: op = spirv::OpBitwiseAnd(); break;
+				case Operator::BIT_OR: op = spirv::OpBitwiseOr(); break;
+				case Operator::BIT_XOR: op = spirv::OpBitwiseXor(); break;
+			}
+		}; break;
+		case Opcode::TYPE_ARRAY: pass;
+		case Opcode::TYPE_VECTOR: pass;
+		case Opcode::TYPE_MATRIX: pass;
+		case Opcode::TYPE_STRUCT: pass;
+		case Opcode::STRUCT_MEMBER: pass;
+		case Opcode::STRUCT_END: pass;
+		case Opcode::TYPE_BOOL: pass;
+		case Opcode::TYPE_PTR: pass;
+		case Opcode::TYPE_TUPLE: pass;
+		default: return;
 	}
-	else
+
+	if (op == spirv::OpNop())
 	{
 		//TODO complain
 		return;
@@ -864,7 +867,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 		{
 			extOp = spirv::GLSL450Ext::FAbs;
 		}
-		else if (outType->op == Opcode::TYPE_INT)
+		else if (outType->op == Opcode::TYPE_INT_SIGN)
 		{
 			extOp = spirv::GLSL450Ext::SAbs;
 		}
@@ -879,17 +882,6 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 		out.main->pushTyped(spirv::OpExtInst(1), spvOutType, id, { lib, (uint32_t)extOp, lhs });
 		return;
 	}
-	else if (cllrOp == Operator::BIT_NEG)
-	{
-		if (outType->op == Opcode::TYPE_FLOAT)
-		{
-			//TODO complain
-			return;
-		}
-		
-		op = spirv::OpNot();
-
-	}
 	else if (outType->op == Opcode::TYPE_FLOAT)
 	{
 		if (cllrOp == Operator::NEG)
@@ -897,39 +889,27 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 			op = spirv::OpFNegate();
 
 		}
-		else
-		{
-			//TODO complain
-			return;
-		}
-
+		
 	}
-	else if (outType->op == Opcode::TYPE_INT)
+	else if (outType->op == Opcode::TYPE_INT_SIGN)
 	{
 		if (cllrOp == Operator::BIT_NEG)
 		{
 			op = spirv::OpNot();
 		}
-		else if (outType->operands[1] == 0) //Unsigned int
+		else if (cllrOp == Operator::NEG)
 		{
-			if (cllrOp == Operator::NEG)
-			{
-				op = spirv::OpSNegate();
-			}
-			else
-			{
-				//TODO complain
-				return;
-			}
-
+			op = spirv::OpSNegate();
 		}
-		else //Signed int
+		
+	}
+	else if (outType->op == Opcode::TYPE_INT_UNSIGN)
+	{
+		if (cllrOp == Operator::BIT_NEG)
 		{
-			//TODO complain
-			return;
-			
+			op = spirv::OpNot();
 		}
-
+		
 	}
 	else if (outType->op == Opcode::TYPE_BOOL)
 	{
@@ -938,14 +918,10 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 			op = spirv::OpLogicalNot();
 
 		}
-		else
-		{
-			//TODO complain
-			return;
-		}
 
 	}
-	else
+
+	if (op == spirv::OpNop())
 	{
 		//TODO complain
 		return;
