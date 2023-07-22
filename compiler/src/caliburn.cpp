@@ -270,15 +270,15 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 	}
 	*/
 	//Make headers
-	for (auto const& node : ast)
+	for (auto const& stmt : ast)
 	{
-		node->declareHeader(table);
+		stmt->declareHeader(table);
 	}
 
 	//Declare everything else
-	for (auto const& node : ast)
+	for (auto const& stmt : ast)
 	{
-		node->declareSymbols(table);
+		stmt->declareSymbols(table);
 	}
 	
 	for (auto const& stage : shaderStmt->stages)

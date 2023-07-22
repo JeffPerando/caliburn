@@ -13,7 +13,7 @@ Tokenizer::Tokenizer(ref<const std::string> str) : doc(str), buf(std::vector<cha
 	//I'm so sorry for this.
 
 	asciiTypes.fill(CharType::UNKNOWN);
-	
+
 	for (auto i = 0; i <= 32; ++i)
 	{
 		asciiTypes[i] = CharType::WHITESPACE;
@@ -28,7 +28,8 @@ Tokenizer::Tokenizer(ref<const std::string> str) : doc(str), buf(std::vector<cha
 	{
 		asciiTypes[l] = CharType::IDENTIFIER;
 		//'a' - 'z'
-		asciiTypes[l + 32] = CharType::IDENTIFIER;
+		auto cap = l + 32;
+		asciiTypes[cap] = CharType::IDENTIFIER;
 	}
 
 	for (auto ch : OPERATOR_CHARS)
@@ -160,7 +161,7 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 	size_t startIndex = buf.currentIndex();
 	bool isPrefixed = true;
 	bool isFloat = false;
-	
+
 	std::stringstream ss;
 
 	//find either a hex, binary, or octal integer
@@ -170,13 +171,13 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 
 		switch (litType)
 		{
-			case 'x': pass;
-			case 'X': validIntChars = &hexInts; break;
-			case 'b': pass;
-			case 'B': validIntChars = &binInts; break;
-			case 'c': pass;
-			case 'C': validIntChars = &octInts; break;
-			default: isPrefixed = false;
+		case 'x': pass;
+		case 'X': validIntChars = &hexInts; break;
+		case 'b': pass;
+		case 'B': validIntChars = &binInts; break;
+		case 'c': pass;
+		case 'C': validIntChars = &octInts; break;
+		default: isPrefixed = false;
 		}
 
 		if (isPrefixed)
@@ -195,7 +196,7 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 	while (buf.hasNext())
 	{
 		char current = buf.current();
-		
+
 		if (current == '_')
 		{
 			buf.consume();
@@ -250,7 +251,7 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 			if (exp == 'e' || exp == 'E')
 			{
 				ss << exp;
-				
+
 				char sign = buf.next();
 
 				if (sign == '+' || sign == '-')
@@ -282,7 +283,7 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 
 		if (suffix > 96)
 			suffix -= 32;
-		
+
 		if (suffix == 'U')
 		{
 			typeSuffix = "uint";
@@ -292,10 +293,10 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 
 		switch (suffix)
 		{
-			case 'D': width = 64; pass;
-			case 'F': isFloat = true; break;
-			case 'L': width = 64; break;
-			default: buf.rewind();
+		case 'D': width = 64; pass;
+		case 'F': isFloat = true; break;
+		case 'L': width = 64; break;
+		default: buf.rewind();
 		}
 
 	}
@@ -313,7 +314,7 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 
 	lit = ss.str();
 	type = isFloat ? TokenType::LITERAL_FLOAT : TokenType::LITERAL_INT;
-	
+
 	return (buf.currentIndex() - startIndex);
 }
 
@@ -428,7 +429,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 				buf.consume(idOffset);
 				pos.move(idOffset);
-				
+
 			}
 			else
 			{
@@ -436,7 +437,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 				buf.consume(intOffset);
 				pos.move(intOffset);
-				
+
 			}
 
 			continue;
@@ -500,11 +501,11 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			tokens.push_back(new_sptr<Token>(std::string(1, current), TokenType::OPERATOR, pos, buf.currentIndex(), 1L));
 
 		}
-		
+
 		//if all else fails, skip it.
 		buf.consume();
 		pos.move();
-		
+
 	}
 
 	return tokens;

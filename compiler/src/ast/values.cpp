@@ -21,7 +21,7 @@ cllr::TypedSSA IntLiteralValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr:
 		uint64_t parsedLit = t->base->parseLiteral(lit->str);
 
 		auto tID = t->emitDeclCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_INT, { (uint32_t)(parsedLit & 0xFFFFFFFF), (uint32_t)((parsedLit >> 32) & 0xFFFFFFFF) }, { tID }));
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_INT, { (uint32_t)(parsedLit & 0xFFFFFFFF), (uint32_t)((parsedLit >> 32) & 0xFFFFFFFF) }, {}, tID));
 
 		return cllr::TypedSSA(t, tID, vID);
 	}
@@ -44,7 +44,7 @@ cllr::TypedSSA FloatLiteralValue::emitValueCLLR(sptr<SymbolTable> table, ref<cll
 	if (auto t = pType.resolve(table))
 	{
 		auto tID = t->emitDeclCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_FP, { sID }, { tID }));
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_FP, { sID }, {}, tID));
 
 		return cllr::TypedSSA(t, tID, vID);
 	}
@@ -66,7 +66,7 @@ cllr::TypedSSA StringLitValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::
 	{
 		auto sID = codeAsm.addString(lit->str);
 		auto tID = t->emitDeclCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_STR, { sID }, { tID }));
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_STR, { sID }, {}, tID));
 
 		return cllr::TypedSSA(t, tID, vID);
 	}
@@ -87,7 +87,7 @@ cllr::TypedSSA BoolLitValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::As
 	if (auto t = pType.resolve(table))
 	{
 		auto tID = t->emitDeclCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_BOOL, { lit->str == "true" }, { tID }));
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_BOOL, { lit->str == "true" }, {}, tID));
 
 		return cllr::TypedSSA(t, tID, vID);
 	}
@@ -117,6 +117,7 @@ void ArrayLitValue::prettyPrint(ref<std::stringstream> ss) const
 
 cllr::TypedSSA ArrayLitValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
 {
+	//TODO make array type
 	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_ARRAY, { (uint32_t)values.size() }));
 
 	for (uint32_t i = 0; i < values.size(); ++i)
@@ -166,7 +167,7 @@ cllr::TypedSSA ExpressionValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr:
 		cllrOp = cllr::Opcode::COMPARE;
 	}
 
-	auto vID = codeAsm.pushNew(cllr::Instruction(cllrOp, { (uint32_t)op }, { lhs.value, rhs.value }));
+	auto vID = codeAsm.pushNew(cllr::Instruction(cllrOp, { (uint32_t)op }, { lhs.value, rhs.value }, lhs.type));
 
 	//FIXME
 	return cllr::TypedSSA(lhs.typePtr, lhs.type, vID);
@@ -216,7 +217,7 @@ cllr::TypedSSA SubArrayValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::A
 
 	//FIXME check array type
 	auto outType = codeAsm.codeFor(aID)->refs[0];
-	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_SUBARRAY, {}, { aID, iID }));
+	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_SUBARRAY, {}, { aID, iID }, outType));
 
 	//FIXME
 	return cllr::TypedSSA(nullptr, outType, vID);
@@ -239,7 +240,7 @@ cllr::TypedSSA CastValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assem
 		auto& [inType, inTypeID, inID] = lhs->emitValueCLLR(table, codeAsm);
 		auto tID = t->emitDeclCLLR(table, codeAsm);
 
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_CAST, {}, { inID, tID, 0 }));
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_CAST, {}, { inID }, tID));
 
 		return cllr::TypedSSA(t, tID, vID);
 	}
@@ -484,8 +485,8 @@ cllr::TypedSSA SetterValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Ass
 
 	if (op != Operator::UNKNOWN)
 	{
-		auto rvID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_EXPR, { (uint32_t)op }, { lvalue.value, rvalue.value }));
-		rvalue = cllr::TypedSSA(rvalue.typePtr, rvalue.type, rvID);
+		auto rvID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_EXPR, { (uint32_t)op }, { lvalue.value, rvalue.value }, lvalue.type));
+		rvalue = cllr::TypedSSA(lvalue.typePtr, lvalue.type, rvID);
 
 	}
 
