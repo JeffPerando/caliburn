@@ -56,6 +56,7 @@ bool Compiler::parseText(std::string text)
 		return !ast.empty();
 	}
 
+	//keep this a shared pointer since the AST will use it to report validation errors
 	auto astErrs = new_sptr<ErrorHandler>(CompileStage::AST_VALIDATION);
 	for (auto const& stmt : ast)
 	{
@@ -109,7 +110,6 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 
 	//Conditional compilation
 	/*
-	error->stage = CompileStage::CONDITIONAL_COMPILATION;
 	auto sortAST = lambda() {
 		std::sort(ast.begin(), ast.end(), lambda(const uptr<Statement> a, const uptr<Statement> b)
 			{
@@ -167,14 +167,16 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 
 	}
 	*/
+
+	//COMPILE
+	
+	//TODO populate built-in types
 	auto root = new_uptr<RootModule>();
 	
 	std::vector<ptr<ShaderStatement>> shaderDecls;
 
 	ptr<ShaderStatement> shaderStmt = nullptr;
 
-	//COMPILE
-	//error->stage = CompileStage::CLLR_EMIT;
 	for (auto const& stmt : ast)
 	{
 		//import x;
@@ -235,11 +237,38 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 		return false;
 	}
 
-	auto table = new_sptr<SymbolTable>();
+	auto table = new_sptr<SymbolTable>(root);
 
-	//Populate table with the built-in library
-	root->declareSymbols(table);
-	
+	/*
+	for (auto const& [inner, outer] : dynTypes)
+	{
+		auto tokenizer = Tokenizer(outer);
+		auto tkns = tokenizer.tokenize();
+		auto p = Parser(tkns);
+
+		if (auto pt = p.parseTypeName())
+		{
+			if (auto t = pt->resolve(table))
+			{
+				if (!table->add(inner, t))
+				{
+					//TODO complain
+				}
+
+			}
+			else
+			{
+				//TODO complain
+			}
+
+		}
+		else
+		{
+			//TODO complain
+		}
+
+	}
+	*/
 	//Make headers
 	for (auto const& node : ast)
 	{

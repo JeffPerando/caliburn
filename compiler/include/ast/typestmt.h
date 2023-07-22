@@ -30,15 +30,15 @@ namespace caliburn
 			return alias->lastTkn();
 		}
 
-		void declareHeader(sptr<SymbolTable> table) override {} //Do nothing here
-
-		void declareSymbols(sptr<SymbolTable> table) override
+		void declareHeader(sptr<SymbolTable> table) override
 		{
 			//TODO implement strong typing (needs wrapper)
 
 			table->add(name->str, alias->resolve(table));
 
 		}
+
+		void declareSymbols(sptr<SymbolTable> table) override {}
 
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{

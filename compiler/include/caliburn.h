@@ -22,7 +22,7 @@ namespace caliburn
 	{
 	private:
 		CompilerSettings settings;
-		HashMap<std::string, std::string> dynTypes;
+		std::map<std::string, std::string> dynTypes;
 		std::vector<sptr<Error>> allErrors;
 		std::vector<uptr<Statement>> ast;
 		
