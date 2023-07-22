@@ -57,6 +57,26 @@ namespace caliburn
 			return Symbol();
 		}
 
+		bool isChildOf(sptr<SymbolTable> table) const
+		{
+			if (table == nullptr)
+			{
+				return false;
+			}
+
+			if (parent == nullptr)
+			{
+				return table.get() == this;
+			}
+
+			if (table == parent)
+			{
+				return true;
+			}
+
+			return parent->isChildOf(table);
+		}
+
 		void reparent(sptr<SymbolTable> p)
 		{
 			parent = p;
