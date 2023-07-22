@@ -24,7 +24,7 @@ namespace caliburn
 		private:
 			uint32_t nextSSA = 1;
 			
-			const sptr<InstructionVec> code = new_sptr<InstructionVec>();
+			const uptr<InstructionVec> code = new_uptr<InstructionVec>();
 
 			InstructionVec ssaToCode{ new_sptr<Instruction>() };
 			std::vector<Opcode> ssaToOp{ Opcode::UNKNOWN };
@@ -79,9 +79,9 @@ namespace caliburn
 				return strs.at(index);
 			}
 			
-			sptr<const InstructionVec> getCode()
+			const ref<const InstructionVec> getCode()
 			{
-				return code;
+				return *code;
 			}
 			
 			void setLoop(SSA start, SSA end)

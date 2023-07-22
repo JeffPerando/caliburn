@@ -27,7 +27,7 @@ namespace caliburn
 		template<typename OutCode>
 		struct OutAssembler
 		{
-			const sptr<ErrorHandler> errors = new_sptr<ErrorHandler>(CompileStage::OUT_EMIT);
+			const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::OUT_EMIT);
 			const Target target;
 
 			OutAssembler(Target t) : target(t) {}

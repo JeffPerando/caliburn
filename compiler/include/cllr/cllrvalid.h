@@ -17,7 +17,7 @@ namespace caliburn
 
 			Validator(ref<const CompilerSettings> cs) : settings(cs) {}
 
-			bool validate(sptr<const InstructionVec> is);
+			bool validate(ref<const InstructionVec> is);
 
 			bool isType(cllr::Opcode op);
 

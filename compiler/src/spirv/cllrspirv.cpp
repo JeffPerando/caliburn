@@ -82,11 +82,11 @@ cllr::SPIRVOutAssembler::SPIRVOutAssembler() : OutAssembler(Target::GPU)
 
 uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(ref<cllr::Assembler> cllrAsm)
 {
-	auto code = cllrAsm.getCode();
+	auto const& code = cllrAsm.getCode();
 
-	for (size_t off = 0; off < code->size(); ++off)
+	for (size_t off = 0; off < code.size(); ++off)
 	{
-		auto const& i = code->at(off);
+		auto const& i = code.at(off);
 
 		auto fn = (impls[(uint32_t)i->op]);
 		(*fn)(*i, off, cllrAsm, *this);
@@ -305,7 +305,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpShaderStage)
 		.ops({ Opcode::VAR_SHADER_IN, Opcode::VAR_SHADER_OUT })
 		->setLimit(i.operands[1])
 		->setOffset(off + 1)
-		->find(*in.getCode());
+		->find(in.getCode());
 
 	auto ios = cinq::map<sptr<Instruction>, spirv::SSA>(cllrIOs, lambda(sptr<Instruction> i) { return out.toSpvID(i->index); });
 
@@ -381,7 +381,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpFunction)
 		.ops({ Opcode::VAR_FUNC_ARG })
 		->setOffset(off + 1)
 		->setLimit(i.operands[0])
-		->find(*in.getCode());
+		->find(in.getCode());
 
 	auto fnArgs = cinq::map<sptr<Instruction>, spirv::SSA>(cllrFnArgs, lambda(sptr<Instruction> i) { return out.toSpvID(i->refs[0]); });
 
@@ -484,7 +484,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCall)
 		.ops({ Opcode::CALL_ARG })
 		->setOffset(off + 1)
 		->setLimit(i.operands[0])
-		->find(*in.getCode());
+		->find(in.getCode());
 
 	auto fnArgs = cinq::map<sptr<Instruction>, spirv::SSA>(cllrFnArgs, lambda(sptr<Instruction> i) { return out.toSpvID(i->refs[0]); });
 
@@ -562,7 +562,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeStruct)
 		.ops({ Opcode::STRUCT_MEMBER })
 		->setOffset(off + 1)
 		->setLimit(i.operands[0])
-		->find(*in.getCode());
+		->find(in.getCode());
 
 	auto members = cinq::map<sptr<Instruction>, spirv::SSA>(cllrMembers, lambda(sptr<Instruction> i) { return out.toSpvID(i->refs[0]); });
 
@@ -740,7 +740,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueConstruct)
 		.ops({ Opcode::CONSTRUCT_ARG })
 		->setOffset(off + 1)
 		->setLimit(i.operands[0])
-		->find(*in.getCode());
+		->find(in.getCode());
 
 	auto args = cinq::map<sptr<Instruction>, spirv::SSA>(cllrArgs, lambda(sptr<Instruction> i) { return out.toSpvID(i->refs[0]); });
 
@@ -1016,7 +1016,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitArray)
 		.ops({ Opcode::LIT_ARRAY_ELEM })
 		->setOffset(off + 1)
 		->setLimit(i.operands[0])
-		->find(*in.getCode());
+		->find(in.getCode());
 
 	auto elems = cinq::map<sptr<Instruction>, spirv::SSA>(cllrElems, lambda(sptr<Instruction> i) { return out.toSpvID(i->refs[0]); });
 
