@@ -26,6 +26,8 @@ namespace caliburn
 			elements(vecElements)
 		{}
 
+		virtual Member getMember(ref<const std::string> name) const override;
+
 	};
 
 }

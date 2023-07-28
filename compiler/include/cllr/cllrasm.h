@@ -8,6 +8,7 @@
 
 #include "basic.h"
 #include "cllr.h"
+#include "cllrtypeimpl.h"
 #include "error.h"
 #include "langcore.h"
 
@@ -28,9 +29,11 @@ namespace caliburn
 
 			InstructionVec ssaToCode{ new_sptr<Instruction>() };
 			std::vector<Opcode> ssaToOp{ Opcode::UNKNOWN };
+			std::vector<uint32_t> ssaRefs{ 0 };
+
+			HashMap<Instruction, std::pair<SSA, sptr<LowType>>, InstructionHash> types;
 
 			std::vector<std::string> strs;
-			std::vector<uint32_t> ssaRefs{ 0 };
 			
 			std::set<std::string> ioNames;
 			std::map<std::string, SSA> inputs, outputs;
@@ -54,9 +57,7 @@ namespace caliburn
 
 			SSA createSSA(Opcode op);
 
-			Opcode opFor(SSA id);
-
-			sptr<Instruction> codeFor(SSA id);
+			sptr<Instruction> codeFor(SSA id) const;
 
 			SSA push(ref<Instruction> ins);
 
@@ -66,7 +67,11 @@ namespace caliburn
 				return push(ins);
 			}
 
+			SSA pushType(ref<Instruction> ins);
+
 			void pushAll(std::vector<Instruction> code);
+
+			sptr<LowType> getType(SSA id) const;
 
 			std::pair<SSA, uint32_t> pushInput(std::string name, SSA type);
 
@@ -74,12 +79,12 @@ namespace caliburn
 
 			uint32_t addString(std::string str);
 
-			std::string getString(uint32_t index)
+			ref<const std::string> getString(uint32_t index) const
 			{
 				return strs.at(index);
 			}
 			
-			const ref<const InstructionVec> getCode()
+			const ref<const InstructionVec> getCode() const
 			{
 				return *code;
 			}
@@ -89,7 +94,7 @@ namespace caliburn
 				loops.push_back(std::pair(start, end));
 			}
 
-			SSA getLoopStart()
+			SSA getLoopStart() const
 			{
 				if (loops.empty())
 				{
@@ -99,7 +104,7 @@ namespace caliburn
 				return loops.back().first;
 			}
 
-			SSA getLoopEnd()
+			SSA getLoopEnd() const
 			{
 				if (loops.empty())
 				{
@@ -147,7 +152,7 @@ namespace caliburn
 			uint32_t flatten();
 			
 		private:
-			void doBookkeeping(const ref<sptr<Instruction>> i);
+			void doBookkeeping(sptr<Instruction> i);
 
 		};
 

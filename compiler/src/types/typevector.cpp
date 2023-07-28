@@ -25,27 +25,8 @@ cllr::SSA RealVector::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler>
 	return id;
 }
 
-/*
-TypeCompat TypeVector::isCompatible(Operator op, sptr<BaseType> rType) const
+Member TypeVector::getMember(ref<const std::string> name) const
 {
-	if (rType == nullptr)
-	{
-		return inner->isCompatible(op, nullptr);
-	}
-
-	if (rType->category == TypeCategory::VECTOR || rType->category == inner->category)
-	{
-		switch (op)
-		{
-			case Operator::BIT_AND:
-			case Operator::BIT_NEG:
-			case Operator::BIT_OR:
-			case Operator::BIT_XOR: return TypeCompat::INCOMPATIBLE_OP;
-		}
-
-		return TypeCompat::COMPATIBLE;
-	}
-
-	return TypeCompat::INCOMPATIBLE_TYPE;
+	//TODO swizzle
+	return Member();
 }
-*/

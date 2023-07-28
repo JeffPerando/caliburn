@@ -77,7 +77,7 @@ namespace caliburn
 		sptr<Token> start = nullptr;
 		sptr<Token> nameTkn = nullptr;
 		sptr<ParsedType> typeHint = nullptr;
-		
+
 		sptr<Value> initValue = nullptr;
 		bool isConst = false;
 
@@ -104,14 +104,6 @@ namespace caliburn
 
 	};
 
-	enum class TypeCompat
-	{
-		COMPATIBLE,
-		NEEDS_CONVERSION,
-		INCOMPATIBLE_TYPE,
-		INCOMPATIBLE_OP
-	};
-
 	struct ParsedType : ParsedObject
 	{
 	private:
@@ -125,7 +117,7 @@ namespace caliburn
 		sptr<Token> lastToken = nullptr;
 
 		sptr<GenericArguments> genericArgs;
-		std::vector<sptr<Value>> arrayDims;
+		std::vector<sptr<Value>> arrayDims;//TODO implement properly
 
 		ParsedType(std::string n) : name(n), nameTkn(nullptr) {}
 		ParsedType(sptr<Token> n) : name(n->str), nameTkn(n) {}
@@ -182,10 +174,6 @@ namespace caliburn
 		{
 			return canonName == rhs.canonName;
 		}
-
-		//virtual void getConvertibleTypes(std::set<sptr<ConcreteType>>& types) = 0;
-
-		//virtual TypeCompat isCompatible(Operator op, sptr<BaseType> rType) const = 0;
 
 		virtual uint64_t parseLiteral(ref<const std::string> lit) const
 		{
@@ -260,12 +248,13 @@ namespace caliburn
 		//Given this will be read far more than written, using atomics is probably better
 		cllr::SSA id = 0;
 		std::string fullName = "";
+		
 	public:
 		std::vector<sptr<Variable>> members;
 
 		const ptr<BaseType> base;
 		const sptr<GenericArguments> genArgs;
-		
+
 		RealType(ptr<BaseType> parent, sptr<GenericArguments> gArgs = new_sptr<GenericArguments>()) : base(parent), genArgs(gArgs) {}
 		virtual ~RealType() {}
 

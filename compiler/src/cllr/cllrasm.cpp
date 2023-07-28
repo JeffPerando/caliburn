@@ -2,6 +2,7 @@
 #include <algorithm>
 
 #include "cllr/cllrasm.h"
+#include "cllr/cllrtypeimpl.h"
 
 using namespace caliburn::cllr;
 
@@ -23,12 +24,7 @@ SSA Assembler::createSSA(Opcode op)
 	return nextSSA++;
 }
 
-Opcode Assembler::opFor(SSA id)
-{
-	return ssaToOp.at(id);
-}
-
-sptr<Instruction> Assembler::codeFor(SSA id)
+sptr<Instruction> Assembler::codeFor(SSA id) const
 {
 	return ssaToCode.at(id);
 }
@@ -53,6 +49,40 @@ SSA Assembler::push(ref<Instruction> ins)
 	return ssa;
 }
 
+SSA Assembler::pushType(ref<Instruction> ins)
+{
+	auto found = types.find(ins);
+
+	if (found != types.end())
+	{
+		return found->second.first;
+	}
+
+	auto id = push(ins);
+
+	sptr<LowType> t = nullptr;
+
+	switch (ins.op)
+	{
+		case Opcode::TYPE_VOID: t = new_sptr<LowVoid>();
+		case Opcode::TYPE_FLOAT: t = new_sptr<LowFloat>(ins.operands[0]);
+		case Opcode::TYPE_INT_SIGN: pass;
+		case Opcode::TYPE_INT_UNSIGN: t = new_sptr<LowInt>(ins.op, ins.operands[0]);
+		case Opcode::TYPE_ARRAY: t = new_sptr<LowArray>(ins.operands[0], getType(ins.refs[0]));
+		case Opcode::TYPE_VECTOR: t = new_sptr<LowVector>(ins.operands[0], getType(ins.refs[0]));
+		case Opcode::TYPE_MATRIX: t = new_sptr<LowMatrix>(ins.operands[0], ins.operands[1], getType(ins.refs[0]));
+		case Opcode::TYPE_STRUCT: t = new_sptr<LowStruct>();
+		case Opcode::TYPE_BOOL: t = new_sptr<LowBool>();
+		//case Opcode::TYPE_PTR: t = new_sptr<LowPointer>();
+		//case Opcode::TYPE_TUPLE: t = new_sptr<LowVoid>();
+		default: break;//TODO complain
+	}
+
+	types.emplace(ins, std::pair(id, t));
+
+	return id;
+}
+
 void Assembler::pushAll(std::vector<Instruction> ins)
 {
 	code->reserve(code->size() + ins.size());
@@ -67,6 +97,18 @@ void Assembler::pushAll(std::vector<Instruction> ins)
 
 }
 
+sptr<LowType> Assembler::getType(SSA id) const
+{
+	auto& found = types.find(*ssaToCode[id]);
+
+	if (found == types.end())
+	{
+		return nullptr;
+	}
+
+	return found->second.second;
+}
+
 std::pair<SSA, uint32_t> Assembler::pushInput(std::string name, SSA type)
 {
 	if (ioNames.find(name) == ioNames.end())
@@ -74,7 +116,7 @@ std::pair<SSA, uint32_t> Assembler::pushInput(std::string name, SSA type)
 		//TODO complain
 		return std::pair(0, 0);
 	}
-
+	
 	if (outputs.find(name) != outputs.end())
 	{
 		//TODO complain
@@ -236,7 +278,7 @@ uint32_t Assembler::flatten()
 	return replaced;
 }
 
-void Assembler::doBookkeeping(const ref<sptr<Instruction>> ins)
+void Assembler::doBookkeeping(sptr<Instruction> ins)
 {
 	if (ins->index != 0)
 	{
@@ -257,6 +299,11 @@ void Assembler::doBookkeeping(const ref<sptr<Instruction>> ins)
 	if (ins->outType != 0)
 	{
 		ssaRefs[ins->outType] += 1;
+	}
+
+	if (ins->op == Opcode::STRUCT_MEMBER)
+	{
+		getType(ins->refs[0])->addMember(ins->index, getType(ins->refs[1]));
 	}
 
 }

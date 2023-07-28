@@ -220,6 +220,25 @@ namespace caliburn
 
 		};
 
+		struct InstructionHash
+		{
+			size_t operator()(const ref<Instruction> i) const
+			{
+				size_t hash = ((size_t)i.op & 0xFFFF) << 48;
+
+				hash |= size_t(i.operands[0] & 0xFF) << 40;
+				hash |= size_t(i.operands[1] & 0xFF) << 32;
+				hash |= size_t(i.operands[2] & 0xFF) << 24;
+
+				hash |= size_t(i.refs[0] & 0xFF) << 16;
+				hash |= size_t(i.refs[0] & 0xFF) << 8;
+				hash |= size_t(i.refs[0] & 0xFF);
+
+				return hash;
+			}
+
+		};
+
 		struct CompilationUnit
 		{
 			Target target = Target::GPU;
