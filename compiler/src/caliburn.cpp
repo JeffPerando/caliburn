@@ -171,7 +171,7 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 	//COMPILE
 	
 	//TODO populate built-in types
-	auto root = new_uptr<RootModule>();
+	//auto root = new_sptr<RootModule>();
 	
 	std::vector<ptr<ShaderStatement>> shaderDecls;
 
@@ -184,7 +184,7 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 		{
 			auto imp = static_cast<ptr<ImportStatement>>(stmt.get());
 
-			root->importModule(imp->name->str, imp->alias == nullptr ? "" : imp->alias->str);
+			//root->importModule(imp->name->str, imp->alias == nullptr ? "" : imp->alias->str);
 			continue;
 		}
 
@@ -237,7 +237,7 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 		return false;
 	}
 
-	auto table = new_sptr<SymbolTable>(root);
+	auto table = new_sptr<SymbolTable>();
 
 	/*
 	for (auto const& [inner, outer] : dynTypes)

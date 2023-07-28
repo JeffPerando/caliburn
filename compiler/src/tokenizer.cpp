@@ -171,13 +171,13 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 
 		switch (litType)
 		{
-		case 'x': pass;
-		case 'X': validIntChars = &hexInts; break;
-		case 'b': pass;
-		case 'B': validIntChars = &binInts; break;
-		case 'c': pass;
-		case 'C': validIntChars = &octInts; break;
-		default: isPrefixed = false;
+			case 'x': pass;
+			case 'X': validIntChars = &hexInts; break;
+			case 'b': pass;
+			case 'B': validIntChars = &binInts; break;
+			case 'c': pass;
+			case 'C': validIntChars = &octInts; break;
+			default: isPrefixed = false;
 		}
 
 		if (isPrefixed)
@@ -293,10 +293,10 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 
 		switch (suffix)
 		{
-		case 'D': width = 64; pass;
-		case 'F': isFloat = true; break;
-		case 'L': width = 64; break;
-		default: buf.rewind();
+			case 'D': width = 64; pass;
+			case 'F': isFloat = true; break;
+			case 'L': width = 64; break;
+			default: buf.rewind();
 		}
 
 	}

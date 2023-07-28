@@ -79,7 +79,7 @@ cllr::TypedSSA LocalVariable::emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::As
 		auto tID = t->emitDeclCLLR(table, codeAsm);
 		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_READ_VAR, {}, { id }, tID));
 
-		return cllr::TypedSSA(t, tID, vID);
+		return cllr::TypedSSA(tID, vID);
 	}
 	
 	//TODO complain
@@ -150,7 +150,7 @@ cllr::TypedSSA MemberVariable::emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::A
 		auto tID = t->emitDeclCLLR(table, codeAsm);
 		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { memberIndex }, { target }, tID));
 
-		return cllr::TypedSSA(t, tID, vID);
+		return cllr::TypedSSA(tID, vID);
 	}
 
 	//TODO complain
@@ -212,7 +212,7 @@ cllr::TypedSSA GlobalVariable::emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::A
 		auto tID = t->emitDeclCLLR(table, codeAsm);
 		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_READ_VAR, {}, { id }, tID));
 
-		return cllr::TypedSSA(t, tID, vID);
+		return cllr::TypedSSA(tID, vID);
 	}
 
 	//TODO complain
@@ -343,7 +343,7 @@ cllr::TypedSSA ShaderIOVariable::emitLoadCLLR(sptr<SymbolTable> table, ref<cllr:
 		auto tID = t->emitDeclCLLR(table, codeAsm);
 		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_READ_VAR, {}, { id }, tID));
 
-		return cllr::TypedSSA(t, tID, vID);
+		return cllr::TypedSSA(tID, vID);
 	}
 
 	//TODO complain

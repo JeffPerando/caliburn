@@ -64,7 +64,7 @@ cllr::TypedSSA FunctionImpl::call(sptr<SymbolTable> table, ref<cllr::Assembler> 
 
 		}
 
-		return cllr::TypedSSA(t, tID, callID);
+		return cllr::TypedSSA(tID, callID);
 	}
 
 	//TODO complain

@@ -8,8 +8,11 @@
 
 namespace caliburn
 {
-	static const std::vector<std::string> COMPILE_STAGES =
-		{ "Unknown", "Tokenizer", "Parsing", "AST Validation", "Cond. Compilation", "CLLR Generation", "CLLR Validation", "Target Compilation" };
+	static const std::vector<std::string> COMPILE_STAGES = {
+		"Unknown", "Tokenizer", "Parsing", "AST Validation",
+		"Cond. Compilation", "CLLR Generation", "CLLR Validation",
+		"Target Compilation"
+	};
 
 	enum class CompileStage
 	{

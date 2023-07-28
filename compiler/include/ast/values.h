@@ -394,6 +394,9 @@ namespace caliburn
 		sptr<Value> target = nullptr;
 		std::vector<sptr<Token>> chain;
 
+		VarChainValue() : Value(ValueType::UNKNOWN) {}
+		virtual ~VarChainValue() {}
+
 		sptr<Token> firstTkn() const override
 		{
 			if (target != nullptr)

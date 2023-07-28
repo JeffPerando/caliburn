@@ -15,7 +15,8 @@ bool cllr::Validator::isType(cllr::Opcode op)
 	std::vector<cllr::Opcode> ops = {
 		Opcode::TYPE_VOID,
 		Opcode::TYPE_FLOAT,
-		Opcode::TYPE_INT,
+		Opcode::TYPE_INT_SIGN,
+		Opcode::TYPE_INT_UNSIGN,
 		Opcode::TYPE_ARRAY,
 		Opcode::TYPE_VECTOR,
 		Opcode::TYPE_MATRIX,

@@ -33,12 +33,12 @@ namespace caliburn
 		using SSA = uint32_t;
 		struct TypedSSA
 		{
-			sptr<RealType> typePtr = nullptr;
+			//sptr<RealType> typePtr = nullptr;
 			SSA type = 0;
 			SSA value = 0;
 
 			TypedSSA() = default;
-			TypedSSA(sptr<RealType> tPtr, SSA t, SSA v) : typePtr(tPtr), type(t), value(v) {}
+			TypedSSA(SSA t, SSA v) : type(t), value(v) {}
 
 			bool operator==(const TypedSSA& other) const
 			{
@@ -105,6 +105,7 @@ namespace caliburn
 			VALUE_EXPAND,
 			VALUE_EXPR,
 			VALUE_EXPR_UNARY,
+			VALUE_INT_TO_FP,
 			VALUE_INVOKE_POS,
 			VALUE_INVOKE_SIZE,
 			VALUE_LIT_ARRAY,
@@ -163,7 +164,31 @@ namespace caliburn
 				return *this;
 			}
 
-			bool operator==(const Instruction& other) const
+			bool operator<(ref<const Instruction> rhs) const
+			{
+				if (op >= rhs.op)
+				{
+					return false;
+				}
+
+				for (uint32_t i = 0; i < 3; ++i)
+				{
+					if (operands[i] >= rhs.operands[i])
+					{
+						return false;
+					}
+
+					if (refs[i] >= rhs.refs[i])
+					{
+						return false;
+					}
+
+				}
+
+				return true;
+			}
+
+			bool operator==(ref<const Instruction> other) const
 			{
 				if (index != other.index)
 				{
