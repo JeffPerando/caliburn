@@ -2,7 +2,6 @@
 #include <algorithm>
 
 #include "cllr/cllrasm.h"
-#include "cllr/cllrtypeimpl.h"
 
 using namespace caliburn::cllr;
 
@@ -64,17 +63,17 @@ SSA Assembler::pushType(ref<Instruction> ins)
 
 	switch (ins.op)
 	{
-		case Opcode::TYPE_VOID: t = new_sptr<LowVoid>();
-		case Opcode::TYPE_FLOAT: t = new_sptr<LowFloat>(ins.operands[0]);
+		case Opcode::TYPE_VOID: t = new_sptr<LowVoid>(); break;
+		case Opcode::TYPE_FLOAT: t = new_sptr<LowFloat>(ins.operands[0]); break;
 		case Opcode::TYPE_INT_SIGN: pass;
-		case Opcode::TYPE_INT_UNSIGN: t = new_sptr<LowInt>(ins.op, ins.operands[0]);
-		case Opcode::TYPE_ARRAY: t = new_sptr<LowArray>(ins.operands[0], getType(ins.refs[0]));
-		case Opcode::TYPE_VECTOR: t = new_sptr<LowVector>(ins.operands[0], getType(ins.refs[0]));
-		case Opcode::TYPE_MATRIX: t = new_sptr<LowMatrix>(ins.operands[0], ins.operands[1], getType(ins.refs[0]));
-		case Opcode::TYPE_STRUCT: t = new_sptr<LowStruct>();
-		case Opcode::TYPE_BOOL: t = new_sptr<LowBool>();
+		case Opcode::TYPE_INT_UNSIGN: t = new_sptr<LowInt>(ins.op, ins.operands[0]); break;
+		case Opcode::TYPE_ARRAY: t = new_sptr<LowArray>(ins.operands[0], getType(ins.refs[0])); break;
+		case Opcode::TYPE_VECTOR: t = new_sptr<LowVector>(ins.operands[0], getType(ins.refs[0])); break;
+		case Opcode::TYPE_MATRIX: t = new_sptr<LowMatrix>(ins.operands[0], ins.operands[1], getType(ins.refs[0])); break;
+		case Opcode::TYPE_STRUCT: t = new_sptr<LowStruct>(); break;
+		case Opcode::TYPE_BOOL: t = new_sptr<LowBool>(); break;
 		//case Opcode::TYPE_PTR: t = new_sptr<LowPointer>();
-		//case Opcode::TYPE_TUPLE: t = new_sptr<LowVoid>();
+		//case Opcode::TYPE_TUPLE: t = new_sptr<LowTuple>();
 		default: break;//TODO complain
 	}
 

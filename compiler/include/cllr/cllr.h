@@ -222,7 +222,7 @@ namespace caliburn
 
 		struct InstructionHash
 		{
-			size_t operator()(const ref<Instruction> i) const
+			size_t operator()(ref<const Instruction> i) const
 			{
 				size_t hash = ((size_t)i.op & 0xFFFF) << 48;
 

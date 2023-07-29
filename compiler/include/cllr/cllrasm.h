@@ -8,7 +8,7 @@
 
 #include "basic.h"
 #include "cllr.h"
-#include "cllrtypeimpl.h"
+#include "cllrtypes.h"
 #include "error.h"
 #include "langcore.h"
 

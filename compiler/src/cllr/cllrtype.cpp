@@ -1,4 +1,6 @@
 
+#include "cllr/cllrtype.h"
+
 #include "cllr/cllrasm.h"
 #include "cllr/cllrtype.h"
 
@@ -7,6 +9,11 @@ using namespace caliburn;
 bool cllr::LowType::addConverter(SSA type, SSA fnID)
 {
 	return false;
+}
+
+cllr::SSA cllr::LowType::getConverter(SSA type)
+{
+	return 0;
 }
 
 bool cllr::LowType::addMember(SSA typeID, sptr<const LowType> typeImpl)
@@ -61,13 +68,10 @@ bool cllr::TypeChecker::check(ref<TypedSSA> lhs, ref<TypedSSA> rhs, Operator op,
 				rhs = TypedSSA(t, v);
 			}; break;
 			case ConversionResult::METHOD_CONVERSION: {
-				//TODO finish
-
-				SSA fnID = 0;
+				auto fnID = rhsType->getConverter(lhs.type);
 				auto callID = codeAsm.pushNew(Instruction(Opcode::CALL, { 1 }, { fnID }));
-				codeAsm.push(Instruction(Opcode::CALL_ARG, { 0 }, { lhs.value }));
-				lhs = TypedSSA(rhs.type, callID);
-
+				codeAsm.push(Instruction(Opcode::CALL_ARG, { 0 }, { rhs.value }));
+				rhs = TypedSSA(lhs.type, callID);
 			}; break;
 			case ConversionResult::INCOMPATIBLE: return false;
 			default: break;

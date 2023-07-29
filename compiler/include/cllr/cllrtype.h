@@ -29,12 +29,14 @@ namespace caliburn
 
 			virtual uint32_t getBitAlign() const = 0;
 
-			virtual ConversionResult isConvertibleTo(cllr::SSA other, sptr<const LowType> otherImpl) const = 0;
+			virtual ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const = 0;
 
-			virtual bool addMember(cllr::SSA typeID, sptr<const LowType> typeImpl);
+			virtual bool addMember(SSA typeID, sptr<const LowType> typeImpl);
 
-			virtual bool addConverter(cllr::SSA type, cllr::SSA fnID);
+			virtual bool addConverter(SSA type, SSA fnID);
 
+			virtual SSA getConverter(SSA type);
+			
 		};
 
 		struct TypeCheckResult
@@ -45,7 +47,7 @@ namespace caliburn
 
 		struct TypeChecker
 		{
-			bool check(ref<TypedSSA> lhs, ref<TypedSSA> rhs, Operator op, ref<cllr::Assembler> codeAsm) const;
+			bool check(ref<TypedSSA> lhs, ref<TypedSSA> rhs, Operator op, ref<Assembler> codeAsm) const;
 
 		};
 

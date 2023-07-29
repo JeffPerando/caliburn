@@ -21,7 +21,7 @@ namespace caliburn
 				return 0;
 			}
 
-			ConversionResult isConvertibleTo(cllr::SSA other, sptr<const LowType> otherImpl) const override
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const override
 			{
 				return ConversionResult::INCOMPATIBLE;
 			}
@@ -44,20 +44,7 @@ namespace caliburn
 				return width;
 			}
 
-			ConversionResult isConvertibleTo(cllr::SSA other, sptr<const LowType> otherImpl) const override
-			{
-				if (otherImpl->category == Opcode::TYPE_FLOAT)
-				{
-					if (otherImpl->getBitWidth() > this->getBitWidth())
-					{
-						return ConversionResult::WIDEN;
-					}
-
-					return ConversionResult::NO_CONVERSION;
-				}
-
-				return ConversionResult::INCOMPATIBLE;
-			}
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const override;
 
 		};
 
@@ -78,29 +65,7 @@ namespace caliburn
 				return width;
 			}
 
-			ConversionResult isConvertibleTo(cllr::SSA other, sptr<const LowType> otherImpl) const override
-			{
-				if (otherImpl->category == category)
-				{
-					if (otherImpl->getBitWidth() > width)
-					{
-						return ConversionResult::WIDEN;
-					}
-
-					return ConversionResult::NO_CONVERSION;
-				}
-
-				if (otherImpl->category == Opcode::TYPE_FLOAT)
-				{
-					if (width <= caliburn::MAX_FLOAT_BITS)
-					{
-						return ConversionResult::INT_TO_FLOAT;
-					}
-
-				}
-
-				return ConversionResult::INCOMPATIBLE;
-			}
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const;
 
 		};
 
@@ -123,7 +88,7 @@ namespace caliburn
 				return innerType->getBitAlign();
 			}
 
-			ConversionResult isConvertibleTo(cllr::SSA other, sptr<const LowType> otherImpl) const override
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const override
 			{
 				return ConversionResult::INCOMPATIBLE;
 			}
@@ -149,7 +114,7 @@ namespace caliburn
 				return innerType->getBitAlign();
 			}
 
-			ConversionResult isConvertibleTo(cllr::SSA other, sptr<const LowType> otherImpl) const override
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const override
 			{
 				return innerType->isConvertibleTo(other, otherImpl);
 			}
@@ -176,7 +141,7 @@ namespace caliburn
 				return innerType->getBitAlign();
 			}
 
-			ConversionResult isConvertibleTo(cllr::SSA other, sptr<const LowType> otherImpl) const override
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const override
 			{
 				return ConversionResult::INCOMPATIBLE;
 			}
@@ -201,16 +166,7 @@ namespace caliburn
 				return memberVars.back()->getBitAlign();
 			}
 
-			ConversionResult isConvertibleTo(cllr::SSA other, sptr<const LowType> otherImpl) const override
-			{
-				if (conversions.find(other) != conversions.end())
-				{
-					return ConversionResult::METHOD_CONVERSION;
-				}
-
-				return ConversionResult::INCOMPATIBLE;
-			}
-
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const override;
 		};
 
 		struct LowBool : LowType
@@ -227,15 +183,7 @@ namespace caliburn
 				return 8;
 			}
 
-			ConversionResult isConvertibleTo(cllr::SSA other, sptr<const LowType> otherImpl) const override
-			{
-				if (otherImpl->category == Opcode::TYPE_INT_SIGN || otherImpl->category == Opcode::TYPE_INT_UNSIGN)
-				{
-					return ConversionResult::BITCAST_TO_INT;
-				}
-
-				return ConversionResult::INCOMPATIBLE;
-			}
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const override;
 
 		};
 
