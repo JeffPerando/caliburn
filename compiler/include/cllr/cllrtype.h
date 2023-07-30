@@ -39,15 +39,16 @@ namespace caliburn
 			
 		};
 
-		struct TypeCheckResult
-		{
-			TypedSSA lhs;
-			TypedSSA rhs;
-		};
-
 		struct TypeChecker
 		{
-			bool check(ref<TypedSSA> lhs, ref<TypedSSA> rhs, Operator op, ref<Assembler> codeAsm) const;
+			//TODO make cllr::Assembler take a CompilerSettings
+			//const CompilerSettings settings;
+
+			//TypeChecker(ref<const CompilerSettings> cs) : settings(cs) {}
+			TypeChecker() = default;
+			~TypeChecker() {}
+
+			bool check(SSA targetType, ref<TypedSSA> rhs, ref<Assembler> codeAsm) const;
 
 		};
 

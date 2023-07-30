@@ -21,34 +21,31 @@ bool cllr::LowType::addMember(SSA typeID, sptr<const LowType> typeImpl)
 	return false;
 }
 
-bool cllr::TypeChecker::check(ref<TypedSSA> lhs, ref<TypedSSA> rhs, Operator op, ref<Assembler> codeAsm) const
+bool cllr::TypeChecker::check(SSA targetType, ref<TypedSSA> rhs, ref<Assembler> codeAsm) const
 {
-	if (lhs.type == rhs.type)
+	if (targetType == rhs.type)
 	{
 		return true;
 	}
 
-	auto lhsType = codeAsm.getType(lhs.type);
+	auto lhsType = codeAsm.getType(targetType);
 	auto rhsType = codeAsm.getType(rhs.type);
 
-	auto lhsRes = lhsType->isConvertibleTo(rhs.type, rhsType);
-	auto rhsRes = rhsType->isConvertibleTo(lhs.type, lhsType);
+	auto result = rhsType->isConvertibleTo(targetType, lhsType);
 
 	//TODO reconsider
-	if (lhsRes == ConversionResult::NO_CONVERSION || rhsRes == ConversionResult::NO_CONVERSION)
+	if (result == ConversionResult::NO_CONVERSION)
 	{
 		return true;
 	}
-
-	if (lhsRes == rhsRes && rhsRes == ConversionResult::INCOMPATIBLE)
+	else if (result == ConversionResult::INCOMPATIBLE)
 	{
 		return false;
 	}
 
-	//TODO do LHS as well
 	do
 	{
-		switch (rhsRes)
+		switch (result)
 		{
 			case ConversionResult::WIDEN: {
 				auto t = codeAsm.pushType(Instruction(rhsType->category, { lhsType->getBitWidth() }, {}));
@@ -68,19 +65,19 @@ bool cllr::TypeChecker::check(ref<TypedSSA> lhs, ref<TypedSSA> rhs, Operator op,
 				rhs = TypedSSA(t, v);
 			}; break;
 			case ConversionResult::METHOD_CONVERSION: {
-				auto fnID = rhsType->getConverter(lhs.type);
+				auto fnID = rhsType->getConverter(targetType);
 				auto callID = codeAsm.pushNew(Instruction(Opcode::CALL, { 1 }, { fnID }));
 				codeAsm.push(Instruction(Opcode::CALL_ARG, { 0 }, { rhs.value }));
-				rhs = TypedSSA(lhs.type, callID);
+				rhs = TypedSSA(targetType, callID);
 			}; break;
 			case ConversionResult::INCOMPATIBLE: return false;
 			default: break;
 		}
 
 		rhsType = codeAsm.getType(rhs.type);
-		rhsRes = rhsType->isConvertibleTo(lhs.type, lhsType);
+		result = rhsType->isConvertibleTo(targetType, lhsType);
 
-	} while (rhsRes != ConversionResult::NO_CONVERSION);
+	} while (result != ConversionResult::NO_CONVERSION);
 
 	return true;
 }
