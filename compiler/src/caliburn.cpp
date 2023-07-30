@@ -17,12 +17,12 @@ using namespace caliburn;
 
 void Compiler::o(OptimizeLevel lvl)
 {
-	settings.o = lvl;
+	settings->o = lvl;
 }
 
 void caliburn::Compiler::disableValidation()
 {
-	settings.validate = false;
+	settings->validate = false;
 
 }
 
@@ -51,7 +51,7 @@ bool Compiler::parseText(std::string text)
 	p.errors->dump(allErrors);
 
 	//Validate AST
-	if (!settings.validate)
+	if (!settings->validate)
 	{
 		return !ast.empty();
 	}

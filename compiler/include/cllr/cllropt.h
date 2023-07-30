@@ -12,9 +12,9 @@ namespace caliburn
 
 		struct Optimizer
 		{
-			const CompilerSettings settings;
+			sptr<const CompilerSettings> settings;
 
-			Optimizer(ref<const CompilerSettings> cs) : settings(cs) {}
+			Optimizer(sptr<const CompilerSettings> cs) : settings(cs) {}
 
 			void optimize(ref<cllr::Assembler> cllrAsm);
 

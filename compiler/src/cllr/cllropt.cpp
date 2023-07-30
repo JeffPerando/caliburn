@@ -5,7 +5,7 @@ using namespace caliburn;
 
 void caliburn::cllr::Optimizer::optimize(ref<cllr::Assembler> cllrAsm)
 {
-	if (settings.o == OptimizeLevel::DEBUG)
+	if (settings->o == OptimizeLevel::DEBUG)
 	{
 		return;
 	}

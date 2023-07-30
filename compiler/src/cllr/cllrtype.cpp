@@ -21,7 +21,7 @@ bool cllr::LowType::addMember(SSA typeID, sptr<const LowType> typeImpl)
 	return false;
 }
 
-bool cllr::TypeChecker::check(SSA targetType, ref<TypedSSA> rhs, ref<Assembler> codeAsm) const
+bool cllr::TypeChecker::check(SSA targetType, ref<TypedSSA> rhs, ref<Assembler> codeAsm, Operator op) const
 {
 	if (targetType == rhs.type)
 	{
@@ -31,7 +31,7 @@ bool cllr::TypeChecker::check(SSA targetType, ref<TypedSSA> rhs, ref<Assembler> 
 	auto lhsType = codeAsm.getType(targetType);
 	auto rhsType = codeAsm.getType(rhs.type);
 
-	auto result = rhsType->isConvertibleTo(targetType, lhsType);
+	auto result = rhsType->isConvertibleTo(targetType, lhsType, op);
 
 	//TODO reconsider
 	if (result == ConversionResult::NO_CONVERSION)
@@ -75,7 +75,7 @@ bool cllr::TypeChecker::check(SSA targetType, ref<TypedSSA> rhs, ref<Assembler> 
 		}
 
 		rhsType = codeAsm.getType(rhs.type);
-		result = rhsType->isConvertibleTo(targetType, lhsType);
+		result = rhsType->isConvertibleTo(targetType, lhsType, op);
 
 	} while (result != ConversionResult::NO_CONVERSION);
 

@@ -3,9 +3,9 @@
 
 using namespace caliburn::cllr;
 
-ConversionResult LowFloat::isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const
+ConversionResult LowFloat::isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const
 {
-	if (otherImpl->category != Opcode::TYPE_FLOAT)
+	if (otherImpl->category != Opcode::TYPE_FLOAT || op == Operator::INTDIV)
 	{
 		return ConversionResult::INCOMPATIBLE;
 	}
@@ -18,7 +18,7 @@ ConversionResult LowFloat::isConvertibleTo(SSA other, sptr<const LowType> otherI
 	return ConversionResult::NO_CONVERSION;
 }
 
-ConversionResult LowInt::isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const
+ConversionResult LowInt::isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const
 {
 	if (otherImpl->category == category)
 	{
@@ -30,7 +30,7 @@ ConversionResult LowInt::isConvertibleTo(SSA other, sptr<const LowType> otherImp
 		return ConversionResult::NO_CONVERSION;
 	}
 
-	if (otherImpl->category == Opcode::TYPE_FLOAT)
+	if (otherImpl->category == Opcode::TYPE_FLOAT || op == Operator::DIV)
 	{
 		if (width <= caliburn::MAX_FLOAT_BITS)
 		{
@@ -42,7 +42,7 @@ ConversionResult LowInt::isConvertibleTo(SSA other, sptr<const LowType> otherImp
 	return ConversionResult::INCOMPATIBLE;
 }
 
-ConversionResult LowStruct::isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const
+ConversionResult LowStruct::isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const
 {
 	if (conversions.find(other) != conversions.end())
 	{
@@ -52,8 +52,13 @@ ConversionResult LowStruct::isConvertibleTo(SSA other, sptr<const LowType> other
 	return ConversionResult::INCOMPATIBLE;
 }
 
-ConversionResult LowBool::isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const
+ConversionResult LowBool::isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const
 {
+	if (otherImpl->category == category)
+	{
+		return ConversionResult::NO_CONVERSION;
+	}
+
 	if (otherImpl->category == Opcode::TYPE_INT_SIGN || otherImpl->category == Opcode::TYPE_INT_UNSIGN)
 	{
 		return ConversionResult::BITCAST_TO_INT;

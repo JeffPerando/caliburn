@@ -53,7 +53,7 @@ namespace caliburn
 			return 0;
 		}
 
-		uptr<Shader> compile(sptr<SymbolTable> table, ref<const CompilerSettings> settings, ref<std::vector<sptr<Error>>> allErrs);
+		uptr<Shader> compile(sptr<SymbolTable> table, sptr<const CompilerSettings> settings, ref<std::vector<sptr<Error>>> allErrs);
 
 	};
 

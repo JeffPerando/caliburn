@@ -21,7 +21,7 @@ namespace caliburn
 				return 0;
 			}
 
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const override
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override
 			{
 				return ConversionResult::INCOMPATIBLE;
 			}
@@ -44,7 +44,7 @@ namespace caliburn
 				return width;
 			}
 
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const override;
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override;
 
 		};
 
@@ -65,7 +65,7 @@ namespace caliburn
 				return width;
 			}
 
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const;
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const;
 
 		};
 
@@ -88,7 +88,7 @@ namespace caliburn
 				return innerType->getBitAlign();
 			}
 
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const override
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override
 			{
 				return ConversionResult::INCOMPATIBLE;
 			}
@@ -114,9 +114,9 @@ namespace caliburn
 				return innerType->getBitAlign();
 			}
 
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const override
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override
 			{
-				return innerType->isConvertibleTo(other, otherImpl);
+				return innerType->isConvertibleTo(other, otherImpl, op);
 			}
 
 		};
@@ -141,7 +141,7 @@ namespace caliburn
 				return innerType->getBitAlign();
 			}
 
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const override
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override
 			{
 				return ConversionResult::INCOMPATIBLE;
 			}
@@ -166,7 +166,7 @@ namespace caliburn
 				return memberVars.back()->getBitAlign();
 			}
 
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const override;
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override;
 		};
 
 		struct LowBool : LowType
@@ -183,7 +183,7 @@ namespace caliburn
 				return 8;
 			}
 
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const override;
+			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override;
 
 		};
 

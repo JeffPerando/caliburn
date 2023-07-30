@@ -22,6 +22,8 @@ namespace caliburn
 		{
 		public:
 			const ShaderType type;
+			sptr<const CompilerSettings> settings;
+			const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::CLLR_EMIT);
 		private:
 			uint32_t nextSSA = 1;
 			
@@ -40,11 +42,8 @@ namespace caliburn
 
 			//keep a stack of the current loop labels so we can implement break, continue, etc.
 			std::vector<std::pair<SSA, SSA>> loops;
-
 		public:
-			const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::CLLR_EMIT);
-
-			Assembler(ShaderType t, uint32_t initSize = 2048) : type(t)
+			Assembler(ShaderType t, sptr<const CompilerSettings> cs, uint32_t initSize = 2048) : type(t), settings(cs)
 			{
 				code->reserve(initSize);
 				ssaToCode.reserve(initSize);

@@ -11,13 +11,13 @@
 
 using namespace caliburn;
 
-uptr<Shader> ShaderStageStatement::compile(sptr<SymbolTable> table, ref<const CompilerSettings> settings, ref<std::vector<sptr<Error>>> allErrs)
+uptr<Shader> ShaderStageStatement::compile(sptr<SymbolTable> table, sptr<const CompilerSettings> settings, ref<std::vector<sptr<Error>>> allErrs)
 {
-	auto codeAsm = cllr::Assembler(type);
+	auto codeAsm = cllr::Assembler(type, settings);
 
 	code->emitDeclCLLR(table, codeAsm);
 
-	if (settings.validate)
+	if (settings->validate)
 	{
 		auto v = cllr::Validator(settings);
 

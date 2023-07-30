@@ -21,7 +21,7 @@ namespace caliburn
 	struct Compiler
 	{
 	private:
-		CompilerSettings settings;
+		sptr<CompilerSettings> settings = new_sptr<CompilerSettings>();
 		std::map<std::string, std::string> dynTypes;
 		std::vector<sptr<Error>> allErrors;
 		std::vector<uptr<Statement>> ast;
@@ -36,7 +36,7 @@ namespace caliburn
 		void o(OptimizeLevel lvl);
 
 		/*
-		Diuables CLLR validation. Will improve compilation performance at the cost of, well...
+		Disables CLLR validation. Will improve compilation performance at the cost of, well...
 
 		Only disable if you know the shaders will compile correctly.
 		*/

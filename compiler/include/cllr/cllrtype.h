@@ -19,6 +19,14 @@ namespace caliburn
 			INCOMPATIBLE
 		};
 
+		enum class OpResult
+		{
+			COMPATIBLE,
+			CONVERT_NEEDED,
+			METHOD_OP,
+			INCOMPATIBLE
+		};
+
 		struct LowType
 		{
 			const Opcode category;
@@ -29,7 +37,9 @@ namespace caliburn
 
 			virtual uint32_t getBitAlign() const = 0;
 
-			virtual ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl) const = 0;
+			virtual ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const = 0;
+
+			//virtual OpResult getOp(Operator op) const = 0;
 
 			virtual bool addMember(SSA typeID, sptr<const LowType> typeImpl);
 
@@ -41,14 +51,12 @@ namespace caliburn
 
 		struct TypeChecker
 		{
-			//TODO make cllr::Assembler take a CompilerSettings
-			//const CompilerSettings settings;
+			sptr<const CompilerSettings> settings;
 
-			//TypeChecker(ref<const CompilerSettings> cs) : settings(cs) {}
-			TypeChecker() = default;
+			TypeChecker(sptr<const CompilerSettings> cs) : settings(cs) {}
 			~TypeChecker() {}
 
-			bool check(SSA targetType, ref<TypedSSA> rhs, ref<Assembler> codeAsm) const;
+			bool check(SSA targetType, ref<TypedSSA> rhs, ref<Assembler> codeAsm, Operator op = Operator::UNKNOWN) const;
 
 		};
 

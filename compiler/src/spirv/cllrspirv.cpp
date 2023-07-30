@@ -651,44 +651,16 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpAssign)
 	auto lhsVar = i.refs[0];
 	auto rhsVal = i.refs[1];
 
-	auto rhsCode = in.codeFor(rhsVal);
-
-	auto rhs = cllr::TypedSSA(rhsCode->outType, rhsVal);
-
-	auto spvLHSVar = out.toSpvID(lhsVar);
-	auto spvRHSVal = out.toSpvID(rhsVal);
-
-	cllr::TypeChecker tc;
-
-	if (!tc.check(lhsVar, rhs, in))
-	{
-		//TODO complain
-		return;
-	}
-
-	out.main->push(spirv::OpStore(0), 0, { spvLHSVar, spvRHSVal });
+	out.main->push(spirv::OpStore(0), 0, { out.toSpvID(lhsVar), out.toSpvID(rhsVal) });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 {
-	auto lhsType = in.codeFor(i.refs[0])->outType;
-	auto rhsType = in.codeFor(i.refs[1])->outType;
-
-	auto lhs = cllr::TypedSSA(lhsType, i.refs[0]);
-	auto rhs = cllr::TypedSSA(rhsType, i.refs[1]);
-
 	auto cllrOp = (Operator)i.operands[0];
 
-	cllr::TypeChecker tc;
-
-	if (!tc.check(lhs.type, rhs, in))
-	{
-		//TODO complain
-	}
-
-	auto spvLhs = out.toSpvID(lhs.value);
-	auto spvRhs = out.toSpvID(rhs.value);
+	auto spvLhs = out.toSpvID(i.refs[0]);
+	auto spvRhs = out.toSpvID(i.refs[1]);
 	auto outType = in.codeFor(i.outType);
 
 	auto op = spirv::OpNop();
@@ -753,7 +725,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 	auto id = out.toSpvID(i.index);
 	auto spvOutType = out.types.findOrMake(spirv::OpTypeBool(), {});
 
-	out.main->pushTyped(op, spvOutType, id, { out.toSpvID(lhs.value), out.toSpvID(rhs.value) });
+	out.main->pushTyped(op, spvOutType, id, { out.toSpvID(spvLhs), out.toSpvID(spvRhs) });
 
 }
 
@@ -797,7 +769,6 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpand)
 	auto id = out.toSpvID(i.index);
 
 	auto inID = out.toSpvID(i.refs[0]);
-	auto inTypeID = in.codeFor(inID)->outType;
 	auto t = in.codeFor(i.outType);
 
 	auto spvOp = spirv::OpNop();
@@ -820,32 +791,20 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpand)
 		return;
 	}
 
-	out.main->pushTyped(spvOp, t->index, id, { inID });
+	out.main->pushTyped(spvOp, out.toSpvID(t->index), id, { inID });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpr)
 {
-	auto lhsType = in.codeFor(i.refs[0])->outType;
-	auto rhsType = in.codeFor(i.refs[1])->outType;
-
-	auto lhs = cllr::TypedSSA(lhsType, i.refs[0]);
-	auto rhs = cllr::TypedSSA(rhsType, i.refs[1]);
+	auto id = out.toSpvID(i.index);
+	auto outType = in.codeFor(i.outType);
+	auto spvOutType = out.toSpvID(outType->index);
 
 	auto cllrOp = (Operator)i.operands[0];
 
-	cllr::TypeChecker tc;
-
-	if (!tc.check(lhs.type, rhs, in))
-	{
-		//TODO complain
-	}
-
-	auto id = out.toSpvID(i.index);
-	auto spvOutType = out.toSpvID(i.outType);
-
-	auto spvLhs = out.toSpvID(lhs.value);
-	auto spvRhs = out.toSpvID(rhs.value);
+	auto spvLhs = out.toSpvID(i.refs[0]);
+	auto spvRhs = out.toSpvID(i.refs[1]);
 
 	if (cllrOp == Operator::POW)
 	{
@@ -856,8 +815,6 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpr)
 	}
 
 	auto op = spirv::OpNop();
-
-	auto outType = in.codeFor(i.outType);
 
 	switch (outType->op)
 	{
@@ -897,15 +854,9 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpr)
 				case Operator::BIT_XOR: op = spirv::OpBitwiseXor(); break;
 			}
 		}; break;
-		case Opcode::TYPE_ARRAY: pass;
 		case Opcode::TYPE_VECTOR: pass;
 		case Opcode::TYPE_MATRIX: pass;
-		case Opcode::TYPE_STRUCT: pass;
-		case Opcode::STRUCT_MEMBER: pass;
-		case Opcode::STRUCT_END: pass;
 		case Opcode::TYPE_BOOL: pass;
-		case Opcode::TYPE_PTR: pass;
-		case Opcode::TYPE_TUPLE: pass;
 		default: return;
 	}
 
