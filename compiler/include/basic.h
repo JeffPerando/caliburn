@@ -1,6 +1,8 @@
 
 /*
 This header only exists to help make C++ syntax less goofy
+
+and some handy functions
 */
 
 #pragma once
@@ -9,6 +11,8 @@ This header only exists to help make C++ syntax less goofy
 #include <memory>
 #include <stdint.h>
 #include <unordered_map>
+
+#define IS_POW_2(x) ((x & (x - 1)) == 0)
 
 template<typename T>
 using ptr = T*;
@@ -26,8 +30,10 @@ using sptr = std::shared_ptr<T>;
 template<typename T>
 using uptr = std::unique_ptr<T>;
 
+#if __cplusplus >= 201703L
 template<typename T>
 using wptr = std::weak_ptr<T>;
+#endif
 
 /*
 STORY TIME!

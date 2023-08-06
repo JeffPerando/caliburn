@@ -1,7 +1,6 @@
 
 /*
-Contains necessary constants, data types, and functions necessary for parsing, interpreting,
-and compiling Caliburn code.
+Contains necessary constants, data types, and functions necessary for working with Caliburn.
 */
 
 #pragma once
@@ -20,10 +19,14 @@ namespace caliburn
 		CPU, GPU
 	};
 
-	/*
-	Enum denoting how much to optimize emitted shader code.
+	//TODO reconsider
+	enum class TargetOutput : uint32_t
+	{
+		SPIRV, LLVM, DXIL
+	};
 
-	Each level should emit more optimal code, obviously.
+	/*
+	Enum denoting how much to optimize code.
 
 	Regarding whether to add a given algorithm to a given level: Consider how much extra performance is given vs. the time it takes to run.
 	If the algorithm takes ages to run and doesn't make the code much faster, add it to O3.
@@ -42,10 +45,22 @@ namespace caliburn
 		PERFORMANCE
 	};
 
+	//FIXME not used atm; awaiting writing the full validation layer
+	enum class ValidationLevel : uint32_t
+	{
+		//Disables validation entirely
+		NONE,
+		//Only checks for things a programmer could mess up on;
+		BASIC,
+		//Checks everything
+		FULL
+	};
+
 	struct CompilerSettings
 	{
-		OptimizeLevel o;
-		bool validate = true;
+		OptimizeLevel o = OptimizeLevel::DEBUG;
+		ValidationLevel vLvl = ValidationLevel::BASIC;
+		std::map<std::string, std::string> dynTypes;
 
 	};
 
@@ -68,9 +83,9 @@ namespace caliburn
 		ARRAY,
 		STRUCT,
 		BOOLEAN,
-		POINTER,
-		TUPLE,
-		STRING
+		POINTER
+		//TUPLE
+		//STRING
 
 	};
 
@@ -126,8 +141,8 @@ namespace caliburn
 	struct Shader
 	{
 		const ShaderType type;
+		const uptr<std::vector<uint32_t>> spirv;
 
-		uptr<std::vector<uint32_t>> spirv;
 		std::vector<VertexInputAttribute> inputs;
 		std::vector<DescriptorSet> sets;
 

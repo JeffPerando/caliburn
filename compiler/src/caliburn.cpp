@@ -20,42 +20,38 @@ void Compiler::o(OptimizeLevel lvl)
 	settings->o = lvl;
 }
 
-void caliburn::Compiler::disableValidation()
+void Compiler::setValidationLvl(ValidationLevel lvl)
 {
-	settings->validate = false;
-
+	settings->vLvl = lvl;
 }
 
 void Compiler::setDynamicType(std::string inner, std::string concrete)
 {
-	dynTypes.emplace(inner, concrete);
+	settings->dynTypes.emplace(inner, concrete);
 }
 
-bool Compiler::parseText(std::string text)
+std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::string shaderName)
 {
-	if (!ast.empty())
+	if (shaderName.length() == 0)
 	{
-		throw std::exception("Caliburn: parsing method called a second time");
+		throw std::exception("Caliburn: passed shader name is empty!");
 	}
 
+	auto doc = TextDoc(src);
+	
 	//Parse the text into tokens (duh)
-	auto t = Tokenizer(text);
+	auto t = Tokenizer(doc);
 	auto tokens = t.tokenize();
 
-	t.errors->dump(allErrors);
+	t.errors->printout(allErrors, doc);
 
 	//Build the initial AST (ok)
 	auto p = Parser(tokens);
 	auto ast = p.parse();
 
-	p.errors->dump(allErrors);
+	p.errors->printout(allErrors, doc);
 
 	//Validate AST
-	if (!settings->validate)
-	{
-		return !ast.empty();
-	}
-
 	//keep this a shared pointer since the AST will use it to report validation errors
 	auto astErrs = new_sptr<ErrorHandler>(CompileStage::AST_VALIDATION);
 	for (auto const& stmt : ast)
@@ -75,29 +71,7 @@ bool Compiler::parseText(std::string text)
 		*/
 	}
 
-	astErrs->dump(allErrors);
-
-	return !ast.empty();
-}
-
-/*
-bool Compiler::parseCBIR(ref<std::vector<uint32_t>> cbir)
-{
-	return false;
-}
-*/
-
-bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shader>>> shaders)
-{
-	if (ast.empty())
-	{
-		throw std::exception("Caliburn: parsing method not called!");
-	}
-
-	if (shaderName.length() == 0)
-	{
-		throw std::exception("Caliburn: passed shader name is empty!");
-	}
+	astErrs->printout(allErrors, doc);
 
 	/*
 	OK so I'll admit the code below looks utterly goofy, and is probably a form of lambda abuse.
@@ -169,11 +143,9 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 	*/
 
 	//COMPILE
-	
+
 	//TODO populate built-in types
 	//auto root = new_sptr<RootModule>();
-	
-	std::vector<ptr<ShaderStatement>> shaderDecls;
 
 	ptr<ShaderStatement> shaderStmt = nullptr;
 
@@ -209,8 +181,6 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 		{
 			auto shadDecl = static_cast<ptr<ShaderStatement>>(stmt.get());
 
-			shaderDecls.push_back(shadDecl);
-
 			if (shadDecl->name->str != shaderName)
 			{
 				continue;
@@ -233,8 +203,8 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 
 	if (shaderStmt == nullptr)
 	{
-		//TODO complain
-		return false;
+		std::string e = "Caliburn: Shader not found: " + shaderName;
+		throw std::exception(e.c_str());
 	}
 
 	auto table = new_sptr<SymbolTable>();
@@ -269,7 +239,7 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 
 	}
 	*/
-	//Make headers
+	//Declare headers
 	for (auto const& stmt : ast)
 	{
 		stmt->declareHeader(table);
@@ -280,10 +250,13 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 	{
 		stmt->declareSymbols(table);
 	}
-	
+
+	std::vector<uptr<Shader>> shaders;
+	std::vector<sptr<Error>> compileErrs;
+
 	for (auto const& stage : shaderStmt->stages)
 	{
-		auto result = stage->compile(table, settings, allErrors);
+		auto result = stage->compile(table, settings, compileErrs);
 
 		uint32_t d = 0;
 
@@ -297,10 +270,20 @@ bool Compiler::compileShaders(std::string shaderName, ref<std::vector<uptr<Shade
 
 	}
 
-	return !shaders.empty();
+	if (!compileErrs.empty())
+	{
+		for (auto const& e : compileErrs)
+		{
+			allErrors.push_back(e->toStr(doc));
+
+		}
+
+	}
+
+	return shaders;
 }
 
-ref<const std::vector<sptr<Error>>> Compiler::getErrors() const
+std::vector<std::string> Compiler::getErrors() const
 {
 	return allErrors;
 }

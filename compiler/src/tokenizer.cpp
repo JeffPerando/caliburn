@@ -8,7 +8,7 @@
 
 using namespace caliburn;
 
-Tokenizer::Tokenizer(ref<const std::string> str) : doc(str), buf(std::vector<char>(str.begin(), str.end()))
+Tokenizer::Tokenizer(ref<const TextDoc> t) : doc(t), buf(std::vector<char>(t.text.begin(), t.text.end()))
 {
 	//I'm so sorry for this.
 

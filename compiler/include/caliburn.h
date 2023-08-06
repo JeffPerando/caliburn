@@ -10,24 +10,19 @@
 #include <string>
 #include <vector>
 
-#include "basic.h"
-#include "error.h"
 #include "langcore.h"
 
 namespace caliburn
 {
-	struct Statement;
-
 	struct Compiler
 	{
 	private:
-		sptr<CompilerSettings> settings = new_sptr<CompilerSettings>();
-		std::map<std::string, std::string> dynTypes;
-		std::vector<sptr<Error>> allErrors;
-		std::vector<uptr<Statement>> ast;
+		sptr<CompilerSettings> settings;
+		std::vector<std::string> allErrors;
 		
 	public:
-		Compiler() = default;
+		Compiler() : settings(new_sptr<CompilerSettings>()) {}
+		Compiler(ref<CompilerSettings> cs) : settings(new_sptr<CompilerSettings>(cs)) {}
 		virtual ~Compiler() {}
 
 		/*
@@ -36,11 +31,13 @@ namespace caliburn
 		void o(OptimizeLevel lvl);
 
 		/*
-		Disables CLLR validation. Will improve compilation performance at the cost of, well...
+		Sets the degree of validation for the compiler.
 
-		Only disable if you know the shaders will compile correctly.
+		NONE disables validation entirely.
+		BASIC catches routine errors that can be created by a programmer.
+		FULL catches any and all problems in the output code.
 		*/
-		void disableValidation();
+		void setValidationLvl(ValidationLevel lvl);
 
 		/*
 		In Caliburn, a type can be defined as "dynamic", which means the actual
@@ -54,41 +51,16 @@ namespace caliburn
 		void setDynamicType(std::string inner, std::string concrete);
 
 		/*
-		Uses existing CBIR code to create an internal AST which can then be compiled.
+		Compiles raw source code into a set of shaders.
 
-		CBIR is merely the binary representation of a Caliburn source file, and is
-		the format recommended for redistribution.
+		src: The source code, in ASCII. UTF-8 is currently not supported.
+		shaderName: The name of the shader object to compile. Cannot be empty.
 
-		Returns whether the CBIR produced an AST or not
-		
-		bool parseCBIR(ref<std::vector<uint32_t>> cbir);
+		Returns the set of shaders
 		*/
+		std::vector<uptr<Shader>> compileSrcShaders(std::string src, std::string shaderName);
 
-		/*
-		Parses source code text into an internal AST.
-
-		This method does NOT imply endorsement of the redistribution of shader
-		source code. Please package your shaders as CBIR for redistribution.
-
-		Returns whether the input string produced an AST or not
-		*/
-		bool parseText(std::string text);
-
-		/*
-		Compiles the parsed code into a final set of shaders. Each shader is in
-		SPIR-V format, and contains all the metadata needed to interface with Vulkan.
-
-		shaderName: The name of the shader object to compile.
-		shaderDest: The final vector for the final Vulkan shaders.
-
-		Returns a boolean; True for a successful compilation, and false for
-		critical errors.
-
-		An empty shaderName will result in a failed compilation.
-		*/
-		bool compileShaders(std::string shaderName, ref<std::vector<uptr<Shader>>> shaderDest);
-
-		ref<const std::vector<sptr<Error>>> getErrors() const;
+		std::vector<std::string> getErrors() const;
 		
 	};
 

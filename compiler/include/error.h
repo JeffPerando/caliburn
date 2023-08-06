@@ -42,11 +42,19 @@ namespace caliburn
 
 		void prettyPrint(ref<const TextDoc> txt, ref<std::stringstream> ss) const;
 
+		std::string toStr(ref<const TextDoc> txt)
+		{
+			std::stringstream ss;
+			prettyPrint(txt, ss);
+			return ss.str();
+		}
+
 	};
 
 	struct ErrorHandler
 	{
 		const CompileStage stage;
+
 		std::vector<sptr<Error>> errors;
 
 		ErrorHandler(CompileStage s) : stage(s) {}
@@ -59,6 +67,15 @@ namespace caliburn
 		void dump(ref<std::vector<sptr<Error>>> out) const
 		{
 			out.insert(out.end(), errors.begin(), errors.end());
+		}
+
+		void printout(ref<std::vector<std::string>> out, ref<const TextDoc> doc) const
+		{
+			for (auto const& e : errors)
+			{
+				out.push_back(e->toStr(doc));
+			}
+
 		}
 
 		sptr<Error> err(std::string msg, ref<const TextPos> pos);

@@ -22,8 +22,6 @@ namespace caliburn
 			return rValue->lastTkn();
 		}
 
-		void resolveSymbols(sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) override {}
-
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
 		{
 			auto lhs = lValue->emitValueCLLR(table, codeAsm);
