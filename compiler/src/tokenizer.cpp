@@ -479,26 +479,42 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 		}
 		else if (type == CharType::OPERATOR)
 		{
-			size_t off;
+			size_t count;
 
-			for (off = 1; off < buf.remaining(); ++off)
+			for (count = 1; count < buf.remaining(); ++count)
 			{
-				if (getType(buf.peek(off)) != CharType::OPERATOR)
+				if (getType(buf.peek(count)) != CharType::OPERATOR)
 					break;
 			}
+			
+			size_t opLen = count;
 
-			auto fullOp = doc.text.substr(buf.currentIndex(), off);
-			auto meaning = SPECIAL_OPS.find(fullOp);
-
-			if (meaning == SPECIAL_OPS.end())
+			while (opLen > 1)
 			{
-				tokens.push_back(new_sptr<Token>(fullOp, meaning->second, pos, buf.currentIndex(), off));
-				buf.consume(off);
-				pos.move(off);
-				continue;
-			}
+				auto testOp = doc.text.substr(buf.currentIndex(), opLen);
+				auto meaning = INFIX_OPS.find(testOp);
 
-			tokens.push_back(new_sptr<Token>(std::string(1, current), TokenType::OPERATOR, pos, buf.currentIndex(), 1L));
+				if (meaning == INFIX_OPS.end())
+				{
+					auto specMeaning = SPECIAL_OPS.find(testOp);
+
+					if (specMeaning != SPECIAL_OPS.end())
+					{
+						tokens.push_back(new_sptr<Token>(testOp, specMeaning->second, pos, buf.currentIndex(), opLen));
+						buf.consume(opLen);
+						pos.move(opLen);
+						break;
+					}
+
+					--opLen;
+					continue;
+				}
+
+				tokens.push_back(new_sptr<Token>(testOp, TokenType::OPERATOR, pos, buf.currentIndex(), opLen));
+				buf.consume(opLen);
+				pos.move(opLen);
+				break;
+			}
 
 		}
 

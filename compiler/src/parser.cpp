@@ -1619,121 +1619,62 @@ sptr<Value> Parser::parseExpr(uint32_t precedence)
 
 	while (tokens.hasNext())
 	{
-		std::vector<sptr<Token>> opTkns, removedTkns;
-
-		/*
-		Caliburn operator tokens consist of individual characters. So += is two tokens: '+' and '='
-
 		So we gather the tokens into a vector for later processing
+		auto const& opTkn = tokens.current();
 
-		We also do NOT consume the tokens as a cautionary measure
-		*/
-		for (size_t off = 0; tokens.currentIndex() + off < tokens.length(); ++off)
-		{
-			auto const& offTkn = tokens.peek(off);
-
-			if (offTkn->type != TokenType::OPERATOR)
-			{
-				break;
-			}
-
-			opTkns.push_back(offTkn);
-
-		}
-
-		if (opTkns.empty())
+		if (opTkn->type != TokenType::OPERATOR)
 		{
 			break;
 		}
 
-		/*
-		Now we take the vector of tokens from earlier, and we turn them into a single string.
-
-		That string is then compared against the canonical map of operators. If a particular string
-		is invalid, we remove the last token and repeat the process until we find a valid operator.
-		*/
-		while (!opTkns.empty())
+		auto found = INFIX_OPS.find(opTkn->str);
+		if (found == INFIX_OPS.end())
 		{
-			std::stringstream ss;
-
-			for (auto const& tkn : opTkns)
-			{
-				ss << tkn->str;
-			}
-
-			auto found = INFIX_OPS.find(ss.str());
-
-			if (found == INFIX_OPS.end())
-			{
-				removedTkns.emplace(removedTkns.begin(), opTkns.back());
-				opTkns.pop_back();
-				continue;
-			}
-
-			Operator op = found->second;
-
-			if (op == Operator::UNKNOWN)
-			{
-				continue;
-			}
-
-			auto opWeight = OP_PRECEDENCE.at(op);
-
-			//TODO this is dubious
-			if (opWeight > precedence)
-			{
-				return lhs;
-			}
-
-			//Now we know we'll use the tokens, so we consume them
-			tokens.consume(opTkns.size());
-
-			auto const& tkn = tokens.current();
-
-			//Yes, we use *this* code to parse setters.
-			if (tkn->str == "=")
-			{
-				if (OP_CATEGORIES.find(op)->second == OpCategory::LOGICAL)
-				{
-					//TODO complain
-					return nullptr;
-				}
-
-				tokens.consume();
-
-				auto set = new_sptr<SetterValue>();
-
-				set->lhs = lhs;
-				set->op = op;
-				set->rhs = parseAnyExpr();
-
-				return set;
-			}
-
-			auto expr = new_sptr<ExpressionValue>();
-
-			auto rhs = parseExpr(opWeight);//TODO suppress errors here
-
-			if (rhs == nullptr)
-			{
-				tokens.rewind(opTkns.size());
-				continue;
-			}
-
-			expr->lValue = lhs;
-			expr->op = op;
-			expr->rValue = rhs;
-
-			lhs = expr;
-
 			break;
 		}
 
-		if (opTkns.empty())
+		auto op = found->second;
+
+		auto opWeight = OP_PRECEDENCE.at(op);
+
+		//TODO this is dubious
+		if (opWeight > precedence)
+		{
+			return lhs;
+		}
+
+		auto const& tkn = tokens.next();
+
+		//Yes, we use *this* code to parse setters.
+		if (tkn->str == "=")
+		{
+			tokens.consume();
+
+			auto set = new_sptr<SetterValue>();
+
+			set->lhs = lhs;
+			set->op = op;
+			set->rhs = parseAnyExpr();
+
+			return set;
+		}
+
+		auto expr = new_sptr<ExpressionValue>();
+
+		auto rhs = parseExpr(opWeight - 1);//TODO suppress errors here
+
+		if (rhs == nullptr)
 		{
 			//TODO complain
 		}
 
+		expr->lValue = lhs;
+		expr->op = op;
+		expr->rValue = rhs;
+
+		lhs = expr;
+
+		break;
 	}
 
 	return lhs;
@@ -2035,7 +1976,7 @@ std::vector<uptr<Annotation>> Parser::parseAllAnnotations()
 
 	}
 
-	return std::move(vec);
+	return vec;
 }
 
 uptr<Annotation> Parser::parseAnnotation()
