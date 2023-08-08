@@ -22,11 +22,11 @@ namespace caliburn
 		struct SPIRVOutAssembler;
 
 		//Function pointer type for easier usage later
-		using SPIRVOutFn = void(ref<cllr::Instruction> i, size_t off, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out);
+		using SPIRVOutFn = void(ref<const cllr::Instruction> i, size_t off, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out);
 		using SPIRVOpList = std::initializer_list<spirv::SpvOp>;
 
 		//Macro shorthand for implementation signature
-		#define CLLR_SPIRV_IMPL(Name) void Name(ref<Instruction> i, size_t off, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out)
+		#define CLLR_SPIRV_IMPL(Name) void Name(ref<const Instruction> i, size_t off, ref<cllr::Assembler> in, ref<SPIRVOutAssembler> out)
 		
 		//I hate how wordy modern C++ can be...
 		#define SPIRV_CODE_SECTION(...) new_uptr<spirv::CodeSection>(__VA_ARGS__)

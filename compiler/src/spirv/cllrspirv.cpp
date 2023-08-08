@@ -484,6 +484,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCall)
 
 	auto cllrFnArgs = cllr::Finder()
 		.ops({ Opcode::CALL_ARG })
+		->references(i.index)
 		->setOffset(off + 1)
 		->setLimit(i.operands[0])
 		->find(in.getCode());
@@ -538,7 +539,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeArray)//TODO decide on OpTypeRuntimeArra
 	auto id = out.toSpvID(i.index);
 	auto inner = out.toSpvID(i.refs[0]);
 
-	out.types.pushNew(spirv::OpTypeArray(), id, { inner, i.operands[0] });
+	out.types.pushNew(spirv::OpTypeRuntimeArray(), id, { inner });
 
 }
 
