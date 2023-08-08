@@ -13,6 +13,8 @@
 
 #include "cllr/cllrasm.h"
 
+#include "types/type.h"
+
 namespace caliburn
 {
 	struct Function;
@@ -22,9 +24,34 @@ namespace caliburn
 		FUNCTION,
 		CONSTRUCTOR,
 		DESTRUCTOR,
-		CONVERTER,
 		OP_OVERLOAD,
-		MEMBER_FN,
+		CONVERTER
+	};
+
+	static const std::map<std::string, FnType> FN_TYPES = {
+		{"def", FnType::FUNCTION},
+		{"construct", FnType::CONSTRUCTOR},
+		{"destruct", FnType::DESTRUCTOR},
+		{"op", FnType::OP_OVERLOAD}
+	};
+
+	struct ParsedFnArg
+	{
+		sptr<ParsedType> typeHint;
+		sptr<Token> name;
+	};
+
+	struct ParsedFn
+	{
+		FnType type;
+		sptr<Token> first;
+		sptr<Token> name;
+		std::vector<sptr<Token>> invokeDims;
+		sptr<GenericSignature> genSig;
+		std::vector<uptr<ParsedFnArg>> args;
+		sptr<ParsedType> retType;
+		uptr<ScopeStatement> code;
+
 	};
 
 	struct FunctionSignature
@@ -32,6 +59,26 @@ namespace caliburn
 		std::vector<sptr<FnArgVariable>> args;
 		sptr<GenericSignature> genSig;
 		sptr<ParsedType> returnType;
+
+		FunctionSignature() = default;
+		FunctionSignature(ref<const ParsedFn> fn) : genSig(fn.genSig), returnType(fn.retType)
+		{
+			uint32_t a = 0;
+			for (auto const& pFnArg : fn.args)
+			{
+				auto const& [type, name] = *pFnArg;
+
+				auto arg = new_sptr<FnArgVariable>(a);
+
+				arg->typeHint = type;
+				arg->nameTkn = name;
+
+				args.push_back(arg);
+				++a;
+
+			}
+
+		}
 
 	};
 
@@ -53,6 +100,11 @@ namespace caliburn
 
 	};
 
+	struct MethodImpl : FunctionImpl
+	{
+
+	};
+
 	struct Function : Generic<FunctionImpl>
 	{
 		const sptr<FunctionSignature> sig;
@@ -60,6 +112,11 @@ namespace caliburn
 		sptr<Token> name = nullptr;
 		uptr<ScopeStatement> code = nullptr;
 
+		Function(ref<ParsedFn> fn) : Function(new_sptr<FunctionSignature>(fn))
+		{
+			name = fn.name;
+			code = std::move(fn.code);
+		}
 		Function(sptr<FunctionSignature> sig) : Generic(sig->genSig), sig(sig) {}
 		virtual ~Function() {}
 
@@ -76,10 +133,25 @@ namespace caliburn
 
 	struct Method : Function
 	{
-		Method(sptr<FunctionSignature> sig) : Function(sig)
+		Method(ref<ParsedFn> fnData) : Function(fnData)
 		{
 
 		}
+		/*
+		sptr<FunctionImpl> makeVariant(sptr<GenericArguments> args) override
+		{
+
+		}
+		*/
+	};
+
+	struct Constructor : Method
+	{
+
+	};
+
+	struct Destructor : Method
+	{
 
 	};
 

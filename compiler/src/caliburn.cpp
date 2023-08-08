@@ -203,8 +203,7 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 
 	if (shaderStmt == nullptr)
 	{
-		std::string e = "Caliburn: Shader not found: " + shaderName;
-		throw std::exception(e.c_str());
+		throw std::exception((std::stringstream() << "Caliburn: Shader not found: " << shaderName).str().c_str());
 	}
 
 	auto table = new_sptr<SymbolTable>();

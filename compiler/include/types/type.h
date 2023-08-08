@@ -94,8 +94,6 @@ namespace caliburn
 			return nameTkn;
 		}
 
-		virtual void resolveSymbols(sptr<const SymbolTable> table);
-
 		virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) = 0;
 
 		virtual cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target) = 0;
@@ -146,6 +144,15 @@ namespace caliburn
 		void prettyPrint(ref<std::stringstream> ss) const override;
 
 		sptr<RealType> resolve(sptr<const SymbolTable> table);
+
+	};
+
+	struct ParsedVar
+	{
+		bool isConst = false;
+		sptr<Token> first;
+		std::vector<sptr<Token>> names;
+		sptr<Value> initValue;
 
 	};
 

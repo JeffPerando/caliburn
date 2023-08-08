@@ -2,8 +2,10 @@
 #pragma once
 
 #include "langcore.h"
+
 #include "ast/symbols.h"
 
+#include "typearray.h"
 #include "typebool.h"
 #include "typefloat.h"
 #include "typeint.h"

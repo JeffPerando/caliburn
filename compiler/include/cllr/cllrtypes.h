@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "cllrasm.h"
 #include "cllrtype.h"
 
 namespace caliburn

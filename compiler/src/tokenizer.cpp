@@ -318,16 +318,17 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 	return (buf.currentIndex() - startIndex);
 }
 
-size_t Tokenizer::findIdentifierLen(size_t off)
+size_t Tokenizer::findIdentifierLen()
 {
-	for (size_t i = off; i < buf.length(); ++i)
+	for (size_t i = 0; i < buf.remaining(); ++i)
 	{
-		auto type = getType(buf[off]);
+		auto type = getType(buf[i + buf.currentIndex()]);
 
 		if (type != CharType::IDENTIFIER && type != CharType::INT)
 		{
-			return (i - off);
+			return i;
 		}
+
 	}
 
 	return 0;
@@ -371,8 +372,6 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 				tokens.push_back(new_sptr<Token>(std::string(1, current), TokenType::WHITESPACE, pos, buf.currentIndex(), buf.currentIndex() + 1L));
 			}
 
-			buf.consume();
-
 			if (current == '\n')
 			{
 				pos.newline();
@@ -388,18 +387,34 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 				pos.move();
 			}
 
-			continue;
-		}
+			buf.consume();
 
-		//Identifiers can start with a number
-		if (type == CharType::IDENTIFIER || type == CharType::INT)
+		}
+		else if (type == CharType::COMMENT)
 		{
-			auto offset = buf.currentIndex();
+			while (buf.hasNext())
+			{
+				pos.move();
+
+				if (buf.next() == '\n')
+					break;
+
+			}
+
+		}
+		//Identifiers can start with a number
+		else if (type == CharType::IDENTIFIER || type == CharType::INT)
+		{
 			std::string intLit = "";
 			TokenType intType = TokenType::UNKNOWN;
 
 			size_t intOffset = findIntLiteral(intType, intLit);
-			size_t idOffset = findIdentifierLen(offset);
+			size_t idOffset = findIdentifierLen();
+
+			if (intOffset == 0 && idOffset == 0)
+			{
+				errors->err("Identifier found, but no length", pos);
+			}
 
 			//So the idea is simple: We try to make an identifier token, and we try
 			//to make an integer token. Whichever is longer is the one we go with. BUT
@@ -440,34 +455,19 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 			}
 
-			continue;
 		}
-
-		if (type == CharType::COMMENT)
-		{
-			while (buf.hasNext())
-			{
-				pos.move();
-
-				if (buf.next() == '\n')
-					break;
-
-			}
-
-			continue;
-		}
-
-		if (type == CharType::STRING_DELIM)
+		/* string support is not a thing currently
+		else if (type == CharType::STRING_DELIM)
 		{
 			auto start = buf.currentIndex();
 			auto str = findStr(current);
 
 			//findStr should offset col and line
 			tokens.push_back(new_sptr<Token>(str, TokenType::LITERAL_STR, pos, start, start - buf.currentIndex()));
-			continue;
+			
 		}
-
-		if (type == CharType::SPECIAL)
+		*/
+		else if (type == CharType::SPECIAL)
 		{
 			auto specialType = CHAR_TOKEN_TYPES.find(current);
 
@@ -475,52 +475,66 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			{
 				tokens.push_back(new_sptr<Token>(std::string(1, current), specialType->second, pos, buf.currentIndex(), 1L));
 			}
+			else
+			{
+				//TODO warn
+			}
+			
+			buf.consume();
+			pos.move();
 
 		}
 		else if (type == CharType::OPERATOR)
 		{
-			size_t count;
+			size_t opLen = 1;
 
-			for (count = 1; count < buf.remaining(); ++count)
+			while (opLen < buf.remaining())
 			{
-				if (getType(buf.peek(count)) != CharType::OPERATOR)
+				if (getType(buf.peek(opLen)) != CharType::OPERATOR)
+				{
 					break;
+				}
+
+				++opLen;
+
 			}
 			
-			size_t opLen = count;
-
-			while (opLen > 1)
+			while (opLen > 0)
 			{
 				auto testOp = doc.text.substr(buf.currentIndex(), opLen);
 				auto meaning = INFIX_OPS.find(testOp);
 
-				if (meaning == INFIX_OPS.end())
+				if (meaning != INFIX_OPS.end())
 				{
-					auto specMeaning = SPECIAL_OPS.find(testOp);
-
-					if (specMeaning != SPECIAL_OPS.end())
-					{
-						tokens.push_back(new_sptr<Token>(testOp, specMeaning->second, pos, buf.currentIndex(), opLen));
-						buf.consume(opLen);
-						pos.move(opLen);
-						break;
-					}
-
-					--opLen;
-					continue;
+					tokens.push_back(new_sptr<Token>(testOp, TokenType::OPERATOR, pos, buf.currentIndex(), opLen));
+					buf.consume(opLen);
+					pos.move(opLen);
+					break;
 				}
 
-				tokens.push_back(new_sptr<Token>(testOp, TokenType::OPERATOR, pos, buf.currentIndex(), opLen));
-				buf.consume(opLen);
-				pos.move(opLen);
-				break;
+				auto specMeaning = SPECIAL_OPS.find(testOp);
+
+				if (specMeaning != SPECIAL_OPS.end())
+				{
+					tokens.push_back(new_sptr<Token>(testOp, specMeaning->second, pos, buf.currentIndex(), opLen));
+					buf.consume(opLen);
+					pos.move(opLen);
+					opLen = 0;
+					break;
+				}
+
+				--opLen;
+
 			}
 
 		}
+		else
+		{
+			//if all else fails, skip it.
+			buf.consume();
+			pos.move();
 
-		//if all else fails, skip it.
-		buf.consume();
-		pos.move();
+		}
 
 	}
 

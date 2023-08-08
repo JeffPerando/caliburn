@@ -2,6 +2,7 @@
 #include <algorithm>
 
 #include "cllr/cllrasm.h"
+#include "cllr/cllrtypes.h"
 
 using namespace caliburn::cllr;
 
@@ -26,6 +27,11 @@ SSA Assembler::createSSA(Opcode op)
 sptr<Instruction> Assembler::codeFor(SSA id) const
 {
 	return ssaToCode.at(id);
+}
+
+Opcode Assembler::opFor(SSA id) const
+{
+	return ssaToOp.at(id);
 }
 
 SSA Assembler::push(ref<Instruction> ins)

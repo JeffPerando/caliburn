@@ -9,14 +9,12 @@
 #include "syntax.h"
 
 #include "ast/ast.h"
+#include "ast/fn.h"
+#include "ast/generics.h"
 #include "ast/var.h"
-
-#include "types/type.h"
 
 namespace caliburn
 {
-	struct GenericArguments;
-	struct GenericSignature;
 	struct StructStatement;
 	struct Parser;
 
@@ -78,15 +76,9 @@ namespace caliburn
 
 		uptr<Statement> parseFnStmt();
 
-		sptr<Function> parseFunction();
-
-		std::pair<sptr<Token>, Member> parseMember(bool isConst = false);
+		uptr<ParsedFn> parseFnLike();
 
 		sptr<Function> parseMethod();
-
-		sptr<Function> parseConstructor();
-
-		sptr<Function> parseDestructor();
 
 		uptr<Statement> parseLogic();
 
@@ -124,13 +116,13 @@ namespace caliburn
 
 		sptr<Value> parseFnCall(sptr<Value> start);
 
-		bool parseLocalVars(ref<std::vector<sptr<Variable>>> vars);
+		std::vector<sptr<Variable>> parseLocalVars();
 
 		sptr<Variable> parseGlobalVar();
 
 		sptr<Variable> parseMemberVar();
 
-		std::vector<sptr<FnArgVariable>> parseFnArgs();
+		std::vector<uptr<ParsedFnArg>> parseFnArgs();
 
 		std::vector<uptr<Annotation>> parseAllAnnotations();
 

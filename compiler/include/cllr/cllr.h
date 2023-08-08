@@ -33,7 +33,6 @@ namespace caliburn
 		using SSA = uint32_t;
 		struct TypedSSA
 		{
-			//sptr<RealType> typePtr = nullptr;
 			SSA type = 0;
 			SSA value = 0;
 
@@ -162,6 +161,34 @@ namespace caliburn
 			{
 				debugTkn = tkn;
 				return *this;
+			}
+
+			std::string toStr() const
+			{
+				std::stringstream ss;
+
+				if (debugTkn != nullptr)
+				{
+					ss << '@' << debugTkn->pos.toStr() << ": ";
+				}
+
+				if (index != 0)
+				{
+					ss << '#' << index << ": ";
+				}
+
+				ss << (uint32_t)op;
+
+				if (operands[0] != 0 || operands[1] != 0 || operands[2] != 0)
+					ss << " [" << operands[0] << ", " << operands[1] << ", " << operands[2] << "]";
+
+				if (refs[0] != 0 || refs[1] != 0 || refs[2] != 0)
+					ss << " {#" << refs[0] << ", #" << refs[1] << ", #" << refs[2] << '}';
+				
+				if (outType != 0)
+					ss << " -> #" << outType;
+
+				return ss.str();
 			}
 
 			bool operator<(ref<const Instruction> rhs) const

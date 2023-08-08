@@ -12,7 +12,7 @@
 namespace caliburn
 {
 	static const std::vector<std::string_view> KEYWORDS = {
-		"as",
+		"array", "as",
 		"break",
 		"case", "class", "const", "construct", "continue",
 		"def", "default", "delete", "destruct", "discard", "do", "dynamic",
@@ -32,6 +32,10 @@ namespace caliburn
 	};
 
 	static constexpr std::string_view OPERATOR_CHARS = "!$%&*+-/<=>^|~";
+
+	static const std::vector<std::string_view> FN_STARTS = {
+		"construct", "def", "destruct", "op", "override"
+	};
 
 	enum class TokenType : uint64_t
 	{
@@ -172,7 +176,7 @@ namespace caliburn
 		{':',	TokenType::COLON}
 	};
 
-	static const std::map<std::string, TokenType> STR_TOKEN_TYPES = {
+	static const HashMap<std::string, TokenType> STR_TOKEN_TYPES = {
 		{"true",	TokenType::LITERAL_BOOL},
 		{"false",	TokenType::LITERAL_BOOL}
 	};

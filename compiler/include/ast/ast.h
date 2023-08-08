@@ -118,12 +118,24 @@ namespace caliburn
 		const StatementType type;
 
 		StmtModifiers mods = {};
-		std::vector<uptr<Annotation>> annotations;
+		std::map<std::string, uptr<Annotation>> annotations;
 
 		Statement(StatementType stmtType) : type(stmtType) {}
 		virtual ~Statement() {}
+		
+		ptr<Annotation> getAnnotation(std::string name) const
+		{
+			auto found = annotations.find(name);
 
-		bool validate(sptr<ErrorHandler> errors) const
+			if (found == annotations.end())
+			{
+				return nullptr;
+			}
+
+			return found->second.get();
+		}
+		
+		virtual bool validate(sptr<ErrorHandler> errors) const
 		{
 			return false;
 		}

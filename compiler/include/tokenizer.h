@@ -40,7 +40,7 @@ namespace caliburn
 
 		//TODO use 32-bit wide chars for UTF-8 support
 		//or, y'know, find a UTF-8 library (NOT BOOST)
-		Tokenizer(ref<const std::string> str);
+		Tokenizer(ref<const TextDoc> doc);
 
 		virtual ~Tokenizer() {}
 
@@ -58,7 +58,7 @@ namespace caliburn
 
 		size_t findIntLiteral(ref<TokenType> type, ref<std::string> offset);
 
-		size_t findIdentifierLen(size_t off);
+		size_t findIdentifierLen();
 
 	};
 

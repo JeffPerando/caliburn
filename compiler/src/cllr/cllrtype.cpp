@@ -33,7 +33,6 @@ bool cllr::TypeChecker::check(SSA targetType, ref<TypedSSA> rhs, ref<Assembler> 
 
 	auto result = rhsType->isConvertibleTo(targetType, lhsType, op);
 
-	//TODO reconsider
 	if (result == ConversionResult::NO_CONVERSION)
 	{
 		return true;

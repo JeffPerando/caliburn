@@ -8,7 +8,6 @@
 
 #include "basic.h"
 #include "cllr.h"
-#include "cllrtypes.h"
 #include "error.h"
 #include "langcore.h"
 
@@ -18,6 +17,8 @@ namespace caliburn
 {
 	namespace cllr
 	{
+		struct LowType;
+
 		struct Assembler
 		{
 		public:
@@ -57,6 +58,8 @@ namespace caliburn
 			SSA createSSA(Opcode op);
 
 			sptr<Instruction> codeFor(SSA id) const;
+
+			Opcode opFor(SSA id) const;
 
 			SSA push(ref<Instruction> ins);
 

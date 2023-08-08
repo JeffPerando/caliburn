@@ -2,6 +2,8 @@
 #include "ast/values.h"
 #include "ast/fn.h"
 
+#include "cllr/cllrtype.h"
+
 using namespace caliburn;
 
 cllr::TypedSSA IntLiteralValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const

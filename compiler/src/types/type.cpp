@@ -45,24 +45,16 @@ sptr<RealType> ParsedType::resolve(sptr<const SymbolTable> table)
 		}
 
 		resultType = *cType;
-		return resultType;
 	}
 	else if (auto cType = std::get_if<sptr<BaseType>>(&cTypeSym))
 	{
 		resultType = (**cType).getImpl(genericArgs);
-		return resultType;
 	}
 
-	//TODO complain
-	return nullptr;
-}
-
-void Variable::resolveSymbols(sptr<const SymbolTable> table)
-{
-	/*
-	if (initValue != nullptr)
+	if (resultType == nullptr)
 	{
-		initValue->resolveSymbols(table);
+		//TODO complain
 	}
-	*/
+
+	return resultType;
 }

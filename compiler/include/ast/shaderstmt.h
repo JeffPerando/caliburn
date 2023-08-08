@@ -2,56 +2,40 @@
 #pragma once
 
 #include "ast.h"
+#include "fn.h"
 #include "var.h"
 
 #include "error.h"
 
 namespace caliburn
 {
-	struct ShaderStageStatement : Statement
+	struct ShaderStage : ParsedObject
 	{
-		const sptr<ErrorHandler> errors;
-		const sptr<Token> first;
-		const sptr<Token> name;
-
-		uptr<ScopeStatement> code = nullptr;
-
-		ShaderType type = ShaderType::COMPUTE;
+		const ShaderType type;
+		const uptr<ParsedFn> base;
 
 		std::vector<sptr<ShaderIOVariable>> ios;
+		
+		ShaderStage(ref<uptr<ParsedFn>> fn) : base(std::move(fn)), type(SHADER_TYPES.find(base->name->str)->second) {}
 
-		sptr<ParsedType> retType = nullptr;
-
-		ShaderStageStatement(sptr<ErrorHandler> err, sptr<Token> f, sptr<Token> n) : Statement(StatementType::SHADER_STAGE),
-			errors(err), first(f), name(n)
-		{
-			type = SHADER_TYPES.find(n->str)->second;
-		}
-		ShaderStageStatement(ShaderType t) : Statement(StatementType::SHADER_STAGE),
-			type(t), first(nullptr), name(nullptr) {}
-		virtual ~ShaderStageStatement() {}
+		virtual ~ShaderStage() {}
 
 		sptr<Token> firstTkn() const override
 		{
-			return first;
+			return base->first;
 		}
 
 		sptr<Token> lastTkn() const override
 		{
-			return code->lastTkn();//idk
+			if (base->code == nullptr)
+			{
+				return base->retType->lastTkn();
+			}
+
+			return base->code->lastTkn();//idk
 		}
 
 		void prettyPrint(ref<std::stringstream> ss) const override {}
-
-		void declareSymbols(sptr<SymbolTable> table) override
-		{
-			code->declareSymbols(table);
-		}
-
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
-		{
-			return 0;
-		}
 
 		uptr<Shader> compile(sptr<SymbolTable> table, sptr<const CompilerSettings> settings, ref<std::vector<sptr<Error>>> allErrs);
 
@@ -63,7 +47,7 @@ namespace caliburn
 		sptr<Token> name = nullptr;
 		sptr<Token> last = nullptr;
 
-		std::vector<uptr<ShaderStageStatement>> stages;
+		std::vector<uptr<ShaderStage>> stages;
 
 		std::vector<std::pair<sptr<ParsedType>, sptr<Token>>> descriptors;
 

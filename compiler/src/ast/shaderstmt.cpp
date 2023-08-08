@@ -8,16 +8,17 @@
 #include "spirv/cllrspirv.h"
 
 #include "types/cbrn_std.h"
+#include <iostream>
 
 using namespace caliburn;
 
-uptr<Shader> ShaderStageStatement::compile(sptr<SymbolTable> table, sptr<const CompilerSettings> settings, ref<std::vector<sptr<Error>>> allErrs)
+uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSettings> settings, ref<std::vector<sptr<Error>>> allErrs)
 {
 	auto codeAsm = cllr::Assembler(type, settings);
 
-	code->emitDeclCLLR(table, codeAsm);
+	base->code->emitDeclCLLR(table, codeAsm);
 
-	if (settings->validate)
+	if (settings->vLvl != ValidationLevel::NONE)
 	{
 		auto v = cllr::Validator(settings);
 
@@ -28,6 +29,13 @@ uptr<Shader> ShaderStageStatement::compile(sptr<SymbolTable> table, sptr<const C
 		}
 
 	}
+
+#ifdef CLLR_DEBUG_OUT
+	for (auto i : codeAsm.getCode())
+	{
+		std::cout << i->toStr() << '\n';
+	}
+#endif
 	
 	//TODO emit CBIR
 

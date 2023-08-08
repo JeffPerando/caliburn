@@ -2,6 +2,7 @@
 #pragma once
 
 #include <string>
+#include <sstream>
 #include <vector>
 
 #include "basic.h"
@@ -15,6 +16,15 @@ namespace caliburn
 		TextPos() : line(1), column(0) {}
 		TextPos(size_t l, size_t c = 0) : line(l), column(c) {}
 		
+		std::string toStr() const
+		{
+			std::stringstream ss;
+
+			ss << '(' << line << ':' << column << ')';
+
+			return ss.str();
+		}
+
 		bool operator<(ref<const TextPos> rhs) const
 		{
 			if (line > rhs.line)
@@ -50,13 +60,17 @@ namespace caliburn
 
 		void startLine(size_t off)
 		{
-			//TODO can't be bothered to write validation code
+			if (lineOffsets.size() > 1 && off <= lineOffsets.back())
+			{
+				throw std::exception("You somehow tried to push an impossible line offset.");
+			}
+
 			lineOffsets.push_back(off);
 		}
 
 		std::string getLine(size_t line) const
 		{
-			if (line > lineOffsets.size())
+			if (line >= lineOffsets.size())
 			{
 				return "";
 			}
