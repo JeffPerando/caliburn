@@ -34,10 +34,7 @@ namespace caliburn
 		std::vector<uptr<Statement>> parse();
 
 		template<typename T>
-		uptr<T> parseAnyUnique(std::vector<ParseMethod<uptr<T>>> fns);
-
-		template<typename T>
-		sptr<T> parseAnyShared(std::vector<ParseMethod<sptr<T>>> fns);
+		T parseAny(std::vector<ParseMethod<T>> fns);
 
 		template<typename T>
 		T parseBetween(std::string start, ParseMethod<T> fn, std::string end);

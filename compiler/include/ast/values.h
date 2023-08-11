@@ -361,6 +361,11 @@ namespace caliburn
 		sptr<Token> memberName = nullptr;
 
 		MemberReadValue() : Value(ValueType::UNKNOWN) {}
+		MemberReadValue(sptr<Value> t, sptr<Token> n) : MemberReadValue()
+		{
+			target = t;
+			memberName = n;
+		}
 		virtual ~MemberReadValue() {}
 
 		sptr<Token> firstTkn() const override

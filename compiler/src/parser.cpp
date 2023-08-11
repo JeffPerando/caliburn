@@ -39,7 +39,7 @@ std::vector<uptr<Statement>> Parser::parse()
 }
 
 template<typename T>
-uptr<T> Parser::parseAnyUnique(std::vector<ParseMethod<uptr<T>>> fns)
+T Parser::parseAny(std::vector<ParseMethod<T>> fns)
 {
 	/*
 	this code is really smart, and stupid. at the same time.
@@ -48,31 +48,6 @@ uptr<T> Parser::parseAnyUnique(std::vector<ParseMethod<uptr<T>>> fns)
 	it returns that result.
 	The alternative was very repetitive code.
 	*/
-	auto current = tokens.currentIndex();
-
-	for (auto fn : fns)
-	{
-		auto parsed = fn(*this);
-
-		if (parsed)
-		{
-			return parsed;
-		}
-		else
-		{
-			//undo any funny business the parse function may have done
-			tokens.revertTo(current);
-
-		}
-
-	}
-
-	return nullptr;
-}
-
-template<typename T>
-sptr<T> Parser::parseAnyShared(std::vector<ParseMethod<sptr<T>>> fns)
-{
 	auto current = tokens.currentIndex();
 
 	for (auto fn : fns)
@@ -586,7 +561,7 @@ uptr<Statement> Parser::parseDecl()
 		&Parser::parseIf
 	};
 
-	uptr<Statement> stmt = parseAnyUnique(methods);
+	uptr<Statement> stmt = parseAny(methods);
 
 	if (stmt == nullptr)
 	{
@@ -1059,7 +1034,7 @@ uptr<Statement> Parser::parseLogic()
 		&Parser::parseValueStmt
 	};
 
-	return parseAnyUnique(methods);
+	return parseAny(methods);
 }
 
 uptr<Statement> Parser::parseControl()
@@ -1084,7 +1059,7 @@ uptr<Statement> Parser::parseControl()
 		//&Parser::parseSwitch
 	};
 
-	auto ctrl = parseAnyUnique(methods);
+	auto ctrl = parseAny(methods);
 
 	if (ctrl == nullptr)
 	{
@@ -1213,7 +1188,7 @@ uptr<Statement> Parser::parseValueStmt()
 		&Parser::parseAnyExpr
 	};
 
-	auto val = parseAnyShared(methods);
+	auto val = parseAny(methods);
 
 	if (val == nullptr)
 	{
@@ -1272,15 +1247,15 @@ sptr<Value> Parser::parseAnyValue()
 		&Parser::parseAnyFnCall,
 	};
 
-	return parseAnyShared(methods);
+	return parseAny(methods);
 }
 
 sptr<Value> Parser::parseNonExpr()
 {
 	std::vector<ParseMethod<sptr<Value>>> initParsers =
-		{ &Parser::parseLiteral, &Parser::parseAnyAccess, &Parser::parseAnyFnCall };
+		{ &Parser::parseLiteral, &Parser::parseAnyFnCall, &Parser::parseAnyAccess };
 
-	auto v = parseAnyShared(initParsers);
+	auto v = parseAny(initParsers);
 
 	if (v == nullptr)
 	{
@@ -1523,45 +1498,43 @@ sptr<Value> Parser::parseAccess(sptr<Value> target)
 	auto access = new_sptr<VarChainValue>();
 
 	access->target = target;
-
-	while (tokens.hasRem())
+	
+	while (true)
 	{
-		auto const& peek = tokens.peek();
-
-		//check for method call
-		if (peek->str == GENERIC_START || peek->type == TokenType::START_PAREN)
+		if (tokens.hasNext())
 		{
-			if (auto fnCall = parseFnCall(access))
+			auto const& peek = tokens.peek();
+
+			//check for method call
+			if (peek->str == GENERIC_START || peek->type == TokenType::START_PAREN)
 			{
-				return fnCall;
+				if (auto fnCall = parseFnCall(access))
+				{
+					return fnCall;
+				}
+
 			}
 
-			//NO COMPLAINING HERE
-			break;
 		}
-
+		
 		access->chain.push_back(tokens.current());
 
-		auto const& dot = tokens.next();
-
-		if (dot->type != TokenType::PERIOD)
+		if (!tokens.hasNext(2))
 		{
 			break;
 		}
 
-		auto const& next = tokens.next();
+		if (tokens.next()->type != TokenType::PERIOD)
+		{
+			break;
+		}
 
-		if (next->type != TokenType::IDENTIFIER)
+		if (tokens.next()->type != TokenType::IDENTIFIER)
 		{
 			//TODO complain
 			break;
 		}
 
-	}
-
-	if (access->chain.empty())
-	{
-		return target;
 	}
 
 	return access;
