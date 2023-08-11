@@ -184,7 +184,7 @@ namespace caliburn
 			uint32_t nextSSA = 1;
 			HashMap<cllr::SSA, spirv::SSA> ssaAliases;
 
-			std::vector<spirv::SSAEntry> ssaEntries;
+			std::vector<spirv::SSAEntry> ssaEntries{ spirv::SSAEntry() };
 			std::vector<spirv::SSAKind> ssaToSection;
 			std::set<spirv::Capability> capabilities;
 			std::vector<std::string> extensions;

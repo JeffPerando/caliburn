@@ -1,4 +1,6 @@
 
+#include <iostream>
+
 #include "spirv/cllrspirv.h"
 
 #include "cllr/cllrfind.h"
@@ -230,17 +232,9 @@ void cllr::SPIRVOutAssembler::setOpForSSA(spirv::SSA id, spirv::SpvOp op)
 	}
 
 	//find OOB SSA entry. No idea how this happens tbh
-	if (ssaEntries.size() >= id)
+	if (id >= ssaEntries.size())
 	{
-		//arbitrary limit, here in case things go haywire. feel free to remove in 2025 or whenever
-		if (id > 0xFFFF)
-		{
-			throw std::exception("NO.");
-		}
-
-		ssaEntries.insert(ssaEntries.begin() + id, spirv::SSAEntry());
-		ssaToSection.insert(ssaToSection.begin() + id, spirv::SSAKind::UNKNOWN);
-
+		throw std::exception("NO.");
 	}
 
 	auto& entry = ssaEntries.at(id);
@@ -249,10 +243,13 @@ void cllr::SPIRVOutAssembler::setOpForSSA(spirv::SSA id, spirv::SpvOp op)
 	{
 		entry.ssa = id;
 		entry.instruction = op;
+
 		return;
 	}
-
-	//TODO complain
+	else
+	{
+		//TODO complain
+	}
 
 }
 
