@@ -28,23 +28,26 @@ void CodeSection::push(SpvOp op, SSA id, std::vector<uint32_t> args)
 
 void CodeSection::pushTyped(SpvOp op, SSA type, SSA id, std::vector<uint32_t> args)
 {
-	//TODO check for valid type, maybe.
+	if (op.words == 0)
+	{
+		//TODO complain
+		throw std::exception();
+	}
 
 	if (!isValidOp(op))
 	{
-		return;
+		//TODO complain
+		throw std::exception();
 	}
 
 	if (type == 0)
 	{
-		//TODO complain
-		return;
+		//TODO complain(?)
 	}
 
 	if (id == 0)
 	{
 		//TODO complain(?)
-		return;
 	}
 
 	spvAsm->setOpForSSA(id, op);
@@ -62,7 +65,7 @@ void CodeSection::pushVar(SSA type, SSA id, StorageClass sc, SSA init)
 	if (id == 0)
 	{
 		//TODO complain
-		return;
+		throw std::exception();
 	}
 
 	varMeta.emplace(id, VarData{ id, type, sc });

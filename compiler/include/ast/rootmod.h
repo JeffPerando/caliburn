@@ -12,6 +12,7 @@
 
 namespace caliburn
 {
+	/*
 	struct RootModule : Module
 	{
 		std::vector<std::pair<std::string, std::string>> modRequests;
@@ -63,5 +64,5 @@ namespace caliburn
 		}
 
 	};
-
+	*/
 }

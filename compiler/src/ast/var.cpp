@@ -330,18 +330,15 @@ cllr::TypedSSA ShaderIOVariable::emitLoadCLLR(sptr<SymbolTable> table, ref<cllr:
 {
 	if (ioType == ShaderIOVarType::OUTPUT)
 	{
-		//TODO complain
 		return cllr::TypedSSA();
 	}
 
 	ioType = ShaderIOVarType::INPUT;
 
-	emitDeclCLLR(table, codeAsm);
-
 	if (auto t = typeHint->resolve(table))
 	{
 		auto tID = t->emitDeclCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_READ_VAR, {}, { id }, tID));
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_READ_VAR, {}, { emitDeclCLLR(table, codeAsm) }, tID));
 
 		return cllr::TypedSSA(tID, vID);
 	}

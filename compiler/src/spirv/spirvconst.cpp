@@ -80,12 +80,12 @@ void ConstSection::dump(ref<CodeSection> sec) const
 		{
 			if (data.upper != 0)
 			{
-				sec.pushTyped(OpConstant(2), data.type, id, { data.lower, data.upper });
+				sec.pushTyped(OpConstant(1), data.type, id, { data.lower, data.upper });
 
 			}
 			else
 			{
-				sec.pushTyped(OpConstant(1), data.type, id, { data.lower });
+				sec.pushTyped(OpConstant(0), data.type, id, { data.lower });
 
 			}
 

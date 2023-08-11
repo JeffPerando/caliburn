@@ -22,6 +22,12 @@ namespace caliburn
 			}))
 		{}
 
+		Member getMember(ref<const std::string> name) const override
+		{
+			//TODO get length
+			return Member();
+		}
+
 	};
 
 }

@@ -35,15 +35,9 @@ namespace caliburn
 		{"op", FnType::OP_OVERLOAD}
 	};
 
-	struct ParsedFnArg
-	{
-		sptr<ParsedType> typeHint;
-		sptr<Token> name;
-	};
-
 	struct ParsedFn
 	{
-		FnType type;
+		FnType type = FnType::FUNCTION;
 		sptr<Token> first;
 		sptr<Token> name;
 		std::vector<sptr<Token>> invokeDims;

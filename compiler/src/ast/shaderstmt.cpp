@@ -8,36 +8,43 @@
 #include "spirv/cllrspirv.h"
 
 #include "types/cbrn_std.h"
-#include <iostream>
 
 using namespace caliburn;
 
 uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSettings> settings, ref<std::vector<sptr<Error>>> allErrs)
 {
-	auto codeAsm = cllr::Assembler(type, settings);
+	sptr<SymbolTable> stageTable = table;
 
-	base->code->emitDeclCLLR(table, codeAsm);
-
-	if (settings->vLvl != ValidationLevel::NONE)
+	if (!vtxInputs.empty())
 	{
-		auto v = cllr::Validator(settings);
+		stageTable = new_sptr<SymbolTable>(table);
 
-		if (!v.validate(codeAsm.getCode()))
+		for (auto const& in : vtxInputs)
 		{
-			v.errors->dump(allErrs);
-			return nullptr;
+			stageTable->add(in->name, in);
+			
 		}
 
 	}
 
-#ifdef CLLR_DEBUG_OUT
-	for (auto i : codeAsm.getCode())
+	auto codeAsm = cllr::Assembler(type, settings);
+
+	auto fullName = parentName->str + "_" + SHADER_TYPE_NAMES.at(type);
+	auto nameID = codeAsm.addString(fullName);
+
+	auto stageID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::SHADER_STAGE, { (uint32_t)type, nameID }, {}));
+
+	base->code->declareSymbols(stageTable);
+	base->code->emitDeclCLLR(stageTable, codeAsm);
+
+	codeAsm.push(cllr::Instruction(cllr::Opcode::SHADER_STAGE_END, {}, { stageID }));
+
+	auto valid = cllr::Validator(settings);
+
+	if (!valid.validate(codeAsm.getCode()))
 	{
-		std::cout << i->toStr() << '\n';
+		valid.errors->dump(allErrs);
 	}
-#endif
-	
-	//TODO emit CBIR
 
 	auto op = cllr::Optimizer(settings);
 	op.optimize(codeAsm);
@@ -45,25 +52,48 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 	auto spirvAsm = cllr::SPIRVOutAssembler();
 
 	auto out = new_uptr<Shader>(type, spirvAsm.translateCLLR(codeAsm));
-
+	
 	spirvAsm.errors->dump(allErrs);
-
-	//TODO add descriptor sets
 
 	if (type == ShaderType::VERTEX)
 	{
-		for (auto const& ioVar : ios)
+		for (auto const& [name, index] : codeAsm.getInputs())
 		{
-			if (ioVar->getIOType() != ShaderIOVarType::INPUT)
-			{
-				continue;
-			}
-
-			out->inputs.push_back(VertexInputAttribute{ ioVar->name, ioVar->getIndex() });
+			out->inputs.push_back(VertexInputAttribute{ name, index });
 
 		}
 
 	}
 
 	return out;
+}
+
+std::vector<uptr<Shader>> ShaderStatement::compile(sptr<SymbolTable> table, sptr<CompilerSettings> settings, ref<std::vector<sptr<Error>>> compileErrs)
+{
+	std::vector<uptr<Shader>> shaders;
+
+	auto shaderSyms = new_sptr<SymbolTable>(table);
+
+	for (auto const& io : ioVars)
+	{
+		shaderSyms->add(io->name, io);
+	}
+
+	for (auto const& stage : stages)
+	{
+		auto shader = stage->compile(shaderSyms, settings, compileErrs);
+
+		uint32_t d = 0;
+
+		for (auto const& desc : descriptors)
+		{
+			shader->sets.push_back(DescriptorSet{ desc.second->str, d++ });
+
+		}
+
+		shaders.push_back(std::move(shader));
+
+	}
+
+	return shaders;
 }

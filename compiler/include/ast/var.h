@@ -5,9 +5,19 @@
 
 namespace caliburn
 {
+	struct ParsedFnArg
+	{
+		sptr<ParsedType> typeHint;
+		sptr<Token> name;
+	};
+
 	struct LocalVariable : Variable
 	{
 		LocalVariable() : Variable() {}
+		LocalVariable(ref<const ParsedVar> v) : Variable()
+		{
+
+		}
 		virtual ~LocalVariable() {}
 
 		void prettyPrint(ref<std::stringstream> ss) const override;
@@ -89,11 +99,14 @@ namespace caliburn
 	public:
 		const std::string name;
 
-		ShaderIOVariable(std::string n) : name(n) {}
-		ShaderIOVariable(sptr<Token> n) : name(n->str)
+		ShaderIOVariable(std::string n) : Variable(), name(n) {}
+		ShaderIOVariable(ref<ParsedVar> v) : Variable(v), name(v.name->str) {}
+		ShaderIOVariable(ShaderIOVarType t, ref<ParsedFnArg> v) : Variable(), ioType(t), name(v.name->str)
 		{
-			nameTkn = n;
+			typeHint = v.typeHint;
+
 		}
+
 		virtual ~ShaderIOVariable() {}
 
 		ShaderIOVarType getIOType()

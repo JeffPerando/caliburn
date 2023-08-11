@@ -20,8 +20,8 @@ namespace caliburn
 	struct SymbolTable
 	{
 	private:
-		HashMap<std::string, Symbol> symbols;
-		sptr<const SymbolTable> parent;
+		std::map<std::string, Symbol> symbols;
+		sptr<SymbolTable> parent;
 
 	public:
 		SymbolTable() : parent(nullptr) {}
@@ -77,9 +77,10 @@ namespace caliburn
 			return parent->isChildOf(table);
 		}
 
+		//TODO does not seem to work
 		void reparent(sptr<SymbolTable> p)
 		{
-			parent = p;
+			//parent = p;
 		}
 
 	};

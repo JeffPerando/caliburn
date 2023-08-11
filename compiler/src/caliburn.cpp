@@ -13,6 +13,13 @@
 
 #include "spirv/cllrspirv.h"
 
+#include "types/typearray.h"
+#include "types/typebool.h"
+#include "types/typefloat.h"
+#include "types/typeint.h"
+#include "types/typevector.h"
+#include "types/typevoid.h"
+
 using namespace caliburn;
 
 void Compiler::o(OptimizeLevel lvl)
@@ -144,9 +151,6 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 
 	//COMPILE
 
-	//TODO populate built-in types
-	//auto root = new_sptr<RootModule>();
-
 	ptr<ShaderStatement> shaderStmt = nullptr;
 
 	for (auto const& stmt : ast)
@@ -206,7 +210,33 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 		throw std::exception((std::stringstream() << "Caliburn: Shader not found: " << shaderName).str().c_str());
 	}
 
-	auto table = new_sptr<SymbolTable>();
+	shaderStmt->sortStages();
+
+	//Populate the built-in symbols table
+
+	auto root = new_sptr<SymbolTable>();
+
+	root->add("array", new_sptr<TypeArray>());
+	root->add("bool", new_sptr<TypeBool>());
+	root->add("void", new_sptr<TypeVoid>());
+
+	for (auto bits = MIN_INT_BITS; bits <= MAX_INT_BITS; bits *= 2)
+	{
+		root->add((std::stringstream() << "int" << bits).str(), new_sptr<TypeInt>(bits, true));
+		root->add((std::stringstream() << "uint" << bits).str(), new_sptr<TypeInt>(bits, false));
+	}
+
+	for (auto bits = MIN_FLOAT_BITS; bits <= MAX_FLOAT_BITS; bits *= 2)
+	{
+		root->add((std::stringstream() << "float" << bits).str(), new_sptr<TypeFloat>(bits));
+	}
+
+	for (auto len = MIN_VECTOR_LEN; len <= MAX_VECTOR_LEN; ++len)
+	{
+		root->add((std::stringstream() << "vec" << len).str(), new_sptr<TypeVector>(len));
+	}
+
+	auto table = new_sptr<SymbolTable>(root);
 
 	/*
 	for (auto const& [inner, outer] : dynTypes)
@@ -250,24 +280,8 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 		stmt->declareSymbols(table);
 	}
 
-	std::vector<uptr<Shader>> shaders;
 	std::vector<sptr<Error>> compileErrs;
-
-	for (auto const& stage : shaderStmt->stages)
-	{
-		auto result = stage->compile(table, settings, compileErrs);
-
-		uint32_t d = 0;
-
-		for (auto const& desc : shaderStmt->descriptors)
-		{
-			result->sets.push_back(DescriptorSet{ desc.second->str, d++ });
-
-		}
-
-		shaders.push_back(std::move(result));
-
-	}
+	auto shaders = shaderStmt->compile(table, settings, compileErrs);
 
 	if (!compileErrs.empty())
 	{

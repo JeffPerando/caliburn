@@ -90,13 +90,14 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss) const
 
 	if (!suggestions.empty())
 	{
-		ss << "\nSuggestions: ";
+		ss << "\nSuggestions:";
+
 		for (size_t i = 0; i < suggestions.size(); ++i)
 		{
 			ss << '\n\t' << (i + 1) << ". " << suggestions.at(i);
 
 		}
-
+		
 	}
 
 	ss << '\n';

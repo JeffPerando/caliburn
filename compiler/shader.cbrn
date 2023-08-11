@@ -1,5 +1,8 @@
 
 shader TestShader
 {
-	
+	def vertex(vec4 v) -> vec4
+	{
+		return v;
+	};
 };

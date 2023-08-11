@@ -6,7 +6,7 @@
 
 using namespace caliburn::cllr;
 
-uint32_t Assembler::addString(std::string str)
+uint32_t Assembler::addString(ref<const std::string> str)
 {
 	auto index = strs.size();
 
@@ -138,6 +138,7 @@ std::pair<SSA, uint32_t> Assembler::pushInput(std::string name, SSA type)
 	SSA nextIn = pushNew(Instruction(Opcode::VAR_SHADER_IN, { index }, { type }));
 	
 	inputs.emplace(name, nextIn);
+	inputNames.push_back(std::pair(name, index));
 
 	return std::pair(nextIn, index);
 }
@@ -166,6 +167,7 @@ std::pair<SSA, uint32_t> Assembler::pushOutput(std::string name, SSA type)
 	SSA nextOut = pushNew(Instruction(Opcode::VAR_SHADER_OUT, { index }, { type }));
 	
 	outputs.emplace(name, nextOut);
+	outputNames.push_back(std::pair(name, index));
 
 	return std::pair(nextOut, index);
 }

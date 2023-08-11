@@ -418,8 +418,6 @@ bool Parser::parseScopeEnd(ref<uptr<ScopeStatement>> stmt)
 		return false;
 	}
 
-	tokens.consume();
-
 	stmt->retMode = retMode->second;
 
 	if (stmt->retMode == ReturnMode::RETURN)
@@ -430,7 +428,6 @@ bool Parser::parseScopeEnd(ref<uptr<ScopeStatement>> stmt)
 	if (!parseSemicolon())
 	{
 		//TODO complain
-		return false;
 	}
 
 	return true;
@@ -475,6 +472,8 @@ uptr<ScopeStatement> Parser::parseScope(std::vector<ParseMethod<uptr<Statement>>
 		return nullptr;
 	}
 
+	tokens.consume();
+
 	auto scope = new_uptr<ScopeStatement>();
 
 	while (tokens.hasNext())
@@ -488,40 +487,29 @@ uptr<ScopeStatement> Parser::parseScope(std::vector<ParseMethod<uptr<Statement>>
 		}
 		else if (parseScopeEnd(scope))
 		{
-			if (tokens.current()->type == TokenType::END_SCOPE)
+			if (!parseSemicolon())
 			{
-				tokens.consume();
-				return scope;
+				//TODO complain
 			}
 			
-			//TODO complain
-
+			return scope;
 		}
-
-		uptr<Statement> stmt = nullptr;
 
 		for (auto& pm : pms)
 		{
-			stmt = pm(*this);
-
-			if (stmt != nullptr)
+			if (auto stmt = pm(*this))
 			{
+				if (!parseSemicolon())
+				{
+					//TODO complain but continue parsing
+				}
+
+				scope->stmts.push_back(std::move(stmt));
+
 				break;
 			}
 
 		}
-
-		if (stmt == nullptr)
-		{
-			break;
-		}
-
-		if (!parseSemicolon())
-		{
-			//TODO complain but continue parsing
-		}
-
-		scope->stmts.push_back(std::move(stmt));
 
 	}
 
@@ -530,7 +518,7 @@ uptr<ScopeStatement> Parser::parseScope(std::vector<ParseMethod<uptr<Statement>>
 
 sptr<ParsedType> Parser::parseTypeName()
 {
-	auto first = tokens.current();
+	sptr<Token> first = tokens.current();
 
 	if (first->type != TokenType::IDENTIFIER && first->str != "dynamic")
 	{
@@ -808,9 +796,36 @@ uptr<Statement> Parser::parseShader()
 
 		if (auto stageFn = parseFnLike())
 		{
-			shader->stages.push_back(new_uptr<ShaderStage>(stageFn));
+			shader->stages.push_back(new_uptr<ShaderStage>(stageFn, shader->name));
+
 		}
-		
+		else
+		{
+			auto ios = parseMemberVarLike();
+
+			if (ios.empty())
+			{
+				//TODO complain
+			}
+
+			for (auto const& ioData : ios)
+			{
+				if (ioData->isConst)
+				{
+					//TODO complain
+				}
+
+				shader->ioVars.push_back(new_sptr<ShaderIOVariable>(*ioData));
+
+			}
+
+		}
+		/*
+		if (!parseSemicolon())
+		{
+			//TODO complain
+		}
+		*/
 	}
 
 	return shader;
@@ -963,7 +978,7 @@ uptr<ParsedFn> Parser::parseFnLike()
 	}
 	else
 	{
-		fn->name = tokens.next();
+		fn->name = tokens.current();
 		tokens.consume();
 
 	}
@@ -1004,13 +1019,17 @@ uptr<ParsedFn> Parser::parseFnLike()
 	}
 
 	fn->retType = retType;
+	
+	auto scopeStart = tokens.current();
+	
+	if (scopeStart->type != TokenType::START_SCOPE)
+	{
+		auto e = errors->err("Invalid start to scope", scopeStart, nullptr);
+
+	}
+
 	fn->code = parseScope({&Parser::parseLogic});
 
-	if (fn->code == nullptr)
-	{
-		//TODO complain
-	}
-	
 	return fn;
 }
 
@@ -1190,7 +1209,7 @@ uptr<Statement> Parser::parseDoWhile()
 uptr<Statement> Parser::parseValueStmt()
 {
 	std::vector<ParseMethod<sptr<Value>>> methods = {
-		&Parser::parseAnyFnCall,
+		//&Parser::parseAnyFnCall,
 		&Parser::parseAnyExpr
 	};
 
@@ -1247,13 +1266,15 @@ uptr<Statement> Parser::parseLocalVarStmt()
 
 sptr<Value> Parser::parseAnyValue()
 {
+	/*
 	std::vector<ParseMethod<sptr<Value>>> methods = {
 		&Parser::parseAnyExpr,//this will call the other two and look for an expression
 		&Parser::parseLiteral,
 		&Parser::parseAnyFnCall,
 	};
 
-	return parseAnyShared(methods);
+	return parseAnyShared(methods);*/
+	return parseAccess(nullptr);
 }
 
 sptr<Value> Parser::parseNonExpr()
@@ -1501,7 +1522,9 @@ sptr<Value> Parser::parseAccess(sptr<Value> target)
 		return target;
 	}
 
-	if (!tokens.hasNext() || tokens.peek()->type != TokenType::PERIOD)
+	return new_sptr<VarReadValue>(first);
+	/*
+	if (tokens.hasNext() && tokens.peek()->type == TokenType::PERIOD)
 	{
 		if (target != nullptr)
 		{
@@ -1513,9 +1536,8 @@ sptr<Value> Parser::parseAccess(sptr<Value> target)
 			return mem;
 		}
 
-		return new_sptr<VarReadValue>(first);
 	}
-
+	
 	auto access = new_sptr<VarChainValue>();
 
 	access->target = target;
@@ -1560,7 +1582,7 @@ sptr<Value> Parser::parseAccess(sptr<Value> target)
 		return target;
 	}
 
-	return access;
+	return access;*/
 }
 
 sptr<Value> Parser::parseAnyExpr()
@@ -1687,77 +1709,11 @@ sptr<Value> Parser::parseFnCall(sptr<Value> start)
 std::vector<sptr<Variable>> Parser::parseLocalVars()
 {
 	std::vector<sptr<Variable>> vars;
-	auto first = tokens.current();
+	auto pvars = parseLocalVarLike();
 
-	if (first->type != TokenType::KEYWORD)
+	for (auto const& pv : pvars)
 	{
-		return vars;
-	}
-
-	bool isConst = false;
-
-	if (first->str == "const")
-	{
-		isConst = true;
-	}
-	else if (first->str != "var")
-	{
-		return vars;
-	}
-
-	auto tkn = tokens.next();
-
-	sptr<ParsedType> type = nullptr;
-	if (tkn->str == ":")
-	{
-		tkn = tokens.next();
-		type = parseTypeName();
-
-		if (type == nullptr)
-		{
-			//TODO complain
-		}
-
-	}
-
-	std::vector<sptr<Token>> names = parseIdentifierList();
-
-	tkn = tokens.current();
-
-	if (tkn->str == ":")
-	{
-		//postParseException(new_uptr<ParseException>("That's not how type hints work in Caliburn. Type hints go before the variable name, not after. So var: int x is valid. var x: int isn't.", tkn));
-		return vars;
-	}
-
-	sptr<Value> initVal = nullptr;
-	if (tkn->str == "=")
-	{
-		tokens.consume();
-
-		auto last = tokens.current();
-
-		initVal = parseAnyValue();
-
-	}
-	else if (type == nullptr)
-	{
-		//postParseException(new_uptr<ParseException>("Implicitly-typed variable must be manually initialized", tkn));
-		return vars;
-	}
-
-	for (auto const& name : names)
-	{
-		auto v = new_sptr<LocalVariable>();
-
-		v->start = first;
-		v->nameTkn = name;
-		v->typeHint = type;
-		v->initValue = initVal;
-		v->isConst = isConst;
-
-		vars.push_back(v);
-
+		vars.push_back(new_sptr<LocalVariable>(*pv));
 	}
 
 	return vars;
@@ -1814,7 +1770,7 @@ sptr<Variable> Parser::parseGlobalVar()
 
 	auto v = new_sptr<GlobalVariable>();
 
-	v->start = first;
+	v->first = first;
 	v->nameTkn = name;
 	v->typeHint = type;
 	v->initValue = initVal;
@@ -1864,13 +1820,147 @@ sptr<Variable> Parser::parseMemberVar()
 	auto v = new_sptr<MemberVariable>();
 
 	v->mods = mods;
-	v->start = start;
+	v->first = start;
 	v->nameTkn = name;
 	v->typeHint = type;
 	v->initValue = initVal;
 	v->isConst = isConst;
 	
 	return v;
+}
+
+std::vector<sptr<ParsedVar>> Parser::parseLocalVarLike()
+{
+	std::vector<sptr<ParsedVar>> vars;
+	auto first = tokens.current();
+
+	if (first->type != TokenType::KEYWORD)
+	{
+		return vars;
+	}
+
+	bool isConst = false;
+
+	if (first->str == "const")
+	{
+		isConst = true;
+	}
+	else if (first->str != "var")
+	{
+		return vars;
+	}
+
+	auto tkn = tokens.next();
+	sptr<ParsedType> typeHint = nullptr;
+
+	if (tkn->str == ":")
+	{
+		tkn = tokens.next();
+		typeHint = parseTypeName();
+
+		if (typeHint == nullptr)
+		{
+			//TODO complain
+		}
+
+	}
+
+	auto varNames = parseIdentifierList();
+	
+	tkn = tokens.next();
+
+	if (tkn->str == ":")
+	{
+		//postParseException(new_uptr<ParseException>("That's not how type hints work in Caliburn. Type hints go before the variable name, not after. So var: int x is valid. var x: int isn't.", tkn));
+		return vars;
+	}
+
+	sptr<Value> initValue = nullptr;
+
+	if (tkn->str == "=")
+	{
+		tokens.consume();
+		initValue = parseAnyValue();
+
+	}
+	else if (typeHint == nullptr)
+	{
+		//postParseException(new_uptr<ParseException>("Implicitly-typed variable must be manually initialized", tkn));
+		return vars;
+	}
+
+	for (auto const& name : varNames)
+	{
+		auto v = new_sptr<ParsedVar>();
+
+		v->first = first;
+		v->isConst = isConst;
+		v->typeHint = typeHint;
+		v->name = name;
+		v->initValue = initValue;
+
+		vars.push_back(v);
+
+	}
+
+	return vars;
+}
+
+std::vector<sptr<ParsedVar>> Parser::parseMemberVarLike()
+{
+	std::vector<sptr<ParsedVar>> vars;
+	bool isConst = false;
+	auto first = tokens.current();
+
+	if (first->type == TokenType::KEYWORD && first->str == "const")
+	{
+		isConst = true;
+		tokens.consume();
+	}
+
+	auto typeHint = parseTypeName();
+
+	if (typeHint == nullptr)
+	{
+		return vars;
+	}
+
+	auto varNames = parseIdentifierList();
+
+	if (varNames.empty())
+	{
+		//TODO complain
+		return vars;
+	}
+
+	sptr<Value> initValue = nullptr;
+
+	if (tokens.current()->str == "=")
+	{
+		initValue = parseAnyValue();
+
+		if (initValue == nullptr)
+		{
+			//TODO complain
+		}
+
+	}
+
+	for (auto& name : varNames)
+	{
+		auto v = new_sptr<ParsedVar>();
+
+		v->first = first;
+		v->isConst = isConst;
+		v->typeHint = typeHint;
+		v->name = name;
+		v->initValue = initValue;
+
+		vars.push_back(v);
+
+	}
+
+	return vars;
 }
 
 std::vector<uptr<ParsedFnArg>> Parser::parseFnArgs()
@@ -1886,18 +1976,18 @@ std::vector<uptr<ParsedFnArg>> Parser::parseFnArgs()
 			break;
 		}
 
-		auto argName = tokens.current();
-
-		if (argName->type != TokenType::IDENTIFIER)
-		{
-			//TODO complain
-			break;
-		}
-
 		auto arg = new_uptr<ParsedFnArg>();
 
 		arg->typeHint = argType;
-		arg->name = argName;
+		arg->name = tokens.current();
+
+		if (arg->name->type != TokenType::IDENTIFIER)
+		{
+			errors->err("Not an argument name", arg->name, nullptr);
+			break;
+		}
+
+		tokens.consume();
 
 		fnArgs.push_back(std::move(arg));
 

@@ -106,7 +106,7 @@ namespace caliburn
 		MESH
 	};
 
-	static const HashMap<std::string, ShaderType> SHADER_TYPES = {
+	static const HashMap<std::string_view, ShaderType> SHADER_TYPES = {
 		//{"main",		ShaderType::COMPUTE},
 		{"vertex",		ShaderType::VERTEX},
 		{"frag",		ShaderType::FRAGMENT},
@@ -120,6 +120,22 @@ namespace caliburn
 		//{"rayMiss",		ShaderType::RT_MISS},
 		//{"task",		ShaderType::TASK},
 		//{"mesh",		ShaderType::MESH}
+	};
+
+	static const HashMap<ShaderType, std::string> SHADER_TYPE_NAMES = {
+		//{ShaderType::COMPUTE, "main"},
+		{ShaderType::VERTEX,		"vertex"},
+		{ShaderType::FRAGMENT,		"frag"},
+		//{ShaderType::TESS_CTRL,	"tessCtrl"},
+		//{ShaderType::TESS_EVAL,	"tessEval"},
+		{ShaderType::GEOMETRY,		"geom"},
+		//{ShaderType::RT_GEN,		"rayGen"},
+		//{ShaderType::RT_CLOSE,	"rayClose"},
+		//{ShaderType::RT_ANY_HIT,	"rayHit"},
+		//{ShaderType::RT_INTERSECT	"rayInt"},
+		//{ShaderType::RT_MISS,		"rayMiss"},
+		//{ShaderType::TASK,		"task"},
+		//{ShaderType::MESH,		"mesh"}
 	};
 
 	struct DescriptorSet

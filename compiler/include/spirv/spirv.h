@@ -5,7 +5,7 @@
 #include <string>
 
 #define SPIRV_Op(Name, ID, Count) constexpr SpvOp inline Name() {return SpvOp(Count, ID);}
-#define SPIRV_OpVar(Name, ID, Base) constexpr SpvOp inline Name(uint32_t v = 0) {return SpvOp(Base + v, ID);}
+#define SPIRV_OpVar(Name, ID, Base) constexpr SpvOp inline Name(uint32_t v) {return SpvOp(Base + v, ID);}
 
 //Pro-tip, future me: For whatever reason, not marking functions as inline in this particular file
 //results in linking errors. So... yeah. Fun.
@@ -20,16 +20,16 @@ namespace caliburn
 
         using SSA = uint32_t;
 
-        inline uint32_t SpvStrLen(std::string str)
+        inline uint32_t SpvStrLen(const std::string& str)
         {
             return (uint32_t)((str.length() >> 2) + ((str.length() & 0x3) == 0));
         }
 
         struct SpvOp
         {
-            uint16_t words = 0;
             uint16_t op = 0;
-
+            uint16_t words = 0;
+            
             constexpr SpvOp() = default;
             constexpr SpvOp(uint32_t code)
             {
@@ -55,8 +55,8 @@ namespace caliburn
         private:
             const uint8_t unused_0 = 0;
         public:
-            uint8_t major;
             uint8_t minor;
+            uint8_t major;
         private:
             const uint8_t unused_1 = 0;
         public:
@@ -74,7 +74,8 @@ namespace caliburn
             uint32_t Inline : 1,
                 DontInline : 1,
                 Pure : 1,
-                Const : 1;
+                Const : 1,
+                Rest : 28;
 
             FuncControl()
             {
@@ -82,6 +83,7 @@ namespace caliburn
                 DontInline = 0;
                 Pure = 0;
                 Const = 0;
+                Rest = 0;
             }
 
             operator uint32_t() const

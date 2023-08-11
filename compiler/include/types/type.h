@@ -20,7 +20,6 @@
 
 namespace caliburn
 {
-	struct ParsedType;
 	struct RealType;
 	struct Variable;
 	struct Function;
@@ -53,8 +52,7 @@ namespace caliburn
 	struct Value : ParsedObject
 	{
 		const ValueType vType;
-		//sptr<RealType> type = nullptr;
-
+		
 		Value(ValueType vt) : vType(vt) {}
 		virtual ~Value() {}
 
@@ -63,42 +61,6 @@ namespace caliburn
 		virtual bool isCompileTimeConst() const = 0;
 
 		virtual cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const = 0;
-
-	};
-
-	struct Variable : ParsedObject
-	{
-	protected:
-		cllr::SSA id = 0;
-		cllr::SSA varType = 0;
-
-	public:
-		StmtModifiers mods = {};
-		sptr<Token> start = nullptr;
-		sptr<Token> nameTkn = nullptr;
-		sptr<ParsedType> typeHint = nullptr;
-
-		sptr<Value> initValue = nullptr;
-		bool isConst = false;
-
-		Variable() = default;
-		virtual ~Variable() {}
-
-		sptr<Token> firstTkn() const override
-		{
-			return start;
-		}
-
-		sptr<Token> lastTkn() const override
-		{
-			return nameTkn;
-		}
-
-		virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) = 0;
-
-		virtual cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target) = 0;
-
-		virtual void emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) = 0;
 
 	};
 
@@ -114,7 +76,7 @@ namespace caliburn
 
 		sptr<Token> lastToken = nullptr;
 
-		sptr<GenericArguments> genericArgs;
+		sptr<GenericArguments> genericArgs = new_sptr<GenericArguments>();
 		std::vector<sptr<Value>> arrayDims;//TODO implement properly
 
 		ParsedType(std::string n) : name(n), nameTkn(nullptr) {}
@@ -149,10 +111,58 @@ namespace caliburn
 
 	struct ParsedVar
 	{
-		bool isConst = false;
+		StmtModifiers mods{};
 		sptr<Token> first;
-		std::vector<sptr<Token>> names;
+		bool isConst = false;
+		sptr<ParsedType> typeHint;
+		sptr<Token> name;
 		sptr<Value> initValue;
+
+	};
+
+	struct Variable : ParsedObject
+	{
+	protected:
+		cllr::SSA id = 0;
+		cllr::SSA varType = 0;
+
+	public:
+		StmtModifiers mods = {};
+		sptr<Token> first = nullptr;
+		sptr<Token> nameTkn = nullptr;
+		sptr<ParsedType> typeHint = nullptr;
+
+		sptr<Value> initValue = nullptr;
+		bool isConst = false;
+
+		Variable() = default;
+		Variable(ref<ParsedVar> v)
+		{
+			mods = v.mods;
+			isConst = v.isConst;
+			first = v.first;
+			nameTkn = v.name;
+			typeHint = v.typeHint;
+			initValue = v.initValue;
+
+		}
+		virtual ~Variable() {}
+
+		sptr<Token> firstTkn() const override
+		{
+			return first;
+		}
+
+		sptr<Token> lastTkn() const override
+		{
+			return nameTkn;
+		}
+
+		virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) = 0;
+
+		virtual cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target) = 0;
+
+		virtual void emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) = 0;
 
 	};
 
@@ -200,9 +210,15 @@ namespace caliburn
 
 		virtual Member getMember(ref<const std::string> name) const = 0;
 
-		virtual cllr::TypedSSA callConstructor(ref<cllr::Assembler> codeAsm, ref<std::vector<Value>> args) const = 0;
+		virtual cllr::TypedSSA callConstructor(ref<cllr::Assembler> codeAsm, ref<std::vector<Value>> args) const
+		{
+			return cllr::TypedSSA();
+		}
 
-		virtual void callDestructor(cllr::SSA val) const = 0;
+		virtual void callDestructor(cllr::SSA val) const
+		{
+
+		}
 
 		/* TODO reconsider inheritance
 		sptr<BaseType> getSuper()

@@ -243,14 +243,13 @@ SSA SpvIO::getOutputFor(ExecutionModel type, ref<SSA> outType, uint32_t loc)
 
 	if (type == ExecutionModel::Vertex)
 	{
-		auto v4 = t.typeVec(4);
-
+		outType = t.typeVec(4);
 		outID = getBuiltinVar(type, BuiltIn::Position);
 
 	}
 	else if (type == ExecutionModel::Fragment)
 	{
-		outType = t.typeVec(4, t.typeFP32());
+		outType = t.typeVec(4);
 		outID = makeOutVar(t.typeOutPtr(outType));
 
 		d->decorate(outID, Decoration::Location, { loc });

@@ -27,8 +27,7 @@ SSA TypeSection::findOrMake(SpvOp op, std::vector<uint32_t> args, SSA id)
 	{
 		if (id != 0)
 		{
-			//TODO edge case
-			//just... alias them??? idk
+			ssaToType->emplace(id, Type{ op, fid->second, args });
 		}
 
 		return fid->second;
@@ -37,15 +36,16 @@ SSA TypeSection::findOrMake(SpvOp op, std::vector<uint32_t> args, SSA id)
 	if (id == 0)
 	{
 		id = spvAsm->createSSA();
-		spvAsm->setOpForSSA(op, id);
+		spvAsm->setOpForSSA(id, op);
 
 	}
 
+	ssaToType->emplace(id, Type{ op, id, args });
 	types->emplace(Type{ op, id, args }, id);
 
 	return id;
 }
-
+/*
 void TypeSection::pushNew(SpvOp op, SSA id, std::vector<uint32_t> args)
 {
 	if (id == 0)
@@ -63,7 +63,7 @@ void TypeSection::pushNew(SpvOp op, SSA id, std::vector<uint32_t> args)
 	types->emplace(Type{ op, id, args }, id);
 
 }
-
+*/
 void TypeSection::dump(ref<CodeSection> sec) const
 {
 	for (auto& [t, id] : *types)

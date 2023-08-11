@@ -5,13 +5,6 @@
 
 #include "ast/symbols.h"
 
-#include "typearray.h"
-#include "typebool.h"
-#include "typefloat.h"
-#include "typeint.h"
-#include "typevector.h"
-#include "typevoid.h"
-
 namespace caliburn
 {
 	/*

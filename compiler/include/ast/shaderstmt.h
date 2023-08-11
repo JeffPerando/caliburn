@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <algorithm>
+
 #include "ast.h"
 #include "fn.h"
 #include "var.h"
@@ -11,14 +13,31 @@ namespace caliburn
 {
 	struct ShaderStage : ParsedObject
 	{
-		const ShaderType type;
+		ShaderType type = ShaderType::VERTEX;
+
 		const uptr<ParsedFn> base;
 
-		std::vector<sptr<ShaderIOVariable>> ios;
-		
-		ShaderStage(ref<uptr<ParsedFn>> fn) : base(std::move(fn)), type(SHADER_TYPES.find(base->name->str)->second) {}
+		sptr<Token> parentName;
 
+		std::vector<sptr<ShaderIOVariable>> vtxInputs;
+
+		ShaderStage(ref<uptr<ParsedFn>> fn, sptr<Token> pname) : base(std::move(fn)), parentName(pname)
+		{
+			type = SHADER_TYPES.find(base->name->str)->second;
+
+			for (auto const& a : base->args)
+			{
+				vtxInputs.push_back(new_sptr<ShaderIOVariable>(ShaderIOVarType::INPUT, *a));
+
+			}
+
+		}
 		virtual ~ShaderStage() {}
+
+		bool operator<(ref<const ShaderStage> other) const
+		{
+			return type < other.type;
+		}
 
 		sptr<Token> firstTkn() const override
 		{
@@ -51,6 +70,8 @@ namespace caliburn
 
 		std::vector<std::pair<sptr<ParsedType>, sptr<Token>>> descriptors;
 
+		std::vector<sptr<ShaderIOVariable>> ioVars;
+
 		ShaderStatement() : Statement(StatementType::SHADER) {}
 		virtual ~ShaderStatement() {}
 
@@ -74,6 +95,13 @@ namespace caliburn
 		{
 			return 0;
 		}
+
+		void sortStages()
+		{
+			std::sort(stages.begin(), stages.end());
+		}
+
+		std::vector<uptr<Shader>> compile(sptr<SymbolTable> table, sptr<CompilerSettings> settings, ref<std::vector<sptr<Error>>> compileErrs);
 
 	};
 

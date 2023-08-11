@@ -122,6 +122,10 @@ namespace caliburn
 
 		sptr<Variable> parseMemberVar();
 
+		std::vector<sptr<ParsedVar>> parseLocalVarLike();
+
+		std::vector<sptr<ParsedVar>> parseMemberVarLike();
+
 		std::vector<uptr<ParsedFnArg>> parseFnArgs();
 
 		std::vector<uptr<Annotation>> parseAllAnnotations();

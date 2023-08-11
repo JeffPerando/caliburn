@@ -108,7 +108,7 @@ namespace caliburn
 
             SSA findOrMake(SpvOp op, std::vector<uint32_t> args = {}, SSA id = 0);
 
-            void pushNew(SpvOp op, SSA id, std::vector<uint32_t> args = {});
+            //void pushNew(SpvOp op, SSA id, std::vector<uint32_t> args = {});
 
             void dump(ref<CodeSection> sec) const;
 

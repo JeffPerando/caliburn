@@ -22,14 +22,15 @@ namespace caliburn
     {
         struct SSAEntry
         {
-            SSA ssa;
-            uint32_t instruction;
+            SSA ssa = 0;
+            SpvOp instruction = spirv::OpNop();
         };
 
         struct EntryPoint
         {
             SSA func;
             ExecutionModel type;
+            std::string name;
             std::vector<uint32_t> io;
         };
 

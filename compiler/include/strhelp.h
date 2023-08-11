@@ -76,14 +76,14 @@ namespace caliburn
 			}
 
 			//treat the line # as off by one
-			size_t off = lineOffsets.at(line - 1);
+			size_t off = lineOffsets.at(line);
 			
 			if (line == lineOffsets.size())
 			{
 				return text.substr(off);
 			}
 
-			size_t nextOff = lineOffsets.at(line);
+			size_t nextOff = lineOffsets.at(line + 1);
 
 			return text.substr(off, nextOff - off);
 		}

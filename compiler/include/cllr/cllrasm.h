@@ -19,14 +19,17 @@ namespace caliburn
 	{
 		struct LowType;
 
+		using IOList = std::vector<std::pair<std::string, uint32_t>>;
+
 		struct Assembler
 		{
 		public:
+			uint32_t nextSSA = 1;
+
 			const ShaderType type;
 			sptr<const CompilerSettings> settings;
 			const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::CLLR_EMIT);
 		private:
-			uint32_t nextSSA = 1;
 			
 			const uptr<InstructionVec> code = new_uptr<InstructionVec>();
 
@@ -40,6 +43,7 @@ namespace caliburn
 			
 			std::set<std::string> ioNames;
 			std::map<std::string, SSA> inputs, outputs;
+			IOList inputNames, outputNames;
 
 			//keep a stack of the current loop labels so we can implement break, continue, etc.
 			std::vector<std::pair<SSA, SSA>> loops;
@@ -79,13 +83,28 @@ namespace caliburn
 
 			std::pair<SSA, uint32_t> pushOutput(std::string name, SSA type);
 
-			uint32_t addString(std::string str);
+			uint32_t addString(ref<const std::string> str);
 
 			ref<const std::string> getString(uint32_t index) const
 			{
+				if (strs.empty() || index >= strs.size())
+				{
+					return "";
+				}
+
 				return strs.at(index);
 			}
 			
+			ref<const IOList> getInputs()
+			{
+				return inputNames;
+			}
+
+			ref<const IOList> getOutputs()
+			{
+				return outputNames;
+			}
+
 			const ref<const InstructionVec> getCode() const
 			{
 				return *code;
