@@ -157,12 +157,12 @@ namespace caliburn
 	struct Shader
 	{
 		const ShaderType type;
-		const uptr<std::vector<uint32_t>> spirv;
+		const uptr<std::vector<uint32_t>> code;
 
 		std::vector<VertexInputAttribute> inputs;
 		std::vector<DescriptorSet> sets;
 
-		Shader(ShaderType t, ref<uptr<std::vector<uint32_t>>> spv) : type(t), spirv(std::move(spv)) {}
+		Shader(ShaderType t, ref<uptr<std::vector<uint32_t>>> c) : type(t), code(std::move(c)) {}
 
 	};
 
