@@ -3,8 +3,10 @@
 #include <iostream>
 #include <sstream>
 
-#define CLLR_DEBUG_OUT
+#define CLLR_DEBUG_OUT 1
 #include "caliburn.h"
+
+#include "spirv/spirv.h"
 
 int main()
 {
@@ -42,17 +44,17 @@ int main()
 	{
 		auto name = (std::stringstream() << "./../../../../shader" << ((uint32_t)s->type) << ".spv").str();
 
-		std::ofstream out(name, std::ios::out | std::ios::binary);
+		std::ofstream out(name, std::ios::out | std::ios::binary | std::ios::trunc);
 
 		if (!out.is_open())
 		{
 			continue;
 		}
 
-		out << s->spirv;
+		out.write((char*)&s->spirv->at(0), s->spirv->size() * 4);
 		out.close();
 
 	}
-
+	
 	return 0;
 }
