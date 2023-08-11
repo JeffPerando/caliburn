@@ -3,7 +3,6 @@
 #include <iostream>
 #include <sstream>
 
-#define CLLR_DEBUG_OUT 1
 #include "caliburn.h"
 
 #include "spirv/spirv.h"

@@ -1266,15 +1266,13 @@ uptr<Statement> Parser::parseLocalVarStmt()
 
 sptr<Value> Parser::parseAnyValue()
 {
-	/*
 	std::vector<ParseMethod<sptr<Value>>> methods = {
 		&Parser::parseAnyExpr,//this will call the other two and look for an expression
 		&Parser::parseLiteral,
 		&Parser::parseAnyFnCall,
 	};
 
-	return parseAnyShared(methods);*/
-	return parseAccess(nullptr);
+	return parseAnyShared(methods);
 }
 
 sptr<Value> Parser::parseNonExpr()
@@ -1522,45 +1520,14 @@ sptr<Value> Parser::parseAccess(sptr<Value> target)
 		return target;
 	}
 
-	return new_sptr<VarReadValue>(first);
-	/*
-	if (tokens.hasNext() && tokens.peek()->type == TokenType::PERIOD)
-	{
-		if (target != nullptr)
-		{
-			auto mem = new_sptr<MemberReadValue>();
-
-			mem->memberName = first;
-			mem->target = target;
-
-			return mem;
-		}
-
-	}
-	
 	auto access = new_sptr<VarChainValue>();
 
 	access->target = target;
 
-	while (tokens.hasNext())
+	while (tokens.hasRem())
 	{
-		auto const& dot = tokens.next();
-
-		if (dot->type != TokenType::PERIOD)
-		{
-			break;
-		}
-
-		auto const& name = tokens.next();
-
-		if (name->type != TokenType::IDENTIFIER)
-		{
-			//TODO complain
-			break;
-		}
-
 		auto const& peek = tokens.peek();
-		
+
 		//check for method call
 		if (peek->str == GENERIC_START || peek->type == TokenType::START_PAREN)
 		{
@@ -1573,7 +1540,22 @@ sptr<Value> Parser::parseAccess(sptr<Value> target)
 			break;
 		}
 
-		access->chain.push_back(name);
+		access->chain.push_back(tokens.current());
+
+		auto const& dot = tokens.next();
+
+		if (dot->type != TokenType::PERIOD)
+		{
+			break;
+		}
+
+		auto const& next = tokens.next();
+
+		if (next->type != TokenType::IDENTIFIER)
+		{
+			//TODO complain
+			break;
+		}
 
 	}
 
@@ -1582,7 +1564,7 @@ sptr<Value> Parser::parseAccess(sptr<Value> target)
 		return target;
 	}
 
-	return access;*/
+	return access;
 }
 
 sptr<Value> Parser::parseAnyExpr()
