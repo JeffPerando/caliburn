@@ -2,6 +2,10 @@
 ClosureIdea.py
 docs/
 
+## Hide compiled shaders and disassemblies
+*.spv
+*.dis
+
 README.md
 REFERENCE.md
 
@@ -10,7 +14,7 @@ compiler/build
 compiler/out
 CMakePresets.json
 
-##VS Code
+## VS Code
 compiler/.vscode
 
 ## Ignore Visual Studio temporary files, build results, and
