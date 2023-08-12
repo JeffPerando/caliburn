@@ -403,7 +403,7 @@ void ExpressionValue::prettyPrint(ref<std::stringstream> ss) const
 		return;
 	}
 
-	const auto& opStr = findStrForOp(op);
+	const auto& opStr = INFIX_OPS_STR.at(op);
 
 	lValue->prettyPrint(ss);
 
@@ -532,7 +532,7 @@ void SetterValue::prettyPrint(ref<std::stringstream> ss) const
 
 	if (op != Operator::UNKNOWN)
 	{
-		ss << findStrForOp(op);
+		ss << INFIX_OPS_STR.at(op);
 
 	}
 

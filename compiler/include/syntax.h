@@ -213,16 +213,41 @@ namespace caliburn
 		{"++",	Operator::APPEND}
 	};
 
-	static const HashMap<std::string, ReturnMode> RETURN_MODES = {
-		{"return", ReturnMode::RETURN},
-		{"continue", ReturnMode::CONTINUE},
-		{"break", ReturnMode::BREAK},
-		{"pass", ReturnMode::PASS},
-		{"unreachable", ReturnMode::UNREACHABLE},
-		{"discard", ReturnMode::DISCARD}
+	static const std::map<Operator, std::string> INFIX_OPS_STR = {
+		{Operator::ADD,			"+"},
+		{Operator::SUB,			"-"},
+		{Operator::MUL,			"*"},
+		{Operator::DIV,			"/"},
+		{Operator::INTDIV,		"//"},
+		{Operator::MOD,			"%"},
+		{Operator::POW,			"^"},
+
+		{Operator::BIT_AND,		"&"},
+		{Operator::BIT_OR,		"|"},
+		{Operator::BIT_XOR,		"$"},
+		{Operator::SHIFT_LEFT,	"<<"},
+		{Operator::SHIFT_RIGHT,	">>"},
+
+		{Operator::AND,			"&&"},
+		{Operator::OR,			"||"},
+		{Operator::COMP_EQ,		"=="},
+		{Operator::COMP_NEQ,	"!="},
+		{Operator::COMP_GT,		">"},
+		{Operator::COMP_LT,		"<"},
+		{Operator::COMP_GTE,	">="},
+		{Operator::COMP_LTE,	"<="},
+
+		{Operator::APPEND,		"++"}
 	};
 
-	std::string findStrForOp(Operator op);
+	static const HashMap<std::string, ReturnMode> RETURN_MODES = {
+		{"return",		ReturnMode::RETURN},
+		{"continue",	ReturnMode::CONTINUE},
+		{"break",		ReturnMode::BREAK},
+		{"pass",		ReturnMode::PASS},
+		{"unreachable",	ReturnMode::UNREACHABLE},
+		{"discard",		ReturnMode::DISCARD}
+	};
 
 	//So here's why math ops are separate from logic ops:
 	//Math ops can use (op)= to set something, e.g. +=.

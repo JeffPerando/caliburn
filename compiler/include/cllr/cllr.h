@@ -268,7 +268,7 @@ namespace caliburn
 
 		struct CompilationUnit
 		{
-			Target target = Target::GPU;
+			HostTarget target = HostTarget::GPU;
 			uptr<InstructionVec> code;
 
 		};

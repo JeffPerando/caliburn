@@ -14,17 +14,16 @@ Contains necessary constants, data types, and functions necessary for working wi
 
 namespace caliburn
 {
-	enum class Target : uint32_t
+	enum class HostTarget
 	{
 		CPU, GPU
 	};
 
-	//TODO reconsider
-	enum class TargetOutput : uint32_t
+	enum class GPUTarget
 	{
-		SPIRV, LLVM, DXIL
+		SPIRV, DXIL, METAL
 	};
-
+	
 	/*
 	Enum denoting how much to optimize code.
 
@@ -33,7 +32,7 @@ namespace caliburn
 	If it's near instant and makes the code much much faster, add it to O1.
 	DEBUG disables every optimization, even the obvious ones.
 	*/
-	enum class OptimizeLevel
+	enum class OptimizeLevel : uint32_t
 	{
 		//equivalent to O0. just show me the raw output
 		DEBUG,

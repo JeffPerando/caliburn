@@ -28,9 +28,9 @@ namespace caliburn
 		struct OutAssembler
 		{
 			const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::OUT_EMIT);
-			const Target target;
+			const HostTarget target;
 
-			OutAssembler(Target t) : target(t) {}
+			OutAssembler(HostTarget t) : target(t) {}
 			virtual ~OutAssembler() {}
 
 			virtual uptr<std::vector<OutCode>> translateCLLR(ref<cllr::Assembler> cllrAsm) = 0;

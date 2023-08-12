@@ -11,7 +11,7 @@
 
 using namespace caliburn;
 
-cllr::SPIRVOutAssembler::SPIRVOutAssembler() : OutAssembler(Target::GPU)
+cllr::SPIRVOutAssembler::SPIRVOutAssembler() : OutAssembler(HostTarget::GPU)
 {
 	//here we go...
 
@@ -231,7 +231,6 @@ void cllr::SPIRVOutAssembler::setOpForSSA(spirv::SSA id, spirv::SpvOp op)
 		return;
 	}
 
-	//find OOB SSA entry. No idea how this happens tbh
 	if (id >= ssaEntries.size())
 	{
 		throw std::exception("NO.");
@@ -239,17 +238,14 @@ void cllr::SPIRVOutAssembler::setOpForSSA(spirv::SSA id, spirv::SpvOp op)
 
 	auto& entry = ssaEntries.at(id);
 
-	if (entry.instruction == spirv::OpNop())
-	{
-		entry.ssa = id;
-		entry.instruction = op;
-
-		return;
-	}
-	else
+	if (entry.instruction != spirv::OpNop())
 	{
 		//TODO complain
+		return;
 	}
+
+	entry.ssa = id;
+	entry.instruction = op;
 
 }
 
