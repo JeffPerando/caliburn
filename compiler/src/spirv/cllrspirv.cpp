@@ -1,6 +1,4 @@
 
-#include <iostream>
-
 #include "spirv/cllrspirv.h"
 
 #include "cllr/cllrfind.h"
@@ -13,6 +11,9 @@ using namespace caliburn;
 
 cllr::SPIRVOutAssembler::SPIRVOutAssembler() : OutAssembler(HostTarget::GPU)
 {
+	ssaEntries.reserve(128);
+	ssaToSection.reserve(128);
+	
 	//here we go...
 
 	impls[(uint32_t)Opcode::SHADER_STAGE] = spirv_impl::OpShaderStage;
@@ -324,7 +325,11 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpShaderStage)
 	
 	auto fn_v4 = out.types.findOrMake(spirv::OpTypeFunction(0), { v4 });
 
-	out.main->pushTyped(spirv::OpFunction(), v4, id, { spirv::FuncControl(), fn_v4 });
+	spirv::FuncControl fnctrl;
+
+	fnctrl.Inline = 1;
+
+	out.main->pushTyped(spirv::OpFunction(), v4, id, {fnctrl, fn_v4});
 
 	out.shaderEntries.push_back(spirv::EntryPoint
 	{
@@ -1317,9 +1322,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueZero)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpReturn)
 {
-	auto id = out.toSpvID(i.index);
-
-	out.main->push(spirv::OpReturn(), id, {});
+	out.main->push(spirv::OpReturn(), 0, {});
 
 }
 

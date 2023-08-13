@@ -120,7 +120,7 @@ std::vector<sptr<Token>> Parser::parseIdentifierList()
 {
 	std::vector<sptr<Token>> ids;
 
-	while (tokens.hasNext())
+	while (true)
 	{
 		auto tkn = tokens.current();
 
@@ -130,9 +130,13 @@ std::vector<sptr<Token>> Parser::parseIdentifierList()
 		}
 
 		ids.push_back(tkn);
-		tkn = tokens.next();
 
-		if (tkn->type != TokenType::COMMA)
+		if (!tokens.hasNext(2))
+		{
+			break;
+		}
+
+		if (tokens.next()->type != TokenType::COMMA)
 		{
 			break;
 		}
@@ -940,8 +944,6 @@ uptr<ParsedFn> Parser::parseFnLike()
 				//postParseException(new_uptr<ParseException>("GPU threading data is empty or has invalid values", tkn));
 			}
 
-			tokens.consume();
-
 		}
 
 	}
@@ -974,32 +976,27 @@ uptr<ParsedFn> Parser::parseFnLike()
 		fn->args = parseFnArgs();
 	}, ")");
 
-	sptr<ParsedType> retType = nullptr;
-
 	if (tokens.current()->type == TokenType::ARROW)
 	{
 		tokens.consume();
-		retType = parseTypeName();
-
-		if (retType == nullptr)
-		{
-			//TODO complain
-			return nullptr;
-		}
+		fn->retType = parseTypeName();
 
 	}
 	else
 	{
-		retType = new_sptr<ParsedType>("void");
+		fn->retType = new_sptr<ParsedType>("void");
 	}
 
-	fn->retType = retType;
-	
+	if (fn->retType == nullptr)
+	{
+		//TODO complain
+	}
+
 	auto scopeStart = tokens.current();
 	
 	if (scopeStart->type != TokenType::START_SCOPE)
 	{
-		auto e = errors->err("Invalid start to scope", scopeStart, nullptr);
+		auto e = errors->err("Invalid start to function scope", scopeStart, nullptr);
 
 	}
 
@@ -1014,12 +1011,12 @@ sptr<Function> Parser::parseMethod()
 	{
 		switch (fnData->type)
 		{
-		case FnType::FUNCTION: return new_sptr<Method>(*fnData);
-		case FnType::CONSTRUCTOR: break;
-		case FnType::DESTRUCTOR: break;
-		case FnType::CONVERTER: break;
-		case FnType::OP_OVERLOAD: break;
-		default: break;//TODO complain
+			case FnType::FUNCTION: return new_sptr<Method>(*fnData);
+			case FnType::CONSTRUCTOR: break;
+			case FnType::DESTRUCTOR: break;
+			case FnType::CONVERTER: break;
+			case FnType::OP_OVERLOAD: break;
+			default: break;//TODO complain
 		}
 
 	}
@@ -1093,27 +1090,18 @@ uptr<Statement> Parser::parseIf()
 	auto stmt = new_uptr<IfStatement>();
 
 	stmt->first = first;
-	stmt->condition = parseBetween("(", ParseMethod<sptr<Value>>(&Parser::parseAnyValue), ")");
+
+	parseAnyBetween("(", lambda() {
+		stmt->condition = parseAnyValue();
+	}, ")");
+
 	stmt->innerIf = parseScope({&Parser::parseDecl});
 
 	if (tokens.current()->str == "else")
 	{
 		tokens.consume();
 
-		auto innerElseStmt = parseLogic();
-
-		if (innerElseStmt != nullptr)
-		{
-			stmt->innerElse = new_uptr<ScopeStatement>();
-
-			stmt->innerElse->stmts.push_back(std::move(innerElseStmt));
-
-		}
-		else
-		{
-			stmt->innerElse = parseScope({&Parser::parseDecl});
-
-		}
+		stmt->innerIf = parseScope({ &Parser::parseDecl });
 
 	}
 
@@ -1134,12 +1122,14 @@ uptr<Statement> Parser::parseWhile()
 		return nullptr;
 	}
 
-	auto cond = parseBetween("(", ParseMethod<sptr<Value>>(&Parser::parseAnyValue), ")");
-
 	auto stmt = new_uptr<WhileStatement>();
 	
 	stmt->first = first;
-	stmt->condition = cond;
+
+	parseAnyBetween("(", lambda() {
+		stmt->condition = parseAnyValue();
+	}, ")");
+
 	stmt->loop = parseScope({ &Parser::parseLogic });
 
 	return stmt;
@@ -1156,7 +1146,10 @@ uptr<Statement> Parser::parseDoWhile()
 
 	tokens.consume();
 
-	auto body = parseScope({&Parser::parseLogic});
+	auto ret = new_uptr<WhileStatement>();
+
+	ret->doWhile = true;
+	ret->loop = parseScope({&Parser::parseLogic});
 
 	if (tokens.current()->type != TokenType::KEYWORD || tokens.current()->str != "while")
 	{
@@ -1164,27 +1157,17 @@ uptr<Statement> Parser::parseDoWhile()
 		return nullptr;
 	}
 
-	auto cond = parseBetween("(", ParseMethod<sptr<Value>>(&Parser::parseAnyValue), ")");
-
-	if (cond == nullptr)
-	{
-		//TODO complain
-		return nullptr;
-	}
-
-	auto ret = new_uptr<WhileStatement>();
-
-	ret->doWhile = true;
-	ret->loop = std::move(body);
-	ret->condition = cond;
-
+	parseAnyBetween("(", lambda() {
+		ret->condition = parseAnyValue();
+	}, ")");
+	
 	return ret;
 }
 
 uptr<Statement> Parser::parseValueStmt()
 {
 	std::vector<ParseMethod<sptr<Value>>> methods = {
-		//&Parser::parseAnyFnCall,
+		&Parser::parseAnyFnCall,
 		&Parser::parseAnyExpr
 	};
 
@@ -1255,16 +1238,25 @@ sptr<Value> Parser::parseNonExpr()
 	std::vector<ParseMethod<sptr<Value>>> initParsers =
 		{ &Parser::parseLiteral, &Parser::parseAnyFnCall, &Parser::parseAnyAccess };
 
-	auto v = parseAny(initParsers);
+	sptr<Value> v = parseAny(initParsers);
 
 	if (v == nullptr)
 	{
 		auto const& first = tokens.current();
 
+		//TODO tuple literals
 		if (first->type == TokenType::START_PAREN)
 		{
 			tokens.consume();
-			v = parseBetween("(", ParseMethod<sptr<Value>>(&Parser::parseAnyExpr), ")");
+			v = parseAnyExpr();
+
+			if (tokens.current()->type != TokenType::END_PAREN)
+			{
+				//TODO complain
+			}
+			
+			tokens.consume();
+
 		}
 		else if (first->type == TokenType::KEYWORD)
 		{
