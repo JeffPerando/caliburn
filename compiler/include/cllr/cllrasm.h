@@ -24,13 +24,14 @@ namespace caliburn
 		struct Assembler
 		{
 		public:
+			const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::CLLR_EMIT);
+
 			uint32_t nextSSA = 1;
 
 			const ShaderType type;
 			sptr<const CompilerSettings> settings;
-			const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::CLLR_EMIT);
-		private:
 			
+		private:
 			const uptr<InstructionVec> code = new_uptr<InstructionVec>();
 
 			InstructionVec ssaToCode{ new_sptr<Instruction>() };
@@ -42,7 +43,9 @@ namespace caliburn
 			std::vector<std::string> strs;
 			
 			std::set<std::string> ioNames;
-			std::map<std::string, SSA> inputs, outputs;
+			std::map<std::string, std::pair<uint32_t, SSA>> inputs, outputs;
+			
+			//Makes outputting a shader's 'API' easy.
 			IOList inputNames, outputNames;
 
 			//keep a stack of the current loop labels so we can implement break, continue, etc.
@@ -143,8 +146,6 @@ namespace caliburn
 				}
 
 			}
-
-			void addIOName(std::string name);
 
 			/*
 			Replaces all references to 'in' with 'out'. This includes output types.

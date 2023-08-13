@@ -116,12 +116,6 @@ sptr<LowType> Assembler::getType(SSA id) const
 
 std::pair<SSA, uint32_t> Assembler::pushInput(std::string name, SSA type)
 {
-	if (ioNames.find(name) == ioNames.end())
-	{
-		//TODO complain
-		return std::pair(0, 0);
-	}
-	
 	if (outputs.find(name) != outputs.end())
 	{
 		//TODO complain
@@ -132,6 +126,11 @@ std::pair<SSA, uint32_t> Assembler::pushInput(std::string name, SSA type)
 	{
 		//TODO complain
 		return std::pair(0, 0);
+	}
+
+	if (ioNames.find(name) == ioNames.end())
+	{
+		ioNames.insert(name);
 	}
 
 	uint32_t index = (uint32_t)inputs.size();
@@ -145,12 +144,6 @@ std::pair<SSA, uint32_t> Assembler::pushInput(std::string name, SSA type)
 
 std::pair<SSA, uint32_t> Assembler::pushOutput(std::string name, SSA type)
 {
-	if (ioNames.find(name) == ioNames.end())
-	{
-		//TODO complain
-		return std::pair(0, 0);
-	}
-
 	if (inputs.find(name) != inputs.end())
 	{
 		//TODO complain
@@ -163,6 +156,11 @@ std::pair<SSA, uint32_t> Assembler::pushOutput(std::string name, SSA type)
 		return std::pair(0, 0);
 	}
 
+	if (ioNames.find(name) == ioNames.end())
+	{
+		ioNames.insert(name);
+	}
+
 	uint32_t index = (uint32_t)outputs.size();
 	SSA nextOut = pushNew(Instruction(Opcode::VAR_SHADER_OUT, { index }, { type }));
 	
@@ -170,17 +168,6 @@ std::pair<SSA, uint32_t> Assembler::pushOutput(std::string name, SSA type)
 	outputNames.push_back(std::pair(name, index));
 
 	return std::pair(nextOut, index);
-}
-
-void Assembler::addIOName(std::string name)
-{
-	auto& [itr, success] = ioNames.insert(name);
-
-	if (!success)
-	{
-		//TODO complain
-	}
-
 }
 
 uint32_t Assembler::replace(SSA in, SSA out)

@@ -296,8 +296,6 @@ cllr::SSA ShaderIOVariable::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Asse
 		return 0;
 	}
 
-	codeAsm.addIOName(name);
-
 	if (auto t = typeHint->resolve(table))
 	{
 		auto tID = t->emitDeclCLLR(table, codeAsm);
