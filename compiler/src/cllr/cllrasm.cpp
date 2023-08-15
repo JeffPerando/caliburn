@@ -114,7 +114,7 @@ sptr<LowType> Assembler::getType(SSA id) const
 	return found->second.second;
 }
 
-std::pair<SSA, uint32_t> Assembler::pushInput(std::string name, SSA type)
+std::pair<uint32_t, SSA> Assembler::pushInput(std::string name, SSA type)
 {
 	if (outputs.find(name) != outputs.end())
 	{
@@ -122,27 +122,25 @@ std::pair<SSA, uint32_t> Assembler::pushInput(std::string name, SSA type)
 		return std::pair(0, 0);
 	}
 
-	if (inputs.find(name) != inputs.end())
-	{
-		//TODO complain
-		return std::pair(0, 0);
-	}
+	auto found = inputs.find(name);
 
-	if (ioNames.find(name) == ioNames.end())
+	if (found != inputs.end())
 	{
-		ioNames.insert(name);
+		return found->second;
 	}
 
 	uint32_t index = (uint32_t)inputs.size();
-	SSA nextIn = pushNew(Instruction(Opcode::VAR_SHADER_IN, { index }, { type }));
+	SSA in = pushNew(Instruction(Opcode::VAR_SHADER_IN, { index }, { type }));
 	
-	inputs.emplace(name, nextIn);
+	auto inData = std::pair(index, in);
+
+	inputs.emplace(name, inData);
 	inputNames.push_back(std::pair(name, index));
 
-	return std::pair(nextIn, index);
+	return inData;
 }
 
-std::pair<SSA, uint32_t> Assembler::pushOutput(std::string name, SSA type)
+std::pair<uint32_t, SSA> Assembler::pushOutput(std::string name, SSA type)
 {
 	if (inputs.find(name) != inputs.end())
 	{
@@ -150,24 +148,22 @@ std::pair<SSA, uint32_t> Assembler::pushOutput(std::string name, SSA type)
 		return std::pair(0, 0);
 	}
 
-	if (outputs.find(name) != outputs.end())
-	{
-		//TODO complain
-		return std::pair(0, 0);
-	}
+	auto found = outputs.find(name);
 
-	if (ioNames.find(name) == ioNames.end())
+	if (found != outputs.end())
 	{
-		ioNames.insert(name);
+		return found->second;
 	}
 
 	uint32_t index = (uint32_t)outputs.size();
-	SSA nextOut = pushNew(Instruction(Opcode::VAR_SHADER_OUT, { index }, { type }));
+	SSA out = pushNew(Instruction(Opcode::VAR_SHADER_OUT, { index }, { type }));
 	
-	outputs.emplace(name, nextOut);
+	auto outData = std::pair(index, out);
+
+	outputs.emplace(name, outData);
 	outputNames.push_back(std::pair(name, index));
 
-	return std::pair(nextOut, index);
+	return outData;
 }
 
 uint32_t Assembler::replace(SSA in, SSA out)
@@ -183,7 +179,6 @@ uint32_t Assembler::replace(SSA in, SSA out)
 
 	if (limit == 0)
 	{
-		//TODO complain
 		return 0;
 	}
 

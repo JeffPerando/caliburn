@@ -42,7 +42,6 @@ namespace caliburn
 
 			std::vector<std::string> strs;
 			
-			std::set<std::string> ioNames;
 			std::map<std::string, std::pair<uint32_t, SSA>> inputs, outputs;
 			
 			//Makes outputting a shader's 'API' easy.
@@ -82,9 +81,9 @@ namespace caliburn
 
 			sptr<LowType> getType(SSA id) const;
 
-			std::pair<SSA, uint32_t> pushInput(std::string name, SSA type);
+			std::pair<uint32_t, SSA> pushInput(std::string name, SSA type);
 
-			std::pair<SSA, uint32_t> pushOutput(std::string name, SSA type);
+			std::pair<uint32_t, SSA> pushOutput(std::string name, SSA type);
 
 			uint32_t addString(ref<const std::string> str);
 

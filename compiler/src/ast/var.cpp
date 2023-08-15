@@ -300,22 +300,19 @@ cllr::SSA ShaderIOVariable::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Asse
 	{
 		auto tID = t->emitDeclCLLR(table, codeAsm);
 
+		std::pair<uint32_t, cllr::SSA> ioData;
+
 		if (ioType == ShaderIOVarType::INPUT)
 		{
-			auto &[ioID, index] = codeAsm.pushInput(name, tID);
-
-			id = ioID;
-			ioIndex = index;
-
+			ioData = codeAsm.pushInput(name, tID);
 		}
 		else
 		{
-			auto& [ioID, index] = codeAsm.pushOutput(name, tID);
-
-			id = ioID;
-			ioIndex = index;
-
+			ioData = codeAsm.pushOutput(name, tID);
 		}
+
+		ioIndex = ioData.first;
+		id = ioData.second;
 
 		return id;
 	}
