@@ -9,10 +9,6 @@
 #include "ast/ctrlstmt.h"
 #include "ast/modstmts.h"
 
-#include "cllr/cllrout.h"
-
-#include "spirv/cllrspirv.h"
-
 #include "types/typearray.h"
 #include "types/typebool.h"
 #include "types/typefloat.h"
@@ -37,7 +33,7 @@ void Compiler::setDynamicType(std::string inner, std::string concrete)
 	settings->dynTypes.emplace(inner, concrete);
 }
 
-std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::string shaderName)
+std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::string shaderName, GPUTarget target)
 {
 	if (shaderName.length() == 0)
 	{
@@ -155,6 +151,7 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 
 	for (auto const& stmt : ast)
 	{
+		/*
 		//import x;
 		if (stmt->type == StatementType::IMPORT)
 		{
@@ -178,7 +175,7 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 		{
 
 		}
-
+		*/
 		//shader x {}
 		//where the real magic happens
 		if (stmt->type == StatementType::SHADER)
@@ -194,11 +191,7 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 			{
 				shaderStmt = shadDecl;
 			}
-			else
-			{
-				//TODO complain
-			}
-
+			
 			break;
 		}
 

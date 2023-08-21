@@ -59,7 +59,8 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 	{
 		for (auto const& [name, index] : codeAsm.getInputs())
 		{
-			out->inputs.push_back(VertexInputAttribute{ name, index });
+			//TODO assign input format
+			out->inputs.push_back(VertexInputAttribute{ name, index, 0 });
 
 		}
 

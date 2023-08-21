@@ -1,6 +1,6 @@
 
 /*
-Contains necessary constants, data types, and functions necessary for working with Caliburn.
+Contains necessary constants, and data types necessary for working with Caliburn.
 */
 
 #pragma once
@@ -11,58 +11,10 @@ Contains necessary constants, data types, and functions necessary for working wi
 #include <vector>
 
 #include "basic.h"
+#include "caliburn.h"
 
 namespace caliburn
 {
-	enum class HostTarget
-	{
-		CPU, GPU
-	};
-
-	enum class GPUTarget
-	{
-		SPIRV, DXIL, METAL
-	};
-	
-	/*
-	Enum denoting how much to optimize code.
-
-	Regarding whether to add a given algorithm to a given level: Consider how much extra performance is given vs. the time it takes to run.
-	If the algorithm takes ages to run and doesn't make the code much faster, add it to O3.
-	If it's near instant and makes the code much much faster, add it to O1.
-	DEBUG disables every optimization, even the obvious ones.
-	*/
-	enum class OptimizeLevel : uint32_t
-	{
-		//equivalent to O0. just show me the raw output
-		DEBUG,
-		//equivalent to O1; just do low-hanging fruit
-		BASIC,
-		//equivalent to O2; does more optimizations
-		BALANCED,
-		//equivalent to O3; does EVERY optimization
-		PERFORMANCE
-	};
-
-	//FIXME not used atm; awaiting writing the full validation layer
-	enum class ValidationLevel : uint32_t
-	{
-		//Disables validation entirely
-		NONE,
-		//Only checks for things a programmer could mess up on;
-		BASIC,
-		//Checks everything
-		FULL
-	};
-
-	struct CompilerSettings
-	{
-		OptimizeLevel o = OptimizeLevel::DEBUG;
-		ValidationLevel vLvl = ValidationLevel::BASIC;
-		std::map<std::string, std::string> dynTypes;
-
-	};
-
 	auto static constexpr MIN_INT_BITS = 8;
 	auto static constexpr MAX_INT_BITS = 512;
 	
@@ -71,39 +23,6 @@ namespace caliburn
 
 	auto static constexpr MIN_VECTOR_LEN = 2;
 	auto static constexpr MAX_VECTOR_LEN = 4;
-
-	enum class TypeCategory : uint32_t
-	{
-		VOID,
-		FLOAT,
-		INT,
-		VECTOR,
-		MATRIX,
-		ARRAY,
-		STRUCT,
-		BOOLEAN,
-		POINTER
-		//TUPLE
-		//STRING
-
-	};
-
-	enum class ShaderType
-	{
-		COMPUTE,
-		VERTEX,
-		FRAGMENT,
-		TESS_CTRL,
-		TESS_EVAL,
-		GEOMETRY,
-		RT_GEN,
-		RT_CLOSE,
-		RT_ANY_HIT,
-		RT_INTERSECT,
-		RT_MISS,
-		TASK,
-		MESH
-	};
 
 	static const HashMap<std::string_view, ShaderType> SHADER_TYPES = {
 		//{"main",		ShaderType::COMPUTE},
@@ -135,34 +54,6 @@ namespace caliburn
 		//{ShaderType::RT_MISS,		"rayMiss"},
 		//{ShaderType::TASK,		"task"},
 		//{ShaderType::MESH,		"mesh"}
-	};
-
-	struct DescriptorSet
-	{
-		std::string name;
-		uint32_t binding;
-		uint32_t type;
-
-	};
-
-	struct VertexInputAttribute
-	{
-		std::string name;
-		uint32_t location;
-		uint32_t format;
-
-	};
-
-	struct Shader
-	{
-		const ShaderType type;
-		const uptr<std::vector<uint32_t>> code;
-
-		std::vector<VertexInputAttribute> inputs;
-		std::vector<DescriptorSet> sets;
-
-		Shader(ShaderType t, ref<uptr<std::vector<uint32_t>>> c) : type(t), code(std::move(c)) {}
-
 	};
 
 	struct StmtModifiers

@@ -6,23 +6,118 @@
 #else
 
 #include <map>
+#include <memory>
 #include <stdint.h>
 #include <string>
 #include <vector>
 
-#include "langcore.h"
-
 namespace caliburn
 {
+	/*
+	Sets the type of compilation target
+
+	NOTE: Currently unused; Caliburn currently only supports GPU compilation
+	*/
+	enum class HostTarget : uint32_t
+	{
+		CPU, GPU
+	};
+
+	/*
+	Sets the host language
+
+	NOTE: Currently unused; Caliburn currently only supports SPIR-V
+	*/
+	enum class GPUTarget : uint32_t
+	{
+		SPIRV, DXIL, METAL
+	};
+
+	/*
+	Enum denoting how much to optimize code.
+	*/
+	enum class OptimizeLevel : uint32_t
+	{
+		DEBUG, //O0
+		BASIC, //O1
+		BALANCED, //O2
+		PERFORMANCE //O3
+	};
+
+	//FIXME not used atm; awaiting writing the full validation layer
+	enum class ValidationLevel : uint32_t
+	{
+		//Disables validation entirely
+		NONE,
+		//Only checks for things a programmer could mess up on;
+		BASIC,
+		//Checks everything
+		FULL
+	};
+
+	struct CompilerSettings
+	{
+		OptimizeLevel o = OptimizeLevel::DEBUG;
+		ValidationLevel vLvl = ValidationLevel::BASIC;
+		std::map<std::string, std::string> dynTypes;
+
+	};
+
+	struct DescriptorSet
+	{
+		std::string name;
+		uint32_t binding;
+		uint32_t type;
+
+	};
+
+	struct VertexInputAttribute
+	{
+		std::string name;
+		uint32_t location;
+		uint32_t format;
+
+	};
+
+	enum class ShaderType
+	{
+		COMPUTE,
+		VERTEX,
+		FRAGMENT,
+		TESS_CTRL,
+		TESS_EVAL,
+		GEOMETRY,
+		RT_GEN,
+		RT_CLOSE,
+		RT_ANY_HIT,
+		RT_INTERSECT,
+		RT_MISS,
+		TASK,
+		MESH
+	};
+
+	struct Shader
+	{
+		const ShaderType type;
+		const std::unique_ptr<std::vector<uint32_t>> code;
+
+		std::vector<VertexInputAttribute> inputs;
+		std::vector<DescriptorSet> sets;
+
+		Shader(ShaderType t, std::unique_ptr<std::vector<uint32_t>>& c) : type(t), code(std::move(c)) {}
+
+	};
+
 	struct Compiler
 	{
 	private:
-		sptr<CompilerSettings> settings;
+		std::shared_ptr<CompilerSettings> settings;
 		std::vector<std::string> allErrors;
 		
 	public:
-		Compiler() : settings(new_sptr<CompilerSettings>()) {}
-		Compiler(ref<CompilerSettings> cs) : settings(new_sptr<CompilerSettings>(cs)) {}
+		Compiler() : settings(std::make_shared<CompilerSettings>()) {}
+		Compiler(const CompilerSettings& cs) : settings(std::make_shared<CompilerSettings>(cs)) {}
+		Compiler(std::shared_ptr<CompilerSettings> cs) : settings(cs) {}
 		virtual ~Compiler() {}
 
 		/*
@@ -58,7 +153,7 @@ namespace caliburn
 
 		Returns the set of shaders
 		*/
-		std::vector<uptr<Shader>> compileSrcShaders(std::string src, std::string shaderName);
+		std::vector<std::unique_ptr<Shader>> compileSrcShaders(std::string src, std::string shaderName, GPUTarget target = GPUTarget::SPIRV);
 
 		std::vector<std::string> getErrors() const;
 		

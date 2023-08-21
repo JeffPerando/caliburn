@@ -24,6 +24,22 @@ namespace caliburn
 	struct Variable;
 	struct Function;
 
+	enum class TypeCategory : uint32_t
+	{
+		VOID,
+		FLOAT,
+		INT,
+		VECTOR,
+		MATRIX,
+		ARRAY,
+		STRUCT,
+		BOOLEAN,
+		POINTER
+		//TUPLE
+		//STRING
+
+	};
+
 	enum class ValueType
 	{
 		UNKNOWN,

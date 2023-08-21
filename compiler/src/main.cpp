@@ -8,7 +8,13 @@
 
 int main()
 {
-	caliburn::Compiler cc;
+	caliburn::CompilerSettings cs;
+
+	cs.o = caliburn::OptimizeLevel::DEBUG;
+	cs.vLvl = caliburn::ValidationLevel::FULL;
+
+	caliburn::Compiler cc(cs);
+
 	std::ifstream file("./../../../../shader.cbrn");
 
 	if (!file.is_open())
@@ -59,6 +65,6 @@ int main()
 		out.close();
 
 	}
-	
+
 	return 0;
 }
