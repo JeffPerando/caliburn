@@ -1,8 +1,15 @@
 
 #pragma once
 
+#ifdef __cplusplus
+
 #if __cplusplus < 201703L
-#error Caliburn requires C++17; also MSVC doesn't set __cplusplus correctly, so check that if you're using it
+#error Caliburn requires C++17
+
+#ifdef _MSC_VER
+#error Try adding /Zc:__cplusplus to your compile options
+#endif
+
 #else
 
 #include <map>
@@ -11,6 +18,23 @@
 #include <string>
 #include <vector>
 
+#if defined(_WIN32)
+
+#ifdef CBRN_NO_DLL
+#define CBRN_API __declspec(dllimport)
+#else
+#define CBRN_API __declspec(dllexport)
+#endif
+
+#else
+#define CBRN_API
+#endif
+
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable: 4251)
+#endif
+
 namespace caliburn
 {
 	/*
@@ -18,7 +42,7 @@ namespace caliburn
 
 	NOTE: Currently unused; Caliburn currently only supports GPU compilation
 	*/
-	enum class HostTarget : uint32_t
+	enum class CBRN_API HostTarget : uint32_t
 	{
 		CPU, GPU
 	};
@@ -28,7 +52,7 @@ namespace caliburn
 
 	NOTE: Currently unused; Caliburn currently only supports SPIR-V
 	*/
-	enum class GPUTarget : uint32_t
+	enum class CBRN_API GPUTarget : uint32_t
 	{
 		SPIRV, DXIL, METAL
 	};
@@ -36,7 +60,7 @@ namespace caliburn
 	/*
 	Enum denoting how much to optimize code.
 	*/
-	enum class OptimizeLevel : uint32_t
+	enum class CBRN_API OptimizeLevel : uint32_t
 	{
 		DEBUG, //O0
 		BASIC, //O1
@@ -45,7 +69,7 @@ namespace caliburn
 	};
 
 	//FIXME not used atm; awaiting writing the full validation layer
-	enum class ValidationLevel : uint32_t
+	enum class CBRN_API ValidationLevel : uint32_t
 	{
 		//Disables validation entirely
 		NONE,
@@ -55,7 +79,7 @@ namespace caliburn
 		FULL
 	};
 
-	struct CompilerSettings
+	struct CBRN_API CompilerSettings
 	{
 		OptimizeLevel o = OptimizeLevel::DEBUG;
 		ValidationLevel vLvl = ValidationLevel::BASIC;
@@ -63,7 +87,7 @@ namespace caliburn
 
 	};
 
-	struct DescriptorSet
+	struct CBRN_API DescriptorSet
 	{
 		std::string name;
 		uint32_t binding;
@@ -71,7 +95,7 @@ namespace caliburn
 
 	};
 
-	struct VertexInputAttribute
+	struct CBRN_API VertexInputAttribute
 	{
 		std::string name;
 		uint32_t location;
@@ -79,7 +103,7 @@ namespace caliburn
 
 	};
 
-	enum class ShaderType
+	enum class CBRN_API ShaderType
 	{
 		COMPUTE,
 		VERTEX,
@@ -96,7 +120,7 @@ namespace caliburn
 		MESH
 	};
 
-	struct Shader
+	struct CBRN_API Shader
 	{
 		const ShaderType type;
 		const std::unique_ptr<std::vector<uint32_t>> code;
@@ -108,7 +132,7 @@ namespace caliburn
 
 	};
 
-	struct Compiler
+	struct CBRN_API Compiler
 	{
 	private:
 		std::shared_ptr<CompilerSettings> settings;
@@ -150,8 +174,9 @@ namespace caliburn
 
 		src: The source code, in ASCII. UTF-8 is currently not supported.
 		shaderName: The name of the shader object to compile. Cannot be empty.
+		target: The GPU IR to compile to. Currently only SPIR-V is supported
 
-		Returns the set of shaders
+		Returns the set of compiled shaders
 		*/
 		std::vector<std::unique_ptr<Shader>> compileSrcShaders(std::string src, std::string shaderName, GPUTarget target = GPUTarget::SPIRV);
 
@@ -161,4 +186,9 @@ namespace caliburn
 
 }
 
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
+#endif
 #endif
