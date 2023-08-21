@@ -20,10 +20,12 @@
 
 #if defined(_WIN32)
 
-#ifdef CBRN_NO_DLL
+#if defined(CBRN_BUILD_DLL)
+#define CBRN_API __declspec(dllexport)
+#elif defined(CBRN_IMPORT)
 #define CBRN_API __declspec(dllimport)
 #else
-#define CBRN_API __declspec(dllexport)
+#define CBRN_API
 #endif
 
 #else
