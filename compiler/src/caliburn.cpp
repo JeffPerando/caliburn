@@ -1,4 +1,5 @@
 
+#define CBRN_NO_IMPORT
 #include "caliburn.h"
 
 #include "error.h"
@@ -40,23 +41,37 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 		throw std::exception("Caliburn: passed shader name is empty!");
 	}
 
+	std::vector<uptr<Shader>> shaders;
+
 	auto doc = TextDoc(src);
 	
 	//Parse the text into tokens (duh)
 	auto t = Tokenizer(doc);
 	auto tokens = t.tokenize();
 
-	t.errors->printout(allErrors, doc);
+	if (!t.errors->empty())
+	{
+		t.errors->printout(allErrors, doc);
 
+		//TODO reconsider
+		return shaders;
+	}
+	
 	//Build the initial AST (ok)
 	auto p = Parser(tokens);
 	auto ast = p.parse();
 
-	p.errors->printout(allErrors, doc);
+	if (!p.errors->empty())
+	{
+		p.errors->printout(allErrors, doc);
+
+		//TODO reconsider
+		return shaders;
+	}
 
 	//Validate AST
 	//keep this a shared pointer since the AST will use it to report validation errors
-	auto astErrs = new_sptr<ErrorHandler>(CompileStage::AST_VALIDATION);
+	/*auto astErrs = new_sptr<ErrorHandler>(CompileStage::AST_VALIDATION);
 	for (auto const& stmt : ast)
 	{
 		std::set<StatementType> topStmts = TOP_STMT_TYPES;
@@ -66,16 +81,21 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 			//TODO complain
 			continue;
 		}
-		/*
+
 		if (!stmt->validate(topStmts))
 		{
 			//TODO complain
 		}
-		*/
+		
 	}
 
-	astErrs->printout(allErrors, doc);
+	if (!astErrs->empty())
+	{
+		astErrs->printout(allErrors, doc);
 
+		return shaders;
+	}
+	*/
 	/*
 	OK so I'll admit the code below looks utterly goofy, and is probably a form of lambda abuse.
 
@@ -231,36 +251,6 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 
 	auto table = new_sptr<SymbolTable>(root);
 
-	/*
-	for (auto const& [inner, outer] : dynTypes)
-	{
-		auto tokenizer = Tokenizer(outer);
-		auto tkns = tokenizer.tokenize();
-		auto p = Parser(tkns);
-
-		if (auto pt = p.parseTypeName())
-		{
-			if (auto t = pt->resolve(table))
-			{
-				if (!table->add(inner, t))
-				{
-					//TODO complain
-				}
-
-			}
-			else
-			{
-				//TODO complain
-			}
-
-		}
-		else
-		{
-			//TODO complain
-		}
-
-	}
-	*/
 	//Declare headers
 	for (auto const& stmt : ast)
 	{
@@ -274,7 +264,7 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 	}
 
 	std::vector<sptr<Error>> compileErrs;
-	auto shaders = shaderStmt->compile(table, settings, compileErrs);
+	shaders = shaderStmt->compile(table, settings, compileErrs);
 
 	if (!compileErrs.empty())
 	{

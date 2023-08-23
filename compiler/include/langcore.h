@@ -11,6 +11,8 @@ Contains necessary constants, and data types necessary for working with Caliburn
 #include <vector>
 
 #include "basic.h"
+
+#define CBRN_NO_IMPORT
 #include "caliburn.h"
 
 namespace caliburn

@@ -22,10 +22,10 @@
 
 #if defined(CBRN_BUILD_DLL)
 #define CBRN_API __declspec(dllexport)
-#elif defined(CBRN_IMPORT)
-#define CBRN_API __declspec(dllimport)
-#else
+#elif defined(CBRN_NO_IMPORT)
 #define CBRN_API
+#else
+#define CBRN_API __declspec(dllimport)
 #endif
 
 #else

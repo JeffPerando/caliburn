@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 
+#define CBRN_NO_IMPORT
 #include "caliburn.h"
 
 int main()
