@@ -94,12 +94,12 @@ T Parser::parseBetween(std::string start, ParseMethod<T> fn, std::string end)
 	return ret;
 }
 
-void Parser::parseAnyBetween(std::string start, std::function<void()> fn, std::string end)
+bool Parser::parseAnyBetween(std::string start, std::function<void()> fn, std::string end)
 {
 	if (tokens.current()->str != start)
 	{
 		//TODO complain
-		return;
+		return false;
 	}
 
 	tokens.consume();
@@ -109,11 +109,12 @@ void Parser::parseAnyBetween(std::string start, std::function<void()> fn, std::s
 	if (tokens.current()->str != end)
 	{
 		//TODO complain
-		return;
+		return false;
 	}
 
 	tokens.consume();
 
+	return true;
 }
 
 std::vector<sptr<Token>> Parser::parseIdentifierList()
@@ -296,8 +297,10 @@ sptr<GenericArguments> Parser::parseGenericArgs()
 	return args;
 }
 
-bool Parser::parseValueList(ref<std::vector<sptr<Value>>> values, bool commaOptional)
+std::vector<sptr<Value>> Parser::parseValueList(bool commaOptional)
 {
+	std::vector<sptr<Value>> values;
+
 	while (tokens.hasNext())
 	{
 		auto v = parseAnyValue();
@@ -322,7 +325,7 @@ bool Parser::parseValueList(ref<std::vector<sptr<Value>>> values, bool commaOpti
 
 	}
 
-	return true;
+	return values;
 }
 
 bool Parser::parseSemicolon()
@@ -1147,26 +1150,23 @@ uptr<Statement> Parser::parseValueStmt()
 		&Parser::parseAnyExpr
 	};
 
-	auto val = parseAny(methods);
-
-	if (val == nullptr)
+	if (auto val = parseAny(methods))
 	{
-		return nullptr;
+		return new_uptr<ValueStatement>(val);
 	}
 
-	return new_uptr<ValueStatement>(val);
+	return nullptr;
 }
 
 uptr<Statement> Parser::parseGlobalVarStmt()
 {
-	auto first = tokens.current();
+	sptr<Token> first = tokens.current();
 
 	if (auto v = parseGlobalVar())
 	{
 		auto stmt = new_uptr<VariableStatement>();
 
 		stmt->first = first;
-
 		stmt->vars.push_back(v);
 
 		return stmt;
@@ -1177,16 +1177,14 @@ uptr<Statement> Parser::parseGlobalVarStmt()
 
 uptr<Statement> Parser::parseLocalVarStmt()
 {
-	auto first = tokens.current();
-
-	if (first->type != TokenType::KEYWORD)
+	if (tokens.current()->type != TokenType::KEYWORD)
 	{
 		return nullptr;
 	}
 
 	auto stmt = new_uptr<VariableStatement>();
 
-	stmt->first = first;
+	stmt->first = tokens.current();
 	stmt->vars = parseLocalVars();
 
 	if (stmt->vars.empty())
@@ -1212,92 +1210,13 @@ sptr<Value> Parser::parseAnyValue()
 sptr<Value> Parser::parseNonExpr()
 {
 	std::vector<ParseMethod<sptr<Value>>> initParsers =
-		{ &Parser::parseLiteral, &Parser::parseAnyFnCall, &Parser::parseAnyAccess };
+		{ &Parser::parseParenValue, &Parser::parseUnaryValue, &Parser::parseLiteral, &Parser::parseAnyFnCall, &Parser::parseAnyAccess };
 
 	sptr<Value> v = parseAny(initParsers);
 
 	if (v == nullptr)
 	{
-		sptr<Token> first = tokens.current();
-
-		//TODO tuple literals
-		if (first->type == TokenType::START_PAREN)
-		{
-			tokens.consume();
-			v = parseAnyExpr();
-
-			if (tokens.current()->type != TokenType::END_PAREN)
-			{
-				//TODO complain
-			}
-			
-			tokens.consume();
-
-		}
-		else if (first->type == TokenType::KEYWORD)
-		{
-			tokens.consume();
-
-			if (first->str == "sign")
-			{
-				v = new_sptr<SignValue>(first, parseNonExpr());
-			}
-			else if (first->str == "unsign")
-			{
-				v = new_sptr<UnsignValue>(first, parseNonExpr());
-			}
-			else
-			{
-				tokens.rewind();
-				return nullptr;
-			}
-
-		}
-		else if (first->type == TokenType::OPERATOR)
-		{
-			Operator uOp = Operator::UNKNOWN;
-			
-			switch (first->str[0])
-			{
-				case '|': uOp = Operator::ABS; break;
-				case '-': uOp = Operator::NEG; break;
-				case '~': uOp = Operator::BIT_NEG; break;
-				case '!': uOp = Operator::BOOL_NOT; break;
-				default: {
-					return nullptr;
-				};
-			}
-
-			tokens.consume();
-
-			auto unary = new_sptr<UnaryValue>();
-
-			unary->op = uOp;
-			unary->val = parseAnyExpr();
-
-			if (uOp == Operator::ABS)
-			{
-				if (tokens.current()->str != "|")
-				{
-					//TODO complain
-					return nullptr;
-				}
-
-				unary->end = tokens.current();
-
-				tokens.consume();
-
-			}
-
-			v = unary;
-
-		}
-		
-		if (v == nullptr)
-		{
-			return nullptr;
-		}
-
+		return nullptr;
 	}
 
 	while (tokens.hasNext())
@@ -1311,18 +1230,21 @@ sptr<Value> Parser::parseNonExpr()
 		}
 		else if (tkn->type == TokenType::START_BRACKET)
 		{
-			auto i = parseBetween("[", ParseMethod<sptr<Value>>(&Parser::parseAnyValue), "]");//enables for expressions inside of array access
-			
-			if (i == nullptr)
-			{
-				//TODO complain
-				return nullptr;
-			}
-
 			auto subA = new_sptr<SubArrayValue>();
 
 			subA->array = v;
-			subA->index = i;
+
+			parseAnyBetween("[", lambda() {
+				if (auto i = parseAnyValue())
+				{
+					subA->index = i;
+				}
+				else
+				{
+					//TODO complain
+				}
+			}, "]");
+			
 			subA->last = tokens.peekBack();
 
 			v = subA;
@@ -1387,6 +1309,8 @@ sptr<Value> Parser::parseLiteral()
 {
 	sptr<Token> first = tokens.current();
 
+	tokens.consume();
+
 	if (first->type == TokenType::KEYWORD)
 	{
 		if (first->str == "this")
@@ -1398,6 +1322,7 @@ sptr<Value> Parser::parseLiteral()
 			return new_sptr<NullValue>(first);
 		}
 
+		tokens.rewind();
 		return nullptr;
 	}
 
@@ -1414,8 +1339,9 @@ sptr<Value> Parser::parseLiteral()
 		auto arrLit = new_sptr<ArrayLitValue>();
 
 		arrLit->start = first;
+		arrLit->values = parseValueList(true);
 
-		if (!parseValueList(arrLit->values, true))
+		if (arrLit->values.empty())
 		{
 			//TODO complain
 		}
@@ -1434,7 +1360,91 @@ sptr<Value> Parser::parseLiteral()
 		return arrLit;
 	}
 
+	tokens.rewind();
 	return nullptr;
+}
+
+sptr<Value> Parser::parseUnaryValue()
+{
+	sptr<Token> first = tokens.current();
+
+	if (first->type == TokenType::KEYWORD)
+	{
+		tokens.consume();
+
+		if (first->str == "sign")
+		{
+			return new_sptr<SignValue>(first, parseNonExpr());
+		}
+		else if (first->str == "unsign")
+		{
+			return new_sptr<UnsignValue>(first, parseNonExpr());
+		}
+
+		tokens.rewind();
+		return nullptr;
+	}
+	else if (first->type == TokenType::OPERATOR)
+	{
+		auto foundOp = UNARY_OPS.find(first->str);
+
+		if (foundOp != UNARY_OPS.end())
+		{
+			tokens.consume();
+
+			auto unary = new_sptr<UnaryValue>();
+
+			unary->start = first;
+			unary->op = foundOp->second;
+			unary->val = parseAnyExpr();
+
+			if (foundOp->second == Operator::ABS)
+			{
+				if (tokens.current()->str != "|")
+				{
+					//TODO complain
+					return nullptr;
+				}
+
+				unary->end = tokens.current();
+
+				tokens.consume();
+
+			}
+
+			return unary;
+		}
+
+	}
+
+	return nullptr;
+}
+
+sptr<Value> Parser::parseParenValue()
+{
+	sptr<Token> first = tokens.current();
+
+	if (first->type != TokenType::START_PAREN)
+	{
+		return nullptr;
+	}
+
+	tokens.consume();
+
+	auto v = parseAnyValue();
+
+	//TODO tuple literals go here
+
+	sptr<Token> last = tokens.current();
+
+	if (last->type != TokenType::END_PAREN)
+	{
+		//TODO complain
+	}
+
+	tokens.consume();
+
+	return v;
 }
 
 sptr<Value> Parser::parseAnyAccess()
@@ -1574,17 +1584,19 @@ sptr<Value> Parser::parseAnyFnCall()
 
 sptr<Value> Parser::parseFnCall(sptr<Value> start)
 {
-	auto& name = tokens.current();
+	sptr<Token> name = tokens.current();
 
 	if (name->type != TokenType::IDENTIFIER)
 	{
 		return nullptr;
 	}
 
+	tokens.consume();
+
 	auto fnCall = new_sptr<FnCallValue>();
 
-	tokens.consume();
-	
+	fnCall->name = name;
+	fnCall->target = start;
 	fnCall->genArgs = parseGenericArgs();
 
 	if (fnCall->genArgs == nullptr)
@@ -1593,23 +1605,15 @@ sptr<Value> Parser::parseFnCall(sptr<Value> start)
 		return nullptr;
 	}
 
-	if (tokens.current()->type != TokenType::START_PAREN)
+	if (!parseAnyBetween("(", lambda() {
+		fnCall->args = parseValueList(false);
+	}, ")"))
 	{
 		//TODO complain
 		return nullptr;
 	}
 
-	tokens.consume();
-
-	fnCall->name = name;
-	fnCall->target = start;
-
-	if (!parseValueList(fnCall->args, false))
-	{
-		//TODO complain
-	}
-
-	fnCall->end = tokens.current();
+	fnCall->end = tokens.peekBack();
 
 	return fnCall;
 }

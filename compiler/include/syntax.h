@@ -186,6 +186,13 @@ namespace caliburn
 		{"=>",	TokenType::ARROW}
 	};
 
+	static const HashMap<std::string, Operator> UNARY_OPS = {
+		{"|",	Operator::ABS},
+		{"-",	Operator::NEG},
+		{"~",	Operator::BIT_NEG},
+		{"!",	Operator::BOOL_NOT}
+	};
+
 	static const HashMap<std::string, Operator> INFIX_OPS = {
 		{"+",	Operator::ADD},
 		{"-",	Operator::SUB},

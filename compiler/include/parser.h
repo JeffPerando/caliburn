@@ -39,7 +39,7 @@ namespace caliburn
 		template<typename T>
 		T parseBetween(std::string start, ParseMethod<T> fn, std::string end);
 
-		void parseAnyBetween(std::string start, std::function<void()> fn, std::string end);
+		bool parseAnyBetween(std::string start, std::function<void()> fn, std::string end);
 
 		std::vector<sptr<Token>> parseIdentifierList();
 
@@ -47,7 +47,7 @@ namespace caliburn
 
 		sptr<GenericArguments> parseGenericArgs();
 
-		bool parseValueList(ref<std::vector<sptr<Value>>> values, bool commaOptional);
+		std::vector<sptr<Value>> parseValueList(bool commaOptional);
 
 		bool parseSemicolon();
 
@@ -100,6 +100,10 @@ namespace caliburn
 		sptr<Value> parseNonExpr();
 
 		sptr<Value> parseLiteral();
+
+		sptr<Value> parseUnaryValue();
+
+		sptr<Value> parseParenValue();
 
 		sptr<Value> parseAnyAccess();
 
