@@ -7,7 +7,7 @@
 #error Caliburn requires C++17
 
 #ifdef _MSC_VER
-#error Try adding /Zc:__cplusplus to your compile options
+#error Try adding /Zc:__cplusplus to your compiler options
 #endif
 
 #else
@@ -20,10 +20,10 @@
 
 #if defined(_WIN32)
 
-#if defined(CBRN_BUILD_DLL)
-#define CBRN_API __declspec(dllexport)
-#elif defined(CBRN_NO_IMPORT)
+#if defined(CBRN_NO_IMPORT)
 #define CBRN_API
+#elif defined(CBRN_BUILD_DLL)
+#define CBRN_API __declspec(dllexport)
 #else
 #define CBRN_API __declspec(dllimport)
 #endif
