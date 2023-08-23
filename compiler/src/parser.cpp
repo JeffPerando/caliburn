@@ -122,14 +122,12 @@ std::vector<sptr<Token>> Parser::parseIdentifierList()
 
 	while (true)
 	{
-		auto tkn = tokens.current();
-
-		if (tkn->type != TokenType::IDENTIFIER)
+		if (tokens.current()->type != TokenType::IDENTIFIER)
 		{
 			break;
 		}
 
-		ids.push_back(tkn);
+		ids.push_back(tokens.current());
 
 		if (!tokens.hasNext(2))
 		{
@@ -150,11 +148,10 @@ std::vector<sptr<Token>> Parser::parseIdentifierList()
 
 sptr<GenericSignature> Parser::parseGenericSig()
 {
-	auto oldIndex = tokens.currentIndex();
-	auto tkn = tokens.current();
-	bool valid = false;
+	sptr<Token> first = tokens.current();
+	auto start = tokens.currentIndex();
 	
-	if (tkn->str != GENERIC_START)
+	if (first->str != GENERIC_START)
 	{
 		//We return an empty signature since every generic needs one, even a blank one.
 		return new_sptr<GenericSignature>();
@@ -164,75 +161,58 @@ sptr<GenericSignature> Parser::parseGenericSig()
 
 	bool parsingDefaults = false;
 
-	while (tokens.hasNext())
+	while (tokens.hasNext(2))
 	{
-		tkn = tokens.next();
+		sptr<Token> t = tokens.current();
+		sptr<Token> n = tokens.peek();
 
-		if (tkn->type != TokenType::KEYWORD)
+		if (t->type != TokenType::KEYWORD)
 		{
-			valid = false;
 			break;
 		}
-
-		sptr<Token> t = tkn;
-		sptr<Token> n = tokens.next();
 
 		if (n->type != TokenType::IDENTIFIER)
 		{
-			valid = false;
+			//TODO complain
 			break;
 		}
 
+		tokens.consume(2);
+
 		GenericResult defRes;
 
-		tkn = tokens.next();
-
-		if (tkn->str == "=")
+		if (tokens.current()->str == "=")
 		{
 			parsingDefaults = true;
 
 			tokens.consume();
 
-			auto v = parseLiteral();
-
-			if (v != nullptr)
+			if (auto v = parseLiteral())
 			{
 				defRes = v;
-
+			}
+			else if (auto t = parseTypeName())
+			{
+				defRes = t;
 			}
 			else
 			{
-				auto t = parseTypeName();
-
-				if (t == nullptr)
-				{
-					//TODO complain
-					break;
-				}
-
-				defRes = t;
-
-			}
-
-			tkn = tokens.current();//parse methods should leave us at the first invalid token for that parse
-
-		}
-		else
-		{
-			if (parsingDefaults)
-			{
 				//TODO complain
-				//Generics defaults must always be at the end
-				//I may reconsider this rule if explicit-named generics become a thing. But that logic is too hard right now
 			}
 
 		}
+		else if (parsingDefaults)
+		{
+			//TODO complain
+			//Generics defaults must always be at the end
+			//I may reconsider this rule if explicit-named generics become a thing. But that logic is too hard right now
+		}
 
-		auto genName = GenericName(tkn, tokens.next(), defRes);
+		auto genName = GenericName(t, n, defRes);
 
 		names.push_back(genName);
 
-		if (tkn->str != ",")
+		if (tokens.current()->str != ",")
 		{
 			break;
 		}
@@ -241,16 +221,11 @@ sptr<GenericSignature> Parser::parseGenericSig()
 
 	}
 
-	tkn = tokens.current();
+	sptr<Token> last = tokens.current();
 
-	if (tkn->str != GENERIC_END)
+	if (last->str != GENERIC_END)
 	{
-		tokens.revertTo(oldIndex);
-		valid = false;
-	}
-
-	if (!valid)
-	{
+		tokens.revertTo(start);
 		return nullptr;
 	}
 
@@ -258,57 +233,43 @@ sptr<GenericSignature> Parser::parseGenericSig()
 
 	auto sig = new_sptr<GenericSignature>(names);
 
-	sig->first = tkn;
-	sig->last = tkn;
-	
+	sig->first = first;
+	sig->last = last;
+
 	return sig;
 }
 
 sptr<GenericArguments> Parser::parseGenericArgs()
 {
-	auto oldIndex = tokens.currentIndex();
-	auto tkn = tokens.current();
-	bool valid = false;
-
-	if (tkn->str != GENERIC_START)
+	sptr<Token> first = tokens.current();
+	auto start = tokens.currentIndex();
+	
+	if (first->str != GENERIC_START)
 	{
 		return new_sptr<GenericArguments>();
 	}
+
+	tokens.consume();
 
 	std::vector<GenericResult> results;
 
 	while (tokens.hasNext())
 	{
-		tkn = tokens.next();
-
 		GenericResult result;
 
-		auto v = parseLiteral();
-
-		if (v != nullptr)
+		if (auto v = parseLiteral())
 		{
 			result = v;
-
 		}
-		else
+		else if (auto t = parseTypeName())
 		{
-			auto t = parseTypeName();
-
-			if (t == nullptr)
-			{
-				//TODO complain
-				break;
-			}
-
 			result = t;
-
 		}
-
-		tkn = tokens.current();//parse methods should leave us at the first invalid token for that parse
+		else break;
 
 		results.push_back(result);
 
-		if (tkn->str != ",")
+		if (tokens.current()->str != ",")
 		{
 			break;
 		}
@@ -317,23 +278,20 @@ sptr<GenericArguments> Parser::parseGenericArgs()
 
 	}
 
-	tkn = tokens.current();
+	auto& last = tokens.current();
 
-	if (tkn->str != GENERIC_END)
+	if (last->str != GENERIC_END)
 	{
-		tokens.revertTo(oldIndex);
-		valid = false;
-	}
-
-	if (!valid)
-	{
+		tokens.revertTo(start);
 		return nullptr;
 	}
 
+	tokens.consume();
+
 	auto args = new_sptr<GenericArguments>(results);
 
-	args->first = tkn;
-	args->last = tkn;
+	args->first = first;
+	args->last = last;
 
 	return args;
 }
@@ -342,7 +300,15 @@ bool Parser::parseValueList(ref<std::vector<sptr<Value>>> values, bool commaOpti
 {
 	while (tokens.hasNext())
 	{
-		values.push_back(parseAnyValue());
+		auto v = parseAnyValue();
+
+		if (v == nullptr)
+		{
+			//TODO complain?
+			break;
+		}
+
+		values.push_back(v);
 
 		if (tokens.current()->str == ",")
 		{
@@ -361,9 +327,9 @@ bool Parser::parseValueList(ref<std::vector<sptr<Value>>> values, bool commaOpti
 
 bool Parser::parseSemicolon()
 {
-	auto tkn = tokens.current();
+	auto& end = tokens.current();
 
-	if (tkn->type == TokenType::END)
+	if (end->type == TokenType::END)
 	{
 		tokens.consume();
 		return true;
@@ -375,19 +341,17 @@ bool Parser::parseSemicolon()
 
 bool Parser::parseScopeEnd(ref<uptr<ScopeStatement>> stmt)
 {
-	auto tkn = tokens.current();
+	sptr<Token> first = tokens.current();
 	auto tknIndex = tokens.currentIndex();
-
-	if (tkn->type != TokenType::KEYWORD)
+	
+	if (first->type != TokenType::KEYWORD)
 	{
 		return false;
 	}
 
-	bool valid = true;
-
 	tokens.consume();
 
-	auto retMode = RETURN_MODES.find(tkn->str);
+	auto retMode = RETURN_MODES.find(first->str);
 
 	if (retMode == RETURN_MODES.end())
 	{
@@ -418,20 +382,19 @@ StmtModifiers Parser::parseStmtMods()
 
 	while (tokens.hasNext())
 	{
-		auto tkn = tokens.current();
+		auto& mod = tokens.current();
 
-		if (tkn->str == "public")
+		if (mod->str == "public")
 			mods.PUBLIC = 1;
-		else if (tkn->str == "private")
+		else if (mod->str == "private")
 			mods.PRIVATE = 1;
-		else if (tkn->str == "protected")
+		else if (mod->str == "protected")
 			mods.PROTECTED = 1;
-		else if (tkn->str == "shared")
+		else if (mod->str == "shared")
 			mods.SHARED = 1;
-		else if (tkn->str == "static")
+		else if (mod->str == "static")
 			mods.STATIC = 1;
-		else
-			break;
+		else break;
 
 		tokens.consume();
 
@@ -444,9 +407,9 @@ uptr<ScopeStatement> Parser::parseScope(std::vector<ParseMethod<uptr<Statement>>
 {
 	auto mods = parseStmtMods();
 
-	auto tkn = tokens.current();
+	sptr<Token> first = tokens.current();
 
-	if (tkn->type != TokenType::START_SCOPE)
+	if (first->type != TokenType::START_SCOPE)
 	{
 		return nullptr;
 	}
@@ -455,12 +418,14 @@ uptr<ScopeStatement> Parser::parseScope(std::vector<ParseMethod<uptr<Statement>>
 
 	auto scope = new_uptr<ScopeStatement>();
 
+	scope->first = first;
+
 	while (tokens.hasNext())
 	{
-		tkn = tokens.current();
-
-		if (tkn->type == TokenType::END_SCOPE)
+		if (tokens.current()->type == TokenType::END_SCOPE)
 		{
+			scope->last = tokens.current();
+
 			tokens.consume();
 			break;
 		}
@@ -511,11 +476,9 @@ sptr<ParsedType> Parser::parseTypeName()
 
 	type->genericArgs = parseGenericArgs();
 
-	auto tkn = tokens.current();
-
-	while (tokens.hasNext() && tkn->type == TokenType::START_BRACKET)
+	while (tokens.hasNext(2) && tokens.current()->type == TokenType::START_BRACKET)
 	{
-		tkn = tokens.next();
+		tokens.consume();
 
 		auto arrayType = new_sptr<ParsedType>("array");
 
@@ -540,9 +503,9 @@ sptr<ParsedType> Parser::parseTypeName()
 		}
 
 		type = arrayType;
-		type->lastToken = tkn;
+		type->lastToken = tokens.current();
 
-		tkn = tokens.next();
+		tokens.consume();
 
 	}
 
@@ -590,58 +553,72 @@ uptr<Statement> Parser::parseDecl()
 
 uptr<Statement> Parser::parseImport()
 {
-	auto tkn = tokens.current();
+	sptr<Token> first = tokens.current();
 
-	if (tkn->type != TokenType::KEYWORD || tkn->str != "import")
+	if (first->type != TokenType::KEYWORD || first->str != "import")
 	{
 		return nullptr;
 	}
 
-	auto modName = tokens.next();
-	
-	sptr<Token> alias = nullptr;
+	auto& modName = tokens.next();
 
-	tkn = tokens.next();
+	if (modName->type != TokenType::IDENTIFIER)
+	{
+		//TODO complain
+		return nullptr;
+	}
 
-	if (tkn->type == TokenType::KEYWORD &&
-		tkn->str == "as")
+	tokens.consume();
+
+	auto ret = new_uptr<ImportStatement>(first);
+
+	ret->name = modName;
+
+	if (tokens.current()->str == "as")
 	{
 		if (tokens.peek()->type != TokenType::IDENTIFIER)
 		{
 			//TODO complain
 		}
 
-		alias = tokens.next();
+		ret->alias = tokens.next();
 
 		tokens.consume();
 
 	}
-
-	auto ret = new_uptr<ImportStatement>(tkn);
-
-	ret->name = modName;
-	ret->alias = alias;
 
 	return ret;
 }
 
 uptr<Statement> Parser::parseModuleDef()
 {
-	auto start = tokens.current();
+	auto& start = tokens.current();
 
 	if (start->type != TokenType::KEYWORD || start->str != "module")
 	{
 		return nullptr;
 	}
 
-	auto name = tokens.next();
+	auto& name = tokens.next();
+
+	if (name->type != TokenType::IDENTIFIER)
+	{
+		//TODO complain
+		return nullptr;
+	}
 
 	return new_uptr<ModuleStatement>(start, name);
 }
 
 uptr<Statement> Parser::parseTypedef()
 {
-	auto start = tokens.current();
+	//type x = y;
+	if (!tokens.hasNext(5))
+	{
+		return nullptr;
+	}
+
+	auto& start = tokens.current();
 
 	if (start->type != TokenType::KEYWORD)
 	{
@@ -658,12 +635,13 @@ uptr<Statement> Parser::parseTypedef()
 		return nullptr;
 	}
 
-	if (tokens.next()->type != TokenType::IDENTIFIER)
+	auto& name = tokens.next();
+
+	if (name->type != TokenType::IDENTIFIER)
 	{
+		//TODO complain
 		return nullptr;
 	}
-
-	auto name = tokens.current();
 
 	if (tokens.next()->str != "=")
 	{
@@ -681,38 +659,39 @@ uptr<Statement> Parser::parseTypedef()
 
 uptr<Statement> Parser::parseShader()
 {
-	auto first = tokens.current();
+	sptr<Token> first = tokens.current();
 
-	if (first->type != TokenType::KEYWORD)
+	if (first->type != TokenType::KEYWORD && first->str != "shader")
 	{
 		return nullptr;
 	}
 
-	if (first->str != "shader")
+	auto& name = tokens.next();
+
+	if (name->type != TokenType::IDENTIFIER)
 	{
+		//TODO complain
 		return nullptr;
 	}
 
 	auto shader = new_uptr<ShaderStatement>();
 
 	shader->first = first;
-	shader->name = tokens.next();
+	shader->name = name;
 
-	auto tkn = tokens.next();
+	tokens.consume();
 
-	if (tkn->type == TokenType::START_PAREN)
+	if (tokens.current()->type == TokenType::START_PAREN)
 	{
 		tokens.consume();
 
 		while (tokens.hasNext())
 		{
-			if (tkn->type == TokenType::END_PAREN)
+			if (tokens.current()->type == TokenType::END_PAREN)
 			{
-				tkn = tokens.next();
+				tokens.consume();
 				break;
 			}
-
-			tkn = tokens.current();
 
 			auto type = parseTypeName();
 			
@@ -722,7 +701,7 @@ uptr<Statement> Parser::parseShader()
 				break;
 			}
 
-			auto name = tokens.current();
+			auto& name = tokens.current();
 
 			if (name->type != TokenType::IDENTIFIER)
 			{
@@ -730,25 +709,16 @@ uptr<Statement> Parser::parseShader()
 				break;
 			}
 
-			tkn = tokens.next();
+			tokens.consume();
 
 			shader->descriptors.push_back(std::pair(type, name));
 
-			if (tkn->type == TokenType::COMMA)
+			if (tokens.current()->type == TokenType::COMMA)
 			{
+				tokens.consume();
 				continue;
 			}
-			else if (tkn->type == TokenType::END_PAREN)
-			{
-				tkn = tokens.next();
-				break;
-			}
-			else
-			{
-				//TODO complain
-				break;
-			}
-
+			
 		}
 
 		if (shader->descriptors.empty())
@@ -758,17 +728,17 @@ uptr<Statement> Parser::parseShader()
 
 	}
 
-	if (tkn->type != TokenType::START_SCOPE)
+	if (tokens.current()->type != TokenType::START_SCOPE)
 	{
 		//TODO complain
 		return shader;
 	}
 
-	while (tokens.hasNext())
-	{
-		tkn = tokens.next();
+	tokens.consume();
 
-		if (tkn->type == TokenType::END_SCOPE)
+	while (true)
+	{
+		if (tokens.current()->type == TokenType::END_SCOPE)
 		{
 			break;
 		}
@@ -799,12 +769,12 @@ uptr<Statement> Parser::parseShader()
 			}
 
 		}
-		/*
+		
 		if (!parseSemicolon())
 		{
 			//TODO complain
 		}
-		*/
+
 	}
 
 	return shader;
@@ -812,7 +782,7 @@ uptr<Statement> Parser::parseShader()
 
 uptr<Statement> Parser::parseStruct()
 {
-	auto first = tokens.current();
+	sptr<Token> first = tokens.current();
 
 	if (first->type != TokenType::KEYWORD)
 	{
@@ -834,7 +804,7 @@ uptr<Statement> Parser::parseStruct()
 		return nullptr;
 	}
 
-	auto name = tokens.next();
+	auto& name = tokens.next();
 
 	if (name->type != TokenType::IDENTIFIER)
 	{
@@ -845,20 +815,22 @@ uptr<Statement> Parser::parseStruct()
 
 	stmt->first = first;
 
-	auto tkn = tokens.next();
+	tokens.consume();
 
-	if (tkn->str != "{")
+	if (tokens.current()->type != TokenType::START_SCOPE)
 	{
 		//TODO complain
 	}
 
-	while (tokens.hasNext())
-	{
-		tkn = tokens.next();
+	tokens.consume();
 
-		if (tkn->str == "}")
+	while (true)
+	{
+		auto& end = tokens.current();
+
+		if (end->type == TokenType::END_SCOPE)
 		{
-			stmt->last = tkn;
+			stmt->last = end;
 			tokens.consume();
 			break;
 		}
@@ -879,6 +851,10 @@ uptr<Statement> Parser::parseStruct()
 
 			stmt->members.emplace(fn->name->str, fn);
 
+		}
+		else
+		{
+			//TODO complain
 		}
 
 		if (!parseSemicolon())
@@ -911,7 +887,7 @@ uptr<Statement> Parser::parseFnStmt()
 
 uptr<ParsedFn> Parser::parseFnLike()
 {
-	auto& first = tokens.current();
+	sptr<Token> first = tokens.current();
 
 	if (first->type != TokenType::KEYWORD)
 	{
@@ -992,7 +968,7 @@ uptr<ParsedFn> Parser::parseFnLike()
 		//TODO complain
 	}
 
-	auto scopeStart = tokens.current();
+	auto& scopeStart = tokens.current();
 	
 	if (scopeStart->type != TokenType::START_SCOPE)
 	{
@@ -1040,11 +1016,10 @@ uptr<Statement> Parser::parseControl()
 
 	auto as = parseAllAnnotations();
 
-	auto const& tkn = tokens.current();
-
-	if (tkn->type != TokenType::KEYWORD)
+	if (tokens.current()->type != TokenType::KEYWORD)
 	{
-		tokens.revertTo(start);
+		//TODO complain
+		//tokens.revertTo(start);
 		return nullptr;
 	}
 	
@@ -1078,7 +1053,7 @@ uptr<Statement> Parser::parseControl()
 
 uptr<Statement> Parser::parseIf()
 {
-	auto const& first = tokens.current();
+	sptr<Token> first = tokens.current();
 
 	if (first->type != TokenType::KEYWORD || first->str != "if")
 	{
@@ -1115,7 +1090,7 @@ uptr<Statement> Parser::parseFor() //FIXME
 
 uptr<Statement> Parser::parseWhile()
 {
-	auto const& first = tokens.current();
+	sptr<Token> first = tokens.current();
 
 	if (first->type != TokenType::KEYWORD || first->str != "while")
 	{
@@ -1137,9 +1112,9 @@ uptr<Statement> Parser::parseWhile()
 
 uptr<Statement> Parser::parseDoWhile()
 {
-	auto tkn = tokens.current();
+	sptr<Token> first = tokens.current();
 
-	if (tkn->type != TokenType::KEYWORD || tkn->str != "do")
+	if (first->type != TokenType::KEYWORD || first->str != "do")
 	{
 		return nullptr;
 	}
@@ -1148,6 +1123,7 @@ uptr<Statement> Parser::parseDoWhile()
 
 	auto ret = new_uptr<WhileStatement>();
 
+	ret->first = first;
 	ret->doWhile = true;
 	ret->loop = parseScope({&Parser::parseLogic});
 
@@ -1242,7 +1218,7 @@ sptr<Value> Parser::parseNonExpr()
 
 	if (v == nullptr)
 	{
-		auto const& first = tokens.current();
+		sptr<Token> first = tokens.current();
 
 		//TODO tuple literals
 		if (first->type == TokenType::START_PAREN)
@@ -1326,7 +1302,7 @@ sptr<Value> Parser::parseNonExpr()
 
 	while (tokens.hasNext())
 	{
-		auto const& tkn = tokens.current();
+		auto& tkn = tokens.current();
 
 		if (tkn->type == TokenType::PERIOD && tokens.peek()->type == TokenType::IDENTIFIER)
 		{
@@ -1367,16 +1343,16 @@ sptr<Value> Parser::parseNonExpr()
 
 	while (tokens.hasNext())
 	{
-		auto const& tkn = tokens.current();
+		auto& kywd = tokens.current();
 
-		if (tkn->type != TokenType::KEYWORD)
+		if (kywd->type != TokenType::KEYWORD)
 		{
 			break;
 		}
 
 		tokens.consume();
 
-		if (tkn->str == "is")
+		if (kywd->str == "is")
 		{
 			auto isa = new_sptr<IsAValue>();
 
@@ -1386,7 +1362,7 @@ sptr<Value> Parser::parseNonExpr()
 			v = isa;
 
 		}
-		else if (tkn->str == "as")
+		else if (kywd->str == "as")
 		{
 			auto cast = new_sptr<CastValue>();
 
@@ -1409,7 +1385,7 @@ sptr<Value> Parser::parseNonExpr()
 
 sptr<Value> Parser::parseLiteral()
 {
-	auto const& first = tokens.current();
+	sptr<Token> first = tokens.current();
 
 	if (first->type == TokenType::KEYWORD)
 	{
@@ -1439,33 +1415,21 @@ sptr<Value> Parser::parseLiteral()
 
 		arrLit->start = first;
 
-		while (tokens.hasNext())
+		if (!parseValueList(arrLit->values, true))
 		{
-			auto const& tkn = tokens.next();
-
-			if (tkn->type == TokenType::COMMA)
-			{
-				continue;
-			}
-
-			if (tkn->type == TokenType::END_BRACKET)
-			{
-				arrLit->end = tkn;
-				tokens.consume();
-				break;
-			}
-
-			auto v = parseAnyValue();
-
-			if (v == nullptr)
-			{
-				//TODO complain
-				break;
-			}
-
-			arrLit->values.push_back(v);
-
+			//TODO complain
 		}
+
+		sptr<Token> last = tokens.current();
+
+		if (last->type != TokenType::END_BRACKET)
+		{
+			//TODO complain
+		}
+
+		arrLit->end = last;
+
+		tokens.consume();
 
 		return arrLit;
 	}
@@ -1480,7 +1444,7 @@ sptr<Value> Parser::parseAnyAccess()
 
 sptr<Value> Parser::parseAccess(sptr<Value> target)
 {
-	auto const& first = tokens.current();
+	sptr<Token> first = tokens.current();
 
 	if (first->type != TokenType::IDENTIFIER)
 	{
@@ -1493,14 +1457,14 @@ sptr<Value> Parser::parseAccess(sptr<Value> target)
 	
 	while (true)
 	{
-		if (tokens.hasNext())
+		if (tokens.hasNext(3))
 		{
-			auto const& peek = tokens.peek();
+			auto& fwd = tokens.peek();
 
 			//check for method call
-			if (peek->str == GENERIC_START || peek->type == TokenType::START_PAREN)
+			if (fwd->str == GENERIC_START || fwd->type == TokenType::START_PAREN)
 			{
-				if (auto fnCall = parseFnCall(access))
+				if (auto fnCall = parseFnCall(access->chain.empty() ? target : access))
 				{
 					return fnCall;
 				}
@@ -1511,21 +1475,24 @@ sptr<Value> Parser::parseAccess(sptr<Value> target)
 		
 		access->chain.push_back(tokens.current());
 
+		tokens.consume();
+
 		if (!tokens.hasNext(2))
 		{
 			break;
 		}
 
-		if (tokens.next()->type != TokenType::PERIOD)
+		if (tokens.peek(1)->type != TokenType::PERIOD)
 		{
 			break;
 		}
 
-		if (tokens.next()->type != TokenType::IDENTIFIER)
+		if (tokens.peek(2)->type != TokenType::IDENTIFIER)
 		{
-			//TODO complain
 			break;
 		}
+
+		tokens.consume(2);
 
 	}
 
@@ -1541,9 +1508,9 @@ sptr<Value> Parser::parseExpr(uint32_t precedence)
 {
 	auto lhs = parseNonExpr();
 
-	while (tokens.hasNext())
+	while (tokens.hasNext(2))
 	{
-		auto const& opTkn = tokens.current();
+		auto& opTkn = tokens.current();
 
 		if (opTkn->type != TokenType::OPERATOR)
 		{
@@ -1557,19 +1524,17 @@ sptr<Value> Parser::parseExpr(uint32_t precedence)
 		}
 
 		auto op = found->second;
-
 		auto opWeight = OP_PRECEDENCE.at(op);
 
-		//TODO this is dubious
 		if (opWeight > precedence)
 		{
 			return lhs;
 		}
 
-		auto const& tkn = tokens.next();
+		tokens.consume();
 
 		//Yes, we use *this* code to parse setters.
-		if (tkn->str == "=")
+		if (tokens.current()->str == "=")
 		{
 			tokens.consume();
 
@@ -1582,8 +1547,6 @@ sptr<Value> Parser::parseExpr(uint32_t precedence)
 			return set;
 		}
 
-		auto expr = new_sptr<ExpressionValue>();
-
 		auto rhs = parseExpr(opWeight - 1);//TODO suppress errors here
 
 		if (rhs == nullptr)
@@ -1591,13 +1554,14 @@ sptr<Value> Parser::parseExpr(uint32_t precedence)
 			//TODO complain
 		}
 
+		auto expr = new_sptr<ExpressionValue>();
+
 		expr->lValue = lhs;
 		expr->op = op;
 		expr->rValue = rhs;
 
 		lhs = expr;
 
-		break;
 	}
 
 	return lhs;
@@ -1610,47 +1574,44 @@ sptr<Value> Parser::parseAnyFnCall()
 
 sptr<Value> Parser::parseFnCall(sptr<Value> start)
 {
-	auto tkn = tokens.current();
+	auto& name = tokens.current();
 
-	if (tkn->type != TokenType::IDENTIFIER)
+	if (name->type != TokenType::IDENTIFIER)
 	{
 		return nullptr;
 	}
 
-	auto const& name = tkn;
-
-	auto ret = new_sptr<FnCallValue>();
+	auto fnCall = new_sptr<FnCallValue>();
 
 	tokens.consume();
 	
-	ret->genArgs = parseGenericArgs();
+	fnCall->genArgs = parseGenericArgs();
 
-	if (ret->genArgs == nullptr)
+	if (fnCall->genArgs == nullptr)
 	{
 		//TODO complain
 		return nullptr;
 	}
 
-	tkn = tokens.current();
-
-	if (tkn->type != TokenType::START_PAREN)
+	if (tokens.current()->type != TokenType::START_PAREN)
 	{
+		//TODO complain
 		return nullptr;
 	}
 
 	tokens.consume();
 
-	ret->name = name;
-	ret->target = start;
+	fnCall->name = name;
+	fnCall->target = start;
 
-	if (!parseValueList(ret->args, false))
+	if (!parseValueList(fnCall->args, false))
 	{
 		//TODO complain
 	}
 
-	ret->end = tokens.current();
+	fnCall->end = tokens.current();
 
-	return ret;
+	return fnCall;
 }
 
 std::vector<sptr<Variable>> Parser::parseLocalVars()
@@ -1668,7 +1629,7 @@ std::vector<sptr<Variable>> Parser::parseLocalVars()
 
 sptr<Variable> Parser::parseGlobalVar()
 {
-	auto first = tokens.current();
+	sptr<Token> first = tokens.current();
 
 	if (first->type != TokenType::KEYWORD)
 	{
@@ -1680,26 +1641,26 @@ sptr<Variable> Parser::parseGlobalVar()
 		return nullptr;
 	}
 
-	auto tkn = tokens.next();
+	auto v = new_sptr<GlobalVariable>();
 
-	sptr<ParsedType> type = nullptr;
-	if (tkn->str == ":")
+	v->first = first;
+
+	if (tokens.current()->str == ":")
 	{
-		type = parseTypeName();
-		tkn = tokens.next();
+		v->typeHint = parseTypeName();
 	}
-
-	sptr<Token> name = tkn;
-
-	if (name->type != TokenType::IDENTIFIER)
+	
+	if (tokens.current()->type != TokenType::IDENTIFIER)
 	{
 		//TODO complain
 		return nullptr;
 	}
 
-	tkn = tokens.next();
+	v->nameTkn = tokens.current();
 
-	if (tkn->str != "=")
+	tokens.consume();
+
+	if (tokens.current()->str != "=")
 	{
 		//TODO complain
 		return nullptr;
@@ -1707,20 +1668,13 @@ sptr<Variable> Parser::parseGlobalVar()
 
 	tokens.consume();
 
-	sptr<Value> initVal = parseAnyValue();
+	v->initValue = parseAnyValue();
 
-	if (!initVal->isCompileTimeConst())
+	if (!v->initValue->isCompileTimeConst())
 	{
 		//TODO complain
 		return nullptr;
 	}
-
-	auto v = new_sptr<GlobalVariable>();
-
-	v->first = first;
-	v->nameTkn = name;
-	v->typeHint = type;
-	v->initValue = initVal;
 
 	return v;
 }
@@ -1730,7 +1684,7 @@ sptr<Variable> Parser::parseMemberVar()
 	auto mods = parseStmtMods();
 
 	bool isConst = false;
-	auto start = tokens.current();
+	auto& start = tokens.current();
 
 	if (start->type == TokenType::KEYWORD && start->str == "const")
 	{
@@ -1746,7 +1700,7 @@ sptr<Variable> Parser::parseMemberVar()
 		return nullptr;
 	}
 
-	auto name = tokens.current();
+	auto& name = tokens.current();
 	sptr<Value> initVal = nullptr;
 
 	if (name->type != TokenType::IDENTIFIER)
@@ -1779,7 +1733,7 @@ sptr<Variable> Parser::parseMemberVar()
 std::vector<sptr<ParsedVar>> Parser::parseLocalVarLike()
 {
 	std::vector<sptr<ParsedVar>> vars;
-	auto first = tokens.current();
+	sptr<Token> first = tokens.current();
 
 	if (first->type != TokenType::KEYWORD)
 	{
@@ -1797,12 +1751,13 @@ std::vector<sptr<ParsedVar>> Parser::parseLocalVarLike()
 		return vars;
 	}
 
-	auto tkn = tokens.next();
+	tokens.consume();
+
 	sptr<ParsedType> typeHint = nullptr;
 
-	if (tkn->str == ":")
+	if (tokens.current()->str == ":")
 	{
-		tkn = tokens.next();
+		tokens.consume();
 		typeHint = parseTypeName();
 
 		if (typeHint == nullptr)
@@ -1814,9 +1769,9 @@ std::vector<sptr<ParsedVar>> Parser::parseLocalVarLike()
 
 	auto varNames = parseIdentifierList();
 	
-	tkn = tokens.next();
+	tokens.consume();
 
-	if (tkn->str == ":")
+	if (tokens.current()->str == ":")
 	{
 		//postParseException(new_uptr<ParseException>("That's not how type hints work in Caliburn. Type hints go before the variable name, not after. So var: int x is valid. var x: int isn't.", tkn));
 		return vars;
@@ -1824,7 +1779,7 @@ std::vector<sptr<ParsedVar>> Parser::parseLocalVarLike()
 
 	sptr<Value> initValue = nullptr;
 
-	if (tkn->str == "=")
+	if (tokens.current()->str == "=")
 	{
 		tokens.consume();
 		initValue = parseAnyValue();
@@ -1857,7 +1812,7 @@ std::vector<sptr<ParsedVar>> Parser::parseMemberVarLike()
 {
 	std::vector<sptr<ParsedVar>> vars;
 	bool isConst = false;
-	auto first = tokens.current();
+	sptr<Token> first = tokens.current();
 
 	if (first->type == TokenType::KEYWORD && first->str == "const")
 	{
@@ -1972,25 +1927,31 @@ std::vector<uptr<Annotation>> Parser::parseAllAnnotations()
 
 uptr<Annotation> Parser::parseAnnotation()
 {
-	auto first = tokens.current();
+	if (!tokens.hasNext(2))
+	{
+		return nullptr;
+	}
+
+	sptr<Token> first = tokens.current();
 
 	if (first->str != "@")
 	{
 		return nullptr;
 	}
 
-	auto name = tokens.peek();
+	auto a = new_uptr<Annotation>();
 
-	if (name->type != TokenType::IDENTIFIER)
+	a->first = first;
+	a->name = tokens.next();
+
+	if (a->name->type != TokenType::IDENTIFIER)
 	{
 		//TODO complain
 		return nullptr;
 	}
 
-	tokens.consume(2);
+	tokens.consume();
 
-	std::vector<sptr<Token>> content;
-	
 	if (tokens.current()->type == TokenType::START_PAREN)
 	{
 		tokens.consume();
@@ -1998,7 +1959,7 @@ uptr<Annotation> Parser::parseAnnotation()
 
 		while (tokens.hasNext())
 		{
-			auto tkn = tokens.next();
+			auto& tkn = tokens.current();
 
 			if (tkn->type == TokenType::END_PAREN)
 			{
@@ -2011,15 +1972,13 @@ uptr<Annotation> Parser::parseAnnotation()
 				}
 
 			}
-			else
+			else if (tkn->type == TokenType::START_PAREN)
 			{
-				if (tkn->type == TokenType::START_PAREN)
-				{
-					++closingParenNeeded;
-				}
-
-				content.push_back(tkn);
+				++closingParenNeeded;
 			}
+
+			a->contents.push_back(tkn);
+			tokens.consume();
 
 		}
 
@@ -2028,16 +1987,15 @@ uptr<Annotation> Parser::parseAnnotation()
 			//TODO complain
 		}
 
+		a->last = tokens.current();
+
+		tokens.consume();
+
+	}
+	else
+	{
+		a->last = a->name;
 	}
 
-	auto a = new_uptr<Annotation>();
-
-	a->first = first;
-	a->name = name;
-	a->last = tokens.current();
-	a->contents = content;
-
-	tokens.consume();
-	
 	return a;
 }
