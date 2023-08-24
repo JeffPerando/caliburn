@@ -24,12 +24,12 @@ namespace caliburn
 
 		bool hasNext(size_t count = 1) const
 		{
-			return (index + count) < vec.size();
+			return remaining() >= count;
 		}
 
 		bool hasRem() const
 		{
-			return remaining() > 0;
+			return index != vec.size();
 		}
 
 		//fetch current
