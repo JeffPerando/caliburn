@@ -1,6 +1,8 @@
 
 #include "parser.h"
 
+#include <stack>
+
 #include "ast/ctrlstmt.h"
 #include "ast/fnstmt.h"
 #include "ast/generics.h"
@@ -1518,19 +1520,21 @@ sptr<Value> Parser::parseExpr()
 		return nullptr;
 	}
 
-	std::vector<sptr<Value>> values{ start };
-	std::vector<Operator> ops;
+	std::stack<sptr<Value>> values;
+	std::stack<Operator> ops;
+
+	values.push(start);
 	
 	const auto makeExpr = lambda()
 	{
-		auto popOp = ops.back();
-		ops.pop_back();
+		auto popOp = ops.top();
+		ops.pop();
 
-		auto rhs = values.back();
-		values.pop_back();
+		auto rhs = values.top();
+		values.pop();
 
-		auto lhs = values.back();
-		values.pop_back();
+		auto lhs = values.top();
+		values.pop();
 
 		auto expr = new_sptr<ExpressionValue>();
 
@@ -1538,7 +1542,7 @@ sptr<Value> Parser::parseExpr()
 		expr->op = popOp;
 		expr->rValue = rhs;
 
-		values.emplace_back(expr);
+		values.push(expr);
 
 	};
 
@@ -1562,12 +1566,12 @@ sptr<Value> Parser::parseExpr()
 		auto op = found->second;
 		auto opWeightCur = OP_PRECEDENCE.at(op);
 		
-		if (!ops.empty() && OP_PRECEDENCE.at(ops.back()) > opWeightCur)
+		if (!ops.empty() && OP_PRECEDENCE.at(ops.top()) > opWeightCur)
 		{
 			makeExpr();
 		}
 
-		ops.emplace_back(op);
+		ops.push(op);
 
 		auto val = parseNonExpr();
 
@@ -1577,7 +1581,7 @@ sptr<Value> Parser::parseExpr()
 			break;
 		}
 
-		values.emplace_back(val);
+		values.push(val);
 
 	}
 	
@@ -1586,7 +1590,7 @@ sptr<Value> Parser::parseExpr()
 		makeExpr();
 	}
 
-	return values.at(0);
+	return values.top();
 }
 
 sptr<Value> Parser::parseAnyFnCall()

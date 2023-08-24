@@ -43,13 +43,13 @@ int main()
 	std::cout << '\n';
 
 	auto p = caliburn::Parser(tkns);
-	auto v = p.parseExpr();
-
 	std::chrono::high_resolution_clock clock{};
 
 	auto startTime = clock.now();
-	std::cout << (v == nullptr ? "NULL" : v->prettyStr()) << '\n';
+	auto v = p.parseExpr();
 	auto time = clock.now() - startTime;
+
+	std::cout << (v == nullptr ? "NULL" : v->prettyStr()) << '\n';
 	std::cout << "Time taken: " << (time.count() * 0.000001f) << " ms\n";
 
 	/*
