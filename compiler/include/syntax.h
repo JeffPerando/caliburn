@@ -164,16 +164,16 @@ namespace caliburn
 	};
 
 	static const HashMap<char, TokenType> CHAR_TOKEN_TYPES = {
-		{';',	TokenType::END},
-		{'{',	TokenType::START_SCOPE},
-		{'}',	TokenType::END_SCOPE},
-		{'[',	TokenType::START_BRACKET},
-		{']',	TokenType::END_BRACKET},
 		{'(',	TokenType::START_PAREN},
 		{')',	TokenType::END_PAREN},
-		{'.',	TokenType::PERIOD},
 		{',',	TokenType::COMMA},
-		{':',	TokenType::COLON}
+		{'.',	TokenType::PERIOD},
+		{':',	TokenType::COLON},
+		{';',	TokenType::END},
+		{'[',	TokenType::START_BRACKET},
+		{']',	TokenType::END_BRACKET},
+		{'{',	TokenType::START_SCOPE},
+		{'}',	TokenType::END_SCOPE}
 	};
 
 	static const HashMap<std::string, TokenType> STR_TOKEN_TYPES = {
@@ -292,32 +292,32 @@ namespace caliburn
 		{Operator::APPEND,		OpCategory::MISC},
 	};
 
-	static constexpr uint32_t OP_PRECEDENCE_MAX = 10;
-
 	static const std::map<Operator, uint32_t> OP_PRECEDENCE = {
-		{Operator::POW,			10},
-		{Operator::MUL,			9},
-		{Operator::DIV,			8},
-		{Operator::INTDIV,		8},
-		{Operator::MOD,			8},
-		{Operator::ADD,			7},
-		{Operator::SUB,			7},
+		{Operator::AND,			10},
+		{Operator::OR,			10},
 
-		{Operator::SHIFT_LEFT,	6},
-		{Operator::SHIFT_RIGHT, 6},
-		{Operator::BIT_AND,		5},
-		{Operator::BIT_OR,		4},
-		{Operator::BIT_XOR,		4},
-		
-		{Operator::COMP_EQ,		3},
-		{Operator::COMP_NEQ,	3},
-		{Operator::COMP_GT,		3},
-		{Operator::COMP_LT,		3},
-		{Operator::COMP_GTE,	3},
-		{Operator::COMP_LTE,	3},
-		{Operator::APPEND,		2},
-		{Operator::AND,			1},
-		{Operator::OR,			1},
+		{Operator::COMP_EQ,		9},
+		{Operator::COMP_NEQ,	9},
+		{Operator::COMP_GT,		9},
+		{Operator::COMP_LT,		9},
+		{Operator::COMP_GTE,	9},
+		{Operator::COMP_LTE,	9},
+
+		{Operator::SHIFT_LEFT,	8},
+		{Operator::SHIFT_RIGHT,	8},
+		{Operator::BIT_AND,		7},
+		{Operator::BIT_OR,		6},
+		{Operator::BIT_XOR,		6},
+
+		{Operator::APPEND,		5},
+		{Operator::POW,			4},
+		{Operator::MUL,			3},
+		{Operator::DIV,			2},
+		{Operator::INTDIV,		2},
+		{Operator::MOD,			2},
+		{Operator::ADD,			1},
+		{Operator::SUB,			1},
+
 	};
 
 	static constexpr std::string_view GENERIC_START = "<";

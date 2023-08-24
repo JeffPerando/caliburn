@@ -1147,7 +1147,7 @@ uptr<Statement> Parser::parseValueStmt()
 {
 	std::vector<ParseMethod<sptr<Value>>> methods = {
 		&Parser::parseAnyFnCall,
-		&Parser::parseAnyExpr
+		&Parser::parseExpr
 	};
 
 	if (auto val = parseAny(methods))
@@ -1199,7 +1199,7 @@ uptr<Statement> Parser::parseLocalVarStmt()
 sptr<Value> Parser::parseAnyValue()
 {
 	std::vector<ParseMethod<sptr<Value>>> methods = {
-		&Parser::parseAnyExpr,//this will call the other two and look for an expression
+		&Parser::parseExpr,//this will call the other two and look for an expression
 		&Parser::parseLiteral,
 		&Parser::parseAnyFnCall,
 	};
@@ -1396,7 +1396,7 @@ sptr<Value> Parser::parseUnaryValue()
 
 			unary->start = first;
 			unary->op = foundOp->second;
-			unary->val = parseAnyExpr();
+			unary->val = parseExpr();
 
 			if (foundOp->second == Operator::ABS)
 			{
@@ -1509,14 +1509,38 @@ sptr<Value> Parser::parseAccess(sptr<Value> target)
 	return access;
 }
 
-sptr<Value> Parser::parseAnyExpr()
+sptr<Value> Parser::parseExpr()
 {
-	return parseExpr(OP_PRECEDENCE_MAX);
-}
+	auto start = parseNonExpr();
 
-sptr<Value> Parser::parseExpr(uint32_t precedence)
-{
-	auto lhs = parseNonExpr();
+	if (start == nullptr)
+	{
+		return nullptr;
+	}
+
+	std::vector<sptr<Value>> values{ start };
+	std::vector<Operator> ops;
+	
+	const auto makeExpr = lambda()
+	{
+		auto popOp = ops.back();
+		ops.pop_back();
+
+		auto rhs = values.back();
+		values.pop_back();
+
+		auto lhs = values.back();
+		values.pop_back();
+
+		auto expr = new_sptr<ExpressionValue>();
+
+		expr->lValue = lhs;
+		expr->op = popOp;
+		expr->rValue = rhs;
+
+		values.emplace_back(expr);
+
+	};
 
 	while (tokens.hasNext(2))
 	{
@@ -1533,48 +1557,36 @@ sptr<Value> Parser::parseExpr(uint32_t precedence)
 			break;
 		}
 
-		auto op = found->second;
-		auto opWeight = OP_PRECEDENCE.at(op);
-
-		if (opWeight > precedence)
-		{
-			return lhs;
-		}
-
 		tokens.consume();
 
-		//Yes, we use *this* code to parse setters.
-		if (tokens.current()->str == "=")
+		auto op = found->second;
+		auto opWeightCur = OP_PRECEDENCE.at(op);
+		
+		if (!ops.empty() && OP_PRECEDENCE.at(ops.back()) > opWeightCur)
 		{
-			tokens.consume();
-
-			auto set = new_sptr<SetterValue>();
-
-			set->lhs = lhs;
-			set->op = op;
-			set->rhs = parseAnyExpr();
-
-			return set;
+			makeExpr();
 		}
 
-		auto rhs = parseExpr(opWeight - 1);//TODO suppress errors here
+		ops.emplace_back(op);
 
-		if (rhs == nullptr)
+		auto val = parseNonExpr();
+
+		if (val == nullptr)
 		{
 			//TODO complain
+			break;
 		}
 
-		auto expr = new_sptr<ExpressionValue>();
-
-		expr->lValue = lhs;
-		expr->op = op;
-		expr->rValue = rhs;
-
-		lhs = expr;
+		values.emplace_back(val);
 
 	}
+	
+	while (values.size() > 1)
+	{
+		makeExpr();
+	}
 
-	return lhs;
+	return values.at(0);
 }
 
 sptr<Value> Parser::parseAnyFnCall()

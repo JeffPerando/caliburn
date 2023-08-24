@@ -7,16 +7,20 @@
 #define CBRN_NO_IMPORT
 #include "caliburn.h"
 
+#include "tokenizer.h"
+#include "parser.h"
+
 int main()
 {
+	/*
 	caliburn::CompilerSettings cs;
 
 	cs.o = caliburn::OptimizeLevel::DEBUG;
 	cs.vLvl = caliburn::ValidationLevel::FULL;
 
 	caliburn::Compiler cc(cs);
-
-	std::ifstream file("./../../../../shader.cbrn");
+	*/
+	std::ifstream file("./../../../../expr.txt");
 
 	if (!file.is_open())
 	{
@@ -28,6 +32,27 @@ int main()
 	std::string src = buf.str();
 	file.close();
 
+	auto t = caliburn::Tokenizer(src);
+	auto tkns = t.tokenize();
+
+	for (auto const& t : tkns)
+	{
+		std::cout << t->str << ' ';
+	}
+
+	std::cout << '\n';
+
+	auto p = caliburn::Parser(tkns);
+	auto v = p.parseExpr();
+
+	std::chrono::high_resolution_clock clock{};
+
+	auto startTime = clock.now();
+	std::cout << (v == nullptr ? "NULL" : v->prettyStr()) << '\n';
+	auto time = clock.now() - startTime;
+	std::cout << "Time taken: " << (time.count() * 0.000001f) << " ms\n";
+
+	/*
 	std::cout << "Compiling:\n";
 	std::cout << src << '\n';
 
@@ -66,6 +91,6 @@ int main()
 		out.close();
 
 	}
-
+	*/
 	return 0;
 }

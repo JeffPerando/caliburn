@@ -1,7 +1,6 @@
 
 #include <algorithm>
 #include <map>
-#include <iostream>
 #include <sstream>
 
 #include "tokenizer.h"
@@ -37,17 +36,17 @@ Tokenizer::Tokenizer(ref<const TextDoc> t) : doc(t), buf(std::vector<char>(t.tex
 		asciiTypes[ch] = CharType::OPERATOR;
 	}
 
-	asciiTypes['#'] = CharType::COMMENT;
-	asciiTypes[','] = CharType::SPECIAL;
-	asciiTypes['('] = CharType::SPECIAL;
-	asciiTypes[')'] = CharType::SPECIAL;
-	asciiTypes['{'] = CharType::SPECIAL;
-	asciiTypes['}'] = CharType::SPECIAL;
-	asciiTypes['['] = CharType::SPECIAL;
-	asciiTypes[']'] = CharType::SPECIAL;
 	asciiTypes['\''] = CharType::STRING_DELIM;
 	asciiTypes['\"'] = CharType::STRING_DELIM;
-
+	asciiTypes['#'] = CharType::COMMENT;
+	asciiTypes['('] = CharType::SPECIAL;
+	asciiTypes[')'] = CharType::SPECIAL;
+	asciiTypes[','] = CharType::SPECIAL;
+	asciiTypes['['] = CharType::SPECIAL;
+	asciiTypes[']'] = CharType::SPECIAL;
+	asciiTypes['{'] = CharType::SPECIAL;
+	asciiTypes['}'] = CharType::SPECIAL;
+	
 	//character 127 (DEL) is a reserved UNKNOWN
 	for (auto i = 0; i < 127; ++i)
 	{
@@ -193,7 +192,7 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 	else isPrefixed = false;
 
 	//get the actual numerical digits
-	while (buf.hasNext())
+	while (buf.hasRem())
 	{
 		char current = buf.current();
 
@@ -276,19 +275,18 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 	auto width = 32;
 
 	//find suffix
-	if (buf.hasNext())
+	if (buf.hasRem())
 	{
 		char suffix = buf.current();
 		buf.consume();
 
+		//lowercase
 		if (suffix > 96)
 			suffix -= 32;
 
 		if (suffix == 'U')
 		{
 			typeSuffix = "uint";
-			suffix = buf.current();
-			buf.consume();
 		}
 
 		switch (suffix)
@@ -315,7 +313,11 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 	lit = ss.str();
 	type = isFloat ? TokenType::LITERAL_FLOAT : TokenType::LITERAL_INT;
 
-	return (buf.currentIndex() - startIndex);
+	size_t len = (buf.currentIndex() - startIndex);
+
+	buf.revertTo(startIndex);
+
+	return len;
 }
 
 size_t Tokenizer::findIdentifierLen()
@@ -338,7 +340,9 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 {
 	std::vector<sptr<Token>> tokens;
 
-	while (buf.hasNext())
+	auto last = buf.currentIndex();
+
+	while (buf.hasRem())
 	{
 		char current = buf.current();
 
@@ -351,6 +355,8 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 		}
 
 		CharType type = getType(current);
+
+		last = buf.currentIndex();
 
 		//See https://en.wikipedia.org/w/index.php?title=Newline
 
@@ -408,8 +414,8 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			std::string intLit = "";
 			TokenType intType = TokenType::UNKNOWN;
 
-			size_t intOffset = findIntLiteral(intType, intLit);
 			size_t idOffset = findIdentifierLen();
+			size_t intOffset = findIntLiteral(intType, intLit);
 
 			if (intOffset == 0 && idOffset == 0)
 			{

@@ -356,7 +356,7 @@ cllr::TypedSSA UnsignValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Ass
 
 void IntLiteralValue::prettyPrint(ref<std::stringstream> ss) const
 {
-	ss << lit->str;
+	ss << lit->str.substr(0, lit->str.find('_'));
 }
 
 void FloatLiteralValue::prettyPrint(ref<std::stringstream> ss) const
@@ -405,12 +405,28 @@ void ExpressionValue::prettyPrint(ref<std::stringstream> ss) const
 
 	const auto& opStr = INFIX_OPS_STR.at(op);
 
-	lValue->prettyPrint(ss);
+	auto constexpr postfix = false;
 
-	ss << ' ' << opStr << ' ';
+	if (postfix)
+	{
+		lValue->prettyPrint(ss);
 
-	rValue->prettyPrint(ss);
+		ss << ' ';
 
+		rValue->prettyPrint(ss);
+
+		ss << ' ' << opStr;
+
+	}
+	else
+	{
+		lValue->prettyPrint(ss);
+
+		ss << ' ' << opStr << ' ';
+
+		rValue->prettyPrint(ss);
+	}
+	
 }
 
 void IsAValue::prettyPrint(ref<std::stringstream> ss) const

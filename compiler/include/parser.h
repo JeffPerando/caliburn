@@ -109,9 +109,7 @@ namespace caliburn
 
 		sptr<Value> parseAccess(sptr<Value> target);
 
-		sptr<Value> parseAnyExpr();
-
-		sptr<Value> parseExpr(uint32_t precedence);
+		sptr<Value> parseExpr();
 
 		sptr<Value> parseAnyFnCall();
 
