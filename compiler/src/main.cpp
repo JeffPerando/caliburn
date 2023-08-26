@@ -10,17 +10,14 @@
 #include "tokenizer.h"
 #include "parser.h"
 
-int main()
+int testShaderCompile()
 {
-	/*
 	caliburn::CompilerSettings cs;
 
 	cs.o = caliburn::OptimizeLevel::DEBUG;
 	cs.vLvl = caliburn::ValidationLevel::FULL;
 
-	caliburn::Compiler cc(cs);
-	*/
-	std::ifstream file("./../../../../expr.txt");
+	std::ifstream file("./../../../../shader.cbrn");
 
 	if (!file.is_open())
 	{
@@ -32,29 +29,9 @@ int main()
 	std::string src = buf.str();
 	file.close();
 
-	auto t = caliburn::Tokenizer(src);
-	auto tkns = t.tokenize();
-
-	for (auto const& t : tkns)
-	{
-		std::cout << t->str << ' ';
-	}
-
-	std::cout << '\n';
-
-	auto p = caliburn::Parser(tkns);
-	std::chrono::high_resolution_clock clock{};
-
-	auto startTime = clock.now();
-	auto v = p.parseExpr();
-	auto time = clock.now() - startTime;
-
-	std::cout << (v == nullptr ? "NULL" : v->prettyStr()) << '\n';
-	std::cout << "Time taken: " << (time.count() * 0.000001f) << " ms\n";
-
-	/*
-	std::cout << "Compiling:\n";
-	std::cout << src << '\n';
+	caliburn::Compiler cc(cs);
+	//std::cout << "Compiling:\n";
+	//std::cout << src << '\n';
 
 	std::chrono::high_resolution_clock clock{};
 
@@ -91,6 +68,55 @@ int main()
 		out.close();
 
 	}
-	*/
+
+	return 0;
+}
+
+int testExprParsing()
+{
+	std::ifstream file("./../../../../expr.txt");
+
+	if (!file.is_open())
+	{
+		return -1;
+	}
+
+	std::stringstream buf;
+	buf << file.rdbuf();
+	std::string src = buf.str();
+	file.close();
+
+	auto t = caliburn::Tokenizer(src);
+	auto tkns = t.tokenize();
+
+	for (auto const& t : tkns)
+	{
+		std::cout << t->str << ' ';
+	}
+
+	std::cout << '\n';
+
+	auto p = caliburn::Parser(tkns);
+	std::chrono::high_resolution_clock clock{};
+
+	auto startTime = clock.now();
+	auto v = p.parseExpr();
+	auto time = clock.now() - startTime;
+
+	std::cout << (v == nullptr ? "NULL" : v->prettyStr()) << '\n';
+	std::cout << "Time taken: " << (time.count() * 0.000001f) << " ms\n";
+
+	return 0;
+}
+
+int main()
+{
+	std::cout << sizeof(caliburn::Token) << '\n';
+
+	for (int i = 0; i < 10; ++i)
+	{
+		testShaderCompile();
+	}
+
 	return 0;
 }

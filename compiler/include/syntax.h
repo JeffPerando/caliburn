@@ -37,7 +37,7 @@ namespace caliburn
 		"construct", "def", "destruct", "op", "override"
 	};
 
-	enum class TokenType : uint64_t
+	enum class TokenType : uint8_t
 	{
 		UNKNOWN,
 		WHITESPACE,
@@ -66,7 +66,7 @@ namespace caliburn
 		const std::string str;
 		const TokenType type;
 		const TextPos pos;
-		
+
 		/*
 		These represent the start and end of this token within the file itself.
 		Since a file is just a string, we can index directly into it.
@@ -76,8 +76,7 @@ namespace caliburn
 		const uint64_t textStart, textEnd;
 
 		Token(std::string t,
-			TokenType id = TokenType::IDENTIFIER,
-			TextPos p = TextPos(),
+			TokenType id = TokenType::IDENTIFIER, TextPos p = TextPos(),
 			uint64_t s = 0, uint64_t off = 0) :
 			str(t), type(id), pos(p), textStart(s), textEnd(s + off) {}
 

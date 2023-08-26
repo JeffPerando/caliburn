@@ -11,10 +11,10 @@ namespace caliburn
 {
 	struct TextPos
 	{
-		size_t line, column;
+		uint32_t line, column;
 
 		TextPos() : line(1), column(0) {}
-		TextPos(size_t l, size_t c = 0) : line(l), column(c) {}
+		TextPos(uint32_t l, uint32_t c = 0) : line(l), column(c) {}
 		
 		std::string toStr() const
 		{
@@ -45,7 +45,7 @@ namespace caliburn
 		//and I can't be bothered to type "new" every time I want to call it
 		void move(size_t off = 1)
 		{
-			column += off;
+			column += (uint32_t)off;
 		}
 
 	};
