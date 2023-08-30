@@ -10,6 +10,8 @@
 #include "tokenizer.h"
 #include "parser.h"
 
+static uint64_t totalTime = 0;
+
 int testShaderCompile()
 {
 	caliburn::CompilerSettings cs;
@@ -52,6 +54,8 @@ int testShaderCompile()
 
 	std::cout << "Successfully compiled " << shaders.size() << " shaders!\n";
 	std::cout << "Time taken: " << (time.count() * 0.000001f) << " ms\n";
+
+	totalTime += time.count();
 
 	for (auto const& s : shaders)
 	{
@@ -106,17 +110,21 @@ int testExprParsing()
 	std::cout << (v == nullptr ? "NULL" : v->prettyStr()) << '\n';
 	std::cout << "Time taken: " << (time.count() * 0.000001f) << " ms\n";
 
+	totalTime += time.count();
+
 	return 0;
 }
 
 int main()
 {
-	std::cout << sizeof(caliburn::Token) << '\n';
+	auto const takes = 10;
 
-	for (int i = 0; i < 10; ++i)
+	for (int i = 0; i < takes; ++i)
 	{
 		testShaderCompile();
 	}
+
+	std::cout << "Average time: " << ((totalTime / static_cast<double>(takes)) * 0.000001) << " ms\n";
 
 	return 0;
 }
