@@ -32,11 +32,6 @@
 #define CBRN_API
 #endif
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable: 4251)
-#endif
-
 namespace caliburn
 {
 	/*
@@ -187,10 +182,6 @@ namespace caliburn
 	};
 
 }
-
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
 #endif
 #endif
