@@ -93,8 +93,8 @@ uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(ref<cllr::Ass
 	{
 		auto const& i = code.at(off);
 
-		auto fn = (impls[(uint32_t)i->op]);
-		(*fn)(*i, off, cllrAsm, *this);
+		auto fn = (impls[(uint32_t)i.op]);
+		(*fn)(i, off, cllrAsm, *this);
 
 	}
 
@@ -405,7 +405,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpFunction)
 		->setLimit(i.operands[0])
 		->find(in.getCode());
 
-	auto fnArgs = cinq::map<sptr<Instruction>, spirv::SSA>(cllrFnArgs, lambda(sptr<Instruction> i) { return out.toSpvID(i->refs[0]); });
+	auto fnArgs = cinq::map<Instruction, spirv::SSA>(cllrFnArgs, lambda(ref<const Instruction> i) { return out.toSpvID(i.refs[0]); });
 
 	//put the return type at the start so we can just pass the whole vector
 	fnArgs.emplace(fnArgs.begin(), t);
@@ -513,7 +513,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCall)
 		->setLimit(i.operands[0])
 		->find(in.getCode());
 
-	auto fnArgs = cinq::map<sptr<Instruction>, spirv::SSA>(cllrFnArgs, lambda(sptr<Instruction> i) { return out.toSpvID(i->refs[0]); });
+	auto fnArgs = cinq::map<Instruction, spirv::SSA>(cllrFnArgs, lambda(ref<const Instruction&> i) { return out.toSpvID(i.refs[0]); });
 
 	//push the function ID to pass the whole vector
 	fnArgs.emplace(fnArgs.begin(), fnID);
@@ -600,7 +600,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeStruct)
 		->setLimit(i.operands[0])
 		->find(in.getCode());
 
-	auto members = cinq::map<sptr<Instruction>, spirv::SSA>(cllrMembers, lambda(sptr<Instruction> i) { return out.toSpvID(i->refs[0]); });
+	auto members = cinq::map<Instruction, spirv::SSA>(cllrMembers, lambda(ref<const Instruction&> i) { return out.toSpvID(i.refs[0]); });
 
 	auto memCount = (uint32_t)members.size();
 
@@ -697,11 +697,11 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 
 	auto spvLhs = out.toSpvID(i.refs[0]);
 	auto spvRhs = out.toSpvID(i.refs[1]);
-	auto outType = in.codeFor(i.outType);
+	auto const& outType = in.codeFor(i.outType);
 
 	auto op = spirv::OpNop();
 	
-	if (outType->op == Opcode::TYPE_FLOAT)
+	if (outType.op == Opcode::TYPE_FLOAT)
 	{
 		switch (cllrOp)
 		{
@@ -715,7 +715,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 		}
 
 	}
-	else if (outType->op == Opcode::TYPE_INT_SIGN)
+	else if (outType.op == Opcode::TYPE_INT_SIGN)
 	{
 		switch (cllrOp)
 		{
@@ -729,7 +729,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 		}
 
 	}
-	else if (outType->op == Opcode::TYPE_INT_UNSIGN)
+	else if (outType.op == Opcode::TYPE_INT_UNSIGN)
 	{
 		switch (cllrOp)
 		{
@@ -743,7 +743,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 		}
 
 	}
-	else if (outType->op == Opcode::TYPE_BOOL)
+	else if (outType.op == Opcode::TYPE_BOOL)
 	{
 		switch (cllrOp)
 		{
@@ -782,7 +782,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueConstruct)
 		->setLimit(i.operands[0])
 		->find(in.getCode());
 
-	auto args = cinq::map<sptr<Instruction>, spirv::SSA>(cllrArgs, lambda(sptr<Instruction> i) { return out.toSpvID(i->refs[0]); });
+	auto args = cinq::map<Instruction, spirv::SSA>(cllrArgs, lambda(ref<const Instruction&> i) { return out.toSpvID(i.refs[0]); });
 
 	out.main->pushTyped(spirv::OpCompositeConstruct((uint32_t)args.size()), t, id, args);
 	//TODO consider calling constructor here. Or in the CLLR. idk.
@@ -809,15 +809,15 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpand)
 
 	auto spvOp = spirv::OpNop();
 
-	if (t->op == cllr::Opcode::TYPE_INT_SIGN)
+	if (t.op == cllr::Opcode::TYPE_INT_SIGN)
 	{
 		spvOp = spirv::OpSConvert();
 	}
-	else if (t->op == cllr::Opcode::TYPE_INT_UNSIGN)
+	else if (t.op == cllr::Opcode::TYPE_INT_UNSIGN)
 	{
 		spvOp = spirv::OpUConvert();
 	}
-	else if (t->op == cllr::Opcode::TYPE_FLOAT)
+	else if (t.op == cllr::Opcode::TYPE_FLOAT)
 	{
 		spvOp = spirv::OpFConvert();
 	}
@@ -827,15 +827,15 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpand)
 		return;
 	}
 
-	out.main->pushTyped(spvOp, out.toSpvID(t->index), id, { inID });
+	out.main->pushTyped(spvOp, out.toSpvID(t.index), id, { inID });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpr)
 {
 	auto id = out.toSpvID(i.index);
-	auto outType = in.codeFor(i.outType);
-	auto spvOutType = out.toSpvID(outType->index);
+	auto const& outType = in.codeFor(i.outType);
+	auto spvOutType = out.toSpvID(outType.index);
 
 	auto cllrOp = (Operator)i.operands[0];
 
@@ -852,7 +852,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpr)
 
 	auto op = spirv::OpNop();
 
-	switch (outType->op)
+	switch (outType.op)
 	{
 		case Opcode::TYPE_FLOAT: {
 			switch (cllrOp)
@@ -923,11 +923,11 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 	{
 		auto extOp = spirv::GLSL450Ext::None;
 
-		if (outType->op == Opcode::TYPE_FLOAT)
+		if (outType.op == Opcode::TYPE_FLOAT)
 		{
 			extOp = spirv::GLSL450Ext::FAbs;
 		}
-		else if (outType->op == Opcode::TYPE_INT_SIGN)
+		else if (outType.op == Opcode::TYPE_INT_SIGN)
 		{
 			extOp = spirv::GLSL450Ext::SAbs;
 		}
@@ -942,7 +942,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 		out.main->pushTyped(spirv::OpExtInst(1), spvOutType, id, { lib, (uint32_t)extOp, lhs });
 		return;
 	}
-	else if (outType->op == Opcode::TYPE_FLOAT)
+	else if (outType.op == Opcode::TYPE_FLOAT)
 	{
 		if (cllrOp == Operator::NEG)
 		{
@@ -951,7 +951,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 		}
 
 	}
-	else if (outType->op == Opcode::TYPE_INT_SIGN)
+	else if (outType.op == Opcode::TYPE_INT_SIGN)
 	{
 		if (cllrOp == Operator::BIT_NEG)
 		{
@@ -963,7 +963,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 		}
 
 	}
-	else if (outType->op == Opcode::TYPE_INT_UNSIGN)
+	else if (outType.op == Opcode::TYPE_INT_UNSIGN)
 	{
 		if (cllrOp == Operator::BIT_NEG)
 		{
@@ -971,7 +971,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 		}
 
 	}
-	else if (outType->op == Opcode::TYPE_BOOL)
+	else if (outType.op == Opcode::TYPE_BOOL)
 	{
 		if (cllrOp == Operator::BOOL_NOT)
 		{
@@ -1054,7 +1054,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitArray)
 		->setLimit(i.operands[0])
 		->find(in.getCode());
 
-	auto elems = cinq::map<sptr<Instruction>, spirv::SSA>(cllrElems, lambda(sptr<Instruction> i) { return out.toSpvID(i->refs[0]); });
+	auto elems = cinq::map<Instruction, spirv::SSA>(cllrElems, lambda(ref<const Instruction&> i) { return out.toSpvID(i.refs[0]); });
 
 	if (elems.size() < reqLength)
 	{
@@ -1186,7 +1186,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueSign)
 {
 	auto inValue = out.toSpvID(i.refs[0]);
 
-	auto width = in.codeFor(i.outType)->operands[0];
+	auto width = in.codeFor(i.outType).operands[0];
 	auto words = (width / 32);
 
 	auto uint = out.types.findOrMake(spirv::OpTypeInt(), { width, 0 });
@@ -1258,7 +1258,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueSubarray)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueUnsign)
 {
-	auto width = in.codeFor(i.outType)->operands[0];
+	auto width = in.codeFor(i.outType).operands[0];
 
 	auto inValue = out.toSpvID(i.refs[0]);
 

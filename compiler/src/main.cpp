@@ -117,7 +117,7 @@ int testExprParsing()
 
 int main()
 {
-	auto const takes = 10;
+	auto const takes = 20;
 
 	for (int i = 0; i < takes; ++i)
 	{

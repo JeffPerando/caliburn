@@ -148,7 +148,7 @@ cllr::TypedSSA SubArrayValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::A
 	auto& [iTypeID, iID] = index->emitValueCLLR(table, codeAsm);
 
 	//FIXME check array type
-	auto outType = codeAsm.codeFor(aID)->refs[0];
+	auto outType = codeAsm.codeFor(aID).refs[0];
 	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_SUBARRAY, {}, { aID, iID }, outType));
 
 	//FIXME

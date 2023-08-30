@@ -19,14 +19,19 @@ SSA Assembler::createSSA(Opcode op)
 {
 	ssaRefs.push_back(0);
 	ssaToOp.push_back(op);
-	ssaToCode.push_back(nullptr);
+	ssaToIndex.push_back(0);
 
 	return nextSSA++;
 }
 
-sptr<Instruction> Assembler::codeFor(SSA id) const
+ref<const Instruction> Assembler::codeFor(SSA id) const
 {
-	return ssaToCode.at(id);
+	return code->at(ssaToIndex.at(id));
+}
+
+ref<const Instruction> Assembler::codeAt(size_t off) const
+{
+	return code->at(off);
 }
 
 Opcode Assembler::opFor(SSA id) const
@@ -45,11 +50,8 @@ SSA Assembler::push(ref<Instruction> ins)
 		//TODO complain
 	}
 
-	auto ins_sptr = new_sptr<Instruction>(ins);
-
-	code->push_back(ins_sptr);
-
-	doBookkeeping(ins_sptr);
+	code->push_back(ins);
+	doBookkeeping(ins);
 
 	return ssa;
 }
@@ -90,13 +92,10 @@ SSA Assembler::pushType(ref<Instruction> ins)
 
 void Assembler::pushAll(std::vector<Instruction> ins)
 {
-	code->reserve(code->size() + ins.size());
-
 	for (auto& i : ins)
 	{
-		auto ins = new_sptr<Instruction>(i);
-		code->push_back(ins);
-		doBookkeeping(ins);
+		code->push_back(i);
+		doBookkeeping(i);
 
 	}
 
@@ -104,7 +103,7 @@ void Assembler::pushAll(std::vector<Instruction> ins)
 
 sptr<LowType> Assembler::getType(SSA id) const
 {
-	auto& found = types.find(*ssaToCode[id]);
+	auto& found = types.find(code->at(ssaToIndex[id]));
 
 	if (found == types.end())
 	{
@@ -182,13 +181,13 @@ uint32_t Assembler::replace(SSA in, SSA out)
 		return 0;
 	}
 
-	for (auto const& op : *code)
+	for (auto& op : *code)
 	{
 		for (size_t i = 0; i < 3; ++i)
 		{
-			if (op->refs[i] == in)
+			if (op.refs[i] == in)
 			{
-				op->refs[i] = out;
+				op.refs[i] = out;
 				++count;
 
 			}
@@ -200,9 +199,9 @@ uint32_t Assembler::replace(SSA in, SSA out)
 			break;
 		}
 
-		if (op->outType == in)
+		if (op.outType == in)
 		{
-			op->outType = out;
+			op.outType = out;
 			++count;
 		}
 
@@ -215,14 +214,15 @@ uint32_t Assembler::replace(SSA in, SSA out)
 
 	if (out != 0)
 	{
+		ssaToOp[out] = ssaToOp[in];
 		ssaRefs[out] += count;
-		ssaToCode[out] = ssaToCode[in];
-		ssaToCode[out]->index = out;
-
+		ssaToIndex[out] = ssaToIndex[in];
+		
 	}
 
 	ssaRefs[in] = 0;
-	ssaToCode[in] = nullptr;//TODO find alternative
+	ssaToOp[in] = Opcode::UNKNOWN;
+	ssaToIndex[in] = 0;
 
 	return count;
 }
@@ -255,11 +255,11 @@ uint32_t Assembler::flatten()
 
 	nextSSA = lastSSA + 1;
 
-	for (size_t i = 0; i < ssaToCode.size(); ++i)
+	for (size_t i = 0; i < ssaToIndex.size(); ++i)
 	{
-		if (ssaToCode[i] == nullptr)
+		if (ssaToOp.at(ssaToIndex[i]) == Opcode::UNKNOWN)
 		{
-			ssaToCode.erase(ssaToCode.begin() + i);
+			ssaToIndex.erase(ssaToIndex.begin() + i);
 		}
 
 	}
@@ -267,16 +267,17 @@ uint32_t Assembler::flatten()
 	return replaced;
 }
 
-void Assembler::doBookkeeping(sptr<Instruction> ins)
+void Assembler::doBookkeeping(ref<Instruction> ins)
 {
-	if (ins->index != 0)
+	if (ins.index != 0)
 	{
-		ssaToCode[ins->index] = ins;
+		ssaToIndex[ins.index] = code->size() - 1;
+		ssaToOp[ins.index] = ins.op;
 	}
 
 	for (auto i = 0; i < 3; ++i)
 	{
-		auto refID = ins->refs[i];
+		auto const& refID = ins.refs[i];
 
 		if (refID != 0)
 		{
@@ -285,14 +286,14 @@ void Assembler::doBookkeeping(sptr<Instruction> ins)
 
 	}
 
-	if (ins->outType != 0)
+	if (ins.outType != 0)
 	{
-		ssaRefs[ins->outType] += 1;
+		ssaRefs[ins.outType] += 1;
 	}
 
-	if (ins->op == Opcode::STRUCT_MEMBER)
+	if (ins.op == Opcode::STRUCT_MEMBER)
 	{
-		getType(ins->refs[0])->addMember(ins->index, getType(ins->refs[1]));
+		getType(ins.refs[0])->addMember(ins.index, getType(ins.refs[1]));
 	}
 
 }

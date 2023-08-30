@@ -34,7 +34,7 @@ namespace caliburn
 		private:
 			const uptr<InstructionVec> code = new_uptr<InstructionVec>();
 
-			InstructionVec ssaToCode{ new_sptr<Instruction>() };
+			std::vector<size_t> ssaToIndex{ 0 };
 			std::vector<Opcode> ssaToOp{ Opcode::UNKNOWN };
 			std::vector<uint32_t> ssaRefs{ 0 };
 
@@ -53,7 +53,7 @@ namespace caliburn
 			Assembler(ShaderType t, sptr<const CompilerSettings> cs, uint32_t initSize = 2048) : type(t), settings(cs)
 			{
 				code->reserve(initSize);
-				ssaToCode.reserve(initSize);
+				ssaToIndex.reserve(initSize);
 				ssaToOp.reserve(initSize);
 				ssaRefs.reserve(initSize);
 
@@ -63,7 +63,9 @@ namespace caliburn
 
 			SSA createSSA(Opcode op);
 
-			sptr<Instruction> codeFor(SSA id) const;
+			ref<const Instruction> codeFor(SSA id) const;
+
+			ref<const Instruction> codeAt(size_t off) const;
 
 			Opcode opFor(SSA id) const;
 
@@ -173,7 +175,7 @@ namespace caliburn
 			uint32_t flatten();
 			
 		private:
-			void doBookkeeping(sptr<Instruction> i);
+			void doBookkeeping(ref<Instruction> i);
 
 		};
 

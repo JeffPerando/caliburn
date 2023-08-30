@@ -67,7 +67,7 @@ InstructionVec Finder::find(ref<const InstructionVec> code)
 
 		auto const& i = code[x];
 
-		if (!opcodes.empty() && !std::binary_search(opcodes.begin(), opcodes.end(), i->op))
+		if (!opcodes.empty() && !std::binary_search(opcodes.begin(), opcodes.end(), i.op))
 		{
 			continue;
 		}
@@ -78,7 +78,7 @@ InstructionVec Finder::find(ref<const InstructionVec> code)
 
 			for (uint32_t opInx = 0; opInx < 3; ++opInx)
 			{
-				if (i->operands[opInx] != op_args[opInx])
+				if (i.operands[opInx] != op_args[opInx])
 				{
 					valid = false;
 					break;
@@ -97,7 +97,7 @@ InstructionVec Finder::find(ref<const InstructionVec> code)
 		{
 			bool found = false;
 
-			for (SSA inRefID : i->refs)
+			for (SSA inRefID : i.refs)
 			{
 				if (inRefID == 0)
 				{
@@ -119,7 +119,7 @@ InstructionVec Finder::find(ref<const InstructionVec> code)
 
 		}
 
-		if (outType != 0 && outType != i->outType)
+		if (outType != 0 && outType != i.outType)
 		{
 			continue;
 		}

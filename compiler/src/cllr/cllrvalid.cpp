@@ -188,15 +188,15 @@ CLLR_INSTRUCT_VALIDATE(Validator::OpVarDescriptor)
 
 CLLR_INSTRUCT_VALIDATE(Validator::OpCall)
 {
-	auto fnCode = codeAsm.codeFor(i->refs[0]);
+	auto const& fnCode = codeAsm.codeFor(i->refs[0]);
 
-	if (fnCode->op != Opcode::FUNCTION)
+	if (fnCode.op != Opcode::FUNCTION)
 	{
 		return ValidReason::INVALID_REF;
 	}
 
 	//Checks if the call args match with the arguments set by the called function
-	if (fnCode->operands[0] != i->operands[0])
+	if (fnCode.operands[0] != i->operands[0])
 	{
 		return ValidReason::INVALID_MISC;
 	}

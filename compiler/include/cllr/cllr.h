@@ -28,7 +28,7 @@ namespace caliburn
 		struct Assembler;
 		
 		struct Instruction;
-		using InstructionVec = std::vector<sptr<Instruction>>;
+		using InstructionVec = std::vector<Instruction>;
 
 		using SSA = uint32_t;
 		struct TypedSSA
