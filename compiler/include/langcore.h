@@ -18,10 +18,10 @@ Contains necessary constants, and data types necessary for working with Caliburn
 namespace caliburn
 {
 	auto static constexpr MIN_INT_BITS = 8;
-	auto static constexpr MAX_INT_BITS = 512;
+	auto static constexpr MAX_INT_BITS = 64;
 	
 	auto static constexpr MIN_FLOAT_BITS = 16;
-	auto static constexpr MAX_FLOAT_BITS = 128;
+	auto static constexpr MAX_FLOAT_BITS = 64;
 
 	auto static constexpr MIN_VECTOR_LEN = 2;
 	auto static constexpr MAX_VECTOR_LEN = 4;
