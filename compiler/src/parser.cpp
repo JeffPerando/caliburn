@@ -493,7 +493,7 @@ sptr<ParsedType> Parser::parseTypeName()
 
 			if (!len->isCompileTimeConst())
 			{
-				auto e = errors->err("Array length must be a compile-time constant", len);
+				auto e = errors->err("Array length must be a compile-time constant", *len);
 			}
 
 			gArgs->args.push_back(len);
@@ -1762,7 +1762,7 @@ sptr<Variable> Parser::parseGlobalVar()
 	{
 		if (!init->isCompileTimeConst())
 		{
-			auto e = errors->err("Global variables initialized with a non-constant value", init);
+			auto e = errors->err("Global variables initialized with a non-constant value", *init);
 
 			e->suggest("Use a compile-time constant, like a literal. Struct-likes do not count.");
 
@@ -1773,7 +1773,7 @@ sptr<Variable> Parser::parseGlobalVar()
 	}
 	else
 	{
-		auto e = errors->err("Invalid initializer value", tokens.current());
+		auto e = errors->err("Could not find an initial value here", tokens.current());
 	}
 
 	return v;
