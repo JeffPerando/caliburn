@@ -30,9 +30,9 @@ namespace caliburn
 	{
 		CompileStage stage = CompileStage::UNKNOWN;
 		std::string message;
-		TextPos problemPos;
-		sptr<ParsedObject> problemObj = nullptr;
-		sptr<Token> problemTkn = nullptr;
+		sptr<Token> problemTknStart = nullptr;
+		sptr<Token> problemTknEnd = nullptr;
+		sptr<Token> contextStart = nullptr;
 		std::vector<std::string> suggestions;
 
 		void suggest(std::string idea)
@@ -78,8 +78,47 @@ namespace caliburn
 
 		}
 
-		sptr<Error> err(std::string msg, ref<const TextPos> pos);
-		sptr<Error> err(std::string msg, sptr<Token> keyTkn, sptr<ParsedObject> keyObj = nullptr);
+		sptr<Error> err(std::vector<std::string> msgs, ref<const ParsedObject> keyObj)
+		{
+			std::stringstream ss;
+
+			for (auto const& msg : msgs)
+				ss << msg << ' ';
+
+			return err(ss.str(), keyObj);
+		}
+
+		sptr<Error> err(std::string msg, ref<const ParsedObject> keyObj)
+		{
+			return err(msg, keyObj.firstTkn(), keyObj.lastTkn());
+		}
+
+		sptr<Error> err(std::vector<std::string> msgs, sptr<Token> keyTkn)
+		{
+			std::stringstream ss;
+
+			for (auto const& msg : msgs)
+				ss << msg << ' ';
+
+			return err(ss.str(), keyTkn);
+		}
+
+		sptr<Error> err(std::string msg, sptr<Token> keyTkn)
+		{
+			return err(msg, keyTkn, keyTkn);
+		}
+
+		sptr<Error> err(std::vector<std::string> msgs, sptr<Token> startTkn, sptr<Token> endTkn)
+		{
+			std::stringstream ss;
+
+			for (auto const& msg : msgs)
+				ss << msg << ' ';
+
+			return err(ss.str(), startTkn, endTkn);
+		}
+
+		sptr<Error> err(std::string msg, sptr<Token> tknStart, sptr<Token> tknEnd);
 
 	};
 	

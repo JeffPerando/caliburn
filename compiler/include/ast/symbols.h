@@ -20,7 +20,7 @@ namespace caliburn
 	struct SymbolTable
 	{
 	private:
-		std::map<std::string, Symbol> symbols;
+		HashMap<std::string, Symbol> symbols;
 		sptr<SymbolTable> parent;
 
 	public:

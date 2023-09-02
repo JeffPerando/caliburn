@@ -22,17 +22,15 @@ std::vector<uptr<Statement>> Parser::parse()
 
 	while (tokens.hasNext())
 	{
-		auto start = tokens.current();
-		auto finished = parseDecl();
+		sptr<Token> start = tokens.current();
 
-		if (finished)
+		if (auto finished = parseDecl())
 		{
 			ast.push_back(std::move(finished));
 		}
 		else
 		{
-			//postParseException(new_uptr<InvalidDeclException>(start));
-			break;
+			errors->err("Invalid start to a declaration", start);
 		}
 
 	}
@@ -77,7 +75,6 @@ T Parser::parseBetween(std::string start, ParseMethod<T> fn, std::string end)
 {
 	if (tokens.current()->str != start)
 	{
-		//TODO complain
 		return nullptr;
 	}
 
@@ -87,7 +84,7 @@ T Parser::parseBetween(std::string start, ParseMethod<T> fn, std::string end)
 
 	if (tokens.current()->str != end)
 	{
-		//TODO complain
+		auto e = errors->err({ "Unexpected token found; Expected", end, "got", tokens.current()->str });
 		return ret;
 	}
 
@@ -98,9 +95,12 @@ T Parser::parseBetween(std::string start, ParseMethod<T> fn, std::string end)
 
 bool Parser::parseAnyBetween(std::string start, std::function<void()> fn, std::string end)
 {
-	if (tokens.current()->str != start)
+	sptr<Token> startTkn = tokens.current();
+
+	if (startTkn->str != start)
 	{
-		//TODO complain
+		auto e = errors->err({ "Unexpected token found; Expected", start }, startTkn);
+
 		return false;
 	}
 
@@ -108,9 +108,11 @@ bool Parser::parseAnyBetween(std::string start, std::function<void()> fn, std::s
 
 	fn();
 
-	if (tokens.current()->str != end)
+	sptr<Token> endTkn = tokens.current();
+
+	if (endTkn->str != end)
 	{
-		//TODO complain
+		auto e = errors->err({ "Unexpected token found; Expected", end}, startTkn, endTkn);
 		return false;
 	}
 
@@ -176,7 +178,7 @@ sptr<GenericSignature> Parser::parseGenericSig()
 
 		if (n->type != TokenType::IDENTIFIER)
 		{
-			//TODO complain
+			auto e = errors->err("Names within generic signatures must be a valid identifier", n);
 			break;
 		}
 
@@ -186,9 +188,9 @@ sptr<GenericSignature> Parser::parseGenericSig()
 
 		if (tokens.current()->str == "=")
 		{
-			parsingDefaults = true;
-
 			tokens.consume();
+
+			parsingDefaults = true;
 
 			if (auto v = parseLiteral())
 			{
@@ -200,15 +202,13 @@ sptr<GenericSignature> Parser::parseGenericSig()
 			}
 			else
 			{
-				//TODO complain
+				auto e = errors->err("Invalid generic default starts here", tokens.current());
 			}
 
 		}
 		else if (parsingDefaults)
 		{
-			//TODO complain
-			//Generics defaults must always be at the end
-			//I may reconsider this rule if explicit-named generics become a thing. But that logic is too hard right now
+			auto e = errors->err("Generic signature defaults must always be at the end", tokens.current());
 		}
 
 		auto genName = GenericName(t, n, defRes);
@@ -309,7 +309,6 @@ std::vector<sptr<Value>> Parser::parseValueList(bool commaOptional)
 
 		if (v == nullptr)
 		{
-			//TODO complain?
 			break;
 		}
 
@@ -330,18 +329,19 @@ std::vector<sptr<Value>> Parser::parseValueList(bool commaOptional)
 	return values;
 }
 
-bool Parser::parseSemicolon()
+void Parser::parseSemicolon()
 {
 	auto& end = tokens.current();
 
 	if (end->type == TokenType::END)
 	{
 		tokens.consume();
-		return true;
+	}
+	else
+	{
+		auto e = errors->err({ "Expected a semicolon, got", end->str }, end);
 	}
 
-	//postParseException(new_uptr<UnexpectedTokenException>(tkn, ';'));
-	return false;
 }
 
 bool Parser::parseScopeEnd(ref<uptr<ScopeStatement>> stmt)
@@ -360,7 +360,8 @@ bool Parser::parseScopeEnd(ref<uptr<ScopeStatement>> stmt)
 
 	if (retMode == RETURN_MODES.end())
 	{
-		//TODO complain
+		auto e = errors->err("Not a valid statement or end of scope", first);
+
 		tokens.revertTo(tknIndex);
 
 		return false;
@@ -372,11 +373,8 @@ bool Parser::parseScopeEnd(ref<uptr<ScopeStatement>> stmt)
 	{
 		stmt->retValue = parseAnyValue();
 	}
-
-	if (!parseSemicolon())
-	{
-		//TODO complain
-	}
+	
+	parseSemicolon();
 
 	return true;
 }
@@ -408,7 +406,7 @@ StmtModifiers Parser::parseStmtMods()
 	return mods;
 }
 
-uptr<ScopeStatement> Parser::parseScope(std::vector<ParseMethod<uptr<Statement>>> pms)
+uptr<ScopeStatement> Parser::parseScope(std::vector<ParseMethod<uptr<Statement>>> pms, bool err)
 {
 	auto mods = parseStmtMods();
 
@@ -416,6 +414,14 @@ uptr<ScopeStatement> Parser::parseScope(std::vector<ParseMethod<uptr<Statement>>
 
 	if (first->type != TokenType::START_SCOPE)
 	{
+		if (err)
+		{
+			auto e = errors->err("Expected a { here", first);
+
+			e->suggest("Wrap your code in a scope");
+
+		}
+		
 		return nullptr;
 	}
 
@@ -436,11 +442,6 @@ uptr<ScopeStatement> Parser::parseScope(std::vector<ParseMethod<uptr<Statement>>
 		}
 		else if (parseScopeEnd(scope))
 		{
-			if (!parseSemicolon())
-			{
-				//TODO complain
-			}
-			
 			return scope;
 		}
 
@@ -448,10 +449,7 @@ uptr<ScopeStatement> Parser::parseScope(std::vector<ParseMethod<uptr<Statement>>
 		{
 			if (auto stmt = pm(*this))
 			{
-				if (!parseSemicolon())
-				{
-					//TODO complain but continue parsing
-				}
+				parseSemicolon();
 
 				scope->stmts.push_back(std::move(stmt));
 
@@ -471,7 +469,6 @@ sptr<ParsedType> Parser::parseTypeName()
 
 	if (first->type != TokenType::IDENTIFIER && first->str != "dynamic")
 	{
-		//TODO complain
 		return nullptr;
 	}
 
@@ -496,7 +493,7 @@ sptr<ParsedType> Parser::parseTypeName()
 
 			if (!len->isCompileTimeConst())
 			{
-				//TODO complain
+				auto e = errors->err("Array length must be a compile-time constant", len);
 			}
 
 			gArgs->args.push_back(len);
@@ -504,7 +501,8 @@ sptr<ParsedType> Parser::parseTypeName()
 
 		if (tokens.current()->type != TokenType::END_BRACKET)
 		{
-			//TODO complain
+			auto e = errors->err("Array types must end with a ]", tokens.current());
+
 		}
 
 		type = arrayType;
@@ -522,6 +520,14 @@ uptr<Statement> Parser::parseDecl()
 	auto annotations = parseAllAnnotations();
 	auto mods = parseStmtMods();
 
+	sptr<Token> first = tokens.current();
+
+	if (first->type != TokenType::KEYWORD)
+	{
+		auto e = errors->err("Invalid start to declaration", first);
+		return nullptr;
+	}
+
 	std::vector<ParseMethod<uptr<Statement>>> methods = {
 		&Parser::parseImport,
 		&Parser::parseModuleDef,
@@ -537,7 +543,7 @@ uptr<Statement> Parser::parseDecl()
 
 	if (stmt == nullptr)
 	{
-		//TODO complain
+		auto e = errors->err("Invalid start to declaration", first);
 		return stmt;
 	}
 
@@ -547,11 +553,8 @@ uptr<Statement> Parser::parseDecl()
 	}
 
 	stmt->mods = mods;
-
-	if (!parseSemicolon())
-	{
-		//TODO complain
-	}
+	
+	parseSemicolon();
 
 	return stmt;
 }
@@ -569,7 +572,18 @@ uptr<Statement> Parser::parseImport()
 
 	if (modName->type != TokenType::IDENTIFIER)
 	{
-		//TODO complain
+		auto e = errors->err("Not a valid module name", modName);
+
+		if (modName->type == TokenType::KEYWORD)
+		{
+			e->suggest("Can't import reserved keywords; try renaming your module");
+		}
+
+		if (modName->str == "*")
+		{
+			e->suggest("Can't import everything; try an actual module name");
+		}
+
 		return nullptr;
 	}
 
@@ -581,14 +595,25 @@ uptr<Statement> Parser::parseImport()
 
 	if (tokens.current()->str == "as")
 	{
-		if (tokens.peek()->type != TokenType::IDENTIFIER)
+		sptr<Token> alias = tokens.next();
+
+		if (alias->type == TokenType::IDENTIFIER)
 		{
-			//TODO complain
+			ret->alias = tokens.next();
+
+			tokens.consume();
+
 		}
+		else
+		{
+			auto e = errors->err("Invalid import alias", alias);
 
-		ret->alias = tokens.next();
+			if (alias->str == "*")
+			{
+				e->suggest("Wildcard imports are currently not supported");
+			}
 
-		tokens.consume();
+		}
 
 	}
 
@@ -608,7 +633,7 @@ uptr<Statement> Parser::parseModuleDef()
 
 	if (name->type != TokenType::IDENTIFIER)
 	{
-		//TODO complain
+		auto e = errors->err("Invalid module name", name);
 		return nullptr;
 	}
 
@@ -644,22 +669,39 @@ uptr<Statement> Parser::parseTypedef()
 
 	if (name->type != TokenType::IDENTIFIER)
 	{
-		//TODO complain
+		auto e = errors->err("Invalid type alias name", name);
+
 		return nullptr;
 	}
 
 	if (tokens.next()->str != "=")
 	{
+		auto e = errors->err("Type definitions must have an equal sign to denote the aliased type", tokens.current());
+
 		return nullptr;
 	}
 
-	tokens.consume();
+	sptr<Token> typeStart = tokens.next();
 
-	sptr<ParsedType> aliasedType = parseTypeName();
+	if (sptr<ParsedType> aliasedType = parseTypeName())
+	{
+		return new_uptr<TypedefStatement>(start, name, aliasedType);
+	}
+	else
+	{
+		auto e = errors->err("Invalid start of type name", typeStart);
 
-	auto stmt = new_uptr<TypedefStatement>(start, name, aliasedType);
-	
-	return stmt;
+		if (typeStart->str == "[")
+		{
+			e->suggest("Array types are in the C-style format of x[], where x is the element type.");
+		}
+
+		if (typeStart->type == TokenType::KEYWORD)
+		{
+			e->suggest("Only keyword that's a valid type is the dynamic keyword");
+		}
+
+	}
 }
 
 uptr<Statement> Parser::parseShader()
@@ -675,7 +717,7 @@ uptr<Statement> Parser::parseShader()
 
 	if (name->type != TokenType::IDENTIFIER)
 	{
-		//TODO complain
+		auto e = errors->err("Invalid shader object name", name);
 		return nullptr;
 	}
 
@@ -702,7 +744,7 @@ uptr<Statement> Parser::parseShader()
 			
 			if (type == nullptr)
 			{
-				//TODO complain
+				auto e = errors->err("Invalid descriptor type", tokens.current());
 				break;
 			}
 
@@ -710,7 +752,7 @@ uptr<Statement> Parser::parseShader()
 
 			if (name->type != TokenType::IDENTIFIER)
 			{
-				//TODO complain
+				auto e = errors->err("Invalid descriptor name", tokens.current());
 				break;
 			}
 
@@ -726,16 +768,11 @@ uptr<Statement> Parser::parseShader()
 			
 		}
 
-		if (shader->descriptors.empty())
-		{
-			//TODO complain?
-		}
-
 	}
 
 	if (tokens.current()->type != TokenType::START_SCOPE)
 	{
-		//TODO complain
+		auto e = errors->err("Shaders must start with a scope", tokens.current());
 		return shader;
 	}
 
@@ -759,26 +796,18 @@ uptr<Statement> Parser::parseShader()
 
 			if (ios.empty())
 			{
-				//TODO complain
+				auto e = errors->err("Invalid shader object member", tokens.current());
 			}
 
 			for (auto const& ioData : ios)
 			{
-				if (ioData->isConst)
-				{
-					//TODO complain
-				}
-
 				shader->ioVars.push_back(new_sptr<ShaderIOVariable>(*ioData));
 
 			}
 
 		}
-		
-		if (!parseSemicolon())
-		{
-			//TODO complain
-		}
+
+		parseSemicolon();
 
 	}
 
@@ -813,7 +842,8 @@ uptr<Statement> Parser::parseStruct()
 
 	if (name->type != TokenType::IDENTIFIER)
 	{
-		//TODO complain
+		auto e = errors->err("Invalid type name", name);
+
 	}
 
 	auto stmt = new_uptr<StructStatement>(name, stmtType);
@@ -824,7 +854,7 @@ uptr<Statement> Parser::parseStruct()
 
 	if (tokens.current()->type != TokenType::START_SCOPE)
 	{
-		//TODO complain
+		auto e = errors->err("Types must start with a scope", tokens.current());
 	}
 
 	tokens.consume();
@@ -852,20 +882,16 @@ uptr<Statement> Parser::parseStruct()
 		}
 		else if (auto fn = parseMethod())
 		{
-			//TODO check type
-
 			stmt->members.emplace(fn->name->str, fn);
 
 		}
 		else
 		{
-			//TODO complain
-		}
+			auto e = errors->err("Invalid start to type member", end);
 
-		if (!parseSemicolon())
-		{
-			//TODO complain
 		}
+		
+		parseSemicolon();
 
 	}
 
@@ -913,7 +939,9 @@ uptr<ParsedFn> Parser::parseFnLike()
 
 	if (fn->type == FnType::FUNCTION)
 	{
-		if (tokens.current()->str == "[")
+		sptr<Token> gpuDim = tokens.current();
+
+		if (gpuDim->str == "[")
 		{
 			parseAnyBetween("[", lambda(){
 				fn->invokeDims = parseIdentifierList();
@@ -921,8 +949,10 @@ uptr<ParsedFn> Parser::parseFnLike()
 
 			if (fn->invokeDims.size() == 0)
 			{
-				//TODO complain
-				//postParseException(new_uptr<ParseException>("GPU threading data is empty or has invalid values", tkn));
+				auto e = errors->err("Invocation dimensions are empty", gpuDim, tokens.current());
+
+				e->suggest("To use this feature, add identifiers separated with commas. Each identifier is a dimension within the GPU invocation (first is X, second is Y, etc.)");
+
 			}
 
 		}
@@ -943,11 +973,13 @@ uptr<ParsedFn> Parser::parseFnLike()
 
 	if (fn->type == FnType::FUNCTION)
 	{
+		sptr<Token> genSigStart = tokens.current();
+
 		fn->genSig = parseGenericSig();
 
 		if (fn->genSig == nullptr)
 		{
-			//TODO complain
+			auto e = errors->err("Invalid start to generic signature", genSigStart);
 			return nullptr;
 		}
 
@@ -957,10 +989,31 @@ uptr<ParsedFn> Parser::parseFnLike()
 		fn->args = parseFnArgs();
 	}, ")");
 
-	if (tokens.current()->type == TokenType::ARROW)
+	sptr<Token> arrow = tokens.current();
+
+	if (arrow->type == TokenType::ARROW)
 	{
-		tokens.consume();
-		fn->retType = parseTypeName();
+		sptr<Token> typeNameStart = tokens.next();
+
+		if (auto type = parseTypeName())
+		{
+			fn->retType = type;
+		}
+		else
+		{
+			auto e = errors->err("Invalid return type after", arrow);
+
+			if (typeNameStart->str == "void")
+			{
+				e->suggest("Void is not a proper type name; leave out the return type altogether");
+			}
+
+			if (typeNameStart->str == "dynamic")
+			{
+				e->suggest("Make a typedef statement; you can't make a dynamic type a return type directly since it has no name to look up");
+			}
+
+		}
 
 	}
 	else
@@ -968,20 +1021,16 @@ uptr<ParsedFn> Parser::parseFnLike()
 		fn->retType = new_sptr<ParsedType>("void");
 	}
 
-	if (fn->retType == nullptr)
-	{
-		//TODO complain
-	}
-
-	auto& scopeStart = tokens.current();
+	sptr<Token> scopeStart = tokens.current();
 	
-	if (scopeStart->type != TokenType::START_SCOPE)
+	if (scopeStart->type == TokenType::START_SCOPE)
 	{
-		auto e = errors->err("Invalid start to function scope", scopeStart, nullptr);
-
+		fn->code = parseScope({ &Parser::parseLogic });
 	}
-
-	fn->code = parseScope({&Parser::parseLogic});
+	else
+	{
+		auto e = errors->err("Invalid start to function scope", scopeStart);
+	}
 
 	return fn;
 }
@@ -1023,8 +1072,7 @@ uptr<Statement> Parser::parseControl()
 
 	if (tokens.current()->type != TokenType::KEYWORD)
 	{
-		//TODO complain
-		//tokens.revertTo(start);
+		tokens.revertTo(start);
 		return nullptr;
 	}
 	
@@ -1079,9 +1127,14 @@ uptr<Statement> Parser::parseIf()
 
 	if (tokens.current()->str == "else")
 	{
-		tokens.consume();
+		sptr<Token> scopeStart = tokens.current();
 
-		stmt->innerIf = parseScope({ &Parser::parseDecl });
+		stmt->innerElse = parseScope({ &Parser::parseDecl });
+
+		if (stmt->innerElse == nullptr)
+		{
+
+		}
 
 	}
 
@@ -1132,16 +1185,20 @@ uptr<Statement> Parser::parseDoWhile()
 	ret->doWhile = true;
 	ret->loop = parseScope({&Parser::parseLogic});
 
-	if (tokens.current()->type != TokenType::KEYWORD || tokens.current()->str != "while")
+	sptr<Token> whileKwd = tokens.current();
+
+	if (whileKwd->type != TokenType::KEYWORD || whileKwd->str != "while")
 	{
-		//TODO complain
+		auto e = errors->err("This is a do/while loop, where is your while keyword?", whileKwd);
 		return nullptr;
 	}
+
+	tokens.consume();
 
 	parseAnyBetween("(", lambda() {
 		ret->condition = parseAnyValue();
 	}, ")");
-	
+
 	return ret;
 }
 
@@ -1179,7 +1236,14 @@ uptr<Statement> Parser::parseGlobalVarStmt()
 
 uptr<Statement> Parser::parseLocalVarStmt()
 {
-	if (tokens.current()->type != TokenType::KEYWORD)
+	sptr<Token> first = tokens.current();
+
+	if (first->type != TokenType::KEYWORD)
+	{
+		return nullptr;
+	}
+
+	if (first->str != "const" && first->str != "var")
 	{
 		return nullptr;
 	}
@@ -1188,12 +1252,6 @@ uptr<Statement> Parser::parseLocalVarStmt()
 
 	stmt->first = tokens.current();
 	stmt->vars = parseLocalVars();
-
-	if (stmt->vars.empty())
-	{
-		//TODO complain?
-		return nullptr;
-	}
 
 	return stmt;
 }
@@ -1223,7 +1281,7 @@ sptr<Value> Parser::parseNonExpr()
 
 	while (tokens.hasNext())
 	{
-		auto& tkn = tokens.current();
+		sptr<Token> tkn = tokens.current();
 
 		if (tkn->type == TokenType::PERIOD && tokens.peek()->type == TokenType::IDENTIFIER)
 		{
@@ -1243,7 +1301,7 @@ sptr<Value> Parser::parseNonExpr()
 				}
 				else
 				{
-					//TODO complain
+					auto e = errors->err("Invalid array index", tokens.current());
 				}
 			}, "]");
 			
@@ -1259,7 +1317,7 @@ sptr<Value> Parser::parseNonExpr()
 
 		if (v == nullptr)
 		{
-			//TODO complain
+			auto e = errors->err("Parsing value failed here; see other errors", tkn);
 			break;
 		}
 		
@@ -1313,6 +1371,14 @@ sptr<Value> Parser::parseLiteral()
 
 	tokens.consume();
 
+	switch (first->type)
+	{
+		case TokenType::LITERAL_INT: return new_sptr<IntLiteralValue>(first);
+		case TokenType::LITERAL_FLOAT: return new_sptr<FloatLiteralValue>(first);
+		case TokenType::LITERAL_BOOL: return new_sptr<BoolLitValue>(first);
+		case TokenType::LITERAL_STR: return new_sptr<StringLitValue>(first);
+	}
+
 	if (first->type == TokenType::KEYWORD)
 	{
 		if (first->str == "this")
@@ -1328,37 +1394,25 @@ sptr<Value> Parser::parseLiteral()
 		return nullptr;
 	}
 
-	switch (first->type)
-	{
-		case TokenType::LITERAL_INT: return new_sptr<IntLiteralValue>(first);
-		case TokenType::LITERAL_FLOAT: return new_sptr<FloatLiteralValue>(first);
-		case TokenType::LITERAL_BOOL: return new_sptr<BoolLitValue>(first);
-		case TokenType::LITERAL_STR: return new_sptr<StringLitValue>(first);
-	}
-
 	if (first->type == TokenType::START_BRACKET)
 	{
 		auto arrLit = new_sptr<ArrayLitValue>();
 
 		arrLit->start = first;
-		arrLit->values = parseValueList(true);
+		
+		parseAnyBetween("[", lambda() {
+			auto xs = parseValueList(true);
 
-		if (arrLit->values.empty())
-		{
-			//TODO complain
-		}
+			if (xs.empty())
+			{
+				auto e = errors->err("Empty array literal", first, tokens.peek());
 
-		sptr<Token> last = tokens.current();
+			}
 
-		if (last->type != TokenType::END_BRACKET)
-		{
-			//TODO complain
-		}
+			arrLit->values = xs;
 
-		arrLit->end = last;
-
-		tokens.consume();
-
+		}, "]");
+		
 		return arrLit;
 	}
 
@@ -1402,13 +1456,16 @@ sptr<Value> Parser::parseUnaryValue()
 
 			if (foundOp->second == Operator::ABS)
 			{
-				if (tokens.current()->str != "|")
+				sptr<Token> absEnd = tokens.current();
+
+				if (absEnd->str != "|")
 				{
-					//TODO complain
+					auto e = errors->err("Absolute operator values must end with |", absEnd);
+
 					return nullptr;
 				}
 
-				unary->end = tokens.current();
+				unary->end = absEnd;
 
 				tokens.consume();
 
@@ -1441,7 +1498,7 @@ sptr<Value> Parser::parseParenValue()
 
 	if (last->type != TokenType::END_PAREN)
 	{
-		//TODO complain
+		auto e = errors->err("Expected a closing parentheses", last);
 	}
 
 	tokens.consume();
@@ -1577,7 +1634,7 @@ sptr<Value> Parser::parseExpr()
 
 		if (val == nullptr)
 		{
-			//TODO complain
+			auto e = errors->err("Expected a value here", tokens.current());
 			break;
 		}
 
@@ -1600,6 +1657,11 @@ sptr<Value> Parser::parseAnyFnCall()
 
 sptr<Value> Parser::parseFnCall(sptr<Value> start)
 {
+	if (tokens.hasNext(3))
+	{
+		return nullptr;
+	}
+
 	sptr<Token> name = tokens.current();
 
 	if (name->type != TokenType::IDENTIFIER)
@@ -1613,11 +1675,15 @@ sptr<Value> Parser::parseFnCall(sptr<Value> start)
 
 	fnCall->name = name;
 	fnCall->target = start;
+
+	sptr<Token> genArgStart = tokens.current();
+
 	fnCall->genArgs = parseGenericArgs();
 
 	if (fnCall->genArgs == nullptr)
 	{
-		//TODO complain
+		auto e = errors->err("Invalid generic argument start", genArgStart);
+
 		return nullptr;
 	}
 
@@ -1625,7 +1691,6 @@ sptr<Value> Parser::parseFnCall(sptr<Value> start)
 		fnCall->args = parseValueList(false);
 	}, ")"))
 	{
-		//TODO complain
 		return nullptr;
 	}
 
@@ -1669,31 +1734,46 @@ sptr<Variable> Parser::parseGlobalVar()
 	{
 		v->typeHint = parseTypeName();
 	}
+
+	sptr<Token> name = tokens.current();
 	
-	if (tokens.current()->type != TokenType::IDENTIFIER)
+	if (name->type != TokenType::IDENTIFIER)
 	{
-		//TODO complain
+		auto e = errors->err("Invalid global variable name", name);
 		return nullptr;
 	}
 
-	v->nameTkn = tokens.current();
+	v->nameTkn = name;
 
-	tokens.consume();
+	sptr<Token> eqSign = tokens.next();
 
-	if (tokens.current()->str != "=")
+	if (eqSign->str != "=")
 	{
-		//TODO complain
-		return nullptr;
+		auto e = errors->err("Global variables must be initialized", eqSign);
+
+		e->suggest("Add an equal sign and a value");
+
+		return v;
 	}
 
 	tokens.consume();
 
-	v->initValue = parseAnyValue();
-
-	if (!v->initValue->isCompileTimeConst())
+	if (auto init = parseAnyValue())
 	{
-		//TODO complain
-		return nullptr;
+		if (!init->isCompileTimeConst())
+		{
+			auto e = errors->err("Global variables initialized with a non-constant value", init);
+
+			e->suggest("Use a compile-time constant, like a literal. Struct-likes do not count.");
+
+		}
+
+		v->initValue = init;
+
+	}
+	else
+	{
+		auto e = errors->err("Invalid initializer value", tokens.current());
 	}
 
 	return v;
@@ -1703,40 +1783,35 @@ sptr<Variable> Parser::parseMemberVar()
 {
 	auto mods = parseStmtMods();
 
+	sptr<Token> start = tokens.current();
 	bool isConst = false;
-	auto& start = tokens.current();
-
+	
 	if (start->type == TokenType::KEYWORD && start->str == "const")
 	{
 		isConst = true;
 		tokens.consume();
 	}
 
+	sptr<Token> typeStart = tokens.current();
 	auto type = parseTypeName();
 
 	if (type == nullptr)
 	{
-		//TODO complain
+		auto e = errors->err("Invalid member variable type name starts here", typeStart);
+
 		return nullptr;
 	}
 
-	auto& name = tokens.current();
-	sptr<Value> initVal = nullptr;
-
+	sptr<Token> name = tokens.current();
+	
 	if (name->type != TokenType::IDENTIFIER)
 	{
-		//TODO complain
+		auto e = errors->err("Invalid member variable name", name);
+
 		return nullptr;
 	}
 
 	tokens.consume();
-
-	if (tokens.current()->str == "=")
-	{
-		tokens.consume();
-		initVal = parseAnyValue();
-
-	}
 
 	auto v = new_sptr<MemberVariable>();
 
@@ -1744,9 +1819,15 @@ sptr<Variable> Parser::parseMemberVar()
 	v->first = start;
 	v->nameTkn = name;
 	v->typeHint = type;
-	v->initValue = initVal;
 	v->isConst = isConst;
-	
+
+	if (tokens.current()->str == "=")
+	{
+		tokens.consume();
+
+		v->initValue = parseAnyValue();
+	}
+
 	return v;
 }
 
@@ -1778,22 +1859,33 @@ std::vector<sptr<ParsedVar>> Parser::parseLocalVarLike()
 	if (tokens.current()->str == ":")
 	{
 		tokens.consume();
-		typeHint = parseTypeName();
 
-		if (typeHint == nullptr)
+		if (auto t = parseTypeName())
 		{
-			//TODO complain
+			typeHint = t;
+		}
+		else
+		{
+			sptr<Token> typeName = tokens.current();
+			auto e = errors->err("Invalid type name", typeName);
 		}
 
 	}
 
 	auto varNames = parseIdentifierList();
-	
+
+	if (varNames.empty())
+	{
+		sptr<Token> varName = tokens.current();
+		auto e = errors->err("Invalid local variable name", varName);
+	}
+
 	tokens.consume();
 
 	if (tokens.current()->str == ":")
 	{
-		//postParseException(new_uptr<ParseException>("That's not how type hints work in Caliburn. Type hints go before the variable name, not after. So var: int x is valid. var x: int isn't.", tkn));
+		auto e = errors->err("That's not how type hints work in Caliburn. Type hints go before the variable name, not after. So var: int x is valid. var x: int isn't.", tokens.current());
+
 		return vars;
 	}
 
@@ -1801,13 +1893,21 @@ std::vector<sptr<ParsedVar>> Parser::parseLocalVarLike()
 
 	if (tokens.current()->str == "=")
 	{
-		tokens.consume();
-		initValue = parseAnyValue();
+		sptr<Token> valStart = tokens.next();
+
+		if (auto v = parseAnyValue())
+		{
+			initValue = v;
+		}
+		else
+		{
+			auto e = errors->err("Invalid initializer value", valStart);
+		}
 
 	}
 	else if (typeHint == nullptr)
 	{
-		//postParseException(new_uptr<ParseException>("Implicitly-typed variable must be manually initialized", tkn));
+		auto e = errors->err("Implicitly-typed variables must be manually initialized", first, tokens.current());
 		return vars;
 	}
 
@@ -1851,7 +1951,7 @@ std::vector<sptr<ParsedVar>> Parser::parseMemberVarLike()
 
 	if (varNames.empty())
 	{
-		//TODO complain
+		auto e = errors->err("Invalid member variable name", tokens.current());
 		return vars;
 	}
 
@@ -1859,13 +1959,16 @@ std::vector<sptr<ParsedVar>> Parser::parseMemberVarLike()
 
 	if (tokens.current()->str == "=")
 	{
-		initValue = parseAnyValue();
-
-		if (initValue == nullptr)
+		if (auto v = parseAnyValue())
 		{
-			//TODO complain
-		}
+			initValue = v;
 
+		}
+		else
+		{
+			auto e = errors->err("Invalid member variable initial value", tokens.current());
+		}
+		
 	}
 
 	for (auto& name : varNames)
@@ -1905,7 +2008,7 @@ std::vector<uptr<ParsedFnArg>> Parser::parseFnArgs()
 
 		if (arg->name->type != TokenType::IDENTIFIER)
 		{
-			errors->err("Not an argument name", arg->name, nullptr);
+			errors->err("Not a valid argument name", arg->name);
 			break;
 		}
 
@@ -1953,26 +2056,29 @@ uptr<Annotation> Parser::parseAnnotation()
 	}
 
 	sptr<Token> first = tokens.current();
+	sptr<Token> name = tokens.peek();
 
 	if (first->str != "@")
 	{
 		return nullptr;
 	}
 
-	auto a = new_uptr<Annotation>();
-
-	a->first = first;
-	a->name = tokens.next();
-
-	if (a->name->type != TokenType::IDENTIFIER)
+	if (name->type != TokenType::IDENTIFIER)
 	{
-		//TODO complain
+		auto e = errors->err("Annotations must be named with an identifier", first, name);
 		return nullptr;
 	}
 
-	tokens.consume();
+	tokens.consume(2);
 
-	if (tokens.current()->type == TokenType::START_PAREN)
+	auto a = new_uptr<Annotation>();
+
+	a->first = first;
+	a->name = name;
+
+	sptr<Token> startParen = tokens.current();
+
+	if (startParen->type == TokenType::START_PAREN)
 	{
 		tokens.consume();
 		int closingParenNeeded = 1;
@@ -2004,7 +2110,7 @@ uptr<Annotation> Parser::parseAnnotation()
 
 		if (closingParenNeeded != 0)
 		{
-			//TODO complain
+			auto e = errors->err("Ran out of symbols and could not close annotation", startParen);
 		}
 
 		a->last = tokens.current();

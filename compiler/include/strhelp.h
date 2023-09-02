@@ -88,6 +88,11 @@ namespace caliburn
 			return text.substr(off, nextOff - off);
 		}
 
+		size_t getLineCount() const
+		{
+			return lineOffsets.size();
+		}
+
 	};
 
 }

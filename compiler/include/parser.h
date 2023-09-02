@@ -49,7 +49,7 @@ namespace caliburn
 
 		std::vector<sptr<Value>> parseValueList(bool commaOptional);
 
-		bool parseSemicolon();
+		void parseSemicolon();
 
 		bool parseScopeEnd(ref<uptr<ScopeStatement>> stmt);
 
@@ -57,7 +57,7 @@ namespace caliburn
 
 		StmtModifiers parseStmtMods();
 
-		uptr<ScopeStatement> parseScope(std::vector<ParseMethod<uptr<Statement>>> pms);
+		uptr<ScopeStatement> parseScope(std::vector<ParseMethod<uptr<Statement>>> pms, bool err = true);
 
 		uptr<Statement> parseDecl();
 		
