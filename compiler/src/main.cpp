@@ -121,7 +121,7 @@ int main()
 
 	for (int i = 0; i < takes; ++i)
 	{
-		testShaderCompile();
+		testExprParsing();
 	}
 
 	std::cout << "Average time: " << ((totalTime / static_cast<double>(takes)) * 0.000001) << " ms\n";

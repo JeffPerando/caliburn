@@ -64,11 +64,12 @@ CharType Tokenizer::getType(char chr) const
 	return asciiTypes[chr];
 }
 
-std::string Tokenizer::findStr(char delim)
+std::string Tokenizer::findStr()
 {
+	char delim = buf.current();
+	sptr<Token> startTkn = makeCharTkn(TokenType::UNKNOWN);
+
 	std::stringstream ss;
-	//copy the start in case we don't find the delimiter
-	auto start = pos;
 	bool foundDelim = false;
 
 	while (buf.hasNext())
@@ -126,7 +127,7 @@ std::string Tokenizer::findStr(char delim)
 
 	if (!foundDelim)
 	{
-		errors->err("Unescaped string", start);
+		errors->err("Unescaped string", startTkn);
 		return "";
 	}
 
@@ -340,23 +341,19 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 {
 	std::vector<sptr<Token>> tokens;
 
-	auto last = buf.currentIndex();
-
 	while (buf.hasRem())
 	{
 		char current = buf.current();
 
 		if (current > 127)
 		{
-			errors->err("Unidentifiable character", pos);
+			errors->err("Unidentifiable character", makeCharTkn(TokenType::UNKNOWN));
 			buf.consume();
 			pos.move();
 			continue;
 		}
 
 		CharType type = getType(current);
-
-		last = buf.currentIndex();
 
 		//See https://en.wikipedia.org/w/index.php?title=Newline
 
@@ -375,7 +372,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 			if (significantWhitespace)
 			{
-				tokens.push_back(new_sptr<Token>(std::string(1, current), TokenType::WHITESPACE, pos, buf.currentIndex(), buf.currentIndex() + 1L));
+				tokens.push_back(makeCharTkn(TokenType::WHITESPACE));
 			}
 
 			if (current == '\n')
@@ -419,7 +416,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 			if (intOffset == 0 && idOffset == 0)
 			{
-				errors->err("Identifier found, but no length", pos);
+				errors->err("Zero-width identifier/integer found", makeCharTkn(TokenType::UNKNOWN));
 			}
 
 			//So the idea is simple: We try to make an identifier token, and we try
@@ -462,24 +459,22 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			}
 
 		}
-		/* string support is not a thing currently
 		else if (type == CharType::STRING_DELIM)
 		{
 			auto start = buf.currentIndex();
-			auto str = findStr(current);
+			auto str = findStr();
 
 			//findStr should offset col and line
-			tokens.push_back(new_sptr<Token>(str, TokenType::LITERAL_STR, pos, start, start - buf.currentIndex()));
+			tokens.push_back(new_sptr<Token>(str, TokenType::LITERAL_STR, pos, start, buf.currentIndex() - start));
 			
 		}
-		*/
 		else if (type == CharType::SPECIAL)
 		{
 			auto specialType = CHAR_TOKEN_TYPES.find(current);
 
 			if (specialType != CHAR_TOKEN_TYPES.end())
 			{
-				tokens.push_back(new_sptr<Token>(std::string(1, current), specialType->second, pos, buf.currentIndex(), 1L));
+				tokens.push_back(makeCharTkn(specialType->second));
 			}
 			else
 			{

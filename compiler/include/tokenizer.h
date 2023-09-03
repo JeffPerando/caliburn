@@ -33,6 +33,11 @@ namespace caliburn
 
 		std::array<CharType, 128> asciiTypes;
 
+		sptr<Token> makeCharTkn(TokenType t)
+		{
+			return new_sptr<Token>(buf.current(), TokenType::UNKNOWN, pos, buf.currentIndex());
+		}
+
 	public:
 		const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::TOKENIZER);
 
@@ -54,7 +59,7 @@ namespace caliburn
 	private:
 		CharType getType(char chr) const;
 
-		std::string findStr(char delim);
+		std::string findStr();
 
 		size_t findIntLiteral(ref<TokenType> type, ref<std::string> offset);
 

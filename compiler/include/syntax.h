@@ -80,6 +80,10 @@ namespace caliburn
 			uint64_t s = 0, uint64_t off = 0) :
 			str(t), type(id), pos(p), textStart(s), textEnd(s + off) {}
 
+		Token(char c, TokenType id = TokenType::IDENTIFIER,
+			TextPos p = TextPos(), uint64_t off = 0) :
+			str(std::string(1, c)), type(id), pos(p), textStart(off), textEnd(off + 1) {}
+
 		//TODO decide what looks good for a token
 		void prettyPrint(std::stringstream ss)
 		{

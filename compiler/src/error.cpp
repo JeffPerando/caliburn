@@ -64,31 +64,27 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss) const
 		auto startLine = problemTknStart->pos.line;
 		auto endLine = problemTknEnd->pos.line;
 
+		auto endTknLen = problemTknEnd->textEnd - problemTknEnd->textStart;
+
 		if (startLine == endLine)
 		{
 			ss << pos.line << ' ' << doc.getLine(pos.line) << '\n';
 
-			for (size_t i = 0; i < pos.column; ++i)
-				ss << ' ';
-
-			//off is only for counting the current index to the actual token
-			for (size_t off = problemTknStart->textStart; off < problemTknEnd->textEnd; ++off)
-				ss << '^';
+			//' ' * pos.column
+			ss << std::string(pos.column, ' ');
+			ss << std::string(endTknLen, '^');
 
 			ss << '\n';
 
 		}
 		else //TODO this entire procedure looks uh... *goofy*
 		{
-			auto endTknLen = problemTknEnd->textEnd - problemTknEnd->textStart;
-
 			auto txtStart = problemTknStart->pos.column;
 			auto txtEnd = problemTknEnd->pos.column + endTknLen;
 
 			auto start = problemTknStart->textStart;
-			auto end = problemTknEnd->textEnd;
-
-			ss << doc.text.substr(start, end - start) << '\n';
+			
+			ss << doc.text.substr(start, endTknLen) << '\n';
 
 			for (size_t i = 0; i < txtStart; ++i)
 				ss << ' ';
