@@ -31,6 +31,7 @@ std::vector<uptr<Statement>> Parser::parse()
 		else
 		{
 			errors->err("Invalid start to a declaration", start);
+			break;
 		}
 
 	}
@@ -433,16 +434,24 @@ uptr<ScopeStatement> Parser::parseScope(std::vector<ParseMethod<uptr<Statement>>
 
 	while (tokens.hasNext())
 	{
-		if (tokens.current()->type == TokenType::END_SCOPE)
+		if (parseScopeEnd(scope))
 		{
+			if (tokens.current()->type != TokenType::END_SCOPE)
+			{
+				auto e = errors->err("Found an end-scope statement, but it did not end the scope", tokens.current());
+				continue;
+			}
+
 			scope->last = tokens.current();
 
 			tokens.consume();
 			break;
 		}
-		else if (parseScopeEnd(scope))
+
+		if (tokens.current()->type == TokenType::END_SCOPE)
 		{
-			return scope;
+			tokens.consume();
+			break;
 		}
 
 		for (auto& pm : pms)
@@ -701,7 +710,9 @@ uptr<Statement> Parser::parseTypedef()
 			e->suggest("Only keyword that's a valid type is the dynamic keyword");
 		}
 
+		return nullptr;
 	}
+
 }
 
 uptr<Statement> Parser::parseShader()
@@ -776,40 +787,43 @@ uptr<Statement> Parser::parseShader()
 		return shader;
 	}
 
-	tokens.consume();
-
-	while (true)
+	parseAnyBetween("{", lambda()
 	{
-		if (tokens.current()->type == TokenType::END_SCOPE)
+		while (tokens.hasNext())
 		{
-			break;
-		}
-
-		if (auto stageFn = parseFnLike())
-		{
-			shader->stages.push_back(new_uptr<ShaderStage>(stageFn, shader->name));
-
-		}
-		else
-		{
-			auto ios = parseMemberVarLike();
-
-			if (ios.empty())
+			if (tokens.current()->type != TokenType::KEYWORD)
 			{
-				auto e = errors->err("Invalid shader object member", tokens.current());
+				break;
 			}
 
-			for (auto const& ioData : ios)
+			if (auto stageFn = parseFnLike())
 			{
-				shader->ioVars.push_back(new_sptr<ShaderIOVariable>(*ioData));
+				shader->stages.push_back(new_uptr<ShaderStage>(stageFn, shader->name));
+
+			}
+			else
+			{
+				auto ios = parseMemberVarLike();
+
+				if (ios.empty())
+				{
+					auto e = errors->err("Invalid shader object member", tokens.current());
+					continue;
+				}
+
+				for (auto const& ioData : ios)
+				{
+					shader->ioVars.push_back(new_sptr<ShaderIOVariable>(*ioData));
+
+				}
 
 			}
 
+			parseSemicolon();
+
 		}
 
-		parseSemicolon();
-
-	}
+	}, "}");
 
 	return shader;
 }
