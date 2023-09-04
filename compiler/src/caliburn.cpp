@@ -43,27 +43,27 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 
 	std::vector<uptr<Shader>> shaders;
 
-	auto doc = TextDoc(src);
-	
+	auto doc = new_sptr<TextDoc>(src);
+
 	//Parse the text into tokens (duh)
 	auto t = Tokenizer(doc);
 	auto tokens = t.tokenize();
 
 	if (!t.errors->empty())
 	{
-		t.errors->printout(allErrors, doc);
+		t.errors->printout(allErrors, *doc, settings->coloredErrors);
 
 		//TODO reconsider
 		return shaders;
 	}
-	
+
 	//Build the initial AST (ok)
 	auto p = Parser(tokens);
 	auto ast = p.parse();
 
 	if (!p.errors->empty())
 	{
-		p.errors->printout(allErrors, doc);
+		p.errors->printout(allErrors, *doc, settings->coloredErrors);
 
 		//TODO reconsider
 		return shaders;
@@ -270,7 +270,7 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 	{
 		for (auto const& e : compileErrs)
 		{
-			allErrors.push_back(e->toStr(doc));
+			allErrors.push_back(e->toStr(*doc, settings->coloredErrors));
 
 		}
 

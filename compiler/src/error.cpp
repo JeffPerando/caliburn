@@ -3,7 +3,7 @@
 
 using namespace caliburn;
 
-void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss) const
+void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss, bool color) const
 {
 	/*
 	TODO:
@@ -43,7 +43,7 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss) const
 		auto contextLine = contextStart->pos.line;
 
 		ss << "Context:\n";
-		ss << contextLine << ' ' << doc.getLine(contextStart->pos.line) << '\n';
+		ss << contextLine << ' ' << doc.getLine(contextStart->pos.line);
 
 	}
 
@@ -55,7 +55,7 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss) const
 
 			if (line > 0)
 			{
-				ss << line << ' ' << doc.getLine(line) << '\n';
+				ss << line << '\t' << doc.getLine(line) << '\n';
 
 			}
 
@@ -68,12 +68,43 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss) const
 
 		if (startLine == endLine)
 		{
-			ss << pos.line << ' ' << doc.getLine(pos.line) << '\n';
+			if (color)
+			{
+				auto lineStr = doc.getLine(pos.line);
 
-			//' ' * pos.column
-			ss << std::string(pos.column, ' ');
-			ss << std::string(endTknLen, '^');
+				size_t tknOff = 0;
 
+				ss << pos.line << '\t';
+
+				if (pos.column > 1)
+				{
+					auto preTknLine = lineStr.substr(0, pos.column - (3 + endTknLen));
+
+					tknOff = preTknLine.size();
+
+					ss << preTknLine;
+
+				}
+
+				ss << "\033[1;31m";
+				ss << problemTknStart->str;
+				ss << "\033[0m";
+
+				if (lineStr.length() > (tknOff + endTknLen))
+				{
+					ss << lineStr.substr(tknOff + endTknLen);
+				}
+
+			}
+			else
+			{
+				ss << pos.line << '\t' << doc.getLine(pos.line) << '\n';
+				ss << "\t";
+				ss << std::string(pos.column + endTknLen, ' ');
+				ss << std::string(endTknLen, '^');
+
+			}
+			
 			ss << '\n';
 
 		}
@@ -83,27 +114,23 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss) const
 			auto txtEnd = problemTknEnd->pos.column + endTknLen;
 
 			auto start = problemTknStart->textStart;
-			
-			ss << doc.text.substr(start, endTknLen) << '\n';
 
-			for (size_t i = 0; i < txtStart; ++i)
-				ss << ' ';
-
-			for (size_t off = txtStart; off < txtEnd; ++off)
-				ss << '^';
+			ss << "\033[1;31m";
+			ss << doc.text.substr(start, endTknLen);
+			ss << "\033[0m";
 
 		}
 
 		for (auto i = 0; i < ERR_LINE_COUNT; ++i)
 		{
-			auto line = pos.line + i;
+			auto line = pos.line + i + 1;
 
-			if (line == doc.getLineCount())
+			if (line >= doc.getLineCount())
 			{
 				break;
 			}
 
-			ss << line << ' ' << doc.getLine(line) << '\n';
+			ss << line << '\t' << doc.getLine(line) << '\n';
 
 		}
 

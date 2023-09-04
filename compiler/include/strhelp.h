@@ -75,17 +75,16 @@ namespace caliburn
 				return "";
 			}
 
-			//treat the line # as off by one
-			size_t off = lineOffsets.at(line);
+			size_t off = lineOffsets.at(line - 1);
 			
 			if (line == lineOffsets.size())
 			{
 				return text.substr(off);
 			}
 
-			size_t nextOff = lineOffsets.at(line + 1);
+			size_t nextOff = lineOffsets.at(line);
 
-			return text.substr(off, nextOff - off);
+			return text.substr(off, nextOff - off - 1);
 		}
 
 		size_t getLineCount() const

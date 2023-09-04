@@ -40,12 +40,12 @@ namespace caliburn
 			suggestions.push_back(idea);
 		}
 
-		void prettyPrint(ref<const TextDoc> txt, ref<std::stringstream> ss) const;
+		void prettyPrint(ref<const TextDoc> txt, ref<std::stringstream> ss, bool color) const;
 
-		std::string toStr(ref<const TextDoc> txt)
+		std::string toStr(ref<const TextDoc> txt, bool color)
 		{
 			std::stringstream ss;
-			prettyPrint(txt, ss);
+			prettyPrint(txt, ss, color);
 			return ss.str();
 		}
 
@@ -69,11 +69,11 @@ namespace caliburn
 			out.insert(out.end(), errors.begin(), errors.end());
 		}
 
-		void printout(ref<std::vector<std::string>> out, ref<const TextDoc> doc) const
+		void printout(ref<std::vector<std::string>> out, ref<const TextDoc> doc, bool colored) const
 		{
 			for (auto const& e : errors)
 			{
-				out.push_back(e->toStr(doc));
+				out.push_back(e->toStr(doc, colored));
 			}
 
 		}

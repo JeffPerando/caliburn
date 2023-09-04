@@ -81,6 +81,7 @@ namespace caliburn
 		OptimizeLevel o = OptimizeLevel::DEBUG;
 		ValidationLevel vLvl = ValidationLevel::BASIC;
 		std::map<std::string, std::string> dynTypes;
+		bool coloredErrors = true;
 
 	};
 

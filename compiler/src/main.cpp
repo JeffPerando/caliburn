@@ -18,6 +18,7 @@ int testShaderCompile()
 
 	cs.o = caliburn::OptimizeLevel::DEBUG;
 	cs.vLvl = caliburn::ValidationLevel::FULL;
+	cs.coloredErrors = true;
 
 	std::ifstream file("./../../../../shader.cbrn");
 
@@ -32,8 +33,6 @@ int testShaderCompile()
 	file.close();
 
 	caliburn::Compiler cc(cs);
-	//std::cout << "Compiling:\n";
-	//std::cout << src << '\n';
 
 	std::chrono::high_resolution_clock clock{};
 
@@ -90,7 +89,9 @@ int testExprParsing()
 	std::string src = buf.str();
 	file.close();
 
-	auto t = caliburn::Tokenizer(src);
+	auto doc = new_sptr<caliburn::TextDoc>(src);
+
+	auto t = caliburn::Tokenizer(doc);
 	auto tkns = t.tokenize();
 
 	for (auto const& t : tkns)
@@ -117,11 +118,13 @@ int testExprParsing()
 
 int main()
 {
+	std::cout << "\033[1;31mhi ma\033[0m\n";
+
 	auto const takes = 20;
 
 	for (int i = 0; i < takes; ++i)
 	{
-		testExprParsing();
+		testShaderCompile();
 	}
 
 	std::cout << "Average time: " << ((totalTime / static_cast<double>(takes)) * 0.000001) << " ms\n";
