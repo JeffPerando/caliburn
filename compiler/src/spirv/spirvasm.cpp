@@ -1,9 +1,25 @@
 
 #include "spirv/spirvasm.h"
 
+#include <sstream>
+
 #include "spirv/cllrspirv.h"
 
 using namespace caliburn::spirv;
+
+void CodeSection::pushOp(SpvOp op)
+{
+	if (code.size() != (lastOpOffset + lastOp.words))
+	{
+		throw std::exception((std::stringstream() << "Last op, ID " << lastOp.op << ", did not push enough arguments").str().c_str());
+	}
+
+	lastOp = op;
+	lastOpOffset = code.size();
+
+	code.push_back(op);
+
+}
 
 void CodeSection::push(SpvOp op, SSA id, std::vector<uint32_t> args)
 {
@@ -12,7 +28,7 @@ void CodeSection::push(SpvOp op, SSA id, std::vector<uint32_t> args)
 		return;
 	}
 
-	code.push_back(op);
+	pushOp(op);
 
 	if (id != 0)
 	{
@@ -53,7 +69,8 @@ void CodeSection::pushTyped(SpvOp op, SSA type, SSA id, std::vector<uint32_t> ar
 	spvAsm->setOpForSSA(id, op);
 	spvAsm->setSection(id, section);
 
-	code.push_back(op);
+	pushOp(op);
+
 	code.push_back(type);
 	code.push_back(id);
 	code.insert(code.end(), args.begin(), args.end());

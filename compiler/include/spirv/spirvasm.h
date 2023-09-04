@@ -71,6 +71,11 @@ namespace caliburn
             
             std::map<SSA, VarData> varMeta;
 
+            spirv::SpvOp lastOp = spirv::SpvOp();
+            size_t lastOpOffset = 0;
+
+            void pushOp(SpvOp op);
+
         public:
             CodeSection(SSAKind sec, ptr<cllr::SPIRVOutAssembler> spv, std::vector<SpvOp> ops) : section(sec), spvAsm(spv), validOps(ops)
             {
