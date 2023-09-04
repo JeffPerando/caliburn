@@ -7,7 +7,7 @@
 
 using namespace caliburn;
 
-Tokenizer::Tokenizer(ref<const TextDoc> t) : doc(t), buf(std::vector<char>(t.text.begin(), t.text.end()))
+Tokenizer::Tokenizer(sptr<TextDoc> t) : doc(t), buf(std::vector<char>(t->text.begin(), t->text.end()))
 {
 	//I'm so sorry for this.
 
@@ -94,7 +94,7 @@ std::string Tokenizer::findStr()
 		if (current == '\n')
 		{
 			pos.newline();
-			doc.startLine(buf.currentIndex() + 1);
+			doc->startLine(buf.currentIndex() + 1);
 
 			while (buf.hasNext())
 			{
@@ -106,7 +106,7 @@ std::string Tokenizer::findStr()
 				if (ws == '\n')
 				{
 					pos.newline();
-					doc.startLine(buf.currentIndex());
+					doc->startLine(buf.currentIndex() + 1);
 
 				}
 				else
@@ -378,7 +378,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			if (current == '\n')
 			{
 				pos.newline();
-				doc.startLine(buf.currentIndex());
+				doc->startLine(buf.currentIndex() + 1);
 			}
 			else if (current == '\t')
 			{
@@ -425,7 +425,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			//literals like 0f or 0xDEADBEEF are correctly identified.
 			if (idOffset > intOffset)
 			{
-				auto idStr = doc.text.substr(buf.currentIndex(), idOffset);
+				auto idStr = doc->text.substr(buf.currentIndex(), idOffset);
 				auto idType = TokenType::IDENTIFIER;
 
 				if (std::binary_search(KEYWORDS.begin(), KEYWORDS.end(), idStr))
@@ -502,7 +502,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			
 			while (opLen > 0)
 			{
-				auto testOp = doc.text.substr(buf.currentIndex(), opLen);
+				auto testOp = doc->text.substr(buf.currentIndex(), opLen);
 				auto meaning = INFIX_OPS.find(testOp);
 
 				if (meaning != INFIX_OPS.end())

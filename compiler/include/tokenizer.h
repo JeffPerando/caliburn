@@ -35,17 +35,17 @@ namespace caliburn
 
 		sptr<Token> makeCharTkn(TokenType t)
 		{
-			return new_sptr<Token>(buf.current(), TokenType::UNKNOWN, pos, buf.currentIndex());
+			return new_sptr<Token>(buf.current(), t, pos, buf.currentIndex());
 		}
 
 	public:
 		const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::TOKENIZER);
 
-		TextDoc doc;
+		sptr<TextDoc> doc;
 
 		//TODO use 32-bit wide chars for UTF-8 support
 		//or, y'know, find a UTF-8 library (NOT BOOST)
-		Tokenizer(ref<const TextDoc> doc);
+		Tokenizer(sptr<TextDoc> doc);
 
 		virtual ~Tokenizer() {}
 
