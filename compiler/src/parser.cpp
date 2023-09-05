@@ -49,9 +49,9 @@ T Parser::parseAny(std::vector<ParseMethod<T>> fns)
 	it returns that result.
 	The alternative was very repetitive code.
 	*/
-	auto current = tokens.currentIndex();
+	size_t current = tokens.currentIndex();
 
-	for (auto fn : fns)
+	for (auto& fn : fns)
 	{
 		auto parsed = fn(*this);
 
@@ -724,20 +724,27 @@ uptr<Statement> Parser::parseShader()
 		return nullptr;
 	}
 
-	auto& name = tokens.next();
+	sptr<Token> name = tokens.next();
 
-	if (name->type != TokenType::IDENTIFIER)
+	if (name->type == TokenType::IDENTIFIER)
+	{
+		tokens.consume();
+	}
+	else
 	{
 		auto e = errors->err("Invalid shader object name", name);
-		return nullptr;
+
+		if (name->type == TokenType::START_SCOPE)
+		{
+			e->suggest("Name your shader; this way it can be found and compiled. Caliburn does not support 'anonymous' shaders");
+		}
+
 	}
 
 	auto shader = new_uptr<ShaderStatement>();
 
 	shader->first = first;
 	shader->name = name;
-
-	tokens.consume();
 
 	if (tokens.current()->type == TokenType::START_PAREN)
 	{
@@ -787,43 +794,64 @@ uptr<Statement> Parser::parseShader()
 		return shader;
 	}
 
-	parseAnyBetween("{", lambda()
+	tokens.consume();
+
+	while (tokens.hasNext())
 	{
-		while (tokens.hasNext())
+		sptr<Token> memStart = tokens.current();
+
+		if (memStart->type != TokenType::KEYWORD)
 		{
-			if (tokens.current()->type != TokenType::KEYWORD)
-			{
-				break;
-			}
+			break;
+		}
 
-			if (auto stageFn = parseFnLike())
-			{
-				shader->stages.push_back(new_uptr<ShaderStage>(stageFn, shader->name));
+		if (auto stageFn = parseFnLike())
+		{
+			shader->stages.push_back(new_uptr<ShaderStage>(stageFn, shader->name));
 
-			}
-			else
-			{
-				auto ios = parseMemberVarLike();
+		}
+		else
+		{
+			auto ios = parseMemberVarLike();
 
-				if (ios.empty())
+			if (ios.empty())
+			{
+				auto e = errors->err("Invalid shader object member; skipping statement", tokens.current());
+
+				while (tokens.hasNext())
 				{
-					auto e = errors->err("Invalid shader object member", tokens.current());
-					continue;
+					if (tokens.current()->type == TokenType::END)
+					{
+						tokens.consume();
+						break;
+					}
+					
+					tokens.consume();
+
 				}
 
-				for (auto const& ioData : ios)
-				{
-					shader->ioVars.push_back(new_sptr<ShaderIOVariable>(*ioData));
-
-				}
-
+				continue;
 			}
 
-			parseSemicolon();
+			for (auto const& ioData : ios)
+			{
+				shader->ioVars.push_back(new_sptr<ShaderIOVariable>(*ioData));
+
+			}
 
 		}
 
-	}, "}");
+		parseSemicolon();
+
+	}
+
+	while (tokens.current()->type != TokenType::END_SCOPE)
+	{
+		auto e = errors->err("Stray token; skipping", tokens.current());
+		tokens.consume();
+	}
+
+	tokens.consume();
 
 	return shader;
 }
