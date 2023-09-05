@@ -18,15 +18,30 @@ using namespace caliburn;
 
 void Parser::skipStmt()
 {
+	size_t scopes = 0;
+
 	while (tokens.hasNext())
 	{
-		if (tokens.current()->type == TokenType::END)
+		sptr<Token> tkn = tokens.current();
+
+		if (tkn->type == TokenType::START_SCOPE)
 		{
-			tokens.consume();
+			++scopes;
+		}
+		else if (tkn->type == TokenType::END_SCOPE)
+		{
+			if (scopes > 0)
+			{
+				--scopes;
+			}
+		}
+		
+		tokens.consume();
+
+		if (scopes == 0 && tkn->type == TokenType::END)
+		{
 			break;
 		}
-
-		tokens.consume();
 
 	}
 
