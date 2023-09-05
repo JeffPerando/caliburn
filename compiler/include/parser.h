@@ -31,6 +31,8 @@ namespace caliburn
 		Parser(std::vector<sptr<Token>> tokenVec) : tokens(tokenVec) {}
 		virtual ~Parser() {}
 
+		void skipStmt();
+
 		std::vector<uptr<Statement>> parse();
 
 		template<typename T>

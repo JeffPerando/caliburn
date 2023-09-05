@@ -16,6 +16,22 @@
 
 using namespace caliburn;
 
+void Parser::skipStmt()
+{
+	while (tokens.hasNext())
+	{
+		if (tokens.current()->type == TokenType::END)
+		{
+			tokens.consume();
+			break;
+		}
+
+		tokens.consume();
+
+	}
+
+}
+
 std::vector<uptr<Statement>> Parser::parse()
 {
 	std::vector<uptr<Statement>> ast;
@@ -736,7 +752,7 @@ uptr<Statement> Parser::parseShader()
 
 		if (name->type == TokenType::START_SCOPE)
 		{
-			e->suggest("Name your shader; this way it can be found and compiled. Caliburn does not support 'anonymous' shaders");
+			e->suggest("Name your shader so it can be found and compiled. Caliburn does not support 'anonymous' shaders");
 		}
 
 	}
@@ -766,7 +782,7 @@ uptr<Statement> Parser::parseShader()
 				break;
 			}
 
-			auto& name = tokens.current();
+			sptr<Token> name = tokens.current();
 
 			if (name->type != TokenType::IDENTIFIER)
 			{
@@ -791,6 +807,7 @@ uptr<Statement> Parser::parseShader()
 	if (tokens.current()->type != TokenType::START_SCOPE)
 	{
 		auto e = errors->err("Shaders must start with a scope", tokens.current());
+		skipStmt();
 		return shader;
 	}
 
@@ -817,18 +834,8 @@ uptr<Statement> Parser::parseShader()
 			if (ios.empty())
 			{
 				auto e = errors->err("Invalid shader object member; skipping statement", tokens.current());
-
-				while (tokens.hasNext())
-				{
-					if (tokens.current()->type == TokenType::END)
-					{
-						tokens.consume();
-						break;
-					}
-					
-					tokens.consume();
-
-				}
+				
+				skipStmt();
 
 				continue;
 			}
@@ -880,11 +887,20 @@ uptr<Statement> Parser::parseStruct()
 		return nullptr;
 	}
 
-	auto& name = tokens.next();
+	sptr<Token> name = tokens.next();
 
-	if (name->type != TokenType::IDENTIFIER)
+	if (name->type == TokenType::IDENTIFIER)
+	{
+		tokens.consume();
+	}
+	else
 	{
 		auto e = errors->err("Invalid type name", name);
+
+		if (name->type == TokenType::START_SCOPE)
+		{
+			e->suggest("Name your data structure");
+		}
 
 	}
 
@@ -892,18 +908,20 @@ uptr<Statement> Parser::parseStruct()
 
 	stmt->first = first;
 
-	tokens.consume();
-
-	if (tokens.current()->type != TokenType::START_SCOPE)
+	if (tokens.current()->type == TokenType::START_SCOPE)
+	{
+		tokens.consume();
+	}
+	else
 	{
 		auto e = errors->err("Types must start with a scope", tokens.current());
+		skipStmt();
+		return stmt;
 	}
-
-	tokens.consume();
 
 	while (true)
 	{
-		auto& end = tokens.current();
+		sptr<Token> end = tokens.current();
 
 		if (end->type == TokenType::END_SCOPE)
 		{
