@@ -120,6 +120,8 @@ int main()
 {
 	std::cout << "\033[1;31mhi ma\033[0m\n";
 
+	testShaderCompile();
+	/*
 	auto const takes = 20;
 
 	for (int i = 0; i < takes; ++i)
@@ -128,6 +130,6 @@ int main()
 	}
 
 	std::cout << "Average time: " << ((totalTime / static_cast<double>(takes)) * 0.000001) << " ms\n";
-	
+	*/
 	return 0;
 }

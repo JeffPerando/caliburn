@@ -380,11 +380,6 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 				pos.newline();
 				doc->startLine(buf.currentIndex() + 1);
 			}
-			else if (current == '\t')
-			{
-				//Yes, we're assuming tabs are 4-wide.
-				pos.move(4);
-			}
 			else
 			{
 				pos.move();

@@ -17,12 +17,13 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss, bool 
 
 	ss << '[' << COMPILE_STAGES[(int)stage] << "] ";
 	
-	TextPos pos;
+	TextPos startPos, endPos;
 	bool hasLine = true;
 
 	if (problemTknStart != nullptr)
 	{
-		pos = problemTknStart->pos;
+		startPos = problemTknStart->pos;
+		endPos = problemTknEnd->pos;
 	}
 	else
 	{
@@ -33,7 +34,7 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss, bool 
 
 	if (hasLine)
 	{
-		ss << " on line " << pos.line;
+		ss << " on line " << startPos.line;
 	}
 	
 	ss << ": " << message << '\n';
@@ -51,7 +52,7 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss, bool 
 	{
 		for (auto i = ERR_LINE_COUNT; i > 0; --i)
 		{
-			auto line = pos.line - i;
+			auto line = startPos.line - i;
 
 			if (line > 0)
 			{
@@ -70,60 +71,66 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss, bool 
 		{
 			if (color)
 			{
-				auto lineStr = doc.getLine(pos.line);
+				auto lineStr = doc.getLine(startPos.line);
 
-				size_t tknOff = 0;
+				ss << startPos.line << '\t';
 
-				ss << pos.line << '\t';
-
-				if (pos.column > 1)
+				if (startPos.column > 1)
 				{
-					auto preTknLine = lineStr.substr(0, pos.column - (3 + endTknLen));
-
-					tknOff = preTknLine.size();
-
-					ss << preTknLine;
-
+					ss << lineStr.substr(0, startPos.column - 1);
 				}
 
 				ss << "\033[1;31m";
 				ss << problemTknStart->str;
 				ss << "\033[0m";
 
-				if (lineStr.length() > (tknOff + endTknLen))
+				if (lineStr.length() >= (startPos.column + endTknLen))
 				{
-					ss << lineStr.substr(tknOff + endTknLen);
+					ss << lineStr.substr((startPos.column - 1) + endTknLen);
 				}
 
 			}
 			else
 			{
-				ss << pos.line << '\t' << doc.getLine(pos.line) << '\n';
+				ss << startPos.line << '\t' << doc.getLine(startPos.line) << '\n';
 				ss << "\t";
-				ss << std::string(pos.column + endTknLen, ' ');
+				ss << std::string(startPos.column, ' ');
 				ss << std::string(endTknLen, '^');
 
 			}
 			
-			ss << '\n';
-
 		}
-		else //TODO this entire procedure looks uh... *goofy*
+		else
 		{
-			auto txtStart = problemTknStart->pos.column;
-			auto txtEnd = problemTknEnd->pos.column + endTknLen;
+			auto startLineStr = doc.getLine(startPos.line);
+			auto endLineStr = doc.getLine(endPos.line);
 
-			auto start = problemTknStart->textStart;
+			if (startPos.column > 1)
+			{
+				ss << startLineStr.substr(0, startPos.column - 1);
+			}
 
 			ss << "\033[1;31m";
-			ss << doc.text.substr(start, endTknLen);
+			ss << startPos.line << '\t' << startLineStr.substr(startPos.column - 1) << '\n';
+			for (uint32_t line = startPos.line + 1; line < endPos.line; ++line)
+			{
+				ss << line << '\t' << doc.getLine(line) << '\n';
+			}
+			ss << endPos.line << '\t' << endLineStr.substr(0, endTknLen + endPos.column - 1);
 			ss << "\033[0m";
 
+			if (endLineStr.length() >= (endPos.column + endTknLen))
+			{
+				ss << endLineStr.substr((endPos.column - 1) + endTknLen);
+			}
+
 		}
+
+		ss << '\n';
 
 		for (auto i = 0; i < ERR_LINE_COUNT; ++i)
 		{
-			auto line = pos.line + i + 1;
+			auto line = endPos.line + i + 1;
 
 			if (line >= doc.getLineCount())
 			{
