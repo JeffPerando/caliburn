@@ -161,16 +161,6 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss, bool 
 
 sptr<Error> ErrorHandler::err(std::string msg, sptr<Token> tknStart, sptr<Token> tknEnd)
 {
-	if (tknStart == nullptr)
-	{
-		throw std::exception("Problem start token is null");
-	}
-
-	if (tknEnd == nullptr)
-	{
-		throw std::exception("Problem end token is null");
-	}
-
 	auto e = new_sptr<Error>();
 
 	e->stage = stage;

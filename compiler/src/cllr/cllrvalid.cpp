@@ -6,6 +6,8 @@
 using namespace caliburn::cllr;
 
 Validator::Validator(sptr<const CompilerSettings> cs) : settings(cs), validators({
+	&valid::OpUnknown,
+
 	&valid::OpShaderStage,
 	&valid::OpShaderStageEnd,
 	&valid::OpFunction,

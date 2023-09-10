@@ -15,8 +15,16 @@ namespace caliburn
 		struct Validator;
 
 		static const std::vector<std::string> VALIDATION_REASONS = {
-			"Valid", "Invalid Type", "Invalid Value", "Invalid LHS Value",
-			"Invalid Variable", "Invalid Operand", "Invalid Context",
+			"Valid",
+			"Invalid Reference",
+			"Invalid Operand",
+			"No ID",
+			"No Out Type",
+			"Invalid Type",
+			"Invalid Value",
+			"Invalid LHS Value",
+			"Invalid Variable",
+			"Invalid Context",
 			"Invalid Other"
 		};
 
@@ -44,7 +52,6 @@ namespace caliburn
 
 			sptr<const CompilerSettings> settings;
 
-			
 			Validator(sptr<const CompilerSettings> cs);
 
 			bool validate(ref<Assembler> codeAsm);
