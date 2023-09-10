@@ -450,7 +450,7 @@ uptr<ScopeStatement> Parser::parseScope(std::vector<ParseMethod<uptr<Statement>>
 		{
 			auto e = errors->err("Expected a { here", first);
 
-			e->suggest("Wrap your code in a scope");
+			e->note("Wrap your code in a scope");
 
 		}
 		
@@ -616,12 +616,12 @@ uptr<Statement> Parser::parseImport()
 
 		if (modName->type == TokenType::KEYWORD)
 		{
-			e->suggest("Can't import reserved keywords; try renaming your module");
+			e->note("Can't import reserved keywords; try renaming your module");
 		}
 
 		if (modName->str == "*")
 		{
-			e->suggest("Can't import everything; try an actual module name");
+			e->note("Can't import everything; try an actual module name");
 		}
 
 		return nullptr;
@@ -650,7 +650,7 @@ uptr<Statement> Parser::parseImport()
 
 			if (alias->str == "*")
 			{
-				e->suggest("Wildcard imports are currently not supported");
+				e->note("Wildcard imports are currently not supported");
 			}
 
 		}
@@ -733,12 +733,12 @@ uptr<Statement> Parser::parseTypedef()
 
 		if (typeStart->str == "[")
 		{
-			e->suggest("Array types are in the C-style format of x[], where x is the element type.");
+			e->note("Array types are in the C-style format of x[], where x is the element type.");
 		}
 
 		if (typeStart->type == TokenType::KEYWORD)
 		{
-			e->suggest("Only keyword that's a valid type is the dynamic keyword");
+			e->note("Only keyword that's a valid type is the dynamic keyword");
 		}
 
 		return nullptr;
@@ -767,7 +767,7 @@ uptr<Statement> Parser::parseShader()
 
 		if (name->type == TokenType::START_SCOPE)
 		{
-			e->suggest("Name your shader so it can be found and compiled. Caliburn does not support 'anonymous' shaders");
+			e->note("Name your shader so it can be found and compiled. Caliburn does not support 'anonymous' shaders");
 		}
 
 	}
@@ -914,7 +914,7 @@ uptr<Statement> Parser::parseStruct()
 
 		if (name->type == TokenType::START_SCOPE)
 		{
-			e->suggest("Name your data structure");
+			e->note("Name your data structure");
 		}
 
 	}
@@ -1026,7 +1026,7 @@ uptr<ParsedFn> Parser::parseFnLike()
 			{
 				auto e = errors->err("Invocation dimensions are empty", gpuDim, tokens.current());
 
-				e->suggest("To use this feature, add identifiers separated with commas. Each identifier is a dimension within the GPU invocation (first is X, second is Y, etc.)");
+				e->note("To use this feature, add identifiers separated with commas. Each identifier is a dimension within the GPU invocation (first is X, second is Y, etc.)");
 
 			}
 
@@ -1080,12 +1080,12 @@ uptr<ParsedFn> Parser::parseFnLike()
 
 			if (typeNameStart->str == "void")
 			{
-				e->suggest("Void is not a proper type name; leave out the return type altogether");
+				e->note("Void is not a proper type name; leave out the return type altogether");
 			}
 
 			if (typeNameStart->str == "dynamic")
 			{
-				e->suggest("Make a typedef statement; you can't make a dynamic type a return type directly since it has no name to look up");
+				e->note("Make a typedef statement; you can't make a dynamic type a return type directly since it has no name to look up");
 			}
 
 		}
@@ -1826,7 +1826,7 @@ sptr<Variable> Parser::parseGlobalVar()
 	{
 		auto e = errors->err("Global variables must be initialized", eqSign);
 
-		e->suggest("Add an equal sign and a value");
+		e->note("Add an equal sign and a value");
 
 		return v;
 	}
@@ -1839,7 +1839,7 @@ sptr<Variable> Parser::parseGlobalVar()
 		{
 			auto e = errors->err("Global variables initialized with a non-constant value", *init);
 
-			e->suggest("Use a compile-time constant, like a literal. Struct-likes do not count.");
+			e->note("Use a compile-time constant, like a literal. Struct-likes do not count.");
 
 		}
 

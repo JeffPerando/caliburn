@@ -6,12 +6,14 @@
 #include "cllrasm.h"
 #include "error.h"
 
-#define CLLR_INSTRUCT_VALIDATE(Name) ValidReason Name(sptr<const Instruction> i, ref<Assembler> codeAsm)
+#define CLLR_INSTRUCT_VALIDATE(Name) ValidReason Name(ValidationLevel lvl, ref<const Instruction> i, ref<Assembler> codeAsm)
 
 namespace caliburn
 {
 	namespace cllr
 	{
+		struct Validator;
+
 		static const std::vector<std::string> VALIDATION_REASONS = {
 			"Valid", "Invalid Type", "Invalid Value", "Invalid LHS Value",
 			"Invalid Variable", "Invalid Operand", "Invalid Context",
@@ -33,16 +35,24 @@ namespace caliburn
 			INVALID_MISC
 		};
 
+		using ValidFn = ValidReason(*)(ValidationLevel lvl, ref<const Instruction> i, ref<Assembler> codeAsm);
+
 		struct Validator
 		{
 			const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::CLLR_VALIDATION);
-			
+			const std::array<ValidFn, (uint64_t)cllr::Opcode::CLLR_OP_COUNT> validators;
+
 			sptr<const CompilerSettings> settings;
 
-			Validator(sptr<const CompilerSettings> cs) : settings(cs) {}
+			
+			Validator(sptr<const CompilerSettings> cs);
 
-			bool validate(ref<const InstructionVec> is);
+			bool validate(ref<Assembler> codeAsm);
 
+		};
+
+		namespace valid
+		{
 			bool isType(cllr::Opcode op);
 
 			bool isValue(cllr::Opcode op);
@@ -101,6 +111,7 @@ namespace caliburn
 			CLLR_INSTRUCT_VALIDATE(OpValueExpand);
 			CLLR_INSTRUCT_VALIDATE(OpValueExpr);
 			CLLR_INSTRUCT_VALIDATE(OpValueExprUnary);
+			CLLR_INSTRUCT_VALIDATE(OpValueIntToFP);
 			CLLR_INSTRUCT_VALIDATE(OpValueInvokePos);
 			CLLR_INSTRUCT_VALIDATE(OpValueInvokeSize);
 			CLLR_INSTRUCT_VALIDATE(OpValueLitArray);
@@ -120,8 +131,8 @@ namespace caliburn
 			CLLR_INSTRUCT_VALIDATE(OpReturn);
 			CLLR_INSTRUCT_VALIDATE(OpReturnValue);
 			CLLR_INSTRUCT_VALIDATE(OpDiscard);
-			
-		};
+
+		}
 
 	}
 

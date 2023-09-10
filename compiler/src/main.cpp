@@ -118,7 +118,9 @@ int testExprParsing()
 
 int main()
 {
-	std::cout << "\033[1;31mhi ma\033[0m\n";
+	std::cout << "\033[1;31m";
+	std::cout << sizeof(sptr<caliburn::Token>);
+	std::cout << "\033[0m\n";
 
 	testShaderCompile();
 	/*

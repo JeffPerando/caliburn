@@ -41,7 +41,7 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 
 	auto valid = cllr::Validator(settings);
 
-	if (!valid.validate(codeAsm.getCode()))
+	if (!valid.validate(codeAsm))
 	{
 		valid.errors->dump(allErrs);
 	}

@@ -72,7 +72,7 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss, bool 
 			if (color)
 			{
 				auto lineStr = doc.getLine(startPos.line);
-
+				
 				ss << startPos.line << '\t';
 
 				if (startPos.column > 1)
@@ -81,7 +81,7 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss, bool 
 				}
 
 				ss << "\033[1;31m";
-				ss << problemTknStart->str;
+				ss << doc.text.substr(problemTknStart->textStart, problemTknStart->textEnd - problemTknStart->textStart);
 				ss << "\033[0m";
 
 				if (lineStr.length() >= (startPos.column + endTknLen))
@@ -143,13 +143,13 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss, bool 
 
 	}
 	
-	if (!suggestions.empty())
+	if (!notes.empty())
 	{
-		ss << "\nSuggestions:";
+		ss << "\nNotes:";
 
-		for (size_t i = 0; i < suggestions.size(); ++i)
+		for (size_t i = 0; i < notes.size(); ++i)
 		{
-			ss << '\n\t' << (i + 1) << ". " << suggestions.at(i);
+			ss << '\n\t' << (i + 1) << ". " << notes.at(i);
 
 		}
 		
