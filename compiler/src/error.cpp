@@ -145,14 +145,22 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss, bool 
 	
 	if (!notes.empty())
 	{
-		ss << "\nNotes:";
-
-		for (size_t i = 0; i < notes.size(); ++i)
+		if (notes.size() == 1)
 		{
-			ss << '\n\t' << (i + 1) << ". " << notes.at(i);
+			ss << "Note: " << notes.front();
+		}
+		else
+		{
+			ss << "Notes:";
+
+			for (size_t i = 0; i < notes.size(); ++i)
+			{
+				ss << "\n\t" << (i + 1) << ". " << notes.at(i);
+
+			}
 
 		}
-		
+
 	}
 
 	ss << '\n';

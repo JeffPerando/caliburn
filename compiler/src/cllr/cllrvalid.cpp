@@ -81,6 +81,7 @@ bool Validator::validate(ref<Assembler> codeAsm)
 	auto const codeGenErr = "This is generally a code generation error. You should file an issue on the official Caliburn GitHub repo";
 	auto const& is = codeAsm.getCode();
 	auto const lvl = settings->vLvl;
+	bool err = false;
 
 	if (lvl == ValidationLevel::NONE)
 	{
@@ -96,6 +97,7 @@ bool Validator::validate(ref<Assembler> codeAsm)
 				auto e = errors->err({ "CLLR instruction", std::to_string(i.index), "does not have a debug token" }, nullptr);
 
 				e->note(codeGenErr);
+				err = true;
 
 			}
 
@@ -106,6 +108,7 @@ bool Validator::validate(ref<Assembler> codeAsm)
 					auto e = errors->err("Value does not have an output type", i.debugTkn);
 
 					e->note(codeGenErr);
+					err = true;
 
 				}
 
@@ -116,6 +119,7 @@ bool Validator::validate(ref<Assembler> codeAsm)
 						if (i.refs[r] == i.index)
 						{
 							auto e = errors->err({ "CLLR instruction", std::to_string(i.index), "cannot reference itself" }, i.debugTkn);
+							err = true;
 
 						}
 
@@ -125,6 +129,13 @@ bool Validator::validate(ref<Assembler> codeAsm)
 				
 			}
 
+		}
+
+		if (lvl < ValidationLevel::FULL)
+		{
+			//The full validation layer is quite slow
+			//For now, we'll just not use it.
+			continue;
 		}
 
 		auto const reason = validators[(int)i.op](lvl, i, codeAsm);
@@ -148,15 +159,18 @@ bool Validator::validate(ref<Assembler> codeAsm)
 		{
 			e->note("One of the references has to be an lvalue.");
 		}
-		
+
+		e->note({ "Op:", std::to_string((int)i.op) });
 		e->note({ "ID:", std::to_string(i.index) });
 		e->note({ "Out:", std::to_string(i.outType) });
 		e->note({ "Operands: [", std::to_string(i.operands[0]), std::to_string(i.operands[1]), std::to_string(i.operands[2]), "]" });
 		e->note({ "Refs: [", std::to_string(i.refs[0]), std::to_string(i.refs[1]), std::to_string(i.refs[2]), "]" });
 
+		err = true;
+
 	}
 
-	return true;
+	return !err;
 }
 
 bool valid::isType(Opcode op)
@@ -233,110 +247,139 @@ bool valid::isVar(Opcode op)
 
 CLLR_INSTRUCT_VALIDATE(valid::OpUnknown)
 {
+	CLLR_VALID_NO_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(0);
+	
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpShaderStage)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(0);
+
+	//TODO validate shader stage
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpShaderStageEnd)
 {
+	CLLR_VALID_NO_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(1);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpFunction)
 {
-	if (i.index == 0)
-	{
-		return ValidReason::INVALID_NO_ID;
-	}
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(1);
 
-	if (!isType(codeAsm.opFor(i.refs[0])))
-	{
-		return ValidReason::INVALID_TYPE;
-	}
+	CLLR_VALID_TYPE(i.refs[0]);
 
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpVarFuncArg)
 {
-	if (!isType(codeAsm.opFor(i.refs[0])))
-	{
-		return ValidReason::INVALID_TYPE;
-	}
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_TYPE(i.refs[0]);
 
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpFunctionEnd)
 {
-	if (codeAsm.opFor(i.refs[0]) != Opcode::FUNCTION)
-	{
-		return ValidReason::INVALID_REF;
-	}
+	CLLR_VALID_NO_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_OP(i.refs[0], Opcode::FUNCTION);
 
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpVarLocal)
 {
-	if (!isType(codeAsm.opFor(i.refs[0])))
-	{
-		return ValidReason::INVALID_TYPE;
-	}
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(2);
 
-	if (i.refs[1] != 0)
-	{
-		if (!isValue(codeAsm.opFor(i.refs[1])))
-		{
-			return ValidReason::INVALID_VALUE;
-		}
-
-	}
+	CLLR_VALID_TYPE(i.refs[0]);
+	CLLR_VALID_OPT_VALUE(i.refs[1]);
 
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpVarGlobal)
 {
-	if (!isType(codeAsm.opFor(i.refs[0])))
-	{
-		return ValidReason::INVALID_TYPE;
-	}
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(2);
 
-	if (i.refs[1] == 0)
-	{
-		return ValidReason::INVALID_VALUE;
-	}
-
-	if (!isValue(codeAsm.opFor(i.refs[1])))
-	{
-		return ValidReason::INVALID_VALUE;
-	}
+	CLLR_VALID_TYPE(i.refs[0]);
+	CLLR_VALID_VALUE(i.refs[1]);
 
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpVarShaderIn)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_TYPE(i.refs[0]);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpVarShaderOut)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(1);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpVarDescriptor)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_TYPE(i.refs[0]);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpCall)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(1);
+
 	auto const& fnCode = codeAsm.codeFor(i.refs[0]);
 
 	if (fnCode.op != Opcode::FUNCTION)
@@ -344,7 +387,7 @@ CLLR_INSTRUCT_VALIDATE(valid::OpCall)
 		return ValidReason::INVALID_REF;
 	}
 
-	//Checks if the call args match with the arguments set by the called function
+	//Checks if the call args length equals the function's argument count
 	if (fnCode.operands[0] != i.operands[0])
 	{
 		return ValidReason::INVALID_MISC;
@@ -355,21 +398,32 @@ CLLR_INSTRUCT_VALIDATE(valid::OpCall)
 
 CLLR_INSTRUCT_VALIDATE(valid::OpCallArg)
 {
-	if (!isValue(codeAsm.opFor(i.refs[0])))
-	{
-		return ValidReason::INVALID_VALUE;
-	}
+	CLLR_VALID_NO_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_REFS(2);
+	CLLR_VALID_MAX_OPS(1);
+
+	CLLR_VALID_VALUE(i.refs[0]);
 
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpTypeVoid)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_REFS(0);
+	CLLR_VALID_MAX_OPS(0);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpTypeFloat)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_REFS(0);
+
 	auto const bits = i.operands[0];
 
 	if (bits > caliburn::MAX_FLOAT_BITS || bits < caliburn::MIN_FLOAT_BITS)
@@ -387,6 +441,11 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypeFloat)
 
 CLLR_INSTRUCT_VALIDATE(valid::OpTypeIntSign)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(0);
+
 	auto const bits = i.operands[0];
 
 	if (bits > caliburn::MAX_INT_BITS || bits < caliburn::MIN_INT_BITS)
@@ -404,6 +463,11 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypeIntSign)
 
 CLLR_INSTRUCT_VALIDATE(valid::OpTypeIntUnsign)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(0);
+
 	auto const bits = i.operands[0];
 
 	if (bits > caliburn::MAX_INT_BITS || bits < caliburn::MIN_INT_BITS)
@@ -421,26 +485,29 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypeIntUnsign)
 
 CLLR_INSTRUCT_VALIDATE(valid::OpTypeArray)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(1);
+	CLLR_VALID_TYPE(i.refs[0]);
+
 	//length check
 	if (i.operands[0] == 0)
 	{
 		return ValidReason::INVALID_OPERAND;
 	}
-
-	if (!isType(codeAsm.opFor(i.refs[0])))
-	{
-		return ValidReason::INVALID_TYPE;
-	}
-
+	
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpTypeVector)
 {
-	if (!isType(codeAsm.opFor(i.refs[0])))
-	{
-		return ValidReason::INVALID_TYPE;
-	}
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_TYPE(i.refs[0]);
 
 	auto const len = i.operands[0];
 
@@ -454,6 +521,13 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypeVector)
 
 CLLR_INSTRUCT_VALIDATE(valid::OpTypeMatrix)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(2);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_TYPE(i.refs[0]);
+
 	//TODO consider matrix semantics
 
 	return ValidReason::VALID;
@@ -461,6 +535,11 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypeMatrix)
 
 CLLR_INSTRUCT_VALIDATE(valid::OpTypeStruct)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(0);
+
 	//empty structs are illegal
 	if (i.operands[0] == 0)
 	{
@@ -472,15 +551,22 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypeStruct)
 
 CLLR_INSTRUCT_VALIDATE(valid::OpTypeBool)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(0);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpTypePtr)
 {
-	if (!isType(codeAsm.opFor(i.refs[0])))
-	{
-		return ValidReason::INVALID_REF;
-	}
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_TYPE(i.refs[0]);
 
 	return ValidReason::VALID;
 }
@@ -488,251 +574,399 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypePtr)
 //TOOD oops, I haven't begun to implement this yet
 CLLR_INSTRUCT_VALIDATE(valid::OpTypeTuple)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpStructMember)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(2);
+
+	CLLR_VALID_TYPE(i.refs[0]);
+	CLLR_VALID_OP(i.refs[1], Opcode::TYPE_STRUCT);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpStructEnd)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_OP(i.refs[0], Opcode::TYPE_STRUCT);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpLabel)
 {
-	if (i.index == 0)
-	{
-		return ValidReason::INVALID_NO_ID;
-	}
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(0);
 
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpJump)
 {
-	if (codeAsm.opFor(i.refs[0]) != Opcode::LABEL)
-	{
-		return ValidReason::INVALID_REF;
-	}
+	CLLR_VALID_NO_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_OP(i.refs[0], Opcode::LABEL);
 
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpJumpCond)
 {
-	if (codeAsm.opFor(i.refs[0]) != Opcode::LABEL)
-	{
-		return ValidReason::INVALID_REF;
-	}
+	CLLR_VALID_NO_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(2);
 
-	if (!isValue(codeAsm.opFor(i.refs[1])))
-	{
-		return ValidReason::INVALID_VALUE;
-	}
+	CLLR_VALID_OP(i.refs[0], Opcode::LABEL);
+	CLLR_VALID_VALUE(i.refs[1]);
 
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpLoop)
 {
+	CLLR_VALID_NO_ID;
+	CLLR_VALID_NO_OUT;
+	//TODO recall loop semantics
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(2);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpAssign)
 {
+	CLLR_VALID_NO_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(2);
+
+	CLLR_VALID_LVALUE(i.refs[0]);
+	CLLR_VALID_VALUE(i.refs[1]);
+
+	//no self-assignment
 	if (i.refs[0] == i.refs[1])
 	{
 		return ValidReason::INVALID_MISC;
 	}
-
-	if (!isLValue(codeAsm.opFor(i.refs[0])))
-	{
-		return ValidReason::INVALID_LVALUE;
-	}
-
-	if (!isValue(codeAsm.opFor(i.refs[1])))
-	{
-		return ValidReason::INVALID_VALUE;
-	}
-
+	
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpCompare)
 {
-	if (!isType(codeAsm.opFor(i.outType)))
-	{
-		return ValidReason::INVALID_OUT_TYPE;
-	}
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(2);
 
-	if (!isValue(codeAsm.opFor(i.refs[0])))
-	{
-		return ValidReason::INVALID_VALUE;
-	}
-
-	if (!isValue(codeAsm.opFor(i.refs[1])))
-	{
-		return ValidReason::INVALID_VALUE;
-	}
+	CLLR_VALID_VALUE(i.refs[0]);
+	CLLR_VALID_VALUE(i.refs[1]);
 
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueCast)
 {
-	if (!isType(codeAsm.opFor(i.outType)))
-	{
-		return ValidReason::INVALID_OUT_TYPE;
-	}
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(2);
 
-	if (!isValue(codeAsm.opFor(i.refs[0])))
-	{
-		return ValidReason::INVALID_VALUE;
-	}
+	CLLR_VALID_VALUE(i.refs[0]);
+	CLLR_VALID_TYPE(i.refs[1]);
 
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueConstruct)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(0);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpConstructArg)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(2);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueDeref)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(1);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueExpand)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(2);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueExpr)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(2);
+
+	CLLR_VALID_VALUE(i.refs[0]);
+	CLLR_VALID_VALUE(i.refs[1]);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueExprUnary)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_VALUE(i.refs[0]);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueIntToFP)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_VALUE(i.refs[0]);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueInvokePos)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(0);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueInvokeSize)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(0);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueLitArray)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(0);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpLitArrayElem)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(2);
+
+	CLLR_VALID_OP(i.refs[0], Opcode::TYPE_ARRAY);
+	CLLR_VALID_TYPE(i.refs[1]);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueLitBool)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(0);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueLitFloat)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(2);
+	CLLR_VALID_MAX_REFS(0);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueLitInt)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(2);
+	CLLR_VALID_MAX_REFS(0);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueLitStr)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(0);
+	//TODO string support
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueMember)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(1);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_VALUE(i.refs[0]);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueNull)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(0);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueReadVar)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_VAR(i.refs[0]);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueSign)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_VALUE(i.refs[0]);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueSubarray)
 {
-	if (!isValue(codeAsm.opFor(i.refs[0])))
-	{
-		return ValidReason::INVALID_VALUE;
-	}
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(2);
 
-	if (!isValue(codeAsm.opFor(i.refs[1])))
-	{
-		return ValidReason::INVALID_VALUE;
-	}
-
+	CLLR_VALID_VALUE(i.refs[0]);
+	CLLR_VALID_VALUE(i.refs[1]);
+	
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueUnsign)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_VALUE(i.refs[0]);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpValueZero)
 {
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(0);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpReturn)
 {
+	CLLR_VALID_NO_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(0);
+
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpReturnValue)
 {
-	if (!isValue(codeAsm.opFor(i.refs[0])))
-	{
-		return ValidReason::INVALID_VALUE;
-	}
+	CLLR_VALID_NO_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_VALUE(i.refs[0]);
 
 	return ValidReason::VALID;
 }
 
 CLLR_INSTRUCT_VALIDATE(valid::OpDiscard)
 {
+	CLLR_VALID_NO_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(0);
+	CLLR_VALID_MAX_REFS(0);
+
 	if (codeAsm.type != ShaderType::FRAGMENT)
 	{
 		return ValidReason::INVALID_CONTEXT;
