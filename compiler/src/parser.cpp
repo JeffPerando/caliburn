@@ -219,7 +219,7 @@ sptr<GenericSignature> Parser::parseGenericSig()
 
 		GenericResult defRes;
 
-		if (tkns.cur()->str == "=")
+		if (tkns.cur()->type == TokenType::SETTER)
 		{
 			tkns.consume();
 
@@ -726,7 +726,7 @@ uptr<Statement> Parser::parseTypedef()
 		return nullptr;
 	}
 
-	if (tkns.next()->str != "=")
+	if (tkns.next()->type != TokenType::SETTER)
 	{
 		auto e = errors->err("Type definitions must have an equal sign to denote the aliased type", tkns.cur());
 
@@ -764,6 +764,7 @@ uptr<Statement> Parser::parseShader()
 
 	if (first->type != TokenType::KEYWORD && first->str != "shader")
 	{
+		auto e = errors->err("Bruh.", first);
 		return nullptr;
 	}
 
@@ -1836,7 +1837,7 @@ sptr<Variable> Parser::parseGlobalVar()
 
 	sptr<Token> eqSign = tkns.next();
 
-	if (eqSign->str != "=")
+	if (eqSign->type != TokenType::SETTER)
 	{
 		auto e = errors->err("Global variables must be initialized", eqSign);
 
@@ -1910,7 +1911,7 @@ sptr<Variable> Parser::parseMemberVar()
 	v->typeHint = type;
 	v->isConst = isConst;
 
-	if (tkns.cur()->str == "=")
+	if (tkns.cur()->type == TokenType::SETTER)
 	{
 		tkns.consume();
 
@@ -1980,7 +1981,7 @@ std::vector<sptr<ParsedVar>> Parser::parseLocalVarLike()
 
 	sptr<Value> initValue = nullptr;
 
-	if (tkns.cur()->str == "=")
+	if (tkns.cur()->type == TokenType::SETTER)
 	{
 		sptr<Token> valStart = tkns.next();
 
@@ -2046,7 +2047,7 @@ std::vector<sptr<ParsedVar>> Parser::parseMemberVarLike()
 
 	sptr<Value> initValue = nullptr;
 
-	if (tkns.cur()->str == "=")
+	if (tkns.cur()->type == TokenType::SETTER)
 	{
 		if (auto v = parseAnyValue())
 		{

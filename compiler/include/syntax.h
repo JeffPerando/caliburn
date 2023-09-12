@@ -57,6 +57,7 @@ namespace caliburn
 		PERIOD,
 		COMMA,
 		COLON,
+		SETTER,
 		OPERATOR,
 		ARROW
 	};
@@ -185,6 +186,7 @@ namespace caliburn
 	};
 
 	static const std::map<std::string, TokenType> SPECIAL_OPS = {
+		{"=",	TokenType::SETTER},
 		{"->",	TokenType::ARROW},
 		{"=>",	TokenType::ARROW}
 	};

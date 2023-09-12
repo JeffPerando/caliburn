@@ -485,7 +485,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 		{
 			size_t opLen = 1;
 
-			while (opLen < buf.remaining())
+			while (buf.hasRem(opLen))
 			{
 				if (getType(buf.peek(opLen)) != CharType::OPERATOR)
 				{
@@ -516,7 +516,6 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 					tokens.push_back(new_sptr<Token>(testOp, specMeaning->second, pos, buf.currentIndex(), opLen));
 					buf.consume(opLen);
 					pos.move(opLen);
-					opLen = 0;
 					break;
 				}
 
