@@ -1,7 +1,9 @@
 
+type FP = dynamic<float32>;
+
 shader TestShader
 {
-	def vertex(vec4 v) -> vec4
+	def vertex(vec4<FP> v): vec4<FP>
 	{
 		return v;
 	};
