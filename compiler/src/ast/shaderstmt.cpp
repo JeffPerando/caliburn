@@ -44,6 +44,7 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 	if (!valid.validate(codeAsm))
 	{
 		valid.errors->dump(allErrs);
+		return nullptr;
 	}
 
 	auto op = cllr::Optimizer(settings);
