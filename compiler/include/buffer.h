@@ -61,7 +61,6 @@ namespace caliburn
 		void consume(size_t count = 1)
 		{
 			index += count;
-
 		}
 
 		size_t currentIndex() const
@@ -79,11 +78,6 @@ namespace caliburn
 			return length() - index;
 		}
 
-		bool inRange(size_t offset) const
-		{
-			return (index + offset) < length();
-		}
-
 		void revertTo(size_t i)
 		{
 			index = i;
@@ -91,9 +85,10 @@ namespace caliburn
 
 		void rewind(size_t i = 1)
 		{
-			if (i > index)
-				return;
-			index -= i;
+			if (i <= index)
+			{
+				index -= i;
+			}
 		}
 
 	};
