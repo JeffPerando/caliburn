@@ -40,7 +40,7 @@ namespace caliburn
 			notes.push_back(idea);
 		}
 
-		void note(std::initializer_list<std::string> idea_list)
+		void note(std::vector<std::string> idea_list)
 		{
 			std::stringstream ss;
 
@@ -89,7 +89,7 @@ namespace caliburn
 
 		}
 
-		sptr<Error> err(std::initializer_list<std::string> msgs, ref<const ParsedObject> keyObj)
+		sptr<Error> err(std::vector<std::string> msgs, ref<const ParsedObject> keyObj)
 		{
 			std::stringstream ss;
 
@@ -104,7 +104,7 @@ namespace caliburn
 			return err(msg, keyObj.firstTkn(), keyObj.lastTkn());
 		}
 
-		sptr<Error> err(std::initializer_list<std::string> msgs, sptr<Token> keyTkn)
+		sptr<Error> err(std::vector<std::string> msgs, sptr<Token> keyTkn)
 		{
 			std::stringstream ss;
 
@@ -119,7 +119,7 @@ namespace caliburn
 			return err(msg, keyTkn, keyTkn);
 		}
 
-		sptr<Error> err(std::initializer_list<std::string> msgs, sptr<Token> startTkn, sptr<Token> endTkn)
+		sptr<Error> err(std::vector<std::string> msgs, sptr<Token> startTkn, sptr<Token> endTkn)
 		{
 			std::stringstream ss;
 
