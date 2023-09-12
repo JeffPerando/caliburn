@@ -90,6 +90,16 @@ bool Validator::validate(ref<Assembler> codeAsm)
 
 	for (auto const& i : is)
 	{
+		auto const noteOp = lambda(sptr<Error> e)
+		{
+			e->note({ "Op:", std::to_string((int)i.op) });
+			e->note({ "ID:", std::to_string(i.index) });
+			e->note({ "Out:", std::to_string(i.outType) });
+			e->note({ "Operands: [", std::to_string(i.operands[0]), std::to_string(i.operands[1]), std::to_string(i.operands[2]), "]" });
+			e->note({ "Refs: [", std::to_string(i.refs[0]), std::to_string(i.refs[1]), std::to_string(i.refs[2]), "]" });
+
+		};
+
 		if (lvl >= ValidationLevel::BASIC)
 		{
 			if (i.debugTkn == nullptr)
@@ -97,6 +107,7 @@ bool Validator::validate(ref<Assembler> codeAsm)
 				auto e = errors->err({ "CLLR instruction", std::to_string(i.index), "does not have a debug token" }, nullptr);
 
 				e->note(codeGenErr);
+				noteOp(e);
 				err = true;
 
 			}
@@ -108,6 +119,7 @@ bool Validator::validate(ref<Assembler> codeAsm)
 					auto e = errors->err("Value does not have an output type", i.debugTkn);
 
 					e->note(codeGenErr);
+					noteOp(e);
 					err = true;
 
 				}
@@ -119,6 +131,7 @@ bool Validator::validate(ref<Assembler> codeAsm)
 						if (i.refs[r] == i.index)
 						{
 							auto e = errors->err({ "CLLR instruction", std::to_string(i.index), "cannot reference itself" }, i.debugTkn);
+							noteOp(e);
 							err = true;
 
 						}
@@ -160,12 +173,7 @@ bool Validator::validate(ref<Assembler> codeAsm)
 			e->note("One of the references has to be an lvalue.");
 		}
 
-		e->note({ "Op:", std::to_string((int)i.op) });
-		e->note({ "ID:", std::to_string(i.index) });
-		e->note({ "Out:", std::to_string(i.outType) });
-		e->note({ "Operands: [", std::to_string(i.operands[0]), std::to_string(i.operands[1]), std::to_string(i.operands[2]), "]" });
-		e->note({ "Refs: [", std::to_string(i.refs[0]), std::to_string(i.refs[1]), std::to_string(i.refs[2]), "]" });
-
+		noteOp(e);
 		err = true;
 
 	}
