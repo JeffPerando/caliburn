@@ -737,7 +737,7 @@ uptr<Statement> Parser::parseTypedef()
 
 	if (sptr<ParsedType> aliasedType = parseTypeName())
 	{
-		return new_uptr<TypedefStatement>(start, name, aliasedType);
+		return new_uptr<TypedefStatement>(settings, start, name, aliasedType);
 	}
 	else
 	{

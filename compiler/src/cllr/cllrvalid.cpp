@@ -102,31 +102,6 @@ bool Validator::validate(ref<Assembler> codeAsm)
 
 		if (lvl >= ValidationLevel::BASIC)
 		{
-			if (i.debugTkn == nullptr)
-			{
-				std::vector<std::string> msg;
-
-				msg.push_back("CLLR instruction");
-				
-				if (i.index == 0)
-				{
-					msg.push_back(std::string(OP_NAMES[(int)i.op]));
-				}
-				else
-				{
-					msg.push_back(std::to_string(i.index));
-				}
-
-				msg.push_back("does not have a debug token");
-
-				auto e = errors->err(msg, nullptr);
-
-				e->note(codeGenErr);
-				noteOp(e);
-				err = true;
-
-			}
-
 			if (i.index != 0)
 			{
 				if (valid::isValue(i.op) && i.outType == 0)
@@ -164,6 +139,31 @@ bool Validator::validate(ref<Assembler> codeAsm)
 			//The full validation layer is quite slow
 			//For now, we'll just not use it.
 			continue;
+		}
+
+		if (i.debugTkn == nullptr)
+		{
+			std::vector<std::string> msg;
+
+			msg.push_back("CLLR instruction");
+
+			if (i.index == 0)
+			{
+				msg.push_back(std::string(OP_NAMES[(int)i.op]));
+			}
+			else
+			{
+				msg.push_back(std::to_string(i.index));
+			}
+
+			msg.push_back("does not have a debug token");
+
+			auto e = errors->err(msg, nullptr);
+
+			e->note(codeGenErr);
+			noteOp(e);
+			err = true;
+
 		}
 
 		auto const reason = validators[(int)i.op](lvl, i, codeAsm);

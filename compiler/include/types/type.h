@@ -266,9 +266,9 @@ namespace caliburn
 	struct GenericType : BaseType, Generic<T>
 	{
 	public:
-		GenericType(TypeCategory c, std::string n, sptr<GenericSignature> sig) :
+		GenericType(TypeCategory c, std::string n, sptr<GenericSignature> sig, GenFactoryFn<T> facFn) :
 			BaseType(c, n, nullptr),
-			Generic(sig) {}
+			Generic(sig, facFn) {}
 		virtual ~GenericType() {}
 
 		sptr<RealType> getImpl(sptr<GenericArguments> gArgs) override

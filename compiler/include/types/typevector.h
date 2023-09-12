@@ -5,9 +5,13 @@
 
 namespace caliburn
 {
+	struct TypeVector;
+
 	struct RealVector : RealType
 	{
-		RealVector(ptr<Generic<RealVector>> parent, sptr<GenericArguments> gArgs) : RealType((ptr<BaseType>)parent, gArgs) {}
+		const uint32_t length;
+
+		RealVector(ptr<TypeVector> parent, sptr<GenericArguments> gArgs, uint32_t l) : RealType((ptr<BaseType>)parent, gArgs), length(l) {}
 
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
 
@@ -21,7 +25,10 @@ namespace caliburn
 			GenericType(TypeCategory::VECTOR, "vec" + vecElements,
 				new_sptr<GenericSignature>(std::initializer_list{
 					GenericName(GenericSymType::TYPE, "T", GenericResult(new_sptr<ParsedType>("float32")))
-				})
+				}),
+				lambda_v(sptr<GenericArguments> gArgs) {
+					return new_sptr<RealVector>(this, gArgs, vecElements);
+				}
 			),
 			elements(vecElements)
 		{}

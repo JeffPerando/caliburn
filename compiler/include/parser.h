@@ -24,11 +24,13 @@ namespace caliburn
 	struct Parser
 	{
 	private:
+		sptr<CompilerSettings> settings;
 		Buffer<sptr<Token>> tkns;
 	public:
 		const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::PARSER);
 
-		Parser(std::vector<sptr<Token>> tokenVec) : tkns(tokenVec) {}
+		Parser(std::vector<sptr<Token>> tokenVec) : Parser(new_sptr<CompilerSettings>(), tokenVec) {}
+		Parser(sptr<CompilerSettings> cs, std::vector<sptr<Token>> tokenVec) : settings(cs), tkns(tokenVec) {}
 		virtual ~Parser() {}
 
 		void skipStmt();

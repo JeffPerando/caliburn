@@ -1,19 +1,24 @@
 
 #pragma once
 
+#include <iostream>
+
 #include "ast.h"
 
 namespace caliburn
 {
 	struct TypedefStatement : Statement
 	{
-		const sptr<Token> first;
-		const sptr<Token> name;
-		const sptr<ParsedType> alias;
+		sptr<CompilerSettings> cs;
+
+		sptr<Token> first;
+		sptr<Token> name;
+		sptr<ParsedType> alias;
 
 		bool isStrong = false;
 		
-		TypedefStatement(sptr<Token> f, sptr<Token> n, sptr<ParsedType> t) : Statement(StatementType::TYPEDEF), first(f), name(n), alias(t)
+		TypedefStatement(sptr<CompilerSettings> sets, sptr<Token> f, sptr<Token> n, sptr<ParsedType> t) :
+			Statement(StatementType::TYPEDEF), cs(sets), first(f), name(n), alias(t)
 		{
 			isStrong = (first->str == "strong");
 		}
@@ -34,7 +39,49 @@ namespace caliburn
 		{
 			//TODO implement strong typing (needs wrapper)
 
-			table->add(name->str, alias->resolve(table));
+			//We're a dynamic typedef
+			if (alias->name == "dynamic")
+			{
+				auto outTypename = cs->dynTypes.find(name->str);
+
+				if (outTypename != cs->dynTypes.end())
+				{
+					//In both cases we replace alias
+					alias = new_sptr<ParsedType>(outTypename->second);
+					//No default provided
+					
+				}
+				else
+				{
+					if (alias->genericArgs->empty())
+					{
+						std::cout << "dynamic type generic is empty\n";
+						return;
+					}
+
+					if (auto t = alias->genericArgs->getType(0))
+					{
+						alias = t;
+					}
+					else //Generic at index 0 is not a type
+					{
+						std::cout << "dynamic type default not found\n";
+						//TODO complain
+						return;
+					}
+
+				}
+				
+			}
+			
+			if (auto t = alias->resolve(table))
+			{
+				table->add(name->str, t);
+			}
+			else
+			{
+				std::cout << "was unable to resolve " << alias->name << '\n';
+			}
 
 		}
 

@@ -26,7 +26,9 @@ namespace caliburn
 		sptr<Function> destructor = nullptr;
 		
 		TypeStruct(ref<const std::string> name, sptr<GenericSignature> gSig, ref<std::map<std::string, Member>> members)
-			: GenericType(TypeCategory::STRUCT, name, gSig), members(members) {}
+			: GenericType(TypeCategory::STRUCT, name, gSig, lambda_v(sptr<GenericArguments> gArgs) {
+			return new_sptr<RealStruct>(this, gArgs);
+		}), members(members) {}
 		virtual ~TypeStruct() {}
 
 		virtual Member getMember(ref<const std::string> name) const

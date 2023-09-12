@@ -17,8 +17,9 @@ int testShaderCompile()
 	caliburn::CompilerSettings cs;
 
 	cs.o = caliburn::OptimizeLevel::DEBUG;
-	cs.vLvl = caliburn::ValidationLevel::FULL;
+	cs.vLvl = caliburn::ValidationLevel::BASIC;
 	cs.coloredErrors = true;
+	cs.dynTypes.emplace("FP", "float16");
 
 	std::ifstream file("./../../../../shader.cbrn");
 
@@ -33,8 +34,6 @@ int testShaderCompile()
 	file.close();
 
 	caliburn::Compiler cc(cs);
-
-	cc.setDynamicType("FP", "FP16");
 
 	std::chrono::high_resolution_clock clock{};
 

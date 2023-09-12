@@ -58,7 +58,7 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 	}
 
 	//Build the initial AST (ok)
-	auto p = Parser(tokens);
+	auto p = Parser(settings, tokens);
 	auto ast = p.parse();
 
 	if (!p.errors->empty())

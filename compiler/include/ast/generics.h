@@ -60,6 +60,25 @@ namespace caliburn
 			return args.empty();
 		}
 
+		sptr<ParsedType> getType(size_t index)
+		{
+			if (auto t = std::get_if<sptr<ParsedType>>(&args.at(index)))
+			{
+				return *t;
+			}
+
+			return nullptr;
+		}
+
+		sptr<Value> getConst(size_t index)
+		{
+			if (auto v = std::get_if<sptr<Value>>(&args.at(index)))
+			{
+				return *v;
+			}
+
+			return nullptr;
+		}
 		void apply(sptr<GenericSignature> sig, sptr<SymbolTable> symbols) const;
 
 	};
@@ -186,7 +205,7 @@ namespace caliburn
 	};
 
 	template<typename T>
-	using GenFactoryFn = T(sptr<GenericArguments>);
+	using GenFactoryFn = std::function<sptr<T>(sptr<GenericArguments>)>;
 
 	template<typename T>
 	using GenArgMap = HashMap<sptr<GenericArguments>, sptr<T>, GenericArgHash>;
@@ -195,10 +214,11 @@ namespace caliburn
 	struct Generic
 	{
 		const sptr<GenericSignature> genSig;
+		const GenFactoryFn<T> facFn;
 		
 		const uptr<GenArgMap<T>> variants = new_uptr<GenArgMap<T>>();
 
-		Generic(sptr<GenericSignature> sig) : genSig(sig == nullptr ? new_sptr<GenericSignature>() : sig) {}
+		Generic(sptr<GenericSignature> sig, GenFactoryFn<T> fn) : genSig(sig == nullptr ? new_sptr<GenericSignature>() : sig), facFn(fn) {}
 		virtual ~Generic() {}
 
 		virtual sptr<T> makeVariant(sptr<GenericArguments> args)
@@ -224,7 +244,7 @@ namespace caliburn
 				return found->second;
 			}
 
-			auto newVar = new_sptr<T>(this, args);
+			auto newVar = facFn(args);
 
 			variants->emplace(args, newVar);
 

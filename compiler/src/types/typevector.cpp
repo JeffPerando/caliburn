@@ -18,7 +18,7 @@ cllr::SSA RealVector::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler>
 				returns garbage
 				*/
 
-				id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::TYPE_VECTOR, { 4 }, { type->emitDeclCLLR(table, codeAsm) }));
+				id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::TYPE_VECTOR, { length }, { type->emitDeclCLLR(table, codeAsm) }));
 				return id;
 			}
 

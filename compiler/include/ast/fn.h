@@ -81,7 +81,7 @@ namespace caliburn
 		const ptr<Function> parent;
 		const sptr<GenericArguments> genArgs;
 
-		FunctionImpl(ptr<Generic<FunctionImpl>> parent, sptr<GenericArguments> gArgs) : parent((ptr<Function>)parent), genArgs(gArgs) {}
+		FunctionImpl(ptr<Function> p, sptr<GenericArguments> gArgs) : parent(p), genArgs(gArgs) {}
 		virtual ~FunctionImpl() {}
 
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
@@ -111,7 +111,9 @@ namespace caliburn
 			name = fn.name;
 			code = std::move(fn.code);
 		}
-		Function(sptr<FunctionSignature> sig) : Generic(sig->genSig), sig(sig) {}
+		Function(sptr<FunctionSignature> sig) : Generic(sig->genSig, lambda_v(sptr<GenericArguments> gArgs){
+			return new_sptr<FunctionImpl>(this, gArgs);
+		}), sig(sig) {}
 		virtual ~Function() {}
 
 	};
