@@ -92,7 +92,7 @@ bool Validator::validate(ref<Assembler> codeAsm)
 	{
 		auto const noteOp = lambda(sptr<Error> e)
 		{
-			e->note({ "Op:", std::to_string((int)i.op) });
+			e->note({ "Op:", std::string(OP_NAMES[(int)i.op])});
 			e->note({ "ID:", std::to_string(i.index) });
 			e->note({ "Out:", std::to_string(i.outType) });
 			e->note({ "Operands: [", std::to_string(i.operands[0]), std::to_string(i.operands[1]), std::to_string(i.operands[2]), "]" });
@@ -104,7 +104,22 @@ bool Validator::validate(ref<Assembler> codeAsm)
 		{
 			if (i.debugTkn == nullptr)
 			{
-				auto e = errors->err({ "CLLR instruction", std::to_string(i.index), "does not have a debug token" }, nullptr);
+				std::vector<std::string> msg;
+
+				msg.push_back("CLLR instruction");
+				
+				if (i.index == 0)
+				{
+					msg.push_back(std::string(OP_NAMES[(int)i.op]));
+				}
+				else
+				{
+					msg.push_back(std::to_string(i.index));
+				}
+
+				msg.push_back("does not have a debug token");
+
+				auto e = errors->err(msg, nullptr);
 
 				e->note(codeGenErr);
 				noteOp(e);

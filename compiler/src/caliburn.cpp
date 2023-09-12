@@ -171,32 +171,6 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 
 	for (auto const& stmt : ast)
 	{
-		/*
-		//import x;
-		if (stmt->type == StatementType::IMPORT)
-		{
-			auto imp = static_cast<ptr<ImportStatement>>(stmt.get());
-
-			//root->importModule(imp->name->str, imp->alias == nullptr ? "" : imp->alias->str);
-			continue;
-		}
-
-		//mod x;
-		//So we rename the module here. Right now it does nothing.
-		if (stmt->type == StatementType::MODULE)
-		{
-			auto modDecl = static_cast<ptr<ModuleStatement>>(stmt.get());
-
-			continue;
-		}
-
-		//type x = y;
-		if (stmt->type == StatementType::TYPEDEF)
-		{
-
-		}
-		*/
-		//shader x {}
 		//where the real magic happens
 		if (stmt->type == StatementType::SHADER)
 		{
@@ -211,16 +185,16 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 			{
 				shaderStmt = shadDecl;
 			}
-			
+
 			break;
 		}
 
-		break;
 	}
 
 	if (shaderStmt == nullptr)
 	{
-		throw std::exception((std::stringstream() << "Caliburn: Shader not found: " << shaderName).str().c_str());
+		allErrors.push_back(((std::stringstream() << "Caliburn: Shader not found: " << shaderName << '\n').str()));
+		return shaders;
 	}
 
 	shaderStmt->sortStages();

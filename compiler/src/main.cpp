@@ -34,6 +34,8 @@ int testShaderCompile()
 
 	caliburn::Compiler cc(cs);
 
+	cc.setDynamicType("FP", "FP16");
+
 	std::chrono::high_resolution_clock clock{};
 
 	auto startTime = clock.now();

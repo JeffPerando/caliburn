@@ -129,6 +129,77 @@ namespace caliburn
 
 		};
 		
+		static const std::vector<std::string_view> OP_NAMES = {
+			"Unknown",
+
+			"Shader_Stage",
+			"Shader_Stage_End",
+			"Function",
+			"Var_Func_Arg",
+			"Function_End",
+
+			"Var_Local",
+			"Var_Global",
+			"Var_Shader_In",
+			"Var_Shader_Out",
+			"Var_Descriptor",
+
+			"Call",
+			"Call_Arg",
+
+			"Type_Void",
+			"Type_Float",
+			"Type_Int_Sign",
+			"Type_Int_Unsign",
+			"Type_Array",
+			"Type_Vector",
+			"Type_Matrix",
+
+			"Type_Struct",
+			"Struct_Member",
+			"Struct_End",
+
+			"Type_Bool",
+			"Type_Ptr",
+			"Type_Tuple",
+
+			"Label",
+			"Jump",
+			"Jump_Cond",
+			"Loop",
+
+			"Assign",
+			"Compare",
+
+			"Value_Cast",
+			"Value_Construct",
+			"Construct_Arg",
+			"Value_Deref",
+			"Value_Expand",
+			"Value_Expr",
+			"Value_Expr_Unary",
+			"Value_Int_To_Fp",
+			"Value_Invoke_Pos",
+			"Value_Invoke_Size",
+			"Value_Lit_Array",
+			"Lit_Array_Elem",
+			"Value_Lit_Bool",
+			"Value_Lit_Fp",
+			"Value_Lit_Int",
+			"Value_Lit_Str",
+			"Value_Member",
+			"Value_Null",
+			"Value_Read_Var",
+			"Value_Sign",
+			"Value_Subarray",
+			"Value_Unsign",
+			"Value_Zero",
+
+			"Return",
+			"Return_Value",
+			"Discard"
+		};
+
 		struct Instruction
 		{
 			SSA index = 0;
