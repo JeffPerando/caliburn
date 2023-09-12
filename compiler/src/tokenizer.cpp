@@ -66,15 +66,15 @@ CharType Tokenizer::getType(char chr) const
 
 std::string Tokenizer::findStr()
 {
-	char delim = buf.current();
+	char delim = buf.cur();
 	sptr<Token> startTkn = makeCharTkn(TokenType::UNKNOWN);
 
 	std::stringstream ss;
 	bool foundDelim = false;
 
-	while (buf.hasNext())
+	while (buf.hasCur())
 	{
-		char current = buf.current();
+		char current = buf.cur();
 
 		if (current == '\\')
 		{
@@ -96,7 +96,7 @@ std::string Tokenizer::findStr()
 			pos.newline();
 			doc->startLine(buf.currentIndex() + 1);
 
-			while (buf.hasNext())
+			while (buf.hasCur())
 			{
 				char ws = buf.next();
 
@@ -151,7 +151,7 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 		return std::binary_search(validIntChars->begin(), validIntChars->end(), chr);
 	};
 
-	char first = buf.current();
+	char first = buf.cur();
 
 	if (!isValidInt(first))
 	{
@@ -165,9 +165,9 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 	std::stringstream ss;
 
 	//find either a hex, binary, or octal integer
-	if (first == '0' && buf.remaining() > 2)
+	if (first == '0' && buf.hasRem(3))
 	{
-		char litType = buf.peek();
+		char litType = buf.peek(1);
 
 		switch (litType)
 		{
@@ -193,9 +193,9 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 	else isPrefixed = false;
 
 	//get the actual numerical digits
-	while (buf.hasRem())
+	while (buf.hasCur())
 	{
-		char current = buf.current();
+		char current = buf.cur();
 
 		if (current == '_')
 		{
@@ -220,24 +220,22 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 	if (!isPrefixed)
 	{
 		//find the fractional component
-		if (buf.remaining() >= 2)
+		if (buf.hasRem(2) && buf.cur() == '.')
 		{
-			if (buf.current() == '.')
+			buf.consume();
+			ss << '.';
+			isFloat = true;
+
+			while (buf.hasCur())
 			{
-				ss << '.';
-				isFloat = true;
+				char dec = buf.cur();
 
-				do
+				if (isValidInt(dec))
 				{
-					char dec = buf.next();
-
-					if (isValidInt(dec))
-					{
-						ss << dec;
-					}
-					else break;
-
-				} while (buf.hasNext());
+					ss << dec;
+					buf.consume();
+				}
+				else break;
 
 			}
 
@@ -246,7 +244,7 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 		//find an exponent
 		if (buf.remaining() >= 2)
 		{
-			char exp = buf.current();
+			char exp = buf.cur();
 
 			if (exp == 'e' || exp == 'E')
 			{
@@ -260,9 +258,9 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 					buf.consume();
 				}
 
-				while (buf.hasNext() && isValidInt(buf.current()))
+				while (buf.hasCur() && isValidInt(buf.cur()))
 				{
-					ss << buf.current();
+					ss << buf.cur();
 					buf.consume();
 				}
 
@@ -276,9 +274,9 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 	auto width = 32;
 
 	//find suffix
-	if (buf.hasRem())
+	if (buf.hasCur())
 	{
-		char suffix = buf.current();
+		char suffix = buf.cur();
 		buf.consume();
 
 		//lowercase
@@ -341,9 +339,9 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 {
 	std::vector<sptr<Token>> tokens;
 
-	while (buf.hasRem())
+	while (buf.hasCur())
 	{
-		char current = buf.current();
+		char current = buf.cur();
 
 		if (current > 127)
 		{
@@ -390,12 +388,15 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 		}
 		else if (type == CharType::COMMENT)
 		{
-			while (buf.hasNext())
+			while (buf.hasCur())
 			{
-				pos.move();
-
-				if (buf.next() == '\n')
+				if (buf.cur() == '\n')
+				{
 					break;
+				}
+
+				pos.move();
+				buf.consume();
 
 			}
 

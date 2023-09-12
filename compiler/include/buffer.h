@@ -22,18 +22,18 @@ namespace caliburn
 			return vec.at(i);
 		}
 
-		bool hasNext(size_t count = 1) const
+		bool hasRem(size_t count) const
 		{
-			return remaining() >= count;
+			return (index + count) <= vec.size();
 		}
 
-		bool hasRem() const
+		bool hasCur() const
 		{
-			return index != vec.size();
+			return index < vec.size();
 		}
 
 		//fetch current
-		const T& current() const
+		const T& cur() const
 		{
 			return vec.at(index);
 		}
@@ -45,21 +45,14 @@ namespace caliburn
 			return vec.at(index);
 		}
 
-		//decrement and fetch
-		const T& prev(size_t off = 1)
-		{
-			index -= off;
-			return vec.at(index);
-		}
-
 		//fetch upcoming
-		const T& peek(size_t off = 1) const
+		const T& peek(size_t off) const
 		{
 			return vec.at(index + off);
 		}
 
 		//fetch previous
-		const T& peekBack(size_t off = 1)
+		const T& peekBack(size_t off)
 		{
 			return vec.at(index - off);
 		}
