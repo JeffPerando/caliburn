@@ -915,7 +915,11 @@ uptr<Statement> Parser::parseStruct()
 		return nullptr;
 	}
 
-	sptr<Token> name = tkns.next();
+	auto stmt = new_uptr<StructStatement>(stmtType);
+
+	stmt->first = first;
+	
+	auto name = tkns.next();
 
 	if (name->type == TokenType::IDENTIFIER)
 	{
@@ -932,9 +936,7 @@ uptr<Statement> Parser::parseStruct()
 
 	}
 
-	auto stmt = new_uptr<StructStatement>(name, stmtType);
-
-	stmt->first = first;
+	stmt->name = name;
 
 	if (tkns.cur()->type == TokenType::START_SCOPE)
 	{
