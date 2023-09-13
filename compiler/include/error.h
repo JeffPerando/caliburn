@@ -8,12 +8,10 @@
 
 namespace caliburn
 {
-	static const std::vector<std::string> COMPILE_STAGES = {
-		"Unknown", "Tokenizer", "Parsing", "AST Validation",
-		"Cond. Compilation", "CLLR Generation", "CLLR Validation",
-		"Target Compilation"
-	};
-
+	/*
+	Caliburn's compilation process is fairly straightforward. Errors during compilation
+	will present the user with the stage the error was generated at.
+	*/
 	enum class CompileStage
 	{
 		UNKNOWN,
@@ -26,13 +24,27 @@ namespace caliburn
 		OUT_EMIT
 	};
 
+	/*
+	Strings for the CompileStage enum
+	*/
+	static const std::vector<std::string> COMPILE_STAGES = {
+		"Unknown", "Tokenizing", "Parsing", "AST Validation",
+		"Cond. Compilation", "CLLR Generation", "CLLR Validation",
+		"Target Compilation"
+	};
+
 	struct Error
 	{
 		CompileStage stage = CompileStage::UNKNOWN;
 		std::string message;
 		sptr<Token> problemTknStart = nullptr;
 		sptr<Token> problemTknEnd = nullptr;
+		/*
+		This token is only used to give the user a line of code with more context in it.
+		Such context may be a statement containing the problematic code
+		*/
 		sptr<Token> contextStart = nullptr;
+		//Notes are used to give the user potentially helpful information, such as context or common solutions
 		std::vector<std::string> notes;
 
 		void note(std::string idea)
@@ -62,6 +74,12 @@ namespace caliburn
 
 	};
 
+	/*
+	Caliburn does not have a single error handler; rather, every compiler stage manages its own errors.
+
+	Also note that errors are handled via shared pointers. This is to enable for the creation of notes after
+	initial error creation.
+	*/
 	struct ErrorHandler
 	{
 		const CompileStage stage;
@@ -88,6 +106,8 @@ namespace caliburn
 			}
 
 		}
+
+		//Error-generation methods beyond this point
 
 		sptr<Error> err(std::vector<std::string> msgs, ref<const ParsedObject> keyObj)
 		{

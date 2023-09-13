@@ -4,6 +4,10 @@
 #include <stdint.h>
 
 /*
+NOTICE: THE BELOW CONCEPT IS UNIMPLEMENTED!
+*/
+
+/*
 Caliburn Intermediate Representation (CBIR [pronounced Cyber]):
 
 - High-level bytecode for Caliburn code.

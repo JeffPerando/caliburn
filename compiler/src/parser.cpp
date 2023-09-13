@@ -73,13 +73,6 @@ std::vector<uptr<Statement>> Parser::parse()
 template<typename T>
 T Parser::parseAny(std::vector<ParseMethod<T>> fns)
 {
-	/*
-	this code is really smart, and stupid. at the same time.
-	it takes a bunch of method/function pointers, puts them into a list,
-	then calls them all. if it finds one that doesn't return nullptr,
-	it returns that result.
-	The alternative was very repetitive code.
-	*/
 	size_t current = tkns.currentIndex();
 
 	for (auto& fn : fns)
@@ -100,29 +93,6 @@ T Parser::parseAny(std::vector<ParseMethod<T>> fns)
 	}
 
 	return nullptr;
-}
-
-template<typename T>
-T Parser::parseBetween(std::string start, ParseMethod<T> fn, std::string end)
-{
-	if (tkns.cur()->str != start)
-	{
-		return nullptr;
-	}
-
-	tkns.consume();
-
-	auto ret = fn(*this);
-
-	if (tkns.cur()->str != end)
-	{
-		auto e = errors->err({ "Unexpected token found; Expected", end, "got", tkns.cur()->str });
-		return ret;
-	}
-
-	tkns.consume();
-
-	return ret;
 }
 
 bool Parser::parseAnyBetween(std::string start, std::function<void()> fn, std::string end)
@@ -2166,50 +2136,48 @@ uptr<Annotation> Parser::parseAnnotation()
 
 	sptr<Token> startParen = tkns.cur();
 
-	if (startParen->type == TokenType::START_PAREN)
-	{
-		tkns.consume();
-		int closingParenNeeded = 1;
-
-		while (tkns.hasCur())
-		{
-			auto& tkn = tkns.cur();
-
-			if (tkn->type == TokenType::END_PAREN)
-			{
-				--closingParenNeeded;
-
-				if (closingParenNeeded == 0)
-				{
-					tkns.consume();
-					break;
-				}
-
-			}
-			else if (tkn->type == TokenType::START_PAREN)
-			{
-				++closingParenNeeded;
-			}
-
-			a->contents.push_back(tkn);
-			tkns.consume();
-
-		}
-
-		if (closingParenNeeded != 0)
-		{
-			auto e = errors->err("Ran out of symbols and could not close annotation", startParen);
-		}
-
-		a->last = tkns.cur();
-
-		tkns.consume();
-
-	}
-	else
+	if (startParen->type != TokenType::START_PAREN)
 	{
 		a->last = a->name;
+		return a;
 	}
+
+	tkns.consume();
+	int closingParenNeeded = 1;
+
+	while (tkns.hasCur())
+	{
+		auto& tkn = tkns.cur();
+
+		if (tkn->type == TokenType::END_PAREN)
+		{
+			--closingParenNeeded;
+
+			if (closingParenNeeded == 0)
+			{
+				tkns.consume();
+				break;
+			}
+
+		}
+		else if (tkn->type == TokenType::START_PAREN)
+		{
+			++closingParenNeeded;
+		}
+
+		a->contents.push_back(tkn);
+		tkns.consume();
+
+	}
+
+	if (closingParenNeeded != 0)
+	{
+		auto e = errors->err("Ran out of symbols and could not close annotation", startParen);
+	}
+
+	a->last = tkns.cur();
+
+	tkns.consume();
 
 	return a;
 }

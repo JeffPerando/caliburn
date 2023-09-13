@@ -91,6 +91,7 @@ int testExprParsing()
 	file.close();
 
 	auto doc = new_sptr<caliburn::TextDoc>(src);
+	auto cs = new_sptr<caliburn::CompilerSettings>();
 
 	auto t = caliburn::Tokenizer(doc);
 	auto tkns = t.tokenize();
@@ -102,7 +103,7 @@ int testExprParsing()
 
 	std::cout << '\n';
 
-	auto p = caliburn::Parser(tkns);
+	auto p = caliburn::Parser(cs, tkns);
 	std::chrono::high_resolution_clock clock{};
 
 	auto startTime = clock.now();
@@ -119,12 +120,13 @@ int testExprParsing()
 
 int main()
 {
+	/*
 	std::cout << "\033[1;31m";
 	std::cout << sizeof(sptr<caliburn::Token>);
 	std::cout << "\033[0m\n";
-
-	testShaderCompile();
-	/*
+	*/
+	//testShaderCompile();
+	
 	auto const takes = 20;
 
 	for (int i = 0; i < takes; ++i)
@@ -133,6 +135,6 @@ int main()
 	}
 
 	std::cout << "Average time: " << ((totalTime / static_cast<double>(takes)) * 0.000001) << " ms\n";
-	*/
+	
 	return 0;
 }

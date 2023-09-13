@@ -15,6 +15,11 @@ namespace caliburn
 
 	namespace spirv
 	{
+		/*
+		Maintains the shader inputs and outputs, as well as builtin variables
+
+		Most builtins are not currently supported in any meaningful way
+		*/
 		class SpvIO
 		{
 			std::map<spirv::BuiltIn, spirv::SSA> builtinIOs;

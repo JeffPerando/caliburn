@@ -169,7 +169,7 @@ spirv::SSA cllr::SPIRVOutAssembler::createSSA()
 	++nextSSA;
 
 	ssaEntries.push_back(entry);
-	ssaToSection.push_back(spirv::SSAKind::UNKNOWN);
+	ssaToSection.push_back(spirv::SpvSection::UNKNOWN);
 
 	return entry.ssa;
 }
@@ -195,15 +195,15 @@ spirv::SSA cllr::SPIRVOutAssembler::toSpvID(cllr::SSA ssa)
 	return nextSpvSSA;
 }
 
-spirv::SSAKind cllr::SPIRVOutAssembler::getSection(spirv::SSA id)
+spirv::SpvSection cllr::SPIRVOutAssembler::getSection(spirv::SSA id)
 {
 	if (id >= ssaToSection.size())
-		return spirv::SSAKind::UNKNOWN;
+		return spirv::SpvSection::UNKNOWN;
 
 	return ssaToSection[id];
 }
 
-void cllr::SPIRVOutAssembler::setSection(spirv::SSA id, spirv::SSAKind sec)
+void cllr::SPIRVOutAssembler::setSection(spirv::SSA id, spirv::SpvSection sec)
 {
 	if (id == 0)
 		return;//TODO complain
@@ -211,7 +211,7 @@ void cllr::SPIRVOutAssembler::setSection(spirv::SSA id, spirv::SSAKind sec)
 	if (id >= ssaToSection.size())
 		return;//TODO complain
 
-	if (ssaToSection[id] != spirv::SSAKind::UNKNOWN)
+	if (ssaToSection[id] != spirv::SpvSection::UNKNOWN)
 	{
 		if (ssaToSection[id] != sec)
 		{
@@ -1073,7 +1073,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitArray)
 	for (auto e : elems)
 	{
 		//yes, even UNKNOWNs break the constant promise.
-		if (out.getSection(e) != spirv::SSAKind::CONST)
+		if (out.getSection(e) != spirv::SpvSection::CONST)
 		{
 			isConst = false;
 			break;
@@ -1146,7 +1146,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueMember)
 
 	spirv::VarData vData;
 
-	if (!out.main->findVarMeta(v, vData) && !out.gloVars->findVarMeta(v, vData))
+	if (!out.main->getVarMeta(v, vData) && !out.gloVars->getVarMeta(v, vData))
 	{
 		//TODO complain
 	}
@@ -1234,7 +1234,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueSubarray)
 
 	spirv::VarData vData;
 
-	if (!out.main->findVarMeta(v, vData) && !out.gloVars->findVarMeta(v, vData))
+	if (!out.main->getVarMeta(v, vData) && !out.gloVars->getVarMeta(v, vData))
 	{
 		//TODO complain
 	}

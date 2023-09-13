@@ -41,11 +41,13 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 		throw std::exception("Caliburn: passed shader name is empty!");
 	}
 
+	/*
+	Make the vector now so we have something to return
+	*/
 	std::vector<uptr<Shader>> shaders;
 
 	auto doc = new_sptr<TextDoc>(src);
 
-	//Parse the text into tokens (duh)
 	auto t = Tokenizer(doc);
 	auto tokens = t.tokenize();
 
@@ -57,7 +59,6 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 		return shaders;
 	}
 
-	//Build the initial AST (ok)
 	auto p = Parser(settings, tokens);
 	auto ast = p.parse();
 

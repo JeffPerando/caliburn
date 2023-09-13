@@ -190,7 +190,7 @@ SSA CodeSection::find(SpvOp op, std::vector<uint32_t> args)
 	return 0;
 }
 
-bool CodeSection::findVarMeta(SSA id, ref<VarData> meta)
+bool CodeSection::getVarMeta(SSA id, ref<VarData> meta)
 {
 	auto found = varMeta.find(id);
 

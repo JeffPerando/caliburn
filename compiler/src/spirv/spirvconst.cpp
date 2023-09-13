@@ -20,7 +20,7 @@ SSA ConstSection::findOrMake(SSA t, uint32_t low, uint32_t high)
 	key.id = id;
 
 	consts->emplace(key, id);
-	spvAsm->setSection(id, SSAKind::CONST);
+	spvAsm->setSection(id, SpvSection::CONST);
 
 	return id;
 }
@@ -41,7 +41,7 @@ SSA ConstSection::findOrMakeComposite(SSA t, std::vector<uint32_t> data)
 	key.id = id;
 
 	composites->emplace(key, id);
-	spvAsm->setSection(id, SSAKind::CONST);
+	spvAsm->setSection(id, SpvSection::CONST);
 
 	return id;
 }
@@ -58,7 +58,7 @@ SSA ConstSection::findOrMakeNullFor(SSA t)
 	auto nID = spvAsm->createSSA();
 
 	nulls->emplace(t, nID);
-	spvAsm->setSection(nID, SSAKind::CONST);
+	spvAsm->setSection(nID, SpvSection::CONST);
 
 	return nID;
 }

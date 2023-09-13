@@ -5,10 +5,11 @@
 
 #include "symbols.h"
 
-#include "cllr/cllr.h"
-
 namespace caliburn
 {
+	/*
+	Currently deprecated; a proper module system will be added eventually
+	*/
 	struct Module
 	{
 		Module() = default;

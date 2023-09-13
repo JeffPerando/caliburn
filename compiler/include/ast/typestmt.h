@@ -38,6 +38,14 @@ namespace caliburn
 		void declareHeader(sptr<SymbolTable> table) override
 		{
 			//TODO implement strong typing (needs wrapper)
+			//TODO implement error handling for header declaration and QUIT USING STD::COUT
+
+			//We don't want to override an existing symbol
+			if (table->has(name->str))
+			{
+				//TODO complain
+				return;
+			}
 
 			//We're a dynamic typedef
 			if (alias->name == "dynamic")
@@ -48,10 +56,9 @@ namespace caliburn
 				{
 					//In both cases we replace alias
 					alias = new_sptr<ParsedType>(outTypename->second);
-					//No default provided
 					
 				}
-				else
+				else //No default provided
 				{
 					if (alias->genericArgs->empty())
 					{
@@ -66,7 +73,6 @@ namespace caliburn
 					else //Generic at index 0 is not a type
 					{
 						std::cout << "dynamic type default not found\n";
-						//TODO complain
 						return;
 					}
 

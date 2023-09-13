@@ -7,7 +7,9 @@
 
 namespace caliburn
 {
-	//A buffer in this case is a read-only container used to maintain an index to a vector.
+	/*
+	Buffer is a read-only container used to maintain an index to a vector.
+	*/
 	template<typename T>
 	struct Buffer
 	{
@@ -17,52 +19,74 @@ namespace caliburn
 	public:
 		Buffer(ref<std::vector<T>> backend) : vec(backend) {}
 
+		/*
+		Direct accessor
+		*/
 		const T& operator[](size_t i) const
 		{
 			return vec.at(i);
 		}
 
+		/*
+		Returns true if at least count elements are available within the vector from the current index
+		*/
 		bool hasRem(size_t count) const
 		{
 			return (index + count) <= vec.size();
 		}
 
+		/*
+		Returns true if the current index points to a valid element in the vector
+		*/
 		bool hasCur() const
 		{
 			return index < vec.size();
 		}
 
-		//fetch current
+		/*
+		Fetches the element in vector at index
+		*/
 		const T& cur() const
 		{
 			return vec.at(index);
 		}
 
-		//increment and fetch
+		/*
+		Incrments index, then returns the element at it.
+		*/
 		const T& next()
 		{
 			++index;
 			return vec.at(index);
 		}
 
-		//fetch upcoming
+		/*
+		Returns the element at (index + offset).
+		*/
 		const T& peek(size_t off) const
 		{
 			return vec.at(index + off);
 		}
 
-		//fetch previous
+		/*
+		Returns the element at (index - offset).
+		*/
 		const T& peekBack(size_t off)
 		{
 			return vec.at(index - off);
 		}
 
-		//increment
+		/*
+		Increments the current index. That's it.
+		*/
 		void consume(size_t count = 1)
 		{
 			index += count;
 		}
 
+		/*
+		...
+		*/
 		size_t currentIndex() const
 		{
 			return index;
@@ -78,16 +102,28 @@ namespace caliburn
 			return length() - index;
 		}
 
+		/*
+		Manually sets the index.
+
+		Despite the name, no check is done to ensure the passed index is less than the current one.
+
+		At this rate, should index be a public member? *shrug*
+		*/
 		void revertTo(size_t i)
 		{
 			index = i;
 		}
 
-		void rewind(size_t i = 1)
+		/*
+		Subtracts the current index by the passed offset.
+
+		If this will result in an integer underflow, nothing happens.
+		*/
+		void rewind(size_t off = 1)
 		{
-			if (i <= index)
+			if (off <= index)
 			{
-				index -= i;
+				index -= off;
 			}
 		}
 

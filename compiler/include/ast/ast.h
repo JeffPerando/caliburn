@@ -20,6 +20,9 @@
 
 namespace caliburn
 {
+	/*
+	All statements have a corresponding type. This is currently unused.
+	*/
 	enum class StatementType
 	{
 		UNKNOWN,
@@ -62,6 +65,9 @@ namespace caliburn
 
 	};
 
+	/*
+	This was previously used for AST validation, but that code is currently non-existant.
+	*/
 	constexpr auto TOP_STMT_TYPES = {
 		StatementType::VARIABLE,
 		//StatementType::IF, //conditional compilation
@@ -72,6 +78,24 @@ namespace caliburn
 		//StatementType::ENUM,
 	};
 
+	/*
+	Annotations are a way to add metadata to a statement in Caliburn. They're similar to annotation in Java, but the
+	tokens within can be interpreted by the compiler in any way it likes. An invalid annotation can be safely ignored.
+	
+	Annotations start with an @ symbol and an identifier. If an open parentheses follows, then all symbols before the
+	close parentheses will be included. If more open parentheses are found, then the parser will look for matching close
+	parentheses for them. In this way, expressions can be added to an annotation. So this:
+
+	@Some(()
+
+	is invalid, since the parentheses are uneven. And this:
+
+	@Other(())
+
+	is valid.
+
+	Annotations can have any identifier, minus reserved keywords, and are only visible to the compiler, not any user code.
+	*/
 	struct Annotation : ParsedObject
 	{
 		sptr<Token> first = nullptr;
@@ -113,6 +137,11 @@ namespace caliburn
 
 	};
 
+	/*
+	A statement is a conceptual block of code in Caliburn.
+
+	Caliburn separates statements from expressions in part to prevent goofy code.
+	*/
 	struct Statement : Module, ParsedObject, cllr::Emitter
 	{
 		const StatementType type;
@@ -153,6 +182,9 @@ namespace caliburn
 
 	};
 
+	/*
+	Defines a scope, which contains its own symbol table. Said table can shadow other symbols.
+	*/
 	struct ScopeStatement : Statement
 	{
 		sptr<Token> first = nullptr;

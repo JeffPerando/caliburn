@@ -70,6 +70,9 @@ namespace caliburn
 
         };
 
+        /*
+        Maintains a list of constants for SPIR-V, to be held in the constant code section
+        */
         class ConstSection
         {
             const uptr<std::map<Constant, SSA>> consts = new_uptr<std::map<Constant, SSA>>();

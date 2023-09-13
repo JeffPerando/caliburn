@@ -2,7 +2,7 @@
 #pragma once
 
 #include <map>
-#include <set>
+#include <stack>
 #include <string>
 #include <vector>
 
@@ -17,22 +17,35 @@ namespace caliburn
 {
 	namespace cllr
 	{
+		/*
+		A LowType is a concrete, CLLR-level type. It has no generics, instead being one of Caliburn's fundamental base types.
+		*/
 		struct LowType;
 
+		/*
+		Used to maintain a list of current inputs and outputs. Mainly used to make VertexInputAttribute structs for the front-end API
+		*/
 		using IOList = std::vector<std::pair<std::string, uint32_t>>;
 
+		/*
+		The CLLR Assembler is a tool to help generate CLLR code. It keeps track of errors, the current SSA index,
+		the generated code itself, lookups to help speed up algorithms, inputs, outputs, constant strings, loops,
+		helper methods...
+
+		Yes, all of this is necessary for generating CLLR code.
+		*/
 		struct Assembler
 		{
 		public:
+			const ShaderType type;
 			const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::CLLR_EMIT);
 
-			uint32_t nextSSA = 1;
-
-			const ShaderType type;
 			sptr<const CompilerSettings> settings;
-			
+
 		private:
 			const uptr<InstructionVec> code = new_uptr<InstructionVec>();
+
+			uint32_t nextSSA = 1;
 
 			std::vector<size_t> ssaToIndex{ 0 };
 			std::vector<Opcode> ssaToOp{ Opcode::UNKNOWN };
@@ -48,7 +61,7 @@ namespace caliburn
 			IOList inputNames, outputNames;
 
 			//keep a stack of the current loop labels so we can implement break, continue, etc.
-			std::vector<std::pair<SSA, SSA>> loops;
+			std::stack<std::pair<SSA, SSA>> loops;
 		public:
 			Assembler(ShaderType t, sptr<const CompilerSettings> cs, uint32_t initSize = 2048) : type(t), settings(cs)
 			{
@@ -116,7 +129,7 @@ namespace caliburn
 			
 			void setLoop(SSA start, SSA end)
 			{
-				loops.push_back(std::pair(start, end));
+				loops.push(std::pair(start, end));
 			}
 
 			SSA getLoopStart() const
@@ -126,7 +139,7 @@ namespace caliburn
 					return 0;
 				}
 
-				return loops.back().first;
+				return loops.top().first;
 			}
 
 			SSA getLoopEnd() const
@@ -136,14 +149,14 @@ namespace caliburn
 					return 0;
 				}
 
-				return loops.back().second;
+				return loops.top().second;
 			}
 
 			void exitLoop()
 			{
 				if (!loops.empty())
 				{
-					loops.pop_back();
+					loops.pop();
 				}
 
 			}
@@ -179,9 +192,13 @@ namespace caliburn
 
 		};
 
-		class Emitter
+		/*
+		Contract for any struct which emits valid CLLR code.
+
+		Values use a different method due to having to include their type.
+		*/
+		struct Emitter
 		{
-		public:
 			virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) = 0;
 
 		};

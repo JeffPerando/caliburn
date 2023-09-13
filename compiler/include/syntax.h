@@ -11,6 +11,23 @@
 
 namespace caliburn
 {
+	/*
+	These are effectively lists of the valid characters within a particular type of integer literal.
+
+	Underscores are always valid and can be used to make ints more readable
+	*/
+
+	static const std::string_view BIN_INTS = "01";
+	static const std::string_view OCT_INTS = "01234567";
+	static const std::string_view DEC_INTS = "0123456789";
+	static const std::string_view HEX_INTS = "0123456789ABCDEFabcdef";
+	
+	/*
+	This is the complete list of Caliburn's reserved keywords.
+
+	Some of these are also types. These are not valid for users to use; Rather,
+	they are reserved to enable for internal use.
+	*/
 	static const std::vector<std::string_view> KEYWORDS = {
 		"array", "as",
 		"break",
@@ -31,12 +48,28 @@ namespace caliburn
 		"while", "where", "wrapped"
 	};
 
+	/*
+	This is every single character which is also an operator.
+
+	I'm not sure why it's a string.
+	*/
 	static constexpr std::string_view OPERATOR_CHARS = "!$%&*+-/<=>^|~";
 
+	/*
+	These are all the ways a function statement can start.
+	*/
 	static const std::vector<std::string_view> FN_STARTS = {
 		"construct", "def", "destruct", "op", "override"
 	};
 
+	/*
+	TokenType is a shorthand way to describe the meaning of a token's contents.
+
+	Generally, the parser will look at a token's type to determine if it's valid for a given purpose.
+
+	This also includes things which typically only refer to one particular character. This is to prevent
+	a string comparison, and to enable for easier syntax changes should the need arise.
+	*/
 	enum class TokenType : uint8_t
 	{
 		UNKNOWN,
@@ -62,6 +95,10 @@ namespace caliburn
 		ARROW
 	};
 
+	/*
+	A token represents a string with a specific meaning. Tokens also store where they were in
+	the original text.
+	*/
 	struct Token
 	{
 		const std::string str;
@@ -93,6 +130,9 @@ namespace caliburn
 
 	};
 
+	/*
+	This is every operator, both unary and infix, in Caliburn.
+	*/
 	enum class Operator : uint32_t
 	{
 		UNKNOWN,
@@ -115,6 +155,10 @@ namespace caliburn
 
 	};
 
+	/*
+	Operators have categories; This mainly determines things like output type, how the
+	operator is parsed, capabilities, etc.
+	*/
 	enum class OpCategory : uint32_t
 	{
 		ARITHMETIC,
@@ -124,6 +168,9 @@ namespace caliburn
 		MISC
 	};
 
+	/*
+	A return mode is a statement which ends a scope.
+	*/
 	enum class ReturnMode
 	{
 		NONE,
@@ -135,13 +182,21 @@ namespace caliburn
 		DISCARD
 	};
 
+	/*
+	A parsed object is simply an object which stores tokens for later interpretation.
+
+	At minimum, they need to store the first and last tokens within their concept.
+
+	This abstraction's main purpose is to allow for the easy printing of statements,
+	expressions, values, etc. A good example is in error.h/cpp
+	*/
 	struct ParsedObject
 	{
 		virtual sptr<Token> firstTkn() const = 0;
 
 		virtual sptr<Token> lastTkn() const = 0;
 
-		virtual size_t totalParsedSize() const
+		virtual size_t totalParsedLen() const
 		{
 			auto first = firstTkn();
 			auto last = lastTkn();
@@ -167,6 +222,9 @@ namespace caliburn
 
 	};
 
+	/*
+	Individual characters can have their own token types
+	*/
 	static const HashMap<char, TokenType> CHAR_TOKEN_TYPES = {
 		{'(',	TokenType::START_PAREN},
 		{')',	TokenType::END_PAREN},
@@ -180,17 +238,26 @@ namespace caliburn
 		{'}',	TokenType::END_SCOPE}
 	};
 
+	/*
+	Some keywords have their own token types as well
+	*/
 	static const HashMap<std::string, TokenType> STR_TOKEN_TYPES = {
 		{"true",	TokenType::LITERAL_BOOL},
 		{"false",	TokenType::LITERAL_BOOL}
 	};
 
+	/*
+	This overrides the token type of a string which only contains operator chars
+	*/
 	static const std::map<std::string, TokenType> SPECIAL_OPS = {
 		{"=",	TokenType::SETTER},
 		{"->",	TokenType::ARROW},
 		{"=>",	TokenType::ARROW}
 	};
 
+	/*
+	Unary ops have a higher precedent than infix ops, hence this separate map
+	*/
 	static const HashMap<std::string, Operator> UNARY_OPS = {
 		{"|",	Operator::ABS},
 		{"-",	Operator::NEG},
@@ -225,6 +292,9 @@ namespace caliburn
 		{"++",	Operator::APPEND}
 	};
 
+	/*
+	A map which goes in reverse of INFIX_OPS. Used for debugging, mainly.
+	*/
 	static const std::map<Operator, std::string> INFIX_OPS_STR = {
 		{Operator::ADD,			"+"},
 		{Operator::SUB,			"-"},
@@ -260,10 +330,6 @@ namespace caliburn
 		{"unreachable",	ReturnMode::UNREACHABLE},
 		{"discard",		ReturnMode::DISCARD}
 	};
-
-	//So here's why math ops are separate from logic ops:
-	//Math ops can use (op)= to set something, e.g. +=.
-	//Logic ops can't, mostly because I don't want to deal with parsing that.
 
 	static const std::map<Operator, OpCategory> OP_CATEGORIES = {
 		{Operator::ADD,			OpCategory::ARITHMETIC},
@@ -321,9 +387,10 @@ namespace caliburn
 		{Operator::INTDIV,		2},
 		{Operator::MOD,			2},
 		{Operator::ADD,			1},
-		{Operator::SUB,			1},
-
+		{Operator::SUB,			1}
 	};
+
+	//Since generics share a symbol with certain operators, these constants exist to make parsing code look cleaner and less insane.
 
 	static constexpr std::string_view GENERIC_START = "<";
 	static constexpr std::string_view GENERIC_END = ">";

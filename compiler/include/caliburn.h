@@ -65,7 +65,11 @@ namespace caliburn
 		PERFORMANCE //O3
 	};
 
-	//FIXME not used atm; awaiting writing the full validation layer
+	/*
+	Enum denoting how much to validate generated CLLR
+
+	Full should only be used for development purposes
+	*/
 	enum class CBRN_API ValidationLevel : uint32_t
 	{
 		//Disables validation entirely
@@ -139,7 +143,6 @@ namespace caliburn
 	public:
 		Compiler() : settings(std::make_shared<CompilerSettings>()) {}
 		Compiler(const CompilerSettings& cs) : settings(std::make_shared<CompilerSettings>(cs)) {}
-		Compiler(std::shared_ptr<CompilerSettings> cs) : settings(cs) {}
 		virtual ~Compiler() {}
 
 		/*
@@ -178,6 +181,11 @@ namespace caliburn
 		*/
 		std::vector<std::unique_ptr<Shader>> compileSrcShaders(std::string src, std::string shaderName, GPUTarget target = GPUTarget::SPIRV);
 
+		/*
+		Returns the list of errors produced during the last compilation.
+
+		If empty, it can be assumed that compilation was successful.
+		*/
 		std::vector<std::string> getErrors() const;
 		
 	};

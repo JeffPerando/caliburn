@@ -78,19 +78,17 @@ std::string Tokenizer::findStr()
 
 		if (current == '\\')
 		{
+			//Escaped character; skip the backslash and whatever comes after
 			buf.consume(2);
 			pos.move(2);
 			continue;
 		}
 
-		if (current == delim)
-		{
-			buf.consume();
-			pos.move();
-			foundDelim = true;
-			break;
-		}
+		/*
+		Newlines are skipped in string literals, and trailing whitespace is also skipped.
 
+		Note to self: consider just writing a function for this since it shares some logic with whitespace
+		*/
 		if (current == '\n')
 		{
 			pos.newline();
@@ -119,6 +117,14 @@ std::string Tokenizer::findStr()
 			continue;
 		}
 
+		if (current == delim)
+		{
+			buf.consume();
+			pos.move();
+			foundDelim = true;
+			break;
+		}
+
 		ss << current;
 		buf.consume();
 		pos.move();
@@ -136,22 +142,14 @@ std::string Tokenizer::findStr()
 
 size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 {
-	std::vector<char> decInts =
-	{ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-	std::vector<char> hexInts =
-	{ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-		'A', 'B', 'C', 'D', 'E', 'F', 'a', 'b', 'c', 'd', 'e', 'f' };
-	std::vector<char> binInts = { '0', '1' };
-	std::vector<char> octInts = { '0', '1', '2', '3', '4', '5', '6', '7' };
+	auto validIntChars = &DEC_INTS;
 
-	auto validIntChars = &decInts;
-
-	auto isValidInt = lambda(char chr)
+	auto const isValidInt = lambda(char chr)
 	{
 		return std::binary_search(validIntChars->begin(), validIntChars->end(), chr);
 	};
 
-	char first = buf.cur();
+	auto first = buf.cur();
 
 	if (!isValidInt(first))
 	{
@@ -167,23 +165,23 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 	//find either a hex, binary, or octal integer
 	if (first == '0' && buf.hasRem(3))
 	{
-		char litType = buf.peek(1);
+		char litPrefix = buf.peek(1);
 
-		switch (litType)
+		switch (litPrefix)
 		{
 			case 'x': pass;
-			case 'X': validIntChars = &hexInts; break;
+			case 'X': validIntChars = &HEX_INTS; break;
 			case 'b': pass;
-			case 'B': validIntChars = &binInts; break;
+			case 'B': validIntChars = &BIN_INTS; break;
 			case 'c': pass;
-			case 'C': validIntChars = &octInts; break;
+			case 'C': validIntChars = &OCT_INTS; break;
 			default: isPrefixed = false;
 		}
 
 		if (isPrefixed)
 		{
 			ss << first;
-			ss << litType;
+			ss << litPrefix;
 
 			buf.consume(2);
 
@@ -195,22 +193,19 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 	//get the actual numerical digits
 	while (buf.hasCur())
 	{
-		char current = buf.cur();
-
-		if (current == '_')
-		{
-			buf.consume();
-			continue;
-		}
-
-		if (isValidInt(current))
+		auto digit = buf.cur();
+		
+		if (isValidInt(digit))
 		{
 			//Make all lowercase hex digits uppercase, for everyone's sanity's sake
-			if (current > 96)
-				current -= 32;
-			ss << current;
+			if (digit > 96)
+				digit -= 32;
+			ss << digit;
 			buf.consume();
-
+		}
+		else if (digit == '_')
+		{
+			buf.consume();
 		}
 		else break;
 
@@ -219,7 +214,7 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 	//find a decimal/float
 	if (!isPrefixed)
 	{
-		//find the fractional component
+		//Find the fractional component
 		if (buf.hasRem(2) && buf.cur() == '.')
 		{
 			buf.consume();
@@ -228,7 +223,7 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 
 			while (buf.hasCur())
 			{
-				char dec = buf.cur();
+				auto dec = buf.cur();
 
 				if (isValidInt(dec))
 				{
@@ -241,16 +236,18 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 
 		}
 
-		//find an exponent
-		if (buf.remaining() >= 2)
+		/*
+		Look for an exponent
+		*/
+		if (buf.hasRem(2))
 		{
-			char exp = buf.cur();
+			auto exp = buf.cur();
 
 			if (exp == 'e' || exp == 'E')
 			{
 				ss << exp;
 
-				char sign = buf.next();
+				auto sign = buf.next();
 
 				if (sign == '+' || sign == '-')
 				{
@@ -270,50 +267,69 @@ size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
 
 	}
 
-	std::string typeSuffix = "int";
+	auto typeSuffix = "int";
 	auto width = 32;
 
-	//find suffix
+	/*
+	Caliburn int literals have C-like suffixes. This bit of code finds one.
+	*/
 	if (buf.hasCur())
 	{
-		char suffix = buf.cur();
+		auto suffix = buf.cur();
 		buf.consume();
 
 		//lowercase
 		if (suffix > 96)
 			suffix -= 32;
 
-		if (suffix == 'U')
+		if (suffix == 'F')
+		{
+			isFloat = true;
+		}
+		else if (suffix == 'D')
+		{
+			width = 64;
+			isFloat = true;
+		}
+		else if (suffix == 'U')
 		{
 			typeSuffix = "uint";
-		}
 
-		switch (suffix)
+			if (buf.cur() == 'l' || buf.cur() == 'L')
+			{
+				buf.consume();
+				width = 64;
+			}
+
+		}
+		else if (suffix == 'L')
 		{
-			case 'D': width = 64; pass;
-			case 'F': isFloat = true; break;
-			case 'L': width = 64; break;
-			default: buf.rewind();
+			width = 64;
 		}
-
+		else
+		{
+			buf.rewind();
+		}
+		
 	}
 
 	//This code is not useless, KEEP IT
 	//remember earlier when we checked for a fractional part? Yeah...
 	if (isFloat)
+	{
 		typeSuffix = "float";
+	}
 
 	//Attach type information to the end of the literal
 	//No, I don't want to expose this syntactically. Those literals look so ugly.
-	ss << '_';
-	ss << typeSuffix;
-	ss << width;
+	ss << '_' << typeSuffix << width;
 
 	lit = ss.str();
 	type = isFloat ? TokenType::LITERAL_FLOAT : TokenType::LITERAL_INT;
 
 	size_t len = (buf.currentIndex() - startIndex);
 
+	//The literal might not be selected
 	buf.revertTo(startIndex);
 
 	return len;
@@ -323,7 +339,7 @@ size_t Tokenizer::findIdentifierLen()
 {
 	for (size_t i = 0; i < buf.remaining(); ++i)
 	{
-		auto type = getType(buf[i + buf.currentIndex()]);
+		auto type = getType(buf.peek(i));
 
 		if (type != CharType::IDENTIFIER && type != CharType::INT)
 		{
@@ -341,7 +357,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 	while (buf.hasCur())
 	{
-		char current = buf.cur();
+		auto current = buf.cur();
 
 		if (current > 127)
 		{
@@ -364,6 +380,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			if (current == '\r')
 			{
 				//don't increment pos, just pretend we didn't see it
+				//NOTE: with the increased usage of TextPos for strings, this might be a dumb idea.
 				buf.consume();
 				continue;
 			}
@@ -388,6 +405,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 		}
 		else if (type == CharType::COMMENT)
 		{
+			//skip to the end of the line, which will later invoke the whitespace code above
 			while (buf.hasCur())
 			{
 				if (buf.cur() == '\n')
@@ -401,54 +419,60 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			}
 
 		}
-		//Identifiers can start with a number
 		else if (type == CharType::IDENTIFIER || type == CharType::INT)
 		{
+			/*
+			Identifiers in Caliburn can start with a number.
+
+			First, we find the lengths of both an identifier and an integer. Whichever is
+			longer is the one we go with. If they're the same, the integer is made since it
+			should be a valid integer literal, which isn't a valid identifier.
+			*/
+
 			std::string intLit = "";
 			TokenType intType = TokenType::UNKNOWN;
 
-			size_t idOffset = findIdentifierLen();
+			size_t wordOffset = findIdentifierLen();
 			size_t intOffset = findIntLiteral(intType, intLit);
 
-			if (intOffset == 0 && idOffset == 0)
+			if (intOffset == 0 && wordOffset == 0)
 			{
+				//I don't know how this could be possible. Maybe a code regression?
 				errors->err("Zero-width identifier/integer found", makeCharTkn(TokenType::UNKNOWN));
+				buf.consume();
+				pos.move();
+				continue;
 			}
 
-			//So the idea is simple: We try to make an identifier token, and we try
-			//to make an integer token. Whichever is longer is the one we go with. BUT
-			//if they're the same length, we go with the integer literal. That way,
-			//literals like 0f or 0xDEADBEEF are correctly identified.
-			if (idOffset > intOffset)
+			if (wordOffset > intOffset)
 			{
-				auto idStr = doc->text.substr(buf.currentIndex(), idOffset);
-				auto idType = TokenType::IDENTIFIER;
+				auto wordStr = doc->text.substr(buf.currentIndex(), wordOffset);
+				auto wordType = TokenType::IDENTIFIER;
 
-				if (std::binary_search(KEYWORDS.begin(), KEYWORDS.end(), idStr))
+				//Looks for a keyword
+				if (std::binary_search(KEYWORDS.begin(), KEYWORDS.end(), wordStr))
 				{
-					auto foundType = STR_TOKEN_TYPES.find(idStr);
+					auto foundType = STR_TOKEN_TYPES.find(wordStr);
 
 					if (foundType == STR_TOKEN_TYPES.end())
 					{
-						idType = TokenType::KEYWORD;
+						wordType = TokenType::KEYWORD;
 					}
 					else
 					{
-						idType = foundType->second;
+						wordType = foundType->second;
 					}
 
 				}
 
-				tokens.push_back(new_sptr<Token>(idStr, idType, pos, buf.currentIndex(), idOffset));
-
-				buf.consume(idOffset);
-				pos.move(idOffset);
+				tokens.push_back(new_sptr<Token>(wordStr, wordType, pos, buf.currentIndex(), wordOffset));
+				buf.consume(wordOffset);
+				pos.move(wordOffset);
 
 			}
 			else
 			{
 				tokens.push_back(new_sptr<Token>(intLit, intType, pos, buf.currentIndex(), intOffset));
-
 				buf.consume(intOffset);
 				pos.move(intOffset);
 

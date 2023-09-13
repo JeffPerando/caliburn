@@ -94,6 +94,11 @@ namespace caliburn
             }
         };
 
+        /*
+        Maintains the comprehensive list of types within SPIR-V
+
+        Also includes a fair few helper methods
+        */
         class TypeSection
         {
             const uptr<HashMap<Type, SSA, TypeHash>> types = new_uptr<HashMap<Type, SSA, TypeHash>>();

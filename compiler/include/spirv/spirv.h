@@ -7,8 +7,10 @@
 #define SPIRV_Op(Name, ID, Count) constexpr SpvOp inline Name() {return SpvOp(Count, ID);}
 #define SPIRV_OpVar(Name, ID, Base) constexpr SpvOp inline Name(uint32_t v) {return SpvOp(Base + v, ID);}
 
-//Pro-tip, future me: For whatever reason, not marking functions as inline in this particular file
-//results in linking errors. So... yeah. Fun.
+/*
+Pro-tip, future me: For whatever reason, not marking functions as inline in this particular file
+results in linking errors. So... yeah. Fun.
+*/
 
 namespace caliburn
 {
@@ -20,6 +22,13 @@ namespace caliburn
 
         using SSA = uint32_t;
 
+        /*
+        HOO BOY, let me tell you about strings in SPIR-V
+
+        The individual characters are packed into the words of the file (which are type uint32)
+        Then, if the packed word count is divisible by 4, one more word is added as a null terminator.
+        If it's not divisible by 4, then the strings ends with one more packed character for the null terminator.
+        */
         inline uint32_t SpvStrLen(const std::string& str)
         {
             return (uint32_t)((str.length() >> 2) + ((str.length() & 0x3) == 0));
