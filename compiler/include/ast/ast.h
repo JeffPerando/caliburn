@@ -116,7 +116,7 @@ namespace caliburn
 			return last;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
+		void prettyPrint(out<std::stringstream> ss) const override
 		{
 			ss << '@' << name->str << '(';
 
@@ -152,7 +152,7 @@ namespace caliburn
 		Statement(StatementType stmtType) : type(stmtType) {}
 		virtual ~Statement() {}
 		
-		ptr<Annotation> getAnnotation(std::string name) const
+		ptr<Annotation> getAnnotation(in<std::string> name) const
 		{
 			auto found = annotations.find(name);
 
@@ -173,7 +173,7 @@ namespace caliburn
 
 		sptr<Token> lastTkn() const override = 0;
 
-		void prettyPrint(ref<std::stringstream> ss) const override {}
+		void prettyPrint(out<std::stringstream> ss) const override {}
 
 		//Only used by top-level statements which declare symbols. The rest, like variables, should use declareSymbols() instead
 		virtual void declareHeader(sptr<SymbolTable> table) {}
@@ -210,7 +210,7 @@ namespace caliburn
 			return last;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override
+		void prettyPrint(out<std::stringstream> ss) const override
 		{
 			ss << "{\n";
 
@@ -241,7 +241,7 @@ namespace caliburn
 
 		}
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override
 		{
 			scopeTable->reparent(table);
 

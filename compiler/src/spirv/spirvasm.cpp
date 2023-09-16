@@ -21,7 +21,7 @@ void CodeSection::pushOp(SpvOp op)
 
 }
 
-void CodeSection::push(SpvOp op, SSA id, std::vector<uint32_t> args)
+void CodeSection::push(SpvOp op, SSA id, in<std::vector<uint32_t>> args)
 {
 	if (!isValidOp(op))
 	{
@@ -42,7 +42,7 @@ void CodeSection::push(SpvOp op, SSA id, std::vector<uint32_t> args)
 
 }
 
-void CodeSection::pushTyped(SpvOp op, SSA type, SSA id, std::vector<uint32_t> args)
+void CodeSection::pushTyped(SpvOp op, SSA type, SSA id, in<std::vector<uint32_t>> args)
 {
 	if (op.words == 0)
 	{
@@ -98,7 +98,7 @@ void CodeSection::pushVar(SSA type, SSA id, StorageClass sc, SSA init)
 
 }
 
-void CodeSection::pushRaw(std::vector<uint32_t> args)
+void CodeSection::pushRaw(in<std::vector<uint32_t>> args)
 {
 	code.insert(code.end(), args.begin(), args.end());
 
@@ -138,13 +138,13 @@ void CodeSection::pushStr(std::string str)
 
 }
 
-void CodeSection::decorate(SSA target, Decoration d, std::vector<uint32_t> args)
+void CodeSection::decorate(SSA target, Decoration d, in<std::vector<uint32_t>> args)
 {
 	push(spirv::OpDecorate((uint32_t)args.size()), 0, { target, (uint32_t)d });
 	pushRaw(args);
 }
 
-void CodeSection::decorateMember(SSA target, uint32_t member, Decoration d, std::vector<uint32_t> args)
+void CodeSection::decorateMember(SSA target, uint32_t member, Decoration d, in<std::vector<uint32_t>> args)
 {
 	push(spirv::OpMemberDecorate((uint32_t)args.size()), 0, { target, member, (uint32_t)d });
 	pushRaw(args);
@@ -190,7 +190,7 @@ SSA CodeSection::find(SpvOp op, std::vector<uint32_t> args)
 	return 0;
 }
 
-bool CodeSection::getVarMeta(SSA id, ref<VarData> meta)
+bool CodeSection::getVarMeta(SSA id, out<VarData> meta)
 {
 	auto found = varMeta.find(id);
 

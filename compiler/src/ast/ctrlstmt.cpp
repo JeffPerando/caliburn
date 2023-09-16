@@ -3,7 +3,7 @@
 
 using namespace caliburn;
 
-cllr::SSA IfStatement::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
+cllr::SSA IfStatement::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	auto cond = condition->emitValueCLLR(table, codeAsm);
 
@@ -31,7 +31,7 @@ cllr::SSA IfStatement::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler
 	return ifLabel;
 }
 
-cllr::SSA ForRangeStatement::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
+cllr::SSA ForRangeStatement::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	return 0;
 /*
@@ -99,7 +99,7 @@ uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 */
 }
 
-cllr::SSA WhileStatement::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
+cllr::SSA WhileStatement::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	/*
 	Until CLLR is more fleshed out, we're just going to do the SPIR-V route of putting jumps before labels

@@ -93,7 +93,7 @@ namespace caliburn
 
 		Returns the length of the int literal
 		*/
-		size_t findIntLiteral(ref<TokenType> type, ref<std::string> offset);
+		size_t findIntLiteral(out<TokenType> type, out<std::string> lit);
 
 		/*
 		Looks for an identifier.

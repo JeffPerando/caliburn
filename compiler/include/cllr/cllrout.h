@@ -33,7 +33,7 @@ namespace caliburn
 			OutAssembler(HostTarget t) : target(t) {}
 			virtual ~OutAssembler() {}
 
-			virtual uptr<std::vector<OutCode>> translateCLLR(ref<cllr::Assembler> cllrAsm) = 0;
+			virtual uptr<std::vector<OutCode>> translateCLLR(in<cllr::Assembler> cllrAsm) = 0;
 
 		};
 

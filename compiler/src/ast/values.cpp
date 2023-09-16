@@ -6,7 +6,7 @@
 
 using namespace caliburn;
 
-cllr::TypedSSA IntLiteralValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA IntLiteralValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto pType = ParsedType(lit->str.substr(lit->str.find_first_of('_') + 1));
 
@@ -27,7 +27,7 @@ cllr::TypedSSA IntLiteralValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr:
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA FloatLiteralValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA FloatLiteralValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	//We defer parsing further! Great success!
 	auto sID = codeAsm.addString(lit->str.substr(0, lit->str.find_first_of('_')));
@@ -45,7 +45,7 @@ cllr::TypedSSA FloatLiteralValue::emitValueCLLR(sptr<SymbolTable> table, ref<cll
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA StringLitValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA StringLitValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto pType = ParsedType("string");
 
@@ -62,7 +62,7 @@ cllr::TypedSSA StringLitValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA BoolLitValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA BoolLitValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto pType = ParsedType("bool");
 
@@ -78,7 +78,7 @@ cllr::TypedSSA BoolLitValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::As
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA ArrayLitValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA ArrayLitValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	//TODO make array type
 	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_ARRAY, { (uint32_t)values.size() }));
@@ -98,7 +98,7 @@ cllr::TypedSSA ArrayLitValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::A
 	return cllr::TypedSSA(0, vID);
 }
 
-cllr::TypedSSA ExpressionValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA ExpressionValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto lhs = lValue->emitValueCLLR(table, codeAsm);
 	auto rhs = rValue->emitValueCLLR(table, codeAsm);
@@ -127,7 +127,7 @@ cllr::TypedSSA ExpressionValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr:
 	return cllr::TypedSSA(lhs.type, vID);
 }
 
-cllr::TypedSSA IsAValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA IsAValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	/*
 	chkType->emitDeclCLLR(table, codeAsm);
@@ -142,7 +142,7 @@ cllr::TypedSSA IsAValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assemb
 	//return codeAsm.pushNew(cllr::Opcode::VALUE_INSTANCEOF, {}, { vID, tID, 0 });;
 }
 
-cllr::TypedSSA SubArrayValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA SubArrayValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto& [aTypeID, aID] = array->emitValueCLLR(table, codeAsm);
 	auto& [iTypeID, iID] = index->emitValueCLLR(table, codeAsm);
@@ -155,7 +155,7 @@ cllr::TypedSSA SubArrayValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::A
 	return cllr::TypedSSA(outType, vID);
 }
 
-cllr::TypedSSA CastValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA CastValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	if (auto t = castTarget->resolve(table))
 	{
@@ -171,7 +171,7 @@ cllr::TypedSSA CastValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assem
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA VarReadValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA VarReadValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto v = table->find(varTkn->str);
 
@@ -189,23 +189,24 @@ cllr::TypedSSA VarReadValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::As
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA MemberReadValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA MemberReadValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto& [targetTypeID, targetID] = target->emitValueCLLR(table, codeAsm);
-	/* FIXME big time
-	if (auto v = std::get_if<sptr<Variable>>(&target->->base->getMember(memberName->str)))
+	/*
+	if (auto v = std::get_if<sptr<Variable>>(&codeAsm.getType(targetTypeID)->getMember(memberName->str)))
 	{
-		return (*v)->emitLoadCLLR(table/*FIXME probably not the table to use, codeAsm, targetID);
+		//FIXME probably not the table to use
+		return (*v)->emitLoadCLLR(table, codeAsm, targetID);
 	}
 	*/
 	//TODO complain
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA VarChainValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA VarChainValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	size_t start = 0;
-	auto finalVal = cllr::TypedSSA();
+	cllr::TypedSSA finalVal;
 
 	if (target != nullptr)
 	{
@@ -273,7 +274,7 @@ cllr::TypedSSA VarChainValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::A
 	return finalVal;
 }
 
-cllr::TypedSSA UnaryValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA UnaryValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	//TODO sanity check output types
 	auto in = val->emitValueCLLR(table, codeAsm);
@@ -282,7 +283,7 @@ cllr::TypedSSA UnaryValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Asse
 	return cllr::TypedSSA(in.type, outID);
 }
 
-cllr::TypedSSA FnCallValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA FnCallValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto sym = table->find(name->str);
 
@@ -304,7 +305,7 @@ cllr::TypedSSA FnCallValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Ass
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA SetterValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA SetterValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto lvalue = lhs->emitValueCLLR(table, codeAsm);
 	auto rvalue = rhs->emitValueCLLR(table, codeAsm);
@@ -333,48 +334,48 @@ cllr::TypedSSA SetterValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Ass
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA NullValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA NullValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	//TODO figure out typing
 	return cllr::TypedSSA(0, codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_NULL)));
 }
 
-cllr::TypedSSA ZeroValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA ZeroValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	return cllr::TypedSSA(0, codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_ZERO)));
 }
 
-cllr::TypedSSA SignValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA SignValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA UnsignValue::emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const
+cllr::TypedSSA UnsignValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	return cllr::TypedSSA();
 }
 
-void IntLiteralValue::prettyPrint(ref<std::stringstream> ss) const
+void IntLiteralValue::prettyPrint(out<std::stringstream> ss) const
 {
 	ss << lit->str.substr(0, lit->str.find('_'));
 }
 
-void FloatLiteralValue::prettyPrint(ref<std::stringstream> ss) const
+void FloatLiteralValue::prettyPrint(out<std::stringstream> ss) const
 {
 	ss << lit->str;
 }
 
-void StringLitValue::prettyPrint(ref<std::stringstream> ss) const
+void StringLitValue::prettyPrint(out<std::stringstream> ss) const
 {
 	ss << lit->str;
 }
 
-void BoolLitValue::prettyPrint(ref<std::stringstream> ss) const
+void BoolLitValue::prettyPrint(out<std::stringstream> ss) const
 {
 	ss << lit->str;
 }
 
-void ArrayLitValue::prettyPrint(ref<std::stringstream> ss) const
+void ArrayLitValue::prettyPrint(out<std::stringstream> ss) const
 {
 	ss << '[';
 
@@ -393,7 +394,7 @@ void ArrayLitValue::prettyPrint(ref<std::stringstream> ss) const
 
 }
 
-void ExpressionValue::prettyPrint(ref<std::stringstream> ss) const
+void ExpressionValue::prettyPrint(out<std::stringstream> ss) const
 {
 	const auto cat = OP_CATEGORIES.find(op)->second;
 
@@ -429,7 +430,7 @@ void ExpressionValue::prettyPrint(ref<std::stringstream> ss) const
 	
 }
 
-void IsAValue::prettyPrint(ref<std::stringstream> ss) const
+void IsAValue::prettyPrint(out<std::stringstream> ss) const
 {
 	val->prettyPrint(ss);
 
@@ -439,7 +440,7 @@ void IsAValue::prettyPrint(ref<std::stringstream> ss) const
 
 }
 
-void CastValue::prettyPrint(ref<std::stringstream> ss) const
+void CastValue::prettyPrint(out<std::stringstream> ss) const
 {
 	lhs->prettyPrint(ss);
 
@@ -449,7 +450,7 @@ void CastValue::prettyPrint(ref<std::stringstream> ss) const
 
 }
 
-void SubArrayValue::prettyPrint(ref<std::stringstream> ss) const
+void SubArrayValue::prettyPrint(out<std::stringstream> ss) const
 {
 	array->prettyPrint(ss);
 
@@ -461,12 +462,12 @@ void SubArrayValue::prettyPrint(ref<std::stringstream> ss) const
 
 }
 
-void VarReadValue::prettyPrint(ref<std::stringstream> ss) const
+void VarReadValue::prettyPrint(out<std::stringstream> ss) const
 {
 	ss << varTkn->str;
 }
 
-void MemberReadValue::prettyPrint(ref<std::stringstream> ss) const
+void MemberReadValue::prettyPrint(out<std::stringstream> ss) const
 {
 	target->prettyPrint(ss);
 
@@ -476,7 +477,7 @@ void MemberReadValue::prettyPrint(ref<std::stringstream> ss) const
 
 }
 
-void VarChainValue::prettyPrint(ref<std::stringstream> ss) const
+void VarChainValue::prettyPrint(out<std::stringstream> ss) const
 {
 	if (target != nullptr)
 	{
@@ -493,7 +494,7 @@ void VarChainValue::prettyPrint(ref<std::stringstream> ss) const
 
 }
 
-void UnaryValue::prettyPrint(ref<std::stringstream> ss) const
+void UnaryValue::prettyPrint(out<std::stringstream> ss) const
 {
 	ss << start->str;
 
@@ -506,7 +507,7 @@ void UnaryValue::prettyPrint(ref<std::stringstream> ss) const
 
 }
 
-void FnCallValue::prettyPrint(ref<std::stringstream> ss) const
+void FnCallValue::prettyPrint(out<std::stringstream> ss) const
 {
 	if (target != nullptr)
 	{
@@ -540,7 +541,7 @@ void FnCallValue::prettyPrint(ref<std::stringstream> ss) const
 
 }
 
-void SetterValue::prettyPrint(ref<std::stringstream> ss) const
+void SetterValue::prettyPrint(out<std::stringstream> ss) const
 {
 	lhs->prettyPrint(ss);
 
@@ -558,21 +559,21 @@ void SetterValue::prettyPrint(ref<std::stringstream> ss) const
 
 }
 
-void NullValue::prettyPrint(ref<std::stringstream> ss) const
+void NullValue::prettyPrint(out<std::stringstream> ss) const
 {
 	ss << "null";
 }
 
-void ZeroValue::prettyPrint(ref<std::stringstream> ss) const {}
+void ZeroValue::prettyPrint(out<std::stringstream> ss) const {}
 
-void SignValue::prettyPrint(ref<std::stringstream> ss) const
+void SignValue::prettyPrint(out<std::stringstream> ss) const
 {
 	ss << first->str << ' ';
 	target->prettyPrint(ss);
 
 }
 
-void UnsignValue::prettyPrint(ref<std::stringstream> ss) const
+void UnsignValue::prettyPrint(out<std::stringstream> ss) const
 {
 	ss << first->str << ' ';
 	target->prettyPrint(ss);

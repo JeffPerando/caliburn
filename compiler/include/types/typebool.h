@@ -11,7 +11,7 @@ namespace caliburn
 	{
 		RealBool(ptr<TypeBool> parent) : RealType((ptr<BaseType>)parent) {}
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 	};
 

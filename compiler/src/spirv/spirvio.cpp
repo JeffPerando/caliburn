@@ -226,7 +226,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	return id;
 }
 
-SSA SpvIO::getOutputFor(ExecutionModel type, ref<SSA> outType, uint32_t loc)
+SSA SpvIO::getOutputFor(ExecutionModel type, out<SSA> outType, uint32_t loc)
 {
 	auto found = shaderOuts.find(type);
 

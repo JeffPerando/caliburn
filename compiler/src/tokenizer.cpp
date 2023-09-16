@@ -140,7 +140,7 @@ std::string Tokenizer::findStr()
 	return ss.str();
 }
 
-size_t Tokenizer::findIntLiteral(ref<TokenType> type, ref<std::string> lit)
+size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 {
 	auto validIntChars = &DEC_INTS;
 
@@ -357,7 +357,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 	while (buf.hasCur())
 	{
-		auto current = buf.cur();
+		const char current = buf.cur();
 
 		if (current > 127)
 		{
@@ -367,7 +367,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			continue;
 		}
 
-		CharType type = getType(current);
+		const CharType type = getType(current);
 
 		//See https://en.wikipedia.org/w/index.php?title=Newline
 
@@ -432,8 +432,8 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			std::string intLit = "";
 			TokenType intType = TokenType::UNKNOWN;
 
-			size_t wordOffset = findIdentifierLen();
-			size_t intOffset = findIntLiteral(intType, intLit);
+			const size_t wordOffset = findIdentifierLen();
+			const size_t intOffset = findIntLiteral(intType, intLit);
 
 			if (intOffset == 0 && wordOffset == 0)
 			{
@@ -446,7 +446,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 			if (wordOffset > intOffset)
 			{
-				auto wordStr = doc->text.substr(buf.currentIndex(), wordOffset);
+				const auto wordStr = doc->text.substr(buf.currentIndex(), wordOffset);
 				auto wordType = TokenType::IDENTIFIER;
 
 				//Looks for a keyword
@@ -481,8 +481,8 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 		}
 		else if (type == CharType::STRING_DELIM)
 		{
-			auto start = buf.currentIndex();
-			auto str = findStr();
+			const auto start = buf.currentIndex();
+			const auto str = findStr();
 
 			//findStr should offset col and line
 			tokens.push_back(new_sptr<Token>(str, TokenType::LITERAL_STR, pos, start, buf.currentIndex() - start));
@@ -490,7 +490,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 		}
 		else if (type == CharType::SPECIAL)
 		{
-			auto specialType = CHAR_TOKEN_TYPES.find(current);
+			const auto specialType = CHAR_TOKEN_TYPES.find(current);
 
 			if (specialType != CHAR_TOKEN_TYPES.end())
 			{
@@ -522,8 +522,8 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			
 			while (opLen > 0)
 			{
-				auto testOp = doc->text.substr(buf.currentIndex(), opLen);
-				auto meaning = INFIX_OPS.find(testOp);
+				const auto testOp = doc->text.substr(buf.currentIndex(), opLen);
+				const auto meaning = INFIX_OPS.find(testOp);
 
 				if (meaning != INFIX_OPS.end())
 				{
@@ -533,7 +533,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 					break;
 				}
 
-				auto specMeaning = SPECIAL_OPS.find(testOp);
+				const auto specMeaning = SPECIAL_OPS.find(testOp);
 
 				if (specMeaning != SPECIAL_OPS.end())
 				{

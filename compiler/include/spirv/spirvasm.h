@@ -89,7 +89,7 @@ namespace caliburn
             void pushOp(SpvOp op);
 
         public:
-            CodeSection(SpvSection sec, ptr<cllr::SPIRVOutAssembler> spv, std::vector<SpvOp> ops) : section(sec), spvAsm(spv), validOps(ops)
+            CodeSection(SpvSection sec, ptr<cllr::SPIRVOutAssembler> spv, in<std::vector<SpvOp>> ops) : section(sec), spvAsm(spv), validOps(ops)
             {
                 if (!validOps.empty())
                 {
@@ -104,14 +104,14 @@ namespace caliburn
 
             If ID is 0, it will not be pushed
             */
-            void push(SpvOp op, SSA id, std::vector<uint32_t> args = {});
+            void push(SpvOp op, SSA id, in<std::vector<uint32_t>> args = {});
 
             /*
             Pushes a typed operation
 
             Will complain if type is 0
             */
-            void pushTyped(SpvOp op, SSA type, SSA id, std::vector<uint32_t> args);
+            void pushTyped(SpvOp op, SSA type, SSA id, in<std::vector<uint32_t>> args);
 
             /*
             Pushes a variable
@@ -121,7 +121,7 @@ namespace caliburn
             /*
             Pushes raw data to the code
             */
-            void pushRaw(std::vector<uint32_t> args);
+            void pushRaw(in<std::vector<uint32_t>> args);
 
             /*
             Pushes a packed string directly into the code
@@ -131,12 +131,12 @@ namespace caliburn
             /*
             Pushes an OpDecorate with the given ID and metadata
             */
-            void decorate(SSA target, Decoration d, std::vector<uint32_t> args);
+            void decorate(SSA target, Decoration d, in<std::vector<uint32_t>> args);
 
             /*
             Pushes an OpDecorateMember with the given ID and metadata
             */
-            void decorateMember(SSA target, uint32_t member, Decoration d, std::vector<uint32_t> args);
+            void decorateMember(SSA target, uint32_t member, Decoration d, in<std::vector<uint32_t>> args);
 
             /*
             Pushes a built-in decoration
@@ -156,7 +156,7 @@ namespace caliburn
 
             Returns true if the data was found, false otherwise.
             */
-            bool getVarMeta(SSA id, ref<VarData> meta);
+            bool getVarMeta(SSA id, out<VarData> meta);
 
         private:
             bool isValidOp(SpvOp op)
@@ -170,7 +170,7 @@ namespace caliburn
                 return std::binary_search(validOps.begin(), validOps.end(), op);
             }
 
-            void dump(ref<std::vector<uint32_t>> codeOut)
+            void dump(out<std::vector<uint32_t>> codeOut)
             {
                 codeOut.insert(codeOut.end(), code.begin(), code.end());
             }

@@ -11,7 +11,7 @@
 
 using namespace caliburn;
 
-uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSettings> settings, ref<std::vector<sptr<Error>>> allErrs)
+uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSettings> settings, out<std::vector<sptr<Error>>> allErrs)
 {
 	sptr<SymbolTable> stageTable = table;
 
@@ -70,7 +70,7 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 	return out;
 }
 
-std::vector<uptr<Shader>> ShaderStatement::compile(sptr<SymbolTable> table, sptr<CompilerSettings> settings, ref<std::vector<sptr<Error>>> compileErrs)
+std::vector<uptr<Shader>> ShaderStatement::compile(sptr<SymbolTable> table, sptr<CompilerSettings> settings, out<std::vector<sptr<Error>>> compileErrs)
 {
 	std::vector<uptr<Shader>> shaders;
 

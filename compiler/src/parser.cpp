@@ -71,7 +71,7 @@ std::vector<uptr<Statement>> Parser::parse()
 }
 
 template<typename T>
-T Parser::parseAny(std::vector<ParseMethod<T>> fns)
+T Parser::parseAny(in<std::vector<ParseMethod<T>>> fns)
 {
 	size_t current = tkns.currentIndex();
 
@@ -95,7 +95,7 @@ T Parser::parseAny(std::vector<ParseMethod<T>> fns)
 	return nullptr;
 }
 
-bool Parser::parseAnyBetween(std::string start, std::function<void()> fn, std::string end)
+bool Parser::parseAnyBetween(in<std::string> start, in<std::function<void()>> fn, in<std::string> end)
 {
 	sptr<Token> startTkn = tkns.cur();
 
@@ -352,7 +352,7 @@ void Parser::parseSemicolon()
 
 }
 
-bool Parser::parseScopeEnd(ref<uptr<ScopeStatement>> stmt)
+bool Parser::parseScopeEnd(out<ScopeStatement> stmt)
 {
 	sptr<Token> first = tkns.cur();
 	auto tknIndex = tkns.currentIndex();
@@ -375,11 +375,11 @@ bool Parser::parseScopeEnd(ref<uptr<ScopeStatement>> stmt)
 		return false;
 	}
 
-	stmt->retMode = retMode->second;
+	stmt.retMode = retMode->second;
 
-	if (stmt->retMode == ReturnMode::RETURN)
+	if (stmt.retMode == ReturnMode::RETURN)
 	{
-		stmt->retValue = parseAnyValue();
+		stmt.retValue = parseAnyValue();
 	}
 	
 	parseSemicolon();
@@ -414,7 +414,7 @@ StmtModifiers Parser::parseStmtMods()
 	return mods;
 }
 
-uptr<ScopeStatement> Parser::parseScope(std::vector<ParseMethod<uptr<Statement>>> pms, bool err)
+uptr<ScopeStatement> Parser::parseScope(in<std::vector<ParseMethod<uptr<Statement>>>> pms, bool err)
 {
 	auto mods = parseStmtMods();
 
@@ -441,7 +441,7 @@ uptr<ScopeStatement> Parser::parseScope(std::vector<ParseMethod<uptr<Statement>>
 
 	while (tkns.hasCur())
 	{
-		if (parseScopeEnd(scope))
+		if (parseScopeEnd(*scope))
 		{
 			if (tkns.cur()->type != TokenType::END_SCOPE)
 			{

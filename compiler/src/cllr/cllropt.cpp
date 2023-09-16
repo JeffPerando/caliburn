@@ -3,7 +3,7 @@
 
 using namespace caliburn;
 
-void caliburn::cllr::Optimizer::optimize(ref<cllr::Assembler> cllrAsm)
+void caliburn::cllr::Optimizer::optimize(out<cllr::Assembler> cllrAsm)
 {
 	if (settings->o == OptimizeLevel::DEBUG)
 	{

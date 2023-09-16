@@ -3,7 +3,7 @@
 
 using namespace caliburn;
 
-cllr::SSA RealVector::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
+cllr::SSA RealVector::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	if (id == 0)
 	{
@@ -30,7 +30,7 @@ cllr::SSA RealVector::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler>
 	return id;
 }
 
-Member TypeVector::getMember(ref<const std::string> name) const
+Member TypeVector::getMember(in<std::string> name) const
 {
 	//TODO swizzle
 	return Member();

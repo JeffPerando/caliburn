@@ -6,7 +6,7 @@
 #include "cllrasm.h"
 #include "error.h"
 
-#define CLLR_INSTRUCT_VALIDATE(Name) ValidReason Name(ValidationLevel lvl, ref<const Instruction> i, ref<Assembler> codeAsm)
+#define CLLR_INSTRUCT_VALIDATE(Name) ValidReason Name(ValidationLevel lvl, in<Instruction> i, out<Assembler> codeAsm)
 
 #define CLLR_VALID_HAS_ID if (i.index == 0) return ValidReason::INVALID_NO_ID
 #define CLLR_VALID_NO_ID if (i.index != 0) return ValidReason::INVALID_MISC
@@ -59,7 +59,7 @@ namespace caliburn
 			INVALID_MISC
 		};
 
-		using ValidFn = ValidReason(*)(ValidationLevel lvl, ref<const Instruction> i, ref<Assembler> codeAsm);
+		using ValidFn = ValidReason(*)(ValidationLevel lvl, in<Instruction> i, out<Assembler> codeAsm);
 
 		struct Validator
 		{

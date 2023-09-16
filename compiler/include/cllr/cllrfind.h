@@ -23,14 +23,14 @@ namespace caliburn
 			Finder() = default;
 			virtual ~Finder() {}
 
-			ptr<Finder> ops(std::vector<Opcode> ops);
-			ptr<Finder> operands(std::array<uint32_t, 3> operands);
+			ptr<Finder> ops(in<std::vector<Opcode>> ops);
+			ptr<Finder> operands(in<std::array<uint32_t, 3>> operands);
 			ptr<Finder> references(SSA ref);
 			ptr<Finder> outputs(SSA type);
 			ptr<Finder> setOffset(size_t off);
 			ptr<Finder> setLimit(uint32_t max);
 
-			InstructionVec find(ref<const InstructionVec> code);
+			InstructionVec find(in<InstructionVec> code);
 
 		};
 

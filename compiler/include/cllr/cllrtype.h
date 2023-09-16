@@ -56,7 +56,7 @@ namespace caliburn
 			TypeChecker(sptr<const CompilerSettings> cs) : settings(cs) {}
 			~TypeChecker() {}
 
-			bool check(SSA targetType, ref<TypedSSA> rhs, ref<Assembler> codeAsm, Operator op = Operator::UNKNOWN) const;
+			bool check(SSA targetType, out<TypedSSA> rhs, out<Assembler> codeAsm, Operator op = Operator::UNKNOWN) const;
 
 		};
 

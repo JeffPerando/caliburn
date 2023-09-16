@@ -52,7 +52,7 @@ namespace caliburn
 			notes.push_back(idea);
 		}
 
-		void note(std::vector<std::string> idea_list)
+		void note(in<std::vector<std::string>> idea_list)
 		{
 			std::stringstream ss;
 
@@ -63,9 +63,9 @@ namespace caliburn
 
 		}
 
-		void prettyPrint(ref<const TextDoc> txt, ref<std::stringstream> ss, bool color) const;
+		void prettyPrint(in<TextDoc> txt, out<std::stringstream> ss, bool color) const;
 
-		std::string toStr(ref<const TextDoc> txt, bool color)
+		std::string toStr(in<TextDoc> txt, bool color)
 		{
 			std::stringstream ss;
 			prettyPrint(txt, ss, color);
@@ -93,12 +93,12 @@ namespace caliburn
 			return errors.empty();
 		}
 
-		void dump(ref<std::vector<sptr<Error>>> out) const
+		void dump(out<std::vector<sptr<Error>>> out) const
 		{
 			out.insert(out.end(), errors.begin(), errors.end());
 		}
 
-		void printout(ref<std::vector<std::string>> out, ref<const TextDoc> doc, bool colored) const
+		void printout(out<std::vector<std::string>> out, in<TextDoc> doc, bool colored) const
 		{
 			for (auto const& e : errors)
 			{
@@ -109,7 +109,7 @@ namespace caliburn
 
 		//Error-generation methods beyond this point
 
-		sptr<Error> err(std::vector<std::string> msgs, ref<const ParsedObject> keyObj)
+		sptr<Error> err(in<std::vector<std::string>> msgs, in<ParsedObject> keyObj)
 		{
 			std::stringstream ss;
 
@@ -119,12 +119,12 @@ namespace caliburn
 			return err(ss.str(), keyObj);
 		}
 
-		sptr<Error> err(std::string msg, ref<const ParsedObject> keyObj)
+		sptr<Error> err(in<std::string> msg, in<ParsedObject> keyObj)
 		{
 			return err(msg, keyObj.firstTkn(), keyObj.lastTkn());
 		}
 
-		sptr<Error> err(std::vector<std::string> msgs, sptr<Token> keyTkn)
+		sptr<Error> err(in<std::vector<std::string>> msgs, sptr<Token> keyTkn)
 		{
 			std::stringstream ss;
 
@@ -134,12 +134,12 @@ namespace caliburn
 			return err(ss.str(), keyTkn);
 		}
 
-		sptr<Error> err(std::string msg, sptr<Token> keyTkn)
+		sptr<Error> err(in<std::string> msg, sptr<Token> keyTkn)
 		{
 			return err(msg, keyTkn, keyTkn);
 		}
 
-		sptr<Error> err(std::vector<std::string> msgs, sptr<Token> startTkn, sptr<Token> endTkn)
+		sptr<Error> err(in<std::vector<std::string>> msgs, sptr<Token> startTkn, sptr<Token> endTkn)
 		{
 			std::stringstream ss;
 
@@ -149,7 +149,7 @@ namespace caliburn
 			return err(ss.str(), startTkn, endTkn);
 		}
 
-		sptr<Error> err(std::string msg, sptr<Token> tknStart, sptr<Token> tknEnd);
+		sptr<Error> err(in<std::string> msg, sptr<Token> tknStart, sptr<Token> tknEnd);
 
 	};
 	

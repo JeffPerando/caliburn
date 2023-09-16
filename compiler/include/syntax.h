@@ -209,7 +209,7 @@ namespace caliburn
 			return last->textEnd - first->textStart;
 		}
 
-		virtual void prettyPrint(ref<std::stringstream> ss) const = 0;
+		virtual void prettyPrint(out<std::stringstream> ss) const = 0;
 
 		virtual std::string prettyStr() const
 		{

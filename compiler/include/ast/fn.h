@@ -55,7 +55,7 @@ namespace caliburn
 		sptr<ParsedType> returnType;
 
 		FunctionSignature() = default;
-		FunctionSignature(ref<const ParsedFn> fn) : genSig(fn.genSig), returnType(fn.retType)
+		FunctionSignature(in<ParsedFn> fn) : genSig(fn.genSig), returnType(fn.retType)
 		{
 			uint32_t a = 0;
 			for (auto const& pFnArg : fn.args)
@@ -84,9 +84,9 @@ namespace caliburn
 		FunctionImpl(ptr<Function> p, sptr<GenericArguments> gArgs) : parent(p), genArgs(gArgs) {}
 		virtual ~FunctionImpl() {}
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
-		virtual cllr::TypedSSA call(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, ref<const std::vector<sptr<Value>>> args);
+		virtual cllr::TypedSSA call(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, ref<const std::vector<sptr<Value>>> args);
 
 	private:
 		sptr<SymbolTable> fnImplTable = nullptr;

@@ -218,7 +218,7 @@ namespace caliburn
 		
 		const uptr<GenArgMap<T>> variants = new_uptr<GenArgMap<T>>();
 
-		Generic(sptr<GenericSignature> sig, GenFactoryFn<T> fn) : genSig(sig == nullptr ? new_sptr<GenericSignature>() : sig), facFn(fn) {}
+		Generic(sptr<GenericSignature> sig, in<GenFactoryFn<T>> fn) : genSig(sig == nullptr ? new_sptr<GenericSignature>() : sig), facFn(fn) {}
 		virtual ~Generic() {}
 
 		virtual sptr<T> makeVariant(sptr<GenericArguments> args)

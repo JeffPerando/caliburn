@@ -38,7 +38,7 @@ namespace caliburn
 			
 			spirv::SSA getBuiltinVar(spirv::ExecutionModel model, spirv::BuiltIn builtin);
 
-			spirv::SSA getOutputFor(spirv::ExecutionModel model, ref<spirv::SSA> outType, uint32_t loc = 0);
+			spirv::SSA getOutputFor(spirv::ExecutionModel model, out<spirv::SSA> outType, uint32_t loc = 0);
 
 		};
 

@@ -6,7 +6,7 @@
 
 using namespace caliburn::cllr;
 
-uint32_t Assembler::addString(ref<const std::string> str)
+uint32_t Assembler::addString(in<std::string> str)
 {
 	auto index = strs.size();
 
@@ -24,12 +24,12 @@ SSA Assembler::createSSA(Opcode op)
 	return nextSSA++;
 }
 
-ref<const Instruction> Assembler::codeFor(SSA id) const
+out<Instruction> Assembler::codeFor(SSA id) const
 {
 	return code->at(ssaToIndex.at(id));
 }
 
-ref<const Instruction> Assembler::codeAt(size_t off) const
+out<Instruction> Assembler::codeAt(size_t off) const
 {
 	return code->at(off);
 }
@@ -39,7 +39,7 @@ Opcode Assembler::opFor(SSA id) const
 	return ssaToOp.at(id);
 }
 
-SSA Assembler::push(ref<Instruction> ins)
+SSA Assembler::push(in<Instruction> ins)
 {
 	auto ssa = ins.index;
 
@@ -56,7 +56,7 @@ SSA Assembler::push(ref<Instruction> ins)
 	return ssa;
 }
 
-SSA Assembler::pushType(ref<Instruction> ins)
+SSA Assembler::pushType(in<Instruction> ins)
 {
 	auto found = types.find(ins);
 
@@ -90,7 +90,7 @@ SSA Assembler::pushType(ref<Instruction> ins)
 	return id;
 }
 
-void Assembler::pushAll(std::vector<Instruction> ins)
+void Assembler::pushAll(in<std::vector<Instruction>> ins)
 {
 	for (auto& i : ins)
 	{
@@ -113,7 +113,7 @@ sptr<LowType> Assembler::getType(SSA id) const
 	return found->second.second;
 }
 
-std::pair<uint32_t, SSA> Assembler::pushInput(std::string name, SSA type)
+std::pair<uint32_t, SSA> Assembler::pushInput(in<std::string> name, SSA type)
 {
 	if (outputs.find(name) != outputs.end())
 	{
@@ -139,7 +139,7 @@ std::pair<uint32_t, SSA> Assembler::pushInput(std::string name, SSA type)
 	return inData;
 }
 
-std::pair<uint32_t, SSA> Assembler::pushOutput(std::string name, SSA type)
+std::pair<uint32_t, SSA> Assembler::pushOutput(in<std::string> name, SSA type)
 {
 	if (inputs.find(name) != inputs.end())
 	{
@@ -267,7 +267,7 @@ uint32_t Assembler::flatten()
 	return replaced;
 }
 
-void Assembler::doBookkeeping(ref<Instruction> ins)
+void Assembler::doBookkeeping(in<Instruction> ins)
 {
 	if (ins.index != 0)
 	{

@@ -39,7 +39,7 @@ namespace caliburn
 			TypedSSA() = default;
 			TypedSSA(SSA t, SSA v) : type(t), value(v) {}
 
-			bool operator==(const TypedSSA& other) const
+			bool operator==(in<TypedSSA> other) const
 			{
 				return type == other.type && value == other.value;
 			}
@@ -218,7 +218,7 @@ namespace caliburn
 			Instruction(SSA id, Opcode op, std::array<uint32_t, 3> ops = {}, std::array<SSA, 3> rs = {}, SSA out = 0) :
 				index(id), op(op), operands(ops), refs(rs), outType(out) {}
 
-			Instruction(const Instruction& old)
+			Instruction(in<Instruction> old)
 			{
 				index = old.index;
 				op = old.op;
@@ -262,7 +262,7 @@ namespace caliburn
 				return ss.str();
 			}
 
-			bool operator<(ref<const Instruction> rhs) const
+			bool operator<(in<Instruction> rhs) const
 			{
 				if (op >= rhs.op)
 				{
@@ -286,7 +286,7 @@ namespace caliburn
 				return true;
 			}
 
-			bool operator==(ref<const Instruction> other) const
+			bool operator==(in<Instruction> other) const
 			{
 				if (index != other.index)
 				{
@@ -320,7 +320,7 @@ namespace caliburn
 
 		struct InstructionHash
 		{
-			size_t operator()(ref<const Instruction> i) const
+			size_t operator()(in<Instruction> i) const
 			{
 				size_t hash = ((size_t)i.op & 0xFFFF) << 48;
 

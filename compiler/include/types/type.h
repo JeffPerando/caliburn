@@ -76,7 +76,7 @@ namespace caliburn
 
 		virtual bool isCompileTimeConst() const = 0;
 
-		virtual cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) const = 0;
+		virtual cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const = 0;
 
 	};
 
@@ -95,7 +95,7 @@ namespace caliburn
 		sptr<GenericArguments> genericArgs = new_sptr<GenericArguments>();
 		std::vector<sptr<Value>> arrayDims;//TODO implement properly
 
-		ParsedType(std::string n) : name(n), nameTkn(nullptr) {}
+		ParsedType(in<std::string> n) : name(n), nameTkn(nullptr) {}
 		ParsedType(sptr<Token> n) : name(n->str), nameTkn(n) {}
 		virtual ~ParsedType() {}
 
@@ -119,7 +119,7 @@ namespace caliburn
 			return nameTkn;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		sptr<RealType> resolve(sptr<const SymbolTable> table);
 
@@ -152,7 +152,7 @@ namespace caliburn
 		bool isConst = false;
 
 		Variable() = default;
-		Variable(ref<ParsedVar> v)
+		Variable(in<ParsedVar> v)
 		{
 			mods = v.mods;
 			isConst = v.isConst;
@@ -174,11 +174,11 @@ namespace caliburn
 			return nameTkn;
 		}
 
-		virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) = 0;
+		virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
 
-		virtual cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target) = 0;
+		virtual cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target) = 0;
 
-		virtual void emitStoreCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) = 0;
+		virtual void emitStoreCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) = 0;
 
 	};
 
@@ -194,21 +194,21 @@ namespace caliburn
 		//sptr<BaseType> superType = nullptr;
 
 	public:
-		BaseType(TypeCategory c, std::string n, sptr<RealType> defaultImpl) :
+		BaseType(TypeCategory c, in<std::string> n, sptr<RealType> defaultImpl) :
 			category(c), canonName(n), defImpl(defaultImpl) {}
 		virtual ~BaseType() {}
 
-		bool operator!=(ref<const BaseType> rhs) const
+		bool operator!=(in<BaseType> rhs) const
 		{
 			return !(*this == rhs);
 		}
 
-		bool operator==(ref<const BaseType> rhs) const
+		bool operator==(in<BaseType> rhs) const
 		{
 			return canonName == rhs.canonName;
 		}
 
-		virtual uint64_t parseLiteral(ref<const std::string> lit) const
+		virtual uint64_t parseLiteral(in<std::string> lit) const
 		{
 			throw std::exception("Cannot parse literal for type; Please only attempt parsing literals of ints or floats");
 		}
@@ -224,9 +224,9 @@ namespace caliburn
 			return defImpl;
 		}
 
-		virtual Member getMember(ref<const std::string> name) const = 0;
+		virtual Member getMember(in<std::string> name) const = 0;
 
-		virtual cllr::TypedSSA callConstructor(ref<cllr::Assembler> codeAsm, ref<std::vector<Value>> args) const
+		virtual cllr::TypedSSA callConstructor(out<cllr::Assembler> codeAsm, in<std::vector<Value>> args) const
 		{
 			return cllr::TypedSSA();
 		}
@@ -266,7 +266,7 @@ namespace caliburn
 	struct GenericType : BaseType, Generic<T>
 	{
 	public:
-		GenericType(TypeCategory c, std::string n, sptr<GenericSignature> sig, GenFactoryFn<T> facFn) :
+		GenericType(TypeCategory c, in<std::string> n, sptr<GenericSignature> sig, in<GenFactoryFn<T>> facFn) :
 			BaseType(c, n, nullptr),
 			Generic(sig, facFn) {}
 		virtual ~GenericType() {}
@@ -320,7 +320,7 @@ namespace caliburn
 			return fullName;
 		}
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override = 0;
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override = 0;
 
 	};
 
@@ -328,10 +328,10 @@ namespace caliburn
 	{
 		const uint32_t width;
 
-		PrimitiveType(TypeCategory c, std::string n, uint32_t bits, sptr<RealType> defaultImpl) : BaseType(c, n, defaultImpl), width(bits) {}
+		PrimitiveType(TypeCategory c, in<std::string> n, uint32_t bits, sptr<RealType> defaultImpl) : BaseType(c, n, defaultImpl), width(bits) {}
 		virtual ~PrimitiveType() {}
 
-		Member getMember(ref<const std::string> name) const override
+		Member getMember(in<std::string> name) const override
 		{
 			return Member();
 		}

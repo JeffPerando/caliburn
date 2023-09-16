@@ -21,7 +21,7 @@ bool cllr::LowType::addMember(SSA typeID, sptr<const LowType> typeImpl)
 	return false;
 }
 
-bool cllr::TypeChecker::check(SSA targetType, ref<TypedSSA> rhs, ref<Assembler> codeAsm, Operator op) const
+bool cllr::TypeChecker::check(SSA targetType, out<TypedSSA> rhs, out<Assembler> codeAsm, Operator op) const
 {
 	if (targetType == rhs.type)
 	{

@@ -35,7 +35,7 @@ namespace caliburn
 
 		}
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable>, ref<cllr::Assembler> codeAsm) override
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable>, out<cllr::Assembler> codeAsm) override
 		{
 			return 0;
 		}

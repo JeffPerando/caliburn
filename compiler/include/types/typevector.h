@@ -13,7 +13,7 @@ namespace caliburn
 
 		RealVector(ptr<TypeVector> parent, sptr<GenericArguments> gArgs, uint32_t l) : RealType((ptr<BaseType>)parent, gArgs), length(l) {}
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 	};
 
@@ -33,7 +33,7 @@ namespace caliburn
 			elements(vecElements)
 		{}
 
-		virtual Member getMember(ref<const std::string> name) const override;
+		virtual Member getMember(in<std::string> name) const override;
 
 	};
 

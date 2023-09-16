@@ -25,6 +25,12 @@ using ptr = T*;
 template<typename T>
 using ref = T&;
 
+template<typename T>
+using in = const T&;
+
+template<typename T>
+using out = T&;
+
 //I'll be honest: these names are too short and not super legible.
 //
 //But they're better than the types they're aliasing

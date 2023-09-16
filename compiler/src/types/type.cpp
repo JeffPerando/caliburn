@@ -5,7 +5,7 @@
 
 using namespace caliburn;
 
-void ParsedType::prettyPrint(ref<std::stringstream> ss) const
+void ParsedType::prettyPrint(out<std::stringstream> ss) const
 {
 	if (name == "")
 	{

@@ -11,7 +11,7 @@ namespace caliburn
 	{
 		RealArray(ptr<TypeArray> parent, sptr<GenericArguments> gArgs) : RealType((ptr<BaseType>)parent, gArgs) {}
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override;
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 	};
 
@@ -28,7 +28,7 @@ namespace caliburn
 			)
 		{}
 
-		Member getMember(ref<const std::string> name) const override
+		Member getMember(in<std::string> name) const override
 		{
 			//TODO get length
 			return Member();

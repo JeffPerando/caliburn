@@ -3,7 +3,7 @@
 
 using namespace caliburn;
 
-void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss, bool color) const
+void Error::prettyPrint(in<TextDoc> doc, out<std::stringstream> ss, bool color) const
 {
 	/*
 	TODO:
@@ -167,7 +167,7 @@ void Error::prettyPrint(ref<const TextDoc> doc, ref<std::stringstream> ss, bool 
 
 }
 
-sptr<Error> ErrorHandler::err(std::string msg, sptr<Token> tknStart, sptr<Token> tknEnd)
+sptr<Error> ErrorHandler::err(in<std::string> msg, sptr<Token> tknStart, sptr<Token> tknEnd)
 {
 	auto e = new_sptr<Error>();
 

@@ -16,7 +16,7 @@ namespace caliburn
 
 			Optimizer(sptr<const CompilerSettings> cs) : settings(cs) {}
 
-			void optimize(ref<cllr::Assembler> cllrAsm);
+			void optimize(out<cllr::Assembler> cllrAsm);
 
 		};
 

@@ -76,31 +76,31 @@ namespace caliburn
 
 			SSA createSSA(Opcode op);
 
-			ref<const Instruction> codeFor(SSA id) const;
+			out<Instruction> codeFor(SSA id) const;
 
-			ref<const Instruction> codeAt(size_t off) const;
+			out<Instruction> codeAt(size_t off) const;
 
 			Opcode opFor(SSA id) const;
 
-			SSA push(ref<Instruction> ins);
+			SSA push(in<Instruction> ins);
 
-			SSA pushNew(ref<Instruction> ins)
+			SSA pushNew(out<Instruction> ins)
 			{
 				ins.index = createSSA(ins.op);
 				return push(ins);
 			}
 
-			SSA pushType(ref<Instruction> ins);
+			SSA pushType(in<Instruction> ins);
 
-			void pushAll(std::vector<Instruction> code);
+			void pushAll(in<std::vector<Instruction>> code);
 
 			sptr<LowType> getType(SSA id) const;
 
-			std::pair<uint32_t, SSA> pushInput(std::string name, SSA type);
+			std::pair<uint32_t, SSA> pushInput(in<std::string>, SSA type);
 
-			std::pair<uint32_t, SSA> pushOutput(std::string name, SSA type);
+			std::pair<uint32_t, SSA> pushOutput(in<std::string> name, SSA type);
 
-			uint32_t addString(ref<const std::string> str);
+			uint32_t addString(in<std::string> str);
 
 			ref<const std::string> getString(uint32_t index) const
 			{
@@ -188,7 +188,7 @@ namespace caliburn
 			uint32_t flatten();
 			
 		private:
-			void doBookkeeping(ref<Instruction> i);
+			void doBookkeeping(in<Instruction> i);
 
 		};
 
@@ -199,7 +199,7 @@ namespace caliburn
 		*/
 		struct Emitter
 		{
-			virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) = 0;
+			virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
 
 		};
 

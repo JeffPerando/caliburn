@@ -22,7 +22,7 @@ namespace caliburn
             SSA id = 0;
             std::vector<uint32_t> operands;
 
-            bool operator!=(const Type& rhs) const
+            bool operator!=(in<Type> rhs) const
             {
                 if (opcode != rhs.opcode)
                 {
@@ -42,12 +42,12 @@ namespace caliburn
                 return false;
             }
 
-            bool operator==(const Type& rhs) const
+            bool operator==(in<Type> rhs) const
             {
                 return !(*this != rhs);
             }
 
-            bool operator<(const Type& rhs) const
+            bool operator<(in<Type> rhs) const
             {
                 if (opcode < rhs.opcode)
                     return true;
@@ -77,7 +77,7 @@ namespace caliburn
 
         struct TypeHash
         {
-            size_t operator() (const Type& t) const
+            size_t operator() (in<Type> t) const
             {
                 size_t hash = t.opcode;
 
@@ -109,13 +109,13 @@ namespace caliburn
         public:
             TypeSection(ptr<cllr::SPIRVOutAssembler> spv) : spvAsm(spv) {}
 
-            bool findData(SSA id, ref<Type> out);
+            bool findData(SSA id, out<Type> out);
 
-            SSA findOrMake(SpvOp op, std::vector<uint32_t> args = {}, SSA id = 0);
+            SSA findOrMake(SpvOp op, in<std::vector<uint32_t>> args = {}, SSA id = 0);
 
             //void pushNew(SpvOp op, SSA id, std::vector<uint32_t> args = {});
 
-            void dump(ref<CodeSection> sec) const;
+            void dump(out<CodeSection> sec) const;
 
             SSA typeInt32();
 
@@ -129,7 +129,7 @@ namespace caliburn
 
             SSA typeArray(uint32_t len, SSA inner);
 
-            SSA typeStruct(std::vector<uint32_t> members, std::vector<BuiltIn> decs = {});
+            SSA typeStruct(in<std::vector<uint32_t>> members, in<std::vector<BuiltIn>> decs = {});
 
             SSA typePtr(SSA inner, StorageClass sc);
 

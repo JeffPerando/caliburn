@@ -85,7 +85,7 @@ cllr::SPIRVOutAssembler::SPIRVOutAssembler() : OutAssembler(HostTarget::GPU)
 
 }
 
-uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(ref<cllr::Assembler> cllrAsm)
+uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(in<cllr::Assembler> cllrAsm)
 {
 	auto const& code = cllrAsm.getCode();
 
@@ -108,7 +108,7 @@ uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(ref<cllr::Ass
 	}
 	
 	//Extensions
-	for (auto const& ext : extensions)
+	for (in<std::string> ext : extensions)
 	{
 		spvHeader->pushRaw({ spirv::OpExtension(spirv::SpvStrLen(ext)) });
 		spvHeader->pushStr(ext);
@@ -250,9 +250,9 @@ void cllr::SPIRVOutAssembler::setOpForSSA(spirv::SSA id, spirv::SpvOp op)
 
 }
 
-void cllr::SPIRVOutAssembler::setSpvSSA(cllr::SSA in, spirv::SSA out)
+void cllr::SPIRVOutAssembler::setSpvSSA(cllr::SSA inID, spirv::SSA outID)
 {
-	auto found = ssaAliases.find(in);
+	auto found = ssaAliases.find(inID);
 
 	if (found != ssaAliases.end())
 	{
@@ -260,7 +260,7 @@ void cllr::SPIRVOutAssembler::setSpvSSA(cllr::SSA in, spirv::SSA out)
 		return;
 	}
 
-	ssaAliases.emplace(in, out);
+	ssaAliases.emplace(inID, outID);
 
 }
 
@@ -315,25 +315,25 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpUnknown)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpShaderStage)
 {
-	auto id = out.toSpvID(i.index);
+	auto id = outCode.toSpvID(i.index);
 	auto type = (ShaderType)i.operands[0];
 	auto ex = SHADER_EXECUTION_MODELS.find(type)->second;
 
 	//TODO get output type for shader
-	auto fp = out.types.findOrMake(spirv::OpTypeFloat(), { 32 });
-	auto v4 = out.types.findOrMake(spirv::OpTypeVector(), { fp, 4 });
+	auto fp = outCode.types.findOrMake(spirv::OpTypeFloat(), { 32 });
+	auto v4 = outCode.types.findOrMake(spirv::OpTypeVector(), { fp, 4 });
 	
-	auto fn_v4 = out.types.findOrMake(spirv::OpTypeFunction(0), { v4 });
+	auto fn_v4 = outCode.types.findOrMake(spirv::OpTypeFunction(0), { v4 });
 
 	spirv::FuncControl fnctrl;
 
 	fnctrl.Inline = 1;
 
-	out.main->pushTyped(spirv::OpFunction(), v4, id, {fnctrl, fn_v4});
+	outCode.main->pushTyped(spirv::OpFunction(), v4, id, {fnctrl, fn_v4});
 
-	out.shaderEntries.push_back(spirv::EntryPoint
+	outCode.shaderEntries.push_back(spirv::EntryPoint
 	{
-		id, ex, in.getString(i.operands[1])
+		id, ex, inCode.getString(i.operands[1])
 	});
 
 }
@@ -345,16 +345,16 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpShaderStageEnd)
 	For instance:
 	void main()
 	{
-		out.gl_Position = cbrn_frag();
+		outCode.gl_Position = cbrn_frag();
 	}
 	*/
 
-	auto& code = *out.main.get();
-	auto& types = out.types;
+	auto& code = *outCode.main.get();
+	auto& types = outCode.types;
 
 	code.push(spirv::OpFunctionEnd(), 0, {});
 
-	auto& entry = out.getCurrentEntry();
+	auto& entry = outCode.getCurrentEntry();
 
 	if (entry.type == spirv::ExecutionModel::GLCompute || entry.type == spirv::ExecutionModel::Kernel)
 	{
@@ -369,20 +369,20 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpShaderStageEnd)
 	//auto fp = types.findOrMake(spirv::OpTypeFloat(), { 32 });
 
 	spirv::SSA outType = 0;
-	auto outID = out.builtins.getOutputFor(entry.type, outType);
+	auto outID = outCode.builtins.getOutputFor(entry.type, outType);
 
 	//void main() {
-	auto mainID = out.createSSA();
+	auto mainID = outCode.createSSA();
 	code.pushTyped(spirv::OpFunction(), v, mainID, { spirv::FuncControl(), fn_v_0 });
 
 	//shader call
-	auto callID = out.createSSA();
+	auto callID = outCode.createSSA();
 	code.pushTyped(spirv::OpFunctionCall(0), outType, callID, { entry.func });
 
-	auto accessID = out.createSSA();
+	auto accessID = outCode.createSSA();
 	//TODO doesn't work for fragment shaders (oops)
 	//gl_Position
-	code.pushTyped(spirv::OpAccessChain(1), outType, accessID, { outID, out.consts.findOrMake(u32, 0U) });
+	code.pushTyped(spirv::OpAccessChain(1), outType, accessID, { outID, outCode.consts.findOrMake(u32, 0U) });
 	//=
 	code.push(spirv::OpStore(0), 0, { accessID, callID });
 
@@ -396,44 +396,44 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpShaderStageEnd)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpFunction)
 {
-	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.refs[0]);
+	auto id = outCode.toSpvID(i.index);
+	auto t = outCode.toSpvID(i.refs[0]);
 
 	auto cllrFnArgs = cllr::Finder()
 		.ops({ Opcode::VAR_FUNC_ARG })
 		->setOffset(off + 1)
 		->setLimit(i.operands[0])
-		->find(in.getCode());
+		->find(inCode.getCode());
 
-	auto fnArgs = cinq::map<Instruction, spirv::SSA>(cllrFnArgs, lambda(ref<const Instruction> i) { return out.toSpvID(i.refs[0]); });
+	auto fnArgs = cinq::map<Instruction, spirv::SSA>(cllrFnArgs, lambda(ref<const Instruction> i) { return outCode.toSpvID(i.refs[0]); });
 
 	//put the return type at the start so we can just pass the whole vector
 	fnArgs.emplace(fnArgs.begin(), t);
 
-	auto fnSig = out.types.findOrMake(spirv::OpTypeFunction((uint32_t)fnArgs.size() - 1), fnArgs);
+	auto fnSig = outCode.types.findOrMake(spirv::OpTypeFunction((uint32_t)fnArgs.size() - 1), fnArgs);
 
-	out.main->pushTyped(spirv::OpFunction(), t, id, { fnSig });
+	outCode.main->pushTyped(spirv::OpFunction(), t, id, { fnSig });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpVarFuncArg)
 {
-	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.refs[0]);
+	auto id = outCode.toSpvID(i.index);
+	auto t = outCode.toSpvID(i.refs[0]);
 
-	out.main->pushTyped(spirv::OpFunctionParameter(), t, id, {});
+	outCode.main->pushTyped(spirv::OpFunctionParameter(), t, id, {});
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpFunctionEnd)
 {
-	out.main->push(spirv::OpFunctionEnd(), 0, {});
+	outCode.main->push(spirv::OpFunctionEnd(), 0, {});
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpVarLocal)
 {
-	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.refs[0]);
+	auto id = outCode.toSpvID(i.index);
+	auto t = outCode.toSpvID(i.refs[0]);
 
 	auto sc = spirv::StorageClass::Function;
 
@@ -444,14 +444,14 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpVarLocal)
 		sc = spirv::StorageClass::Workgroup;
 	}
 
-	out.main->pushVar(t, id, sc, out.toSpvID(i.refs[1]));
+	outCode.main->pushVar(t, id, sc, outCode.toSpvID(i.refs[1]));
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpVarGlobal)
 {
-	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.refs[0]);
+	auto id = outCode.toSpvID(i.index);
+	auto t = outCode.toSpvID(i.refs[0]);
 
 	if (i.refs[1] == 0)
 	{
@@ -459,66 +459,66 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpVarGlobal)
 		return;
 	}
 
-	out.gloVars->pushVar(t, id, spirv::StorageClass::CrossWorkgroup, out.toSpvID(i.refs[1]));
+	outCode.gloVars->pushVar(t, id, spirv::StorageClass::CrossWorkgroup, outCode.toSpvID(i.refs[1]));
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpVarShaderIn)
 {
-	auto id = out.toSpvID(i.index);
-	auto innerType = out.toSpvID(i.refs[0]);
+	auto id = outCode.toSpvID(i.index);
+	auto innerType = outCode.toSpvID(i.refs[0]);
 
 	auto constexpr sc = spirv::StorageClass::Input;
 
-	out.gloVars->pushVar(out.types.typePtr(innerType, sc), id, sc, 0);
-	out.decs->decorate(id, spirv::Decoration::Location, { i.operands[0] });
+	outCode.gloVars->pushVar(outCode.types.typePtr(innerType, sc), id, sc, 0);
+	outCode.decs->decorate(id, spirv::Decoration::Location, { i.operands[0] });
 
-	out.getCurrentEntry().io.push_back(id);
+	outCode.getCurrentEntry().io.push_back(id);
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpVarShaderOut)
 {
-	auto id = out.toSpvID(i.index);
-	auto innerType = out.toSpvID(i.refs[0]);
+	auto id = outCode.toSpvID(i.index);
+	auto innerType = outCode.toSpvID(i.refs[0]);
 
 	auto constexpr sc = spirv::StorageClass::Output;
 
-	out.gloVars->pushVar(out.types.typePtr(innerType, sc), id, sc, 0);
-	out.decs->decorate(id, spirv::Decoration::Location, { i.operands[0] });
+	outCode.gloVars->pushVar(outCode.types.typePtr(innerType, sc), id, sc, 0);
+	outCode.decs->decorate(id, spirv::Decoration::Location, { i.operands[0] });
 
-	out.getCurrentEntry().io.push_back(id);
+	outCode.getCurrentEntry().io.push_back(id);
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpVarDescriptor)
 {
-	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.refs[0]);
+	auto id = outCode.toSpvID(i.index);
+	auto t = outCode.toSpvID(i.refs[0]);
 
-	out.gloVars->pushVar(t, id, spirv::StorageClass::Uniform, 0);
+	outCode.gloVars->pushVar(t, id, spirv::StorageClass::Uniform, 0);
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCall)
 {
-	auto id = out.toSpvID(i.index);
-	auto fnID = out.toSpvID(i.refs[0]);
-	auto retType = out.toSpvID(i.outType);
+	auto id = outCode.toSpvID(i.index);
+	auto fnID = outCode.toSpvID(i.refs[0]);
+	auto retType = outCode.toSpvID(i.outType);
 
 	auto cllrFnArgs = cllr::Finder()
 		.ops({ Opcode::CALL_ARG })
 		->references(i.index)
 		->setOffset(off + 1)
 		->setLimit(i.operands[0])
-		->find(in.getCode());
+		->find(inCode.getCode());
 
-	auto fnArgs = cinq::map<Instruction, spirv::SSA>(cllrFnArgs, lambda(ref<const Instruction&> i) { return out.toSpvID(i.refs[0]); });
+	auto fnArgs = cinq::map<Instruction, spirv::SSA>(cllrFnArgs, lambda(ref<const Instruction&> i) { return outCode.toSpvID(i.refs[0]); });
 
 	//push the function ID to pass the whole vector
 	fnArgs.emplace(fnArgs.begin(), fnID);
 
-	out.main->pushTyped(spirv::OpFunctionCall((uint32_t)fnArgs.size() - 1), id, retType, fnArgs);
+	outCode.main->pushTyped(spirv::OpFunctionCall((uint32_t)fnArgs.size() - 1), id, retType, fnArgs);
 
 }
 
@@ -528,64 +528,64 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCallArg) {} //search-ahead
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeVoid)
 {
-	auto id = out.toSpvID(i.index);
+	auto id = outCode.toSpvID(i.index);
 
-	out.types.findOrMake(spirv::OpTypeVoid(), {}, id);
+	outCode.types.findOrMake(spirv::OpTypeVoid(), {}, id);
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeFloat)
 {
-	auto fid = out.types.findOrMake(spirv::OpTypeFloat(), { i.operands[0] });
+	auto fid = outCode.types.findOrMake(spirv::OpTypeFloat(), { i.operands[0] });
 
-	out.setSpvSSA(i.index, fid);
+	outCode.setSpvSSA(i.index, fid);
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeIntSign)
 {
-	auto fid = out.types.findOrMake(spirv::OpTypeInt(), { i.operands[0], 1 });
+	auto fid = outCode.types.findOrMake(spirv::OpTypeInt(), { i.operands[0], 1 });
 
-	out.setSpvSSA(i.index, fid);
+	outCode.setSpvSSA(i.index, fid);
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeIntUnsign)
 {
-	auto fid = out.types.findOrMake(spirv::OpTypeInt(), { i.operands[0], 0 });
+	auto fid = outCode.types.findOrMake(spirv::OpTypeInt(), { i.operands[0], 0 });
 
-	out.setSpvSSA(i.index, fid);
+	outCode.setSpvSSA(i.index, fid);
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeArray)//TODO decide on OpTypeRuntimeArray vs. OpTypeArray
 {
-	auto inner = out.toSpvID(i.refs[0]);
+	auto inner = outCode.toSpvID(i.refs[0]);
 
-	auto fid = out.types.findOrMake(spirv::OpTypeRuntimeArray(), { inner });
+	auto fid = outCode.types.findOrMake(spirv::OpTypeRuntimeArray(), { inner });
 
-	out.setSpvSSA(i.index, fid);
+	outCode.setSpvSSA(i.index, fid);
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeVector)
 {
-	auto inner = out.toSpvID(i.refs[0]);
+	auto inner = outCode.toSpvID(i.refs[0]);
 
-	auto fid = out.types.findOrMake(spirv::OpTypeVector(), { inner, i.operands[0] });
+	auto fid = outCode.types.findOrMake(spirv::OpTypeVector(), { inner, i.operands[0] });
 
-	out.setSpvSSA(i.index, fid);
+	outCode.setSpvSSA(i.index, fid);
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeMatrix)
 {
-	auto elemType = out.toSpvID(i.refs[0]);
-	auto colType = out.types.findOrMake(spirv::OpTypeVector(), { elemType, i.operands[0] });
+	auto elemType = outCode.toSpvID(i.refs[0]);
+	auto colType = outCode.types.findOrMake(spirv::OpTypeVector(), { elemType, i.operands[0] });
 
-	auto fid = out.types.findOrMake(spirv::OpTypeMatrix(), { colType, i.operands[1] });
+	auto fid = outCode.types.findOrMake(spirv::OpTypeMatrix(), { colType, i.operands[1] });
 
-	out.setSpvSSA(i.index, fid);
+	outCode.setSpvSSA(i.index, fid);
 
 }
 
@@ -598,20 +598,20 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeStruct)
 		->setOffset(off + 1)
 		->references(i.index)
 		->setLimit(i.operands[0])
-		->find(in.getCode());
+		->find(inCode.getCode());
 
-	auto members = cinq::map<Instruction, spirv::SSA>(cllrMembers, lambda(ref<const Instruction&> i) { return out.toSpvID(i.refs[0]); });
+	auto members = cinq::map<Instruction, spirv::SSA>(cllrMembers, lambda(ref<const Instruction&> i) { return outCode.toSpvID(i.refs[0]); });
 
 	auto memCount = (uint32_t)members.size();
 
-	auto fid = out.types.findOrMake(spirv::OpTypeStruct(memCount), members);
+	auto fid = outCode.types.findOrMake(spirv::OpTypeStruct(memCount), members);
 
 	if (i.operands[0] != memCount)
 	{
 		//TODO complain
 	}
 
-	out.setSpvSSA(i.index, fid);
+	outCode.setSpvSSA(i.index, fid);
 
 }
 
@@ -621,59 +621,59 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpStructEnd) {} //this is just here for valida
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeBool)
 {
-	auto fid = out.types.findOrMake(spirv::OpTypeBool(), {});
+	auto fid = outCode.types.findOrMake(spirv::OpTypeBool(), {});
 
-	out.setSpvSSA(i.index, fid);
+	outCode.setSpvSSA(i.index, fid);
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypePtr)
 {
-	auto inner = out.toSpvID(i.refs[0]);
+	auto inner = outCode.toSpvID(i.refs[0]);
 
-	auto fid = out.types.findOrMake(spirv::OpTypePointer(), { (uint32_t)spirv::StorageClass::Generic, inner });
+	auto fid = outCode.types.findOrMake(spirv::OpTypePointer(), { (uint32_t)spirv::StorageClass::Generic, inner });
 
-	out.setSpvSSA(i.index, fid);
+	outCode.setSpvSSA(i.index, fid);
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeTuple)
 {
-	auto a = out.toSpvID(i.refs[0]);
-	auto b = out.toSpvID(i.refs[1]);
+	auto a = outCode.toSpvID(i.refs[0]);
+	auto b = outCode.toSpvID(i.refs[1]);
 
-	auto fid = out.types.findOrMake(spirv::OpTypeStruct(2), { a, b });
+	auto fid = outCode.types.findOrMake(spirv::OpTypeStruct(2), { a, b });
 
-	out.setSpvSSA(i.index, fid);
+	outCode.setSpvSSA(i.index, fid);
 
 }
 
 /*
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeString)
 {
-	//TODO figure out strings in SPIR-V
+	//TODO figure outCode strings inCode SPIR-V
 }
 */
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpLabel)
 {
-	out.main->push(spirv::OpLabel(), out.toSpvID(i.index));
+	outCode.main->push(spirv::OpLabel(), outCode.toSpvID(i.index));
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpJump)
 {
-	out.main->push(spirv::OpBranch(), 0, { out.toSpvID(i.refs[0]) });
+	outCode.main->push(spirv::OpBranch(), 0, { outCode.toSpvID(i.refs[0]) });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpJumpCond)
 {
-	auto cond = out.toSpvID(i.refs[0]);
-	auto t = out.toSpvID(i.refs[1]);
-	auto f = out.toSpvID(i.refs[2]);
+	auto cond = outCode.toSpvID(i.refs[0]);
+	auto t = outCode.toSpvID(i.refs[1]);
+	auto f = outCode.toSpvID(i.refs[2]);
 
-	out.main->push(spirv::OpBranchConditional(0), 0, { cond, t, f });
+	outCode.main->push(spirv::OpBranchConditional(0), 0, { cond, t, f });
 
 }
 
@@ -687,7 +687,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpAssign)
 	auto lhsVar = i.refs[0];
 	auto rhsVal = i.refs[1];
 
-	out.main->push(spirv::OpStore(0), 0, { out.toSpvID(lhsVar), out.toSpvID(rhsVal) });
+	outCode.main->push(spirv::OpStore(0), 0, { outCode.toSpvID(lhsVar), outCode.toSpvID(rhsVal) });
 
 }
 
@@ -695,9 +695,9 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 {
 	auto cllrOp = (Operator)i.operands[0];
 
-	auto spvLhs = out.toSpvID(i.refs[0]);
-	auto spvRhs = out.toSpvID(i.refs[1]);
-	auto const& outType = in.codeFor(i.outType);
+	auto spvLhs = outCode.toSpvID(i.refs[0]);
+	auto spvRhs = outCode.toSpvID(i.refs[1]);
+	auto const& outType = inCode.codeFor(i.outType);
 
 	auto op = spirv::OpNop();
 	
@@ -758,54 +758,54 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 		//TODO complain
 	}
 
-	auto id = out.toSpvID(i.index);
-	auto spvOutType = out.types.findOrMake(spirv::OpTypeBool(), {});
+	auto id = outCode.toSpvID(i.index);
+	auto spvOutType = outCode.types.findOrMake(spirv::OpTypeBool(), {});
 
-	out.main->pushTyped(op, spvOutType, id, { out.toSpvID(spvLhs), out.toSpvID(spvRhs) });
+	outCode.main->pushTyped(op, spvOutType, id, { outCode.toSpvID(spvLhs), outCode.toSpvID(spvRhs) });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueCast)//TODO check impl
 {
-	out.main->pushTyped(spirv::OpBitcast(), out.toSpvID(i.outType), out.toSpvID(i.index), { out.toSpvID(i.refs[0]) });
+	outCode.main->pushTyped(spirv::OpBitcast(), outCode.toSpvID(i.outType), outCode.toSpvID(i.index), { outCode.toSpvID(i.refs[0]) });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueConstruct)
 {
-	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.outType);
+	auto id = outCode.toSpvID(i.index);
+	auto t = outCode.toSpvID(i.outType);
 
 	auto cllrArgs = cllr::Finder()
 		.ops({ Opcode::CONSTRUCT_ARG })
 		->setOffset(off + 1)
 		->setLimit(i.operands[0])
-		->find(in.getCode());
+		->find(inCode.getCode());
 
-	auto args = cinq::map<Instruction, spirv::SSA>(cllrArgs, lambda(ref<const Instruction&> i) { return out.toSpvID(i.refs[0]); });
+	auto args = cinq::map<Instruction, spirv::SSA>(cllrArgs, lambda(ref<const Instruction&> i) { return outCode.toSpvID(i.refs[0]); });
 
-	out.main->pushTyped(spirv::OpCompositeConstruct((uint32_t)args.size()), t, id, args);
-	//TODO consider calling constructor here. Or in the CLLR. idk.
+	outCode.main->pushTyped(spirv::OpCompositeConstruct((uint32_t)args.size()), t, id, args);
+	//TODO consider calling constructor here. Or inCode the CLLR. idk.
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpConstructArg) {}//search-ahead
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueDeref)
 {
-	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.outType);
+	auto id = outCode.toSpvID(i.index);
+	auto t = outCode.toSpvID(i.outType);
 
 	//TODO check memory operands
-	out.main->pushTyped(spirv::OpLoad(0), t, id, { out.toSpvID(i.refs[0]) });
+	outCode.main->pushTyped(spirv::OpLoad(0), t, id, { outCode.toSpvID(i.refs[0]) });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpand)
 {
-	auto id = out.toSpvID(i.index);
+	auto id = outCode.toSpvID(i.index);
 
-	auto inID = out.toSpvID(i.refs[0]);
-	auto t = in.codeFor(i.outType);
+	auto inID = outCode.toSpvID(i.refs[0]);
+	auto t = inCode.codeFor(i.outType);
 
 	auto spvOp = spirv::OpNop();
 
@@ -827,26 +827,26 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpand)
 		return;
 	}
 
-	out.main->pushTyped(spvOp, out.toSpvID(t.index), id, { inID });
+	outCode.main->pushTyped(spvOp, outCode.toSpvID(t.index), id, { inID });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpr)
 {
-	auto id = out.toSpvID(i.index);
-	auto const& outType = in.codeFor(i.outType);
-	auto spvOutType = out.toSpvID(outType.index);
+	auto id = outCode.toSpvID(i.index);
+	auto const& outType = inCode.codeFor(i.outType);
+	auto spvOutType = outCode.toSpvID(outType.index);
 
 	auto cllrOp = (Operator)i.operands[0];
 
-	auto spvLhs = out.toSpvID(i.refs[0]);
-	auto spvRhs = out.toSpvID(i.refs[1]);
+	auto spvLhs = outCode.toSpvID(i.refs[0]);
+	auto spvRhs = outCode.toSpvID(i.refs[1]);
 
 	if (cllrOp == Operator::POW)
 	{
-		auto lib = out.addImport("GLSL.std.450");
+		auto lib = outCode.addImport("GLSL.std.450");
 
-		out.main->pushTyped(spirv::OpExtInst(2), spvOutType, id, { lib, (uint32_t)spirv::GLSL450Ext::Pow, spvLhs, spvRhs });
+		outCode.main->pushTyped(spirv::OpExtInst(2), spvOutType, id, { lib, (uint32_t)spirv::GLSL450Ext::Pow, spvLhs, spvRhs });
 		return;
 	}
 
@@ -902,22 +902,22 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpr)
 		return;
 	}
 
-	out.main->pushTyped(op, spvOutType, id, { spvLhs, spvRhs });
+	outCode.main->pushTyped(op, spvOutType, id, { spvLhs, spvRhs });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 {
-	auto id = out.toSpvID(i.index);
-	auto spvOutType = out.toSpvID(i.outType);
+	auto id = outCode.toSpvID(i.index);
+	auto spvOutType = outCode.toSpvID(i.outType);
 
-	auto lhs = out.toSpvID(i.refs[0]);
+	auto lhs = outCode.toSpvID(i.refs[0]);
 
 	auto cllrOp = (Operator)i.operands[0];
 
 	auto op = spirv::OpNop();
 
-	auto outType = in.codeFor(i.outType);
+	auto outType = inCode.codeFor(i.outType);
 
 	if (cllrOp == Operator::ABS)
 	{
@@ -937,9 +937,9 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 			return;
 		}
 
-		auto lib = out.addImport("GLSL.std.450");
+		auto lib = outCode.addImport("GLSL.std.450");
 
-		out.main->pushTyped(spirv::OpExtInst(1), spvOutType, id, { lib, (uint32_t)extOp, lhs });
+		outCode.main->pushTyped(spirv::OpExtInst(1), spvOutType, id, { lib, (uint32_t)extOp, lhs });
 		return;
 	}
 	else if (outType.op == Opcode::TYPE_FLOAT)
@@ -987,7 +987,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 		return;
 	}
 
-	out.main->pushTyped(op, spvOutType, id, { lhs });
+	outCode.main->pushTyped(op, spvOutType, id, { lhs });
 
 }
 
@@ -995,51 +995,51 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueInvokePos)
 {
 	//TODO adjust for non-compute shaders
 
-	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.outType);
+	auto id = outCode.toSpvID(i.index);
+	auto t = outCode.toSpvID(i.outType);
 
-	auto u32 = out.types.findOrMake(spirv::OpTypeInt(), { 32, 0 });
-	//auto i32 = out.types.findOrMake(spirv::OpTypeInt(), { 32, 1 });
-	auto ptrIn = out.types.typeInPtr(u32);
+	auto u32 = outCode.types.findOrMake(spirv::OpTypeInt(), { 32, 0 });
+	//auto i32 = outCode.types.findOrMake(spirv::OpTypeInt(), { 32, 1 });
+	auto ptrIn = outCode.types.typeInPtr(u32);
 
-	auto index = out.consts.findOrMake(u32, i.operands[0]);
+	auto index = outCode.consts.findOrMake(u32, i.operands[0]);
 
-	auto globalInvokeXYZ = out.builtins.getBuiltinVar(out.getCurrentEntry().type, spirv::BuiltIn::GlobalInvocationId);
+	auto globalInvokeXYZ = outCode.builtins.getBuiltinVar(outCode.getCurrentEntry().type, spirv::BuiltIn::GlobalInvocationId);
 
-	auto access = out.createSSA();
+	auto access = outCode.createSSA();
 
-	out.main->pushTyped(spirv::OpAccessChain(1), ptrIn, access, { globalInvokeXYZ, index });
-	out.main->pushTyped(spirv::OpLoad(0), u32, id, { access });
+	outCode.main->pushTyped(spirv::OpAccessChain(1), ptrIn, access, { globalInvokeXYZ, index });
+	outCode.main->pushTyped(spirv::OpLoad(0), u32, id, { access });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueInvokeSize)
 {
-	//TODO I don't think this works in non-compute shaders
+	//TODO I don't think this works inCode non-compute shaders
 
-	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.outType);
+	auto id = outCode.toSpvID(i.index);
+	auto t = outCode.toSpvID(i.outType);
 
-	auto u32 = out.types.findOrMake(spirv::OpTypeInt(), { 32, 0 });
-	auto ptrIn = out.types.typeInPtr(u32);
+	auto u32 = outCode.types.findOrMake(spirv::OpTypeInt(), { 32, 0 });
+	auto ptrIn = outCode.types.typeInPtr(u32);
 
-	auto index = out.consts.findOrMake(u32, i.operands[0]);
+	auto index = outCode.consts.findOrMake(u32, i.operands[0]);
 
-	auto globalInvokeXYZ = out.builtins.getBuiltinVar(out.getCurrentEntry().type, spirv::BuiltIn::GlobalSize);
+	auto globalInvokeXYZ = outCode.builtins.getBuiltinVar(outCode.getCurrentEntry().type, spirv::BuiltIn::GlobalSize);
 
-	auto access = out.createSSA();
+	auto access = outCode.createSSA();
 
-	out.main->pushTyped(spirv::OpAccessChain(1), ptrIn, access, { globalInvokeXYZ, index });
-	out.main->pushTyped(spirv::OpLoad(0), u32, id, { access });
+	outCode.main->pushTyped(spirv::OpAccessChain(1), ptrIn, access, { globalInvokeXYZ, index });
+	outCode.main->pushTyped(spirv::OpLoad(0), u32, id, { access });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitArray)
 {
-	auto t = out.toSpvID(i.outType);
+	auto t = outCode.toSpvID(i.outType);
 
 	spirv::Type typeData;
-	if (!out.types.findData(t, typeData))
+	if (!outCode.types.findData(t, typeData))
 	{
 		//TODO complain
 		return;
@@ -1052,14 +1052,14 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitArray)
 		.ops({ Opcode::LIT_ARRAY_ELEM })
 		->setOffset(off + 1)
 		->setLimit(i.operands[0])
-		->find(in.getCode());
+		->find(inCode.getCode());
 
-	auto elems = cinq::map<Instruction, spirv::SSA>(cllrElems, lambda(ref<const Instruction&> i) { return out.toSpvID(i.refs[0]); });
+	auto elems = cinq::map<Instruction, spirv::SSA>(cllrElems, lambda(ref<const Instruction&> i) { return outCode.toSpvID(i.refs[0]); });
 
 	if (elems.size() < reqLength)
 	{
 		//TODO this might be confusing. MIGHT.
-		spirv::SSA fillID = (elems.size() == 1) ? elems[0] : out.consts.findOrMakeNullFor(innerType);
+		spirv::SSA fillID = (elems.size() == 1) ? elems[0] : outCode.consts.findOrMakeNullFor(innerType);
 
 		while (elems.size() < reqLength)
 		{
@@ -1073,7 +1073,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitArray)
 	for (auto e : elems)
 	{
 		//yes, even UNKNOWNs break the constant promise.
-		if (out.getSection(e) != spirv::SpvSection::CONST)
+		if (outCode.getSection(e) != spirv::SpvSection::CONST)
 		{
 			isConst = false;
 			break;
@@ -1085,18 +1085,18 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitArray)
 
 	if (isConst)
 	{
-		spvID = out.consts.findOrMakeComposite(t, elems);
+		spvID = outCode.consts.findOrMakeComposite(t, elems);
 
 	}
 	else
 	{
-		spvID = out.createSSA();
+		spvID = outCode.createSSA();
 
-		out.main->pushTyped(spirv::OpCompositeConstruct((uint32_t)elems.size()), t, spvID, elems);
+		outCode.main->pushTyped(spirv::OpCompositeConstruct((uint32_t)elems.size()), t, spvID, elems);
 
 	}
 
-	out.setSpvSSA(i.index, spvID);
+	outCode.setSpvSSA(i.index, spvID);
 
 }
 
@@ -1104,103 +1104,103 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpLitArrayElem) {} //search-ahead
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitBool)
 {
-	//Don't wory about find + making types in literals; it'll probably be made elsewhere
+	//Don't wory about find + making types inCode literals; it'll probably be made elsewhere
 
-	auto outID = out.consts.findOrMake(out.toSpvID(i.outType), i.operands[0]);
+	auto outID = outCode.consts.findOrMake(outCode.toSpvID(i.outType), i.operands[0]);
 
-	out.setSpvSSA(i.index, outID);
+	outCode.setSpvSSA(i.index, outID);
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitFloat)
 {
-	auto str = in.getString(i.operands[0]);
+	auto str = inCode.getString(i.operands[0]);
 
 	//TODO consider a better algorithm
 	auto v = std::stof(str);
 
-	auto outID = out.consts.findOrMakeFP32(out.toSpvID(i.outType), v);
+	auto outID = outCode.consts.findOrMakeFP32(outCode.toSpvID(i.outType), v);
 
-	out.setSpvSSA(i.index, outID);
+	outCode.setSpvSSA(i.index, outID);
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitInt)
 {
-	auto outID = out.consts.findOrMake(out.toSpvID(i.outType), i.operands[0], i.operands[1]);
+	auto outID = outCode.consts.findOrMake(outCode.toSpvID(i.outType), i.operands[0], i.operands[1]);
 
-	out.setSpvSSA(i.index, outID);
+	outCode.setSpvSSA(i.index, outID);
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitStr)
 {
-	//TODO figure out strings within SPIR-V
+	//TODO figure outCode strings within SPIR-V
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueMember)
 {
-	auto id = out.toSpvID(i.index);
-	auto outT = out.toSpvID(i.outType);
-	auto v = out.toSpvID(i.refs[0]);
+	auto id = outCode.toSpvID(i.index);
+	auto outT = outCode.toSpvID(i.outType);
+	auto v = outCode.toSpvID(i.refs[0]);
 
 	spirv::VarData vData;
 
-	if (!out.main->getVarMeta(v, vData) && !out.gloVars->getVarMeta(v, vData))
+	if (!outCode.main->getVarMeta(v, vData) && !outCode.gloVars->getVarMeta(v, vData))
 	{
 		//TODO complain
 	}
 
-	auto u32 = out.types.findOrMake(spirv::OpTypeInt(), { 32, 0 });
-	auto c = out.consts.findOrMake(u32, i.operands[0]);
+	auto u32 = outCode.types.findOrMake(spirv::OpTypeInt(), { 32, 0 });
+	auto c = outCode.consts.findOrMake(u32, i.operands[0]);
 
-	auto ptrType = out.types.findOrMake(spirv::OpTypePointer(), { (uint32_t)vData.strClass, outT });
+	auto ptrType = outCode.types.findOrMake(spirv::OpTypePointer(), { (uint32_t)vData.strClass, outT });
 
-	auto access = out.createSSA();
+	auto access = outCode.createSSA();
 
-	out.main->pushTyped(spirv::OpAccessChain(1), ptrType, access, { v, c });
-	out.main->pushTyped(spirv::OpLoad(0), outT, id, { access });
+	outCode.main->pushTyped(spirv::OpAccessChain(1), ptrType, access, { v, c });
+	outCode.main->pushTyped(spirv::OpLoad(0), outT, id, { access });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueNull)
 {
-	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.outType);
+	auto id = outCode.toSpvID(i.index);
+	auto t = outCode.toSpvID(i.outType);
 
-	out.main->push(spirv::OpConstantNull(), id, { t });
+	outCode.main->push(spirv::OpConstantNull(), id, { t });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueReadVar)
 {
-	auto outVal = out.toSpvID(i.index);
-	auto inVal = out.toSpvID(i.refs[0]);
-	auto outType = out.toSpvID(i.outType);
+	auto outVal = outCode.toSpvID(i.index);
+	auto inVal = outCode.toSpvID(i.refs[0]);
+	auto outType = outCode.toSpvID(i.outType);
 
-	out.main->pushTyped(spirv::OpLoad(0), outType, outVal, { inVal });
+	outCode.main->pushTyped(spirv::OpLoad(0), outType, outVal, { inVal });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueSign)
 {
-	auto inValue = out.toSpvID(i.refs[0]);
+	auto inValue = outCode.toSpvID(i.refs[0]);
 
-	auto width = in.codeFor(i.outType).operands[0];
+	auto width = inCode.codeFor(i.outType).operands[0];
 	auto words = (width / 32);
 
-	auto uint = out.types.findOrMake(spirv::OpTypeInt(), { width, 0 });
-	auto sint = out.types.findOrMake(spirv::OpTypeInt(), { width, 1 });
+	auto uint = outCode.types.findOrMake(spirv::OpTypeInt(), { width, 0 });
+	auto sint = outCode.types.findOrMake(spirv::OpTypeInt(), { width, 1 });
 
 	spirv::SSA bigInt = 0;
 
 	if (words == 1)
 	{
-		bigInt = out.consts.findOrMake(uint, 0x7FFFFFFFu);
+		bigInt = outCode.consts.findOrMake(uint, 0x7FFFFFFFu);
 	}
 	else if (words == 2)
 	{
-		bigInt = out.consts.findOrMake(uint, 0xFFFFFFFFu, 0x7FFFFFFFu);
+		bigInt = outCode.consts.findOrMake(uint, 0xFFFFFFFFu, 0x7FFFFFFFu);
 	}
 	else
 	{
@@ -1209,80 +1209,80 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueSign)
 
 		bigIntLits[bigIntLits.size() - 1] = 0x7FFFFFFF;
 
-		bigInt = out.createSSA();
+		bigInt = outCode.createSSA();
 		//TODO consider making the constant page able to use any width of constant (currently restricted to 64-bit)
-		out.main->pushTyped(spirv::OpConstant((uint32_t)(bigIntLits.size() - 1)), uint, bigInt, bigIntLits);
+		outCode.main->pushTyped(spirv::OpConstant((uint32_t)(bigIntLits.size() - 1)), uint, bigInt, bigIntLits);
 
 	}
 
-	auto tmp = out.createSSA();
-	auto outValue = out.toSpvID(i.index);
+	auto tmp = outCode.createSSA();
+	auto outValue = outCode.toSpvID(i.index);
 
-	out.main->pushTyped(spirv::OpExtInst(2), uint, tmp, { out.addImport("GLSL.std.450"), (uint32_t)spirv::GLSL450Ext::UMin, inValue, bigInt });
-	out.main->pushTyped(spirv::OpBitcast(), sint, outValue, { tmp });
+	outCode.main->pushTyped(spirv::OpExtInst(2), uint, tmp, { outCode.addImport("GLSL.std.450"), (uint32_t)spirv::GLSL450Ext::UMin, inValue, bigInt });
+	outCode.main->pushTyped(spirv::OpBitcast(), sint, outValue, { tmp });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueSubarray)
 {
-	auto id = out.toSpvID(i.index);
-	auto outT = out.toSpvID(i.outType);
-	auto v = out.toSpvID(i.refs[0]);
+	auto id = outCode.toSpvID(i.index);
+	auto outT = outCode.toSpvID(i.outType);
+	auto v = outCode.toSpvID(i.refs[0]);
 
-	auto index = out.toSpvID(i.refs[1]);
-	auto index2D = out.toSpvID(i.refs[2]);
+	auto index = outCode.toSpvID(i.refs[1]);
+	auto index2D = outCode.toSpvID(i.refs[2]);
 
 	spirv::VarData vData;
 
-	if (!out.main->getVarMeta(v, vData) && !out.gloVars->getVarMeta(v, vData))
+	if (!outCode.main->getVarMeta(v, vData) && !outCode.gloVars->getVarMeta(v, vData))
 	{
 		//TODO complain
 	}
 
-	auto ptrType = out.types.findOrMake(spirv::OpTypePointer(), { (uint32_t)vData.strClass, outT });
+	auto ptrType = outCode.types.findOrMake(spirv::OpTypePointer(), { (uint32_t)vData.strClass, outT });
 
-	auto access = out.createSSA();
+	auto access = outCode.createSSA();
 
 	if (index2D != 0)
 	{
-		out.main->pushTyped(spirv::OpInBoundsAccessChain(1), ptrType, access, { v, index });
+		outCode.main->pushTyped(spirv::OpInBoundsAccessChain(1), ptrType, access, { v, index });
 	}
 	else
 	{
-		out.main->pushTyped(spirv::OpInBoundsAccessChain(2), ptrType, access, { v, index, index2D });
+		outCode.main->pushTyped(spirv::OpInBoundsAccessChain(2), ptrType, access, { v, index, index2D });
 	}
 
-	out.main->pushTyped(spirv::OpLoad(0), outT, id, { access });
+	outCode.main->pushTyped(spirv::OpLoad(0), outT, id, { access });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueUnsign)
 {
-	auto width = in.codeFor(i.outType).operands[0];
+	auto width = inCode.codeFor(i.outType).operands[0];
 
-	auto inValue = out.toSpvID(i.refs[0]);
+	auto inValue = outCode.toSpvID(i.refs[0]);
 
-	auto uint = out.types.findOrMake(spirv::OpTypeInt(), { width, 0 });
-	auto sint = out.types.findOrMake(spirv::OpTypeInt(), { width, 1 });
+	auto uint = outCode.types.findOrMake(spirv::OpTypeInt(), { width, 0 });
+	auto sint = outCode.types.findOrMake(spirv::OpTypeInt(), { width, 1 });
 
-	auto zero = out.consts.findOrMake(sint, 0);
+	auto zero = outCode.consts.findOrMake(sint, 0);
 
-	auto tmp = out.createSSA();
-	auto outValue = out.toSpvID(i.index);
+	auto tmp = outCode.createSSA();
+	auto outValue = outCode.toSpvID(i.index);
 
-	out.main->pushTyped(spirv::OpExtInst(2), sint, tmp, { out.addImport("GLSL.std.450"), (uint32_t)spirv::GLSL450Ext::SMax, inValue, zero });
-	out.main->pushTyped(spirv::OpBitcast(), uint, outValue, { tmp });
+	outCode.main->pushTyped(spirv::OpExtInst(2), sint, tmp, { outCode.addImport("GLSL.std.450"), (uint32_t)spirv::GLSL450Ext::SMax, inValue, zero });
+	outCode.main->pushTyped(spirv::OpBitcast(), uint, outValue, { tmp });
 
 	/* I'm gonna leave the old version here for posterity's sake. And maybe use it if performance for an OpExtInst call is bad enough
-	auto boolType = out.types.findOrMake(spirv::OpTypeBool());
+	auto boolType = outCode.types.findOrMake(spirv::OpTypeBool());
 
-	auto cmp = out.createSSA();
-	auto ltLabel = out.createSSA();
-	auto ltResult = out.createSSA();
-	auto gteLabel = out.createSSA();
-	auto gteResult = out.createSSA();
-	auto endLabel = out.createSSA();
-	auto outValue = out.toSpvID(i.index);
+	auto cmp = outCode.createSSA();
+	auto ltLabel = outCode.createSSA();
+	auto ltResult = outCode.createSSA();
+	auto gteLabel = outCode.createSSA();
+	auto gteResult = outCode.createSSA();
+	auto endLabel = outCode.createSSA();
+	auto outValue = outCode.toSpvID(i.index);
 
 	//The code below should translate to:
 	//if (x < 0) {
@@ -1291,16 +1291,16 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueUnsign)
 	//	  (uint32_t)x
 	//}
 
-	out.main->pushTyped(spirv::OpSLessThan(), boolType, cmp, { inValue, zero });
-	out.main->push(spirv::OpBranchConditional(), 0, { cmp, ltLabel, gteLabel });
-	out.main->push(spirv::OpLabel(), ltLabel);
-	out.main->pushTyped(spirv::OpConstant(), uint, ltResult, { 0 }); //DO NOT USE THE CONSTANT SECTION FOR THIS
-	out.main->push(spirv::OpBranch(), 0, { endLabel });
-	out.main->push(spirv::OpLabel(), gteLabel);
-	out.main->pushTyped(spirv::OpBitcast(), uint, gteResult, { inValue });
-	out.main->push(spirv::OpBranch(), 0, { endLabel });
-	out.main->push(spirv::OpLabel(), endLabel);
-	out.main->pushTyped(spirv::OpPhi(4), uint, outValue, { ltResult, ltLabel, gteResult, gteLabel });
+	outCode.main->pushTyped(spirv::OpSLessThan(), boolType, cmp, { inValue, zero });
+	outCode.main->push(spirv::OpBranchConditional(), 0, { cmp, ltLabel, gteLabel });
+	outCode.main->push(spirv::OpLabel(), ltLabel);
+	outCode.main->pushTyped(spirv::OpConstant(), uint, ltResult, { 0 }); //DO NOT USE THE CONSTANT SECTION FOR THIS
+	outCode.main->push(spirv::OpBranch(), 0, { endLabel });
+	outCode.main->push(spirv::OpLabel(), gteLabel);
+	outCode.main->pushTyped(spirv::OpBitcast(), uint, gteResult, { inValue });
+	outCode.main->push(spirv::OpBranch(), 0, { endLabel });
+	outCode.main->push(spirv::OpLabel(), endLabel);
+	outCode.main->pushTyped(spirv::OpPhi(4), uint, outValue, { ltResult, ltLabel, gteResult, gteLabel });
 	*/
 }
 
@@ -1313,31 +1313,31 @@ TODO: test against the spec. Worried about arrays, vectors.
 */
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueZero)
 {
-	auto id = out.toSpvID(i.index);
-	auto t = out.toSpvID(i.outType);
+	auto id = outCode.toSpvID(i.index);
+	auto t = outCode.toSpvID(i.outType);
 
-	out.main->push(spirv::OpConstantNull(), id, { t });
+	outCode.main->push(spirv::OpConstantNull(), id, { t });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpReturn)
 {
-	out.main->push(spirv::OpReturn(), 0, {});
+	outCode.main->push(spirv::OpReturn(), 0, {});
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpReturnValue)
 {
-	auto val = out.toSpvID(i.refs[0]);
+	auto val = outCode.toSpvID(i.refs[0]);
 
-	out.main->push(spirv::OpReturnValue(), 0, { val });
+	outCode.main->push(spirv::OpReturnValue(), 0, { val });
 
 }
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpDiscard)
 {
-	//out.main->push(spirv::OpTerminateInvocation(), 0, {});
+	//outCode.main->push(spirv::OpTerminateInvocation(), 0, {});
 	//I know it's deprecated, but like... eh.
-	out.main->push(spirv::OpKill(), 0, {});
+	outCode.main->push(spirv::OpKill(), 0, {});
 
 }

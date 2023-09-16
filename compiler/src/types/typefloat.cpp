@@ -3,7 +3,7 @@
 
 using namespace caliburn;
 
-cllr::SSA RealFloat::emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm)
+cllr::SSA RealFloat::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	if (id == 0)
 	{

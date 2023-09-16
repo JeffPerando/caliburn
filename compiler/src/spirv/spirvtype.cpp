@@ -5,7 +5,7 @@
 
 using namespace caliburn::spirv;
 
-bool TypeSection::findData(SSA id, ref<Type> out)
+bool TypeSection::findData(SSA id, out<Type> out)
 {
 	auto found = ssaToType->find(id);
 
@@ -19,7 +19,7 @@ bool TypeSection::findData(SSA id, ref<Type> out)
 	return true;
 }
 
-SSA TypeSection::findOrMake(SpvOp op, std::vector<uint32_t> args, SSA id)
+SSA TypeSection::findOrMake(SpvOp op, in<std::vector<uint32_t>> args, SSA id)
 {
 	auto fid = types->find(Type{ op, 0, args });
 
@@ -64,7 +64,7 @@ void TypeSection::pushNew(SpvOp op, SSA id, std::vector<uint32_t> args)
 
 }
 */
-void TypeSection::dump(ref<CodeSection> sec) const
+void TypeSection::dump(out<CodeSection> sec) const
 {
 	for (auto& [t, id] : *types)
 	{
@@ -109,7 +109,7 @@ SSA TypeSection::typeArray(uint32_t len, SSA inner)
 	return findOrMake(OpTypeArray(), { inner, len });
 }
 
-SSA TypeSection::typeStruct(std::vector<uint32_t> members, std::vector<BuiltIn> decs)
+SSA TypeSection::typeStruct(in<std::vector<uint32_t>> members, in<std::vector<BuiltIn>> decs)
 {
 	auto id = findOrMake(OpTypeStruct((uint32_t)members.size()), members);
 

@@ -21,7 +21,7 @@ namespace caliburn
 
 		std::vector<sptr<ShaderIOVariable>> vtxInputs;
 
-		ShaderStage(ref<uptr<ParsedFn>> fn, sptr<Token> pname) : base(std::move(fn)), parentName(pname)
+		ShaderStage(out<uptr<ParsedFn>> fn, sptr<Token> pname) : base(std::move(fn)), parentName(pname)
 		{
 			type = SHADER_TYPES.find(base->name->str)->second;
 
@@ -34,7 +34,7 @@ namespace caliburn
 		}
 		virtual ~ShaderStage() {}
 
-		bool operator<(ref<const ShaderStage> other) const
+		bool operator<(in<ShaderStage> other) const
 		{
 			return type < other.type;
 		}
@@ -56,7 +56,7 @@ namespace caliburn
 
 		void prettyPrint(ref<std::stringstream> ss) const override {}
 
-		uptr<Shader> compile(sptr<SymbolTable> table, sptr<const CompilerSettings> settings, ref<std::vector<sptr<Error>>> allErrs);
+		uptr<Shader> compile(sptr<SymbolTable> table, sptr<const CompilerSettings> settings, out<std::vector<sptr<Error>>> allErrs);
 
 	};
 
@@ -91,7 +91,7 @@ namespace caliburn
 
 		void declareSymbols(sptr<SymbolTable> table) override {}
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, ref<cllr::Assembler> codeAsm) override
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override
 		{
 			return 0;
 		}
@@ -101,7 +101,7 @@ namespace caliburn
 			std::sort(stages.begin(), stages.end());
 		}
 
-		std::vector<uptr<Shader>> compile(sptr<SymbolTable> table, sptr<CompilerSettings> settings, ref<std::vector<sptr<Error>>> compileErrs);
+		std::vector<uptr<Shader>> compile(sptr<SymbolTable> table, sptr<CompilerSettings> settings, out<std::vector<sptr<Error>>> compileErrs);
 
 	};
 

@@ -50,7 +50,7 @@ namespace caliburn
 		SymbolTable(sptr<SymbolTable> p) : parent(p) {}
 		virtual ~SymbolTable() {}
 
-		bool add(std::string symName, Symbol sym)
+		bool add(in<std::string> symName, in<Symbol> sym)
 		{
 			if (symbols.find(symName) != symbols.end())
 			{
@@ -62,7 +62,7 @@ namespace caliburn
 			return true;
 		}
 
-		Symbol find(std::string symName) const
+		Symbol find(in<std::string> symName) const
 		{
 			auto result = symbols.find(symName);
 
@@ -79,7 +79,7 @@ namespace caliburn
 			return Symbol();
 		}
 
-		bool has(std::string symName) const
+		bool has(in<std::string> symName) const
 		{
 			return !std::holds_alternative<std::monostate>(find(symName));
 		}

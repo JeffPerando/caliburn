@@ -17,7 +17,7 @@ namespace caliburn
 		const std::vector<T> vec;
 		size_t index = 0;
 	public:
-		Buffer(ref<std::vector<T>> backend) : vec(backend) {}
+		Buffer(in<std::vector<T>> backend) : vec(backend) {}
 
 		/*
 		Direct accessor

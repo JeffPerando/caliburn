@@ -19,7 +19,7 @@ namespace caliburn
             uint32_t lower = 0;
             uint32_t upper = 0;
 
-            bool operator<(const Constant& rhs) const
+            bool operator<(in<Constant> rhs) const
             {
                 if (type < rhs.type)
                     return true;
@@ -45,7 +45,7 @@ namespace caliburn
             SSA id = 0;
             std::vector<uint32_t> data;
 
-            bool operator<(const CompositeConst& rhs) const
+            bool operator<(in<CompositeConst> rhs) const
             {
                 if (typeID < rhs.typeID)
                     return true;
@@ -101,11 +101,11 @@ namespace caliburn
 
             SSA findOrMake(SSA t, uint32_t low, uint32_t high = 0);
 
-            SSA findOrMakeComposite(SSA t, std::vector<uint32_t> data);
+            SSA findOrMakeComposite(SSA t, in<std::vector<uint32_t>> data);
 
             SSA findOrMakeNullFor(SSA t);
 
-            void dump(ref<CodeSection> sec) const;
+            void dump(out<CodeSection> sec) const;
 
         };
 

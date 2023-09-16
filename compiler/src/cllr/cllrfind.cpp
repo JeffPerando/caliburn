@@ -5,7 +5,7 @@
 
 using namespace caliburn::cllr;
 
-ptr<Finder> Finder::ops(std::vector<Opcode> xs)
+ptr<Finder> Finder::ops(in<std::vector<Opcode>> xs)
 {
 	opcodes.insert(xs.end(), xs.begin(), xs.end());
 
@@ -14,7 +14,7 @@ ptr<Finder> Finder::ops(std::vector<Opcode> xs)
 	return this;
 }
 
-ptr<Finder> Finder::operands(std::array<uint32_t, 3> xs)
+ptr<Finder> Finder::operands(in<std::array<uint32_t, 3>> xs)
 {
 	op_args.assign(xs.begin(), xs.end());
 
@@ -49,7 +49,7 @@ ptr<Finder> Finder::setLimit(uint32_t max)
 	return this;
 }
 
-InstructionVec Finder::find(ref<const InstructionVec> code)
+InstructionVec Finder::find(in<InstructionVec> code)
 {
 	if (opcodes.empty() && op_args.empty() && refID == 0 && outType == 0)
 	{

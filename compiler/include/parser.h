@@ -37,7 +37,7 @@ namespace caliburn
 	public:
 		const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::PARSER);
 
-		Parser(sptr<CompilerSettings> cs, std::vector<sptr<Token>> tokenVec) : settings(cs), tkns(tokenVec) {}
+		Parser(sptr<CompilerSettings> cs, in<std::vector<sptr<Token>>> tokenVec) : settings(cs), tkns(tokenVec) {}
 		virtual ~Parser() {}
 
 		/*
@@ -61,7 +61,7 @@ namespace caliburn
 		If parsing fails, then the buffer index is reset to the one it was on when the method was called.
 		*/
 		template<typename T>
-		T parseAny(std::vector<ParseMethod<T>> fns);
+		T parseAny(in<std::vector<ParseMethod<T>>> fns);
 
 		/*
 		Checks the current token for the starting token, then invokes the function, then checks for the end token.
@@ -70,7 +70,7 @@ namespace caliburn
 
 		If parsing is successful, it will return true.
 		*/
-		bool parseAnyBetween(std::string start, std::function<void()> fn, std::string end);
+		bool parseAnyBetween(in<std::string> start, in<std::function<void()>> fn, in<std::string> end);
 
 		/*
 		Finds a list of comma-separated identifiers.
@@ -108,7 +108,7 @@ namespace caliburn
 
 		The results are stored inside the passed scope statement.
 		*/
-		bool parseScopeEnd(ref<uptr<ScopeStatement>> stmt);
+		bool parseScopeEnd(out<ScopeStatement> stmt);
 
 		/*
 		Parses a type name.
@@ -129,7 +129,7 @@ namespace caliburn
 
 		Hypothetically there are contexts where errors are unneeded, hence the error flag.
 		*/
-		uptr<ScopeStatement> parseScope(std::vector<ParseMethod<uptr<Statement>>> pms, bool err = true);
+		uptr<ScopeStatement> parseScope(in<std::vector<ParseMethod<uptr<Statement>>>> pms, bool err = true);
 
 		/*
 		Parses a top-level declaration according to the Caliburn standard.

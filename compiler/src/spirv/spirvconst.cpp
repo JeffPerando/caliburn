@@ -25,7 +25,7 @@ SSA ConstSection::findOrMake(SSA t, uint32_t low, uint32_t high)
 	return id;
 }
 
-SSA ConstSection::findOrMakeComposite(SSA t, std::vector<uint32_t> data)
+SSA ConstSection::findOrMakeComposite(SSA t, in<std::vector<uint32_t>> data)
 {
 	auto key = CompositeConst{ t, 0, data };
 
@@ -63,7 +63,7 @@ SSA ConstSection::findOrMakeNullFor(SSA t)
 	return nID;
 }
 
-void ConstSection::dump(ref<CodeSection> sec) const
+void ConstSection::dump(out<CodeSection> sec) const
 {
 	for (auto& [typeID, nullID] : *nulls)
 	{
