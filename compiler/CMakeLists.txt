@@ -22,7 +22,7 @@ elseif(CBRN_OUT STREQUAL "DLL")
 	message(STATUS "Compiling Caliburn DLL")
 	add_library(${PROJECT_NAME} SHARED ${CALIBURN_SOURCES})
 else()
-	message(STATUS "Please set Caliburn's output via CBRN_OUT; Valid values are DLL and EXE")
+	message(FATAL_ERROR "Please set Caliburn's output via CBRN_OUT; Valid values are DLL and EXE")
 endif()
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
