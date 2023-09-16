@@ -12,7 +12,6 @@ REFERENCE.md
 ## CMake
 compiler/build
 compiler/out
-CMakePresets.json
 
 ## VS Code
 compiler/.vscode
