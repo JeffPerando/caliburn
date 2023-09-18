@@ -107,13 +107,22 @@ int testExprParsing()
 	std::chrono::high_resolution_clock clock{};
 
 	auto startTime = clock.now();
-	auto v = p.parseExpr();
+	auto v = p.parseAnyValue();
 	auto time = clock.now() - startTime;
 
 	std::cout << (v == nullptr ? "NULL" : v->prettyStr()) << '\n';
 	std::cout << "Time taken: " << (time.count() * 0.000001f) << " ms\n";
 
 	totalTime += time.count();
+
+	std::vector<std::string> errs;
+
+	p.errors->printout(errs, *doc, true);
+
+	for (auto& e : errs)
+	{
+		std::cout << e << '\n';
+	}
 
 	return 0;
 }
@@ -125,8 +134,8 @@ int main()
 	std::cout << sizeof(sptr<caliburn::Token>);
 	std::cout << "\033[0m\n";
 	*/
-	//testShaderCompile();
-	
+	testExprParsing();
+	/*
 	auto const takes = 20;
 
 	for (int i = 0; i < takes; ++i)
@@ -135,6 +144,6 @@ int main()
 	}
 
 	std::cout << "Average time: " << ((totalTime / static_cast<double>(takes)) * 0.000001) << " ms\n";
-	
+	*/
 	return 0;
 }

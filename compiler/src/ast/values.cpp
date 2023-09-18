@@ -421,11 +421,14 @@ void ExpressionValue::prettyPrint(out<std::stringstream> ss) const
 	}
 	else
 	{
+		//un-comment the parentheses if you're struggling
+		ss << '(';
 		lValue->prettyPrint(ss);
 
 		ss << ' ' << opStr << ' ';
 
 		rValue->prettyPrint(ss);
+		ss << ')';
 	}
 	
 }
@@ -504,7 +507,7 @@ void UnaryValue::prettyPrint(out<std::stringstream> ss) const
 	{
 		ss << end->str;
 	}
-
+	
 }
 
 void FnCallValue::prettyPrint(out<std::stringstream> ss) const

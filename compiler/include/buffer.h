@@ -32,7 +32,7 @@ namespace caliburn
 		*/
 		bool hasRem(size_t count) const
 		{
-			return (index + count) <= vec.size();
+			return (index + count) < vec.size();
 		}
 
 		/*
@@ -74,6 +74,16 @@ namespace caliburn
 		const T& peekBack(size_t off)
 		{
 			return vec.at(index - off);
+		}
+
+		const T& first()
+		{
+			return vec.front();
+		}
+
+		const T& last()
+		{
+			return vec.back();
 		}
 
 		/*

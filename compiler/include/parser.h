@@ -260,7 +260,7 @@ namespace caliburn
 		/*
 		Parses high-precedent values which can be terms in a math expression.
 		*/
-		sptr<Value> parseNonExpr();
+		sptr<Value> parseTerm();
 
 		/*
 		Parses all forms of literals, including int, float, bool, string, array, and keyword values.

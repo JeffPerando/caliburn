@@ -1327,7 +1327,7 @@ sptr<Value> Parser::parseAnyValue()
 	return parseAny(methods);
 }
 
-sptr<Value> Parser::parseNonExpr()
+sptr<Value> Parser::parseTerm()
 {
 	std::vector<ParseMethod<sptr<Value>>> initParsers =
 		{ &Parser::parseParenValue, &Parser::parseUnaryValue, &Parser::parseLiteral, &Parser::parseAnyFnCall, &Parser::parseAnyAccess };
@@ -1488,11 +1488,11 @@ sptr<Value> Parser::parseUnaryValue()
 
 		if (first->str == "sign")
 		{
-			return new_sptr<SignValue>(first, parseNonExpr());
+			return new_sptr<SignValue>(first, parseTerm());
 		}
 		else if (first->str == "unsign")
 		{
-			return new_sptr<UnsignValue>(first, parseNonExpr());
+			return new_sptr<UnsignValue>(first, parseTerm());
 		}
 
 		tkns.rewind();
@@ -1510,15 +1510,25 @@ sptr<Value> Parser::parseUnaryValue()
 
 			unary->start = first;
 			unary->op = foundOp->second;
-			unary->val = parseExpr();
-
+			unary->val = parseTerm();
+			
 			if (foundOp->second == Operator::ABS)
 			{
+				if (!tkns.hasCur())
+				{
+					auto e = errors->err("Could not find end of absolute operator", first);
+					
+					return nullptr;
+				}
+
 				sptr<Token> absEnd = tkns.cur();
 
 				if (absEnd->str != "|")
 				{
 					auto e = errors->err("Absolute operator values must end with |", absEnd);
+
+					e->note("Unary operators, like abs, only looks for a single term. If you're trying to put an expression inside an abs op, put it in parentheses");
+					e->note("Like so: |(x - 2)|");
 
 					return nullptr;
 				}
@@ -1632,7 +1642,7 @@ sptr<Value> Parser::parseAccess(sptr<Value> target)
 
 sptr<Value> Parser::parseExpr()
 {
-	auto start = parseNonExpr();
+	auto start = parseTerm();
 
 	if (start == nullptr)
 	{
@@ -1667,40 +1677,46 @@ sptr<Value> Parser::parseExpr()
 
 	while (tkns.hasRem(2))
 	{
-		auto& opTkn = tkns.cur();
+		//size_t last = tkns.currentIndex();
 
-		if (opTkn->type != TokenType::OPERATOR)
-		{
-			break;
-		}
-
-		auto found = INFIX_OPS.find(opTkn->str);
-		if (found == INFIX_OPS.end())
-		{
-			break;
-		}
-
-		tkns.consume();
-
-		auto op = found->second;
-		auto opWeightCur = OP_PRECEDENCE.at(op);
+		sptr<Token> opTkn = tkns.cur();
+		sptr<Value> term = nullptr;
+		auto op = Operator::UNKNOWN;
 		
-		if (!ops.empty() && OP_PRECEDENCE.at(ops.top()) > opWeightCur)
+		if (opTkn->type == TokenType::OPERATOR)
 		{
-			makeExpr();
+			auto found = INFIX_OPS.find(opTkn->str);
+
+			if (found == INFIX_OPS.end())
+			{
+				break;
+			}
+
+			tkns.consume();
+			op = found->second;
+			term = parseTerm();
+
 		}
+		else if (opTkn->type == TokenType::START_PAREN)
+		{
+			op = Operator::MUL;
+			term = parseParenValue();
+		}
+		else break;
 
-		ops.push(op);
-
-		auto val = parseNonExpr();
-
-		if (val == nullptr)
+		if (term == nullptr)
 		{
 			auto e = errors->err("Expected a value here", tkns.cur());
 			break;
 		}
 
-		values.push(val);
+		if (!ops.empty() && OP_PRECEDENCE.at(ops.top()) >= OP_PRECEDENCE.at(op))
+		{
+			makeExpr();
+		}
+
+		ops.push(op);
+		values.push(term);
 
 	}
 	
