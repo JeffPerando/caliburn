@@ -39,12 +39,6 @@ namespace caliburn
 		Buffer<char> buf;
 		TextPos pos;
 
-		/*
-		This exists... for some reason.
-		I couldn't tell you why though. It completely breaks the parser.
-		*/
-		bool significantWhitespace = false;
-
 		std::array<CharType, 128> asciiTypes;
 
 		sptr<Token> makeCharTkn(TokenType t)
@@ -69,11 +63,6 @@ namespace caliburn
 		Running this multiple times in a row invokes UB. And by that I mean you'll probably get bupkis the second time.
 		*/
 		std::vector<sptr<Token>> tokenize();
-
-		void enableSignificantWhitespace()
-		{
-			significantWhitespace = true;
-		}
 
 	private:
 		/*

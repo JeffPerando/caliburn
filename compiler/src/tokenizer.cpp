@@ -64,82 +64,6 @@ CharType Tokenizer::getType(char chr) const
 	return asciiTypes[chr];
 }
 
-std::string Tokenizer::findStr()
-{
-	char delim = buf.cur();
-	sptr<Token> startTkn = makeCharTkn(TokenType::UNKNOWN);
-
-	std::stringstream ss;
-	bool foundDelim = false;
-
-	while (buf.hasCur())
-	{
-		char current = buf.cur();
-
-		if (current == '\\')
-		{
-			//Escaped character; skip the backslash and whatever comes after
-			buf.consume(2);
-			pos.move(2);
-			continue;
-		}
-
-		/*
-		Newlines are skipped in string literals, and trailing whitespace is also skipped.
-
-		Note to self: consider just writing a function for this since it shares some logic with whitespace
-		*/
-		if (current == '\n')
-		{
-			pos.newline();
-			doc->startLine(buf.currentIndex() + 1);
-
-			while (buf.hasCur())
-			{
-				char ws = buf.next();
-
-				if (getType(ws) != CharType::WHITESPACE)
-					break;
-
-				if (ws == '\n')
-				{
-					pos.newline();
-					doc->startLine(buf.currentIndex() + 1);
-
-				}
-				else
-				{
-					pos.move();
-				}
-
-			}
-
-			continue;
-		}
-
-		if (current == delim)
-		{
-			buf.consume();
-			pos.move();
-			foundDelim = true;
-			break;
-		}
-
-		ss << current;
-		buf.consume();
-		pos.move();
-
-	}
-
-	if (!foundDelim)
-	{
-		errors->err("Unescaped string", startTkn);
-		return "";
-	}
-
-	return ss.str();
-}
-
 size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 {
 	auto validIntChars = &DEC_INTS;
@@ -357,8 +281,10 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 	while (buf.hasCur())
 	{
+		const size_t start = buf.currentIndex();
 		const char current = buf.cur();
 
+		//Caliburn currently only supports ASCII
 		if (current > 127)
 		{
 			errors->err("Unidentifiable character", makeCharTkn(TokenType::UNKNOWN));
@@ -369,55 +295,55 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 		const CharType type = getType(current);
 
-		//See https://en.wikipedia.org/w/index.php?title=Newline
+		auto tknType = TokenType::UNKNOWN;
+		std::string tknContent = "";
+		size_t tknLen = 0;
 
-		//So there's 2 major line endings we care about:
-		//Windows \n
-		//Linux/MacOS \r\n
-		//Result: We don't care about \r. We just don't. We see it, we skip it. That way line counts are kept sane.
 		if (type == CharType::WHITESPACE)
 		{
-			if (current == '\r')
-			{
-				//don't increment pos, just pretend we didn't see it
-				//NOTE: with the increased usage of TextPos for strings, this might be a dumb idea.
-				buf.consume();
-				continue;
-			}
-
-			if (significantWhitespace)
-			{
-				tokens.push_back(makeCharTkn(TokenType::WHITESPACE));
-			}
+			/*
+			See https://en.wikipedia.org/w/index.php?title=Newline
+			So there's 2 major line endings we care about:
+			Windows \n
+			Linux/MacOS \r\n
+			Result: We don't care about \r. We just don't. We see it, we skip it. That way line counts are kept sane.
+			*/
 
 			if (current == '\n')
 			{
 				pos.newline();
 				doc->startLine(buf.currentIndex() + 1);
 			}
-			else
+			else if (current != '\r')
 			{
 				pos.move();
 			}
 
 			buf.consume();
-
+			continue;
 		}
 		else if (type == CharType::COMMENT)
 		{
 			//skip to the end of the line, which will later invoke the whitespace code above
 			while (buf.hasCur())
 			{
-				if (buf.cur() == '\n')
+				char commentChar = buf.cur();
+
+				if (commentChar == '\n')
 				{
 					break;
 				}
+				else if (commentChar != '\r')
+				{
+					pos.move();
+				}
 
-				pos.move();
 				buf.consume();
 
 			}
 
+			//go back to the start
+			continue;
 		}
 		else if (type == CharType::IDENTIFIER || type == CharType::INT)
 		{
@@ -430,12 +356,11 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			*/
 
 			std::string intLit = "";
-			TokenType intType = TokenType::UNKNOWN;
+			
+			const size_t wordLen = findIdentifierLen();
+			const size_t intLen = findIntLiteral(tknType, intLit);
 
-			const size_t wordOffset = findIdentifierLen();
-			const size_t intOffset = findIntLiteral(intType, intLit);
-
-			if (intOffset == 0 && wordOffset == 0)
+			if (intLen == 0 && wordLen == 0)
 			{
 				//I don't know how this could be possible. Maybe a code regression?
 				errors->err("Zero-width identifier/integer found", makeCharTkn(TokenType::UNKNOWN));
@@ -444,69 +369,126 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 				continue;
 			}
 
-			if (wordOffset > intOffset)
+			if (wordLen > intLen)
 			{
-				const auto wordStr = doc->text.substr(buf.currentIndex(), wordOffset);
-				auto wordType = TokenType::IDENTIFIER;
+				tknContent = doc->text.substr(buf.currentIndex(), wordLen);
+				tknLen = wordLen;
+				tknType = TokenType::IDENTIFIER;
 
-				//Looks for a keyword
-				if (std::binary_search(KEYWORDS.begin(), KEYWORDS.end(), wordStr))
+				if (KEYWORDS.count(tknContent))
 				{
-					auto foundType = STR_TOKEN_TYPES.find(wordStr);
-
-					if (foundType == STR_TOKEN_TYPES.end())
-					{
-						wordType = TokenType::KEYWORD;
-					}
-					else
-					{
-						wordType = foundType->second;
-					}
-
+					tknType = TokenType::KEYWORD;
 				}
 
-				tokens.push_back(new_sptr<Token>(wordStr, wordType, pos, buf.currentIndex(), wordOffset));
-				buf.consume(wordOffset);
-				pos.move(wordOffset);
-
 			}
 			else
 			{
-				tokens.push_back(new_sptr<Token>(intLit, intType, pos, buf.currentIndex(), intOffset));
-				buf.consume(intOffset);
-				pos.move(intOffset);
+				tknContent = intLit;
+				tknLen = intLen;
 
 			}
 
 		}
+		/*
+		//String literals are pain. Why? Because they can be multi-line tokens
 		else if (type == CharType::STRING_DELIM)
 		{
-			const auto start = buf.currentIndex();
-			const auto str = findStr();
+			//only used for error messaging
+			sptr<Token> delimTkn = makeCharTkn(TokenType::UNKNOWN);
 
-			//findStr should offset col and line
-			tokens.push_back(new_sptr<Token>(str, TokenType::LITERAL_STR, pos, start, buf.currentIndex() - start));
-			
-		}
+			std::stringstream ss;
+			char delim = current;
+			bool foundDelim = false;
+
+			buf.consume();
+
+			while (buf.hasCur())
+			{
+				char strChar = buf.cur();
+
+				if (strChar == delim)
+				{
+					buf.consume();
+					pos.move();
+					foundDelim = true;
+					break;
+				}
+
+				if (strChar == '\\')
+				{
+					//Escaped character; skip the backslash and whatever comes after
+					//Note: This will be sound when UTF-8 support is added, since UTF literals won't be needed
+
+					buf.consume(2);
+					pos.move(2);
+					continue;
+				}
+				
+				if (strChar == '\n')
+				{
+					
+					//Newlines are skipped in string literals, and trailing whitespace is also skipped.
+					
+
+					pos.newline();
+					doc->startLine(buf.currentIndex() + 1);
+
+					while (buf.hasCur())
+					{
+						char ws = buf.cur();
+
+						if (getType(ws) != CharType::WHITESPACE)
+							break;
+
+						buf.consume();
+
+						if (ws == '\n')
+						{
+							pos.newline();
+							doc->startLine(buf.currentIndex() + 1);
+						}
+						else if (ws != '\r')
+						{
+							pos.move();
+						}
+
+					}
+
+					continue;
+				}
+
+				ss << strChar;
+				buf.consume();
+				pos.move();
+
+			}
+
+			if (!foundDelim)
+			{
+				errors->err("Unescaped string", delimTkn);
+				break;
+			}
+
+			tknType = TokenType::LITERAL_STR;
+			tknContent = ss.str();
+			tknLen = buf.currentIndex() - start;
+
+		}*/
 		else if (type == CharType::SPECIAL)
 		{
-			const auto specialType = CHAR_TOKEN_TYPES.find(current);
-
-			if (specialType != CHAR_TOKEN_TYPES.end())
-			{
-				tokens.push_back(makeCharTkn(specialType->second));
-			}
-			else
-			{
-				//TODO warn
-			}
-			
-			buf.consume();
-			pos.move();
-
+			/*
+			Special tokens are always 1-char tokens and typically have an override (see TOKEN_TYPE_OVERRIDES)
+			*/
+			tknContent = std::string(1, current);
+			tknLen = 1;
 		}
 		else if (type == CharType::OPERATOR)
 		{
+			/*
+			* The tokenizer here looks ahead to find the longest possible operator, then will pare back the substring
+			* until a valid operator is found.
+			*/
+
 			size_t opLen = 1;
 
 			while (buf.hasRem(opLen))
@@ -520,31 +502,28 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 			}
 			
-			while (opLen > 0)
+			while (opLen > 1)
 			{
 				const auto testOp = doc->text.substr(buf.currentIndex(), opLen);
-				const auto meaning = INFIX_OPS.find(testOp);
-
-				if (meaning != INFIX_OPS.end())
+				
+				if (LONG_OPS.count(testOp))
 				{
-					tokens.push_back(new_sptr<Token>(testOp, TokenType::OPERATOR, pos, buf.currentIndex(), opLen));
-					buf.consume(opLen);
-					pos.move(opLen);
-					break;
-				}
-
-				const auto specMeaning = SPECIAL_OPS.find(testOp);
-
-				if (specMeaning != SPECIAL_OPS.end())
-				{
-					tokens.push_back(new_sptr<Token>(testOp, specMeaning->second, pos, buf.currentIndex(), opLen));
-					buf.consume(opLen);
-					pos.move(opLen);
+					tknType = TokenType::OPERATOR;
+					tknContent = testOp;
+					tknLen = opLen;
 					break;
 				}
 
 				--opLen;
 
+			}
+
+			//Couldn't find anything longer, just pass it along as a char token
+			if (opLen == 1)
+			{
+				tknType = TokenType::OPERATOR;
+				tknContent = std::string(1, current);
+				tknLen = 1;
 			}
 
 		}
@@ -553,8 +532,17 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			//if all else fails, skip it.
 			buf.consume();
 			pos.move();
-
+			continue;
 		}
+
+		if (auto typeOverride = TOKEN_TYPE_OVERRIDES.find(tknContent); typeOverride != TOKEN_TYPE_OVERRIDES.end())
+		{
+			tknType = typeOverride->second;
+		}
+
+		tokens.push_back(new_sptr<Token>(tknContent, tknType, pos, buf.currentIndex(), tknLen));
+		buf.consume(tknLen);
+		pos.move(tknLen);
 
 	}
 

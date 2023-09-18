@@ -4,6 +4,7 @@
 #include <map>
 #include <sstream>
 #include <string_view>
+#include <unordered_set>
 #include <vector>
 
 #include "basic.h"
@@ -28,7 +29,7 @@ namespace caliburn
 	Some of these are also types. These are not valid for users to use; Rather,
 	they are reserved to enable for internal use.
 	*/
-	static const std::vector<std::string_view> KEYWORDS = {
+	static const std::unordered_set<std::string_view> KEYWORDS = {
 		"array", "as",
 		"break",
 		"case", "class", "const", "construct", "continue",
@@ -48,17 +49,12 @@ namespace caliburn
 		"while", "where", "wrapped"
 	};
 
-	/*
-	This is every single character which is also an operator.
-
-	I'm not sure why it's a string.
-	*/
 	static constexpr std::string_view OPERATOR_CHARS = "!$%&*+-/<=>^|~";
 
 	/*
 	These are all the ways a function statement can start.
 	*/
-	static const std::vector<std::string_view> FN_STARTS = {
+	static const std::unordered_set<std::string_view> FN_STARTS = {
 		"construct", "def", "destruct", "op", "override"
 	};
 
@@ -131,8 +127,39 @@ namespace caliburn
 	};
 
 	/*
-	This is every operator, both unary and infix, in Caliburn.
+	A parsed object is simply an object which stores tokens for later interpretation.
+	At minimum, they need to store the first and last tokens within their concept.
+	This abstraction's main purpose is to allow for the easy printing of statements,
+	expressions, values, etc. A good example is in error.h/cpp
 	*/
+	struct ParsedObject
+	{
+		virtual sptr<Token> firstTkn() const = 0;
+
+		virtual sptr<Token> lastTkn() const = 0;
+
+		virtual size_t totalParsedLen() const
+		{
+			auto first = firstTkn();
+			auto last = lastTkn();
+			if (first == nullptr || last == nullptr)
+			{
+				return 0;
+			}
+			return last->textEnd - first->textStart;
+		}
+
+		virtual void prettyPrint(out<std::stringstream> ss) const = 0;
+
+		virtual std::string prettyStr() const
+		{
+			std::stringstream ss;
+			prettyPrint(ss);
+			return ss.str();
+		}
+
+	};
+
 	enum class Operator : uint32_t
 	{
 		UNKNOWN,
@@ -183,76 +210,31 @@ namespace caliburn
 	};
 
 	/*
-	A parsed object is simply an object which stores tokens for later interpretation.
-
-	At minimum, they need to store the first and last tokens within their concept.
-
-	This abstraction's main purpose is to allow for the easy printing of statements,
-	expressions, values, etc. A good example is in error.h/cpp
+	This enables for an arbitrary string to have a specific token type
 	*/
-	struct ParsedObject
-	{
-		virtual sptr<Token> firstTkn() const = 0;
-
-		virtual sptr<Token> lastTkn() const = 0;
-
-		virtual size_t totalParsedLen() const
-		{
-			auto first = firstTkn();
-			auto last = lastTkn();
-
-			if (first == nullptr || last == nullptr)
-			{
-				return 0;
-			}
-
-			return last->textEnd - first->textStart;
-		}
-
-		virtual void prettyPrint(out<std::stringstream> ss) const = 0;
-
-		virtual std::string prettyStr() const
-		{
-			std::stringstream ss;
-
-			prettyPrint(ss);
-
-			return ss.str();
-		}
-
-	};
-
-	/*
-	Individual characters can have their own token types
-	*/
-	static const HashMap<char, TokenType> CHAR_TOKEN_TYPES = {
-		{'(',	TokenType::START_PAREN},
-		{')',	TokenType::END_PAREN},
-		{',',	TokenType::COMMA},
-		{'.',	TokenType::PERIOD},
-		{':',	TokenType::COLON},
-		{';',	TokenType::END},
-		{'[',	TokenType::START_BRACKET},
-		{']',	TokenType::END_BRACKET},
-		{'{',	TokenType::START_SCOPE},
-		{'}',	TokenType::END_SCOPE}
-	};
-
-	/*
-	Some keywords have their own token types as well
-	*/
-	static const HashMap<std::string, TokenType> STR_TOKEN_TYPES = {
+	static const HashMap<std::string_view, TokenType> TOKEN_TYPE_OVERRIDES = {
+		{"=",		TokenType::SETTER},
+		{"(",		TokenType::START_PAREN},
+		{")",		TokenType::END_PAREN},
+		{",",		TokenType::COMMA},
+		{".",		TokenType::PERIOD},
+		{":",		TokenType::COLON},
+		{";",		TokenType::END},
+		{"[",		TokenType::START_BRACKET},
+		{"]",		TokenType::END_BRACKET},
+		{"{",		TokenType::START_SCOPE},
+		{"}",		TokenType::END_SCOPE},
 		{"true",	TokenType::LITERAL_BOOL},
-		{"false",	TokenType::LITERAL_BOOL}
+		{"false",	TokenType::LITERAL_BOOL},
+		{"->",		TokenType::ARROW},
+		{"=>",		TokenType::ARROW}
 	};
 
 	/*
-	This overrides the token type of a string which only contains operator chars
+	Used by the tokenizer to discern valid operator tokens of length 2 or more. Single-char ops are always valid.
 	*/
-	static const std::map<std::string, TokenType> SPECIAL_OPS = {
-		{"=",	TokenType::SETTER},
-		{"->",	TokenType::ARROW},
-		{"=>",	TokenType::ARROW}
+	static const std::unordered_set<std::string_view> LONG_OPS = {
+		"++", "//", "&&", "||", "<<", ">>", "==", "!=", ">=", "<=", "->", "=>"
 	};
 
 	/*

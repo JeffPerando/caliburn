@@ -985,7 +985,7 @@ uptr<ParsedFn> Parser::parseFnLike()
 		return nullptr;
 	}
 
-	if (!std::binary_search(FN_STARTS.begin(), FN_STARTS.end(), first->str))
+	if (!FN_STARTS.count(first->str))
 	{
 		return nullptr;
 	}
@@ -1500,9 +1500,7 @@ sptr<Value> Parser::parseUnaryValue()
 	}
 	else if (first->type == TokenType::OPERATOR)
 	{
-		auto foundOp = UNARY_OPS.find(first->str);
-
-		if (foundOp != UNARY_OPS.end())
+		if (auto foundOp = UNARY_OPS.find(first->str); foundOp != UNARY_OPS.end())
 		{
 			tkns.consume();
 
@@ -1685,17 +1683,13 @@ sptr<Value> Parser::parseExpr()
 		
 		if (opTkn->type == TokenType::OPERATOR)
 		{
-			auto found = INFIX_OPS.find(opTkn->str);
-
-			if (found == INFIX_OPS.end())
+			if (auto found = INFIX_OPS.find(opTkn->str); found != INFIX_OPS.end())
 			{
-				break;
+				tkns.consume();
+				op = found->second;
+				term = parseTerm();
 			}
-
-			tkns.consume();
-			op = found->second;
-			term = parseTerm();
-
+			else break;
 		}
 		else if (opTkn->type == TokenType::START_PAREN)
 		{
