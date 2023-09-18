@@ -73,9 +73,11 @@ namespace caliburn
 		CharType getType(char chr) const;
 
 		/*
-		Looks for and returns a string literal. Assumes it starts on a valid delimiter
+		Looks for the fractional and/or exponential component of a floating-point number.
+
+		Return true if it finds one, meaning the literal is a float.
 		*/
-		std::string findStr();
+		bool findFloatFrac(out<std::stringstream> ss);
 
 		/*
 		Looks for an int literal.

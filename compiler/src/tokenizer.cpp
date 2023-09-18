@@ -1,6 +1,6 @@
 
 #include <algorithm>
-#include <iostream>
+#include <cctype>
 #include <map>
 #include <sstream>
 
@@ -65,18 +65,91 @@ CharType Tokenizer::getType(char chr) const
 	return asciiTypes[chr];
 }
 
+bool Tokenizer::findFloatFrac(out<std::stringstream> ss)
+{
+	bool isFloat = false;
+
+	auto const isInt = lambda(char chr)
+	{
+		return std::binary_search(DEC_INTS.begin(), DEC_INTS.end(), chr);
+	};
+
+	//Find the fractional component
+	if (buf.hasRem(2) && buf.cur() == '.' && isInt(buf.peek(1)))
+	{
+		isFloat = true;
+
+		ss << '.' << buf.peek(1);
+		buf.consume(2);
+
+		while (buf.hasCur())
+		{
+			auto decimal = buf.cur();
+
+			if (isInt(decimal))
+			{
+				ss << decimal;
+				buf.consume();
+			}
+			else break;
+
+		}
+
+	}
+
+	/*
+	Look for an exponent
+	*/
+	if (buf.hasRem(2))
+	{
+		auto exp = buf.cur();
+
+		if (exp != 'e' && exp != 'E')
+		{
+			return isFloat;
+		}
+
+		size_t expStart = buf.index();
+		ss << exp;
+
+		if (auto sign = buf.next(); sign == '+' || sign == '-')
+		{
+			ss << sign;
+			buf.consume();
+		}
+
+		if (!isInt(buf.cur()))
+		{
+			buf.revertTo(expStart);
+			return isFloat;
+		}
+
+		isFloat = true;
+
+		do
+		{
+			ss << buf.cur();
+			buf.consume();
+		}
+		while (buf.hasCur() && isInt(buf.cur()));
+
+	}
+
+	return isFloat;
+}
+
 size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 {
 	auto validIntChars = &DEC_INTS;
 
-	auto const isValidInt = lambda(char chr)
+	auto const isInt = lambda(char chr)
 	{
 		return std::binary_search(validIntChars->begin(), validIntChars->end(), chr);
 	};
 
 	auto first = buf.cur();
 
-	if (!isValidInt(first))
+	if (!isInt(first))
 	{
 		return 0;
 	}
@@ -90,16 +163,13 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 	//find either a hex, binary, or octal integer
 	if (first == '0' && buf.hasRem(3))
 	{
-		char litPrefix = buf.peek(1);
+		char litPrefix = std::tolower(buf.peek(1));
 
 		switch (litPrefix)
 		{
-			case 'x': pass;
-			case 'X': validIntChars = &HEX_INTS; break;
-			case 'b': pass;
-			case 'B': validIntChars = &BIN_INTS; break;
-			case 'c': pass;
-			case 'C': validIntChars = &OCT_INTS; break;
+			case 'b': validIntChars = &BIN_INTS; break;
+			case 'c': validIntChars = &OCT_INTS; break;
+			case 'x': validIntChars = &HEX_INTS; break;
 			default: isPrefixed = false;
 		}
 
@@ -120,114 +190,62 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 	{
 		auto digit = buf.cur();
 		
-		if (isValidInt(digit))
+		if (isInt(digit))
 		{
 			//Make all lowercase hex digits uppercase, for everyone's sanity's sake
-			if (digit > 96)
-				digit -= 32;
-			ss << digit;
-			buf.consume();
+			ss << std::toupper(digit);
 		}
-		else if (digit == '_')
+		else if (digit != '_')
 		{
-			buf.consume();
+			break;
 		}
-		else break;
+
+		buf.consume();
 
 	}
 
 	//find a decimal/float
 	if (!isPrefixed)
 	{
-		//Find the fractional component
-		if (buf.hasRem(2) && buf.cur() == '.')
-		{
-			buf.consume();
-			ss << '.';
-			isFloat = true;
-
-			while (buf.hasCur())
-			{
-				auto dec = buf.cur();
-
-				if (isValidInt(dec))
-				{
-					ss << dec;
-					buf.consume();
-				}
-				else break;
-
-			}
-
-		}
-
-		/*
-		Look for an exponent
-		*/
-		if (buf.hasRem(2))
-		{
-			auto exp = buf.cur();
-
-			if (exp == 'e' || exp == 'E')
-			{
-				ss << exp;
-
-				auto sign = buf.next();
-
-				if (sign == '+' || sign == '-')
-				{
-					ss << sign;
-					buf.consume();
-				}
-
-				while (buf.hasCur() && isValidInt(buf.cur()))
-				{
-					ss << buf.cur();
-					buf.consume();
-				}
-
-			}
-
-		}
-
+		isFloat = findFloatFrac(ss);
 	}
 
-	auto typeSuffix = "int";
+	auto typeName = "int";
 	auto width = 32;
 
 	/*
-	Caliburn int literals have C-like suffixes. This bit of code finds one.
+	Caliburn outer-facing int literals have C-like suffixes. This bit of code finds one.
+
+	Internally, we convert this to a more Rust-like suffix prefaced with an underscore.
+	So 1f gets coverted to 1_fp32, 2.5f becomes 2.5_fp32, etc. This maintains outward-facing
+	code aesthetics while giving the compiler itself the tools to very quickly parse a float
 	*/
 	if (buf.hasCur())
 	{
-		auto suffix = buf.cur();
+		auto suffix = std::tolower(buf.cur());
 		buf.consume();
 
-		//lowercase
-		if (suffix > 96)
-			suffix -= 32;
-
-		if (suffix == 'F')
+		if (suffix == 'f')
 		{
 			isFloat = true;
 		}
-		else if (suffix == 'D')
+		else if (suffix == 'd')
 		{
 			width = 64;
 			isFloat = true;
 		}
-		else if (suffix == 'U')
+		else if (suffix == 'u')
 		{
-			typeSuffix = "uint";
+			typeName = "uint";
 
-			if (buf.cur() == 'l' || buf.cur() == 'L')
+			if (buf.hasCur() && std::tolower(buf.cur()) == 'l')
 			{
 				buf.consume();
 				width = 64;
 			}
 
 		}
-		else if (suffix == 'L')
+		else if (suffix == 'l')
 		{
 			width = 64;
 		}
@@ -247,12 +265,12 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 
 	//Attach type information to the end of the literal
 	//No, I don't want to expose this syntactically. Those literals look so ugly.
-	ss << '_' << typeSuffix << width;
+	ss << '_' << typeName << width;
 
 	lit = ss.str();
 	type = isFloat ? TokenType::LITERAL_FLOAT : TokenType::LITERAL_INT;
 
-	size_t len = (buf.currentIndex() - startIndex);
+	size_t len = (buf.index() - startIndex);
 
 	//The literal might not be selected
 	buf.revertTo(startIndex);
