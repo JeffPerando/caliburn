@@ -81,7 +81,7 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 		return 0;
 	}
 
-	size_t startIndex = buf.currentIndex();
+	size_t startIndex = buf.index();
 	bool isPrefixed = true;
 	bool isFloat = false;
 
@@ -285,7 +285,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 	while (buf.hasCur())
 	{
-		const size_t start = buf.currentIndex();
+		const size_t start = buf.index();
 		const TextPos startPos = pos;
 		const char current = buf.cur();
 
@@ -317,7 +317,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			if (current == '\n')
 			{
 				pos.newline();
-				doc->startLine(buf.currentIndex() + 1);
+				doc->startLine(buf.index() + 1);
 			}
 			else if (current != '\r')
 			{
@@ -376,7 +376,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 			if (wordLen > intLen)
 			{
-				tknContent = doc->text.substr(buf.currentIndex(), wordLen);
+				tknContent = doc->text.substr(buf.index(), wordLen);
 				tknLen = wordLen;
 				tknType = TokenType::IDENTIFIER;
 
@@ -431,7 +431,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 				{
 					//Newlines are *not* skipped, but trailing whitespace after is
 					ss << '\n';
-					doc->startLine(buf.currentIndex() + 1);
+					doc->startLine(buf.index() + 1);
 					buf.consume();
 					pos.newline();
 					
@@ -504,7 +504,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			
 			while (opLen > 1)
 			{
-				const auto testOp = doc->text.substr(buf.currentIndex(), opLen);
+				const auto testOp = doc->text.substr(buf.index(), opLen);
 				
 				if (LONG_OPS.count(testOp))
 				{
@@ -543,7 +543,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 		buf.consume(tknLen);
 		pos.move(tknLen);
 
-		tokens.push_back(new_sptr<Token>(tknContent, tknType, startPos, start, buf.currentIndex()));
+		tokens.push_back(new_sptr<Token>(tknContent, tknType, startPos, start, buf.index()));
 
 	}
 

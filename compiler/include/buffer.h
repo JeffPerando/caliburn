@@ -15,7 +15,7 @@ namespace caliburn
 	{
 	private:
 		const std::vector<T> vec;
-		size_t index = 0;
+		size_t offset = 0;
 	public:
 		Buffer(in<std::vector<T>> backend) : vec(backend) {}
 
@@ -28,52 +28,52 @@ namespace caliburn
 		}
 
 		/*
-		Returns true if at least count elements are available within the vector from the current index
+		Returns true if at least count elements are available within the vector from the current offset
 		*/
 		bool hasRem(size_t count) const
 		{
-			return (index + count) < vec.size();
+			return remaining() > 0;
 		}
 
 		/*
-		Returns true if the current index points to a valid element in the vector
+		Returns true if the current offset points to a valid element in the vector
 		*/
 		bool hasCur() const
 		{
-			return index < vec.size();
+			return offset < vec.size();
 		}
 
 		/*
-		Fetches the element in vector at index
+		Fetches the element in vector at offset
 		*/
 		const T& cur() const
 		{
-			return vec.at(index);
+			return vec.at(offset);
 		}
 
 		/*
-		Incrments index, then returns the element at it.
+		Incrments offset, then returns the element at it.
 		*/
 		const T& next()
 		{
-			++index;
-			return vec.at(index);
+			++offset;
+			return vec.at(offset);
 		}
 
 		/*
-		Returns the element at (index + offset).
+		Returns the element at (offset + offset).
 		*/
 		const T& peek(size_t off) const
 		{
-			return vec.at(index + off);
+			return vec.at(offset + off);
 		}
 
 		/*
-		Returns the element at (index - offset).
+		Returns the element at (offset - offset).
 		*/
 		const T& peekBack(size_t off)
 		{
-			return vec.at(index - off);
+			return vec.at(offset - off);
 		}
 
 		const T& first()
@@ -87,19 +87,19 @@ namespace caliburn
 		}
 
 		/*
-		Increments the current index. That's it.
+		Increments the current offset. That's it.
 		*/
 		void consume(size_t count = 1)
 		{
-			index += count;
+			offset += count;
 		}
 
 		/*
-		...
+		Returns current index/offset
 		*/
-		size_t currentIndex() const
+		size_t index() const
 		{
-			return index;
+			return offset;
 		}
 
 		size_t length() const
@@ -109,31 +109,31 @@ namespace caliburn
 
 		size_t remaining() const
 		{
-			return length() - index;
+			return length() - offset;
 		}
 
 		/*
-		Manually sets the index.
+		Manually sets the offset.
 
-		Despite the name, no check is done to ensure the passed index is less than the current one.
+		Despite the name, no check is done to ensure the passed offset is less than the current one.
 
-		At this rate, should index be a public member? *shrug*
+		At this rate, should offset be a public member? *shrug*
 		*/
 		void revertTo(size_t i)
 		{
-			index = i;
+			offset = i;
 		}
 
 		/*
-		Subtracts the current index by the passed offset.
+		Subtracts the current offset by the passed offset.
 
 		If this will result in an integer underflow, nothing happens.
 		*/
 		void rewind(size_t off = 1)
 		{
-			if (off <= index)
+			if (off <= offset)
 			{
-				index -= off;
+				offset -= off;
 			}
 		}
 

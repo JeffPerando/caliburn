@@ -43,7 +43,7 @@ namespace caliburn
 
 		sptr<Token> makeCharTkn(TokenType t)
 		{
-			return new_sptr<Token>(buf.cur(), t, pos, buf.currentIndex());
+			return new_sptr<Token>(buf.cur(), t, pos, buf.index());
 		}
 
 	public:

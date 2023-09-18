@@ -73,7 +73,7 @@ std::vector<uptr<Statement>> Parser::parse()
 template<typename T>
 T Parser::parseAny(in<std::vector<ParseMethod<T>>> fns)
 {
-	size_t current = tkns.currentIndex();
+	size_t current = tkns.index();
 
 	for (auto& fn : fns)
 	{
@@ -156,7 +156,7 @@ std::vector<sptr<Token>> Parser::parseIdentifierList()
 sptr<GenericSignature> Parser::parseGenericSig()
 {
 	sptr<Token> first = tkns.cur();
-	auto start = tkns.currentIndex();
+	auto start = tkns.index();
 	
 	if (first->str != GENERIC_START)
 	{
@@ -253,7 +253,7 @@ sptr<GenericArguments> Parser::parseGenericArgs()
 	}
 
 	sptr<Token> first = tkns.cur();
-	auto start = tkns.currentIndex();
+	auto start = tkns.index();
 	
 	if (first->str != GENERIC_START)
 	{
@@ -355,7 +355,7 @@ void Parser::parseSemicolon()
 bool Parser::parseScopeEnd(out<ScopeStatement> stmt)
 {
 	sptr<Token> first = tkns.cur();
-	auto tknIndex = tkns.currentIndex();
+	auto tknIndex = tkns.index();
 	
 	if (first->type != TokenType::KEYWORD)
 	{
@@ -1126,7 +1126,7 @@ uptr<Statement> Parser::parseLogic()
 
 uptr<Statement> Parser::parseControl()
 {
-	auto start = tkns.currentIndex();
+	auto start = tkns.index();
 
 	auto as = parseAllAnnotations();
 
