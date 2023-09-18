@@ -93,8 +93,16 @@ int testExprParsing()
 	auto doc = new_sptr<caliburn::TextDoc>(src);
 	auto cs = new_sptr<caliburn::CompilerSettings>();
 
+	std::chrono::high_resolution_clock clock{};
+
+	auto startTime = clock.now();
+	
 	auto t = caliburn::Tokenizer(doc);
 	auto tkns = t.tokenize();
+	auto p = caliburn::Parser(cs, tkns);
+	auto v = p.parseAnyValue();
+
+	auto time = clock.now() - startTime;
 
 	for (auto const& t : tkns)
 	{
@@ -102,13 +110,6 @@ int testExprParsing()
 	}
 
 	std::cout << '\n';
-
-	auto p = caliburn::Parser(cs, tkns);
-	std::chrono::high_resolution_clock clock{};
-
-	auto startTime = clock.now();
-	auto v = p.parseAnyValue();
-	auto time = clock.now() - startTime;
 
 	std::cout << (v == nullptr ? "NULL" : v->prettyStr()) << '\n';
 	std::cout << "Time taken: " << (time.count() * 0.000001f) << " ms\n";

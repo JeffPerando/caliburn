@@ -102,7 +102,7 @@ namespace caliburn
 
 			uint32_t addString(in<std::string> str);
 
-			ref<const std::string> getString(uint32_t index) const
+			std::string getString(uint32_t index) const
 			{
 				if (strs.empty() || index >= strs.size())
 				{

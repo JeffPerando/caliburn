@@ -1706,7 +1706,7 @@ sptr<Value> Parser::parseExpr()
 
 		if (term == nullptr)
 		{
-			auto e = errors->err("Expected a value here", tkns.cur());
+			auto e = errors->err("Expected a value after here", opTkn);
 			break;
 		}
 
