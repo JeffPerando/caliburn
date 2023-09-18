@@ -12,26 +12,32 @@
 
 static uint64_t totalTime = 0;
 
+std::string read(std::string name)
+{
+	std::ifstream file((std::stringstream() << "./../../../../" << name).str());
+
+	if (!file.is_open())
+	{
+		return "";
+	}
+
+	std::stringstream buf;
+	buf << file.rdbuf();
+	file.close();
+
+	return buf.str();
+}
+
 int testShaderCompile()
 {
+	std::string src = read("shader.cbrn");
+	
 	caliburn::CompilerSettings cs;
 
 	cs.o = caliburn::OptimizeLevel::DEBUG;
 	cs.vLvl = caliburn::ValidationLevel::BASIC;
 	cs.coloredErrors = true;
 	cs.dynTypes.emplace("FP", "float16");
-
-	std::ifstream file("./../../../../shader.cbrn");
-
-	if (!file.is_open())
-	{
-		return -1;
-	}
-
-	std::stringstream buf;
-	buf << file.rdbuf();
-	std::string src = buf.str();
-	file.close();
 
 	caliburn::Compiler cc(cs);
 
@@ -78,17 +84,7 @@ int testShaderCompile()
 
 int testExprParsing()
 {
-	std::ifstream file("./../../../../expr.txt");
-
-	if (!file.is_open())
-	{
-		return -1;
-	}
-
-	std::stringstream buf;
-	buf << file.rdbuf();
-	std::string src = buf.str();
-	file.close();
+	std::string src = read("expr.txt");
 
 	auto doc = new_sptr<caliburn::TextDoc>(src);
 	auto cs = new_sptr<caliburn::CompilerSettings>();
@@ -128,14 +124,40 @@ int testExprParsing()
 	return 0;
 }
 
+void printTokens()
+{
+	std::string src = read("expr.txt");
+	auto doc = new_sptr<caliburn::TextDoc>(src);
+	auto t = caliburn::Tokenizer(doc);
+	auto tkns = t.tokenize();
+
+	std::cout << "Token count: " << tkns.size() << '\n';
+	std::cout << "Line count: " << doc->getLineCount() << '\n';
+
+	for (auto const& t : tkns)
+	{
+		std::cout << '\"' << t->str << '\"' << ' ' << t->pos.toStr() << '\n';
+	}
+
+	std::cout << "Original text:\n";
+	
+	for (size_t line = 0; line < doc->getLineCount(); ++line)
+	{
+		std::cout << (line + 1) << '|' << doc->getLine(line) << '\n';
+	}
+
+}
+
 int main()
 {
+	printTokens();
+
 	/*
 	std::cout << "\033[1;31m";
 	std::cout << sizeof(sptr<caliburn::Token>);
 	std::cout << "\033[0m\n";
 	*/
-	testExprParsing();
+	//return testExprParsing();
 	/*
 	auto const takes = 20;
 

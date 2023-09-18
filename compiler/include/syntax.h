@@ -111,8 +111,8 @@ namespace caliburn
 
 		Token(std::string t,
 			TokenType id = TokenType::IDENTIFIER, TextPos p = TextPos(),
-			uint64_t s = 0, uint64_t off = 0) :
-			str(t), type(id), pos(p), textStart(s), textEnd(s + off) {}
+			uint64_t txtOff = 0, uint64_t txtEnd = 0) :
+			str(t), type(id), pos(p), textStart(txtOff), textEnd(txtEnd) {}
 
 		Token(char c, TokenType id = TokenType::IDENTIFIER,
 			TextPos p = TextPos(), uint64_t off = 0) :

@@ -110,7 +110,7 @@ namespace caliburn
 				return text.substr(off);
 			}
 
-			size_t nextOff = lineOffsets.at(line);
+			size_t nextOff = lineOffsets.at(line + 1);
 
 			return text.substr(off, nextOff - off - 1);
 		}
@@ -118,6 +118,21 @@ namespace caliburn
 		size_t getLineCount() const
 		{
 			return lineOffsets.size();
+		}
+
+		size_t getLineSize(size_t line)
+		{
+			if (line >= lineOffsets.size())
+			{
+				return 0;
+			}
+
+			if ((line + 1) >= lineOffsets.size())
+			{
+				return text.length() - lineOffsets[line];
+			}
+
+			return lineOffsets[line + 1] - lineOffsets[line];
 		}
 
 	};

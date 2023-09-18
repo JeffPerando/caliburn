@@ -1,5 +1,6 @@
 
 #include <algorithm>
+#include <iostream>
 #include <map>
 #include <sstream>
 
@@ -261,18 +262,21 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 
 size_t Tokenizer::findIdentifierLen()
 {
+	size_t len = 0;
+
 	for (size_t i = 0; i < buf.remaining(); ++i)
 	{
 		auto type = getType(buf.peek(i));
 
-		if (type != CharType::IDENTIFIER && type != CharType::INT)
+		if (type == CharType::IDENTIFIER || type == CharType::INT)
 		{
-			return i;
+			++len;
 		}
+		else break;
 
 	}
 
-	return 0;
+	return len;
 }
 
 std::vector<sptr<Token>> Tokenizer::tokenize()
@@ -282,6 +286,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 	while (buf.hasCur())
 	{
 		const size_t start = buf.currentIndex();
+		const TextPos startPos = pos;
 		const char current = buf.cur();
 
 		//Caliburn currently only supports ASCII
@@ -389,8 +394,6 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			}
 
 		}
-		/*
-		//String literals are pain. Why? Because they can be multi-line tokens
 		else if (type == CharType::STRING_DELIM)
 		{
 			//only used for error messaging
@@ -426,13 +429,12 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 				
 				if (strChar == '\n')
 				{
-					
-					//Newlines are skipped in string literals, and trailing whitespace is also skipped.
-					
-
-					pos.newline();
+					//Newlines are *not* skipped, but trailing whitespace after is
+					ss << '\n';
 					doc->startLine(buf.currentIndex() + 1);
-
+					buf.consume();
+					pos.newline();
+					
 					while (buf.hasCur())
 					{
 						char ws = buf.cur();
@@ -440,15 +442,13 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 						if (getType(ws) != CharType::WHITESPACE)
 							break;
 
-						buf.consume();
-
 						if (ws == '\n')
 						{
-							pos.newline();
-							doc->startLine(buf.currentIndex() + 1);
+							break;
 						}
 						else if (ws != '\r')
 						{
+							buf.consume();
 							pos.move();
 						}
 
@@ -471,9 +471,9 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 			tknType = TokenType::LITERAL_STR;
 			tknContent = ss.str();
-			tknLen = buf.currentIndex() - start;
+			//DO NOT SET TOKEN LENGTH
 
-		}*/
+		}
 		else if (type == CharType::SPECIAL)
 		{
 			/*
@@ -540,9 +540,10 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			tknType = typeOverride->second;
 		}
 
-		tokens.push_back(new_sptr<Token>(tknContent, tknType, pos, buf.currentIndex(), tknLen));
 		buf.consume(tknLen);
 		pos.move(tknLen);
+
+		tokens.push_back(new_sptr<Token>(tknContent, tknType, startPos, start, buf.currentIndex()));
 
 	}
 
