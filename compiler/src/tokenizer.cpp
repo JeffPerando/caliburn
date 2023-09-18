@@ -260,7 +260,7 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 	//remember earlier when we checked for a fractional part? Yeah...
 	if (isFloat)
 	{
-		typeSuffix = "float";
+		typeName = "fp";
 	}
 
 	//Attach type information to the end of the literal

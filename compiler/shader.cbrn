@@ -1,5 +1,5 @@
 
-type FP = dynamic<float32>;
+type FP = dynamic<fp32>;
 
 shader TestShader
 {

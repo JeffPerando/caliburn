@@ -216,7 +216,7 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 
 	for (auto bits = MIN_FLOAT_BITS; bits <= MAX_FLOAT_BITS; bits *= 2)
 	{
-		root->add((std::stringstream() << "float" << bits).str(), new_sptr<TypeFloat>(bits));
+		root->add((std::stringstream() << "fp" << bits).str(), new_sptr<TypeFloat>(bits));
 	}
 
 	for (auto len = MIN_VECTOR_LEN; len <= MAX_VECTOR_LEN; ++len)

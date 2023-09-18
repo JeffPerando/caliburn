@@ -37,7 +37,7 @@ int testShaderCompile()
 	cs.o = caliburn::OptimizeLevel::DEBUG;
 	cs.vLvl = caliburn::ValidationLevel::BASIC;
 	cs.coloredErrors = true;
-	cs.dynTypes.emplace("FP", "float16");
+	cs.dynTypes.emplace("FP", "fp16");
 
 	caliburn::Compiler cc(cs);
 
@@ -150,13 +150,12 @@ void printTokens()
 
 int main()
 {
-	printTokens();
-
 	/*
 	std::cout << "\033[1;31m";
 	std::cout << sizeof(sptr<caliburn::Token>);
 	std::cout << "\033[0m\n";
 	*/
+	//return testShaderCompile();
 	//return testExprParsing();
 	/*
 	auto const takes = 20;
@@ -167,6 +166,7 @@ int main()
 	}
 
 	std::cout << "Average time: " << ((totalTime / static_cast<double>(takes)) * 0.000001) << " ms\n";
-	*/
+	
 	return 0;
+	*/
 }
