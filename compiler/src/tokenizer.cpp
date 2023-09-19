@@ -102,9 +102,9 @@ bool Tokenizer::findFloatFrac(out<std::stringstream> ss)
 	*/
 	if (buf.hasRem(2))
 	{
-		auto exp = buf.cur();
+		auto exp = std::tolower(buf.cur());
 
-		if (exp != 'e' && exp != 'E')
+		if (exp != 'e')
 		{
 			return isFloat;
 		}
