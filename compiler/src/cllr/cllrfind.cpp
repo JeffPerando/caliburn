@@ -14,7 +14,7 @@ ptr<Finder> Finder::ops(in<std::vector<Opcode>> xs)
 	return this;
 }
 
-ptr<Finder> Finder::operands(in<std::array<uint32_t, 3>> xs)
+ptr<Finder> Finder::operands(in<OpArray> xs)
 {
 	op_args.assign(xs.begin(), xs.end());
 
@@ -76,7 +76,7 @@ InstructionVec Finder::find(in<InstructionVec> code)
 		{
 			bool valid = true;
 
-			for (uint32_t opInx = 0; opInx < 3; ++opInx)
+			for (uint32_t opInx = 0; opInx < op_args.size(); ++opInx)
 			{
 				if (i.operands[opInx] != op_args[opInx])
 				{

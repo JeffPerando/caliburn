@@ -24,7 +24,7 @@ namespace caliburn
 			virtual ~Finder() {}
 
 			ptr<Finder> ops(in<std::vector<Opcode>> ops);
-			ptr<Finder> operands(in<std::array<uint32_t, 3>> operands);
+			ptr<Finder> operands(in<OpArray> operands);
 			ptr<Finder> references(SSA ref);
 			ptr<Finder> outputs(SSA type);
 			ptr<Finder> setOffset(size_t off);

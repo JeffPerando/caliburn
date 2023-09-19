@@ -25,6 +25,9 @@ namespace caliburn
 	*/
 	namespace cllr
 	{
+		static auto constexpr MAX_OPS = 3;
+		static auto constexpr MAX_REFS = 3;
+
 		struct Assembler;
 		
 		struct Instruction;
@@ -119,6 +122,7 @@ namespace caliburn
 			VALUE_SIGN,
 			VALUE_SUBARRAY,
 			VALUE_UNSIGN,
+			VALUE_VEC_SWIZZLE,
 			VALUE_ZERO,
 
 			RETURN,
@@ -193,6 +197,7 @@ namespace caliburn
 			"Value_Sign",
 			"Value_Subarray",
 			"Value_Unsign",
+			"Value_Vec_Swizzle",
 			"Value_Zero",
 
 			"Return",
@@ -200,22 +205,25 @@ namespace caliburn
 			"Discard"
 		};
 
+		using OpArray = std::array<uint32_t, MAX_OPS>;
+		using RefArray = std::array<SSA, MAX_REFS>;
+
 		struct Instruction
 		{
 			SSA index = 0;
 			Opcode op = Opcode::UNKNOWN;
-			std::array<uint32_t, 3> operands = {};
-			std::array<SSA, 3> refs = {};
+			OpArray operands = {};
+			RefArray refs = {};
 
 			SSA outType = 0;
 			sptr<Token> debugTkn = nullptr;
 
 			Instruction() {}
 
-			Instruction(Opcode op, std::array<uint32_t, 3> ops = {}, std::array<SSA, 3> rs = {}, SSA out = 0) :
+			Instruction(Opcode op, OpArray ops = {}, RefArray rs = {}, SSA out = 0) :
 				op(op), operands(ops), refs(rs), outType(out) {}
 
-			Instruction(SSA id, Opcode op, std::array<uint32_t, 3> ops = {}, std::array<SSA, 3> rs = {}, SSA out = 0) :
+			Instruction(SSA id, Opcode op, OpArray ops = {}, RefArray rs = {}, SSA out = 0) :
 				index(id), op(op), operands(ops), refs(rs), outType(out) {}
 
 			Instruction(in<Instruction> old)
@@ -250,12 +258,26 @@ namespace caliburn
 
 				ss << (uint32_t)op;
 
-				if (operands[0] != 0 || operands[1] != 0 || operands[2] != 0)
-					ss << " [" << operands[0] << ", " << operands[1] << ", " << operands[2] << "]";
+				ss << " [";
+				for (size_t i = 0; i < MAX_OPS; ++i)
+				{
+					ss << operands[i];
 
-				if (refs[0] != 0 || refs[1] != 0 || refs[2] != 0)
-					ss << " {#" << refs[0] << ", #" << refs[1] << ", #" << refs[2] << '}';
-				
+					if ((i + 1) < MAX_OPS)
+						ss << ", ";
+
+				}
+				ss << "] {";
+				for (size_t i = 0; i < MAX_REFS; ++i)
+				{
+					ss << '#' << refs[i];
+
+					if ((i + 1) < MAX_REFS)
+						ss << ", ";
+
+				}
+				ss << '}';
+
 				if (outType != 0)
 					ss << " -> #" << outType;
 
@@ -269,18 +291,20 @@ namespace caliburn
 					return false;
 				}
 
-				for (uint32_t i = 0; i < 3; ++i)
+				for (auto i = 0; i < MAX_OPS; ++i)
 				{
 					if (operands[i] >= rhs.operands[i])
 					{
 						return false;
 					}
+				}
 
+				for (auto i = 0; i < MAX_REFS; ++i)
+				{
 					if (refs[i] >= rhs.refs[i])
 					{
 						return false;
 					}
-
 				}
 
 				return true;
@@ -322,16 +346,27 @@ namespace caliburn
 		{
 			size_t operator()(in<Instruction> i) const
 			{
-				size_t hash = ((size_t)i.op & 0xFFFF) << 48;
+				size_t hash = ((size_t)i.op & 0xFFFF);
+				
+				hash |= ((size_t)i.outType & 0xFFFF) << 16;
 
-				hash |= size_t(i.operands[0] & 0xFF) << 40;
-				hash |= size_t(i.operands[1] & 0xFF) << 32;
-				hash |= size_t(i.operands[2] & 0xFF) << 24;
+				size_t opHash = 0;
 
-				hash |= size_t(i.refs[0] & 0xFF) << 16;
-				hash |= size_t(i.refs[0] & 0xFF) << 8;
-				hash |= size_t(i.refs[0] & 0xFF);
+				for (size_t x = 0; x < MAX_OPS; ++x)
+				{
+					opHash ^= i.operands[x];
+				}
 
+				size_t refHash = 0;
+
+				for (size_t x = 0; x < MAX_REFS; ++x)
+				{
+					refHash ^= i.refs[x];
+				}
+
+				hash |= (opHash & 0xFFFF) << 32;
+				hash |= (refHash & 0xFFFF) << 48;
+				
 				return hash;
 			}
 
