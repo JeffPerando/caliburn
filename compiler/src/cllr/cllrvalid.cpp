@@ -68,6 +68,7 @@ Validator::Validator(sptr<const CompilerSettings> cs) : settings(cs), validators
 	&valid::OpValueSign,
 	&valid::OpValueSubarray,
 	&valid::OpValueUnsign,
+	&valid::OpValueVecSwizzle,
 	&valid::OpValueZero,
 
 	&valid::OpReturn,
@@ -95,8 +96,8 @@ bool Validator::validate(ref<Assembler> codeAsm)
 			e->note({ "Op:", std::string(OP_NAMES[(int)i.op])});
 			e->note({ "ID:", std::to_string(i.index) });
 			e->note({ "Out:", std::to_string(i.outType) });
-			e->note({ "Operands: [", std::to_string(i.operands[0]), std::to_string(i.operands[1]), std::to_string(i.operands[2]), "]" });
-			e->note({ "Refs: [", std::to_string(i.refs[0]), std::to_string(i.refs[1]), std::to_string(i.refs[2]), "]" });
+			e->note({ "Operands: [", std::to_string(i.operands[0]), std::to_string(i.operands[1]), std::to_string(i.operands[2]), std::to_string(i.operands[3]), "]" });
+			e->note({ "Refs: [", std::to_string(i.refs[0]), std::to_string(i.refs[1]), std::to_string(i.refs[2]), std::to_string(i.refs[3]), "]" });
 
 		};
 
@@ -947,6 +948,26 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueUnsign)
 	CLLR_VALID_MAX_REFS(1);
 
 	CLLR_VALID_VALUE(i.refs[0]);
+
+	return ValidReason::VALID;
+}
+
+CLLR_INSTRUCT_VALIDATE(valid::OpValueVecSwizzle)
+{
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_OUT_TYPE(Opcode::TYPE_VECTOR);
+	CLLR_VALID_MAX_REFS(1);
+	CLLR_VALID_VALUE(i.refs[0]);
+
+	const uint32_t outVecLen = codeAsm.codeFor(i.outType).operands[0];
+
+	for (auto x = 0; x < MAX_OPS; ++x)
+	{
+		if (i.operands[x] >= outVecLen)
+		{
+			return ValidReason::INVALID_OPERAND;
+		}
+	}
 
 	return ValidReason::VALID;
 }

@@ -13,6 +13,7 @@
 
 #define CLLR_VALID_HAS_OUT if (i.outType == 0 || !isType(codeAsm.opFor(i.outType))) return ValidReason::INVALID_OUT_TYPE
 #define CLLR_VALID_NO_OUT if (i.outType != 0) return ValidReason::INVALID_OUT_TYPE
+#define CLLR_VALID_OUT_TYPE(op) if (i.outType == 0 || (codeAsm.opFor(i.outType) != op)) return ValidReason::INVALID_OUT_TYPE
 
 #define CLLR_VALID_TYPE(id) if (id == 0 || !isType(codeAsm.opFor(id))) return ValidReason::INVALID_TYPE
 #define CLLR_VALID_VALUE(id) if (id == 0 || !isValue(codeAsm.opFor(id))) return ValidReason::INVALID_VALUE
@@ -149,6 +150,7 @@ namespace caliburn
 			CLLR_INSTRUCT_VALIDATE(OpValueSign);
 			CLLR_INSTRUCT_VALIDATE(OpValueSubarray);
 			CLLR_INSTRUCT_VALIDATE(OpValueUnsign);
+			CLLR_INSTRUCT_VALIDATE(OpValueVecSwizzle);
 			CLLR_INSTRUCT_VALIDATE(OpValueZero);
 
 			CLLR_INSTRUCT_VALIDATE(OpReturn);

@@ -77,6 +77,7 @@ cllr::SPIRVOutAssembler::SPIRVOutAssembler() : OutAssembler(HostTarget::GPU)
 	impls[(uint32_t)Opcode::VALUE_SIGN] = spirv_impl::OpValueSign;
 	impls[(uint32_t)Opcode::VALUE_SUBARRAY] = spirv_impl::OpValueSubarray;
 	impls[(uint32_t)Opcode::VALUE_UNSIGN] = spirv_impl::OpValueUnsign;
+	impls[(uint32_t)Opcode::VALUE_VEC_SWIZZLE] = spirv_impl::OpValueVecSwizzle;
 	impls[(uint32_t)Opcode::VALUE_ZERO] = spirv_impl::OpValueZero;
 
 	impls[(uint32_t)Opcode::RETURN] = spirv_impl::OpReturn;
@@ -1302,6 +1303,24 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueUnsign)
 	outCode.main->push(spirv::OpLabel(), endLabel);
 	outCode.main->pushTyped(spirv::OpPhi(4), uint, outValue, { ltResult, ltLabel, gteResult, gteLabel });
 	*/
+}
+
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueVecSwizzle)
+{
+	auto outVecLen = inCode.codeFor(i.outType).operands[0];
+
+	auto id = outCode.toSpvID(i.index);
+	auto t = outCode.toSpvID(i.outType);
+	auto inVec = outCode.toSpvID(i.refs[0]);
+
+	std::vector<uint32_t> args = { inVec, inVec };
+	for (size_t x = 0; x < outVecLen; ++x)
+	{
+		args.push_back(i.operands[x]);
+	}
+
+	outCode.main->pushTyped(spirv::OpVectorShuffle(outVecLen), t, id, args);
+
 }
 
 /*

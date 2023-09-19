@@ -117,6 +117,7 @@ namespace caliburn
 			CLLR_SPIRV_IMPL(OpValueSign);
 			CLLR_SPIRV_IMPL(OpValueSubarray);
 			CLLR_SPIRV_IMPL(OpValueUnsign);
+			CLLR_SPIRV_IMPL(OpValueVecSwizzle);
 			CLLR_SPIRV_IMPL(OpValueZero);
 
 			CLLR_SPIRV_IMPL(OpReturn);

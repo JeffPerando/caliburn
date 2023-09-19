@@ -25,8 +25,8 @@ namespace caliburn
 	*/
 	namespace cllr
 	{
-		static auto constexpr MAX_OPS = 3;
-		static auto constexpr MAX_REFS = 3;
+		static auto constexpr MAX_OPS = 4;
+		static auto constexpr MAX_REFS = 4;
 
 		struct Assembler;
 		
