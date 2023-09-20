@@ -1263,8 +1263,8 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueUnsign)
 
 	auto inValue = outCode.toSpvID(i.refs[0]);
 
-	auto uint = outCode.types.findOrMake(spirv::OpTypeInt(), { width, 0 });
-	auto sint = outCode.types.findOrMake(spirv::OpTypeInt(), { width, 1 });
+	auto uint = outCode.types.typeUInt(width);
+	auto sint = outCode.types.typeInt(width);
 
 	auto zero = outCode.consts.findOrMake(sint, 0);
 

@@ -117,11 +117,11 @@ namespace caliburn
 
             void dump(out<CodeSection> sec) const;
 
-            SSA typeInt32();
+            SSA typeInt(uint32_t width = 32);
 
-            SSA typeUInt32();
+            SSA typeUInt(uint32_t width = 32);
 
-            SSA typeFP32();
+            SSA typeFP(uint32_t width = 32);
 
             SSA typeBool();
 

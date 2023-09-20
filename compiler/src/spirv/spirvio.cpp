@@ -38,8 +38,8 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 
 	spirv::SSA id = 0;
 
-	auto i32 = t.typeInt32();
-	auto u32 = t.typeUInt32();
+	auto i32 = t.typeInt();
+	auto u32 = t.typeUInt();
 
 	bool normalDecorate = true;
 
@@ -50,7 +50,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	case BuiltIn::ClipDistance: pass; //TODO this seems to be used by frag shaders as well
 	case BuiltIn::CullDistance: { //vertex
 		//TODO this struct is used by multiple kinds of IO. It's also inside arrays.
-		auto f32 = t.typeFP32();
+		auto f32 = t.typeFP();
 		auto v4_f32 = t.typeVec(4, f32);
 
 		/*
@@ -88,13 +88,13 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 		id = makeOutVar(i32);
 	}; break;
 	case BuiltIn::TessLevelOuter: { //tess control
-		auto f32 = t.typeFP32();
+		auto f32 = t.typeFP();
 		auto fa4 = t.typeArray(4, f32);
 
 		id = makeOutVar(fa4);
 	}; break;
 	case BuiltIn::TessLevelInner: { //tess control
-		auto f32 = t.typeFP32();
+		auto f32 = t.typeFP();
 		auto fa2 = t.typeArray(2, f32);
 
 		id = makeOutVar(fa2);
@@ -127,7 +127,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::SampleMask: {}; break; //FIXME this seems to be a runtime array.
 	case BuiltIn::FragDepth: { //frag
-		id = makeOutVar(t.typeFP32());
+		id = makeOutVar(t.typeFP());
 	}; break;
 	case BuiltIn::HelperInvocation: {}; break;
 	case BuiltIn::NumWorkgroups: { //GLCompute

@@ -74,19 +74,19 @@ void TypeSection::dump(out<CodeSection> sec) const
 
 }
 
-SSA TypeSection::typeInt32()
+SSA TypeSection::typeInt(uint32_t width)
 {
-	return findOrMake(OpTypeInt(), { 32, 1 });
+	return findOrMake(OpTypeInt(), { width, 1 });
 }
 
-SSA TypeSection::typeUInt32()
+SSA TypeSection::typeUInt(uint32_t width)
 {
-	return findOrMake(OpTypeInt(), { 32, 0 });
+	return findOrMake(OpTypeInt(), { width, 0 });
 }
 
-SSA TypeSection::typeFP32()
+SSA TypeSection::typeFP(uint32_t width)
 {
-	return findOrMake(OpTypeFloat(), { 32 });
+	return findOrMake(OpTypeFloat(), { width });
 }
 
 SSA TypeSection::typeBool()
@@ -98,7 +98,7 @@ SSA TypeSection::typeVec(uint32_t len, SSA inner)
 {
 	if (inner == 0)
 	{
-		inner = typeFP32();
+		inner = typeFP();
 	}
 
 	return findOrMake(OpTypeVector(), { inner, len });
