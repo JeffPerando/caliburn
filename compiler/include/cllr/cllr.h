@@ -256,7 +256,7 @@ namespace caliburn
 					ss << '#' << index << ": ";
 				}
 
-				ss << (uint32_t)op;
+				ss << OP_NAMES[(uint32_t)op];
 
 				ss << " [";
 				for (size_t i = 0; i < MAX_OPS; ++i)
