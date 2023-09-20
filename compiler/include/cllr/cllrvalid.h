@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <algorithm>
+
 #include "basic.h"
 
 #include "cllrasm.h"
@@ -20,10 +22,15 @@
 #define CLLR_VALID_OPT_VALUE(id) if (id != 0 && !isValue(codeAsm.opFor(id))) return ValidReason::INVALID_VALUE
 #define CLLR_VALID_LVALUE(id) if (id == 0 || !isLValue(codeAsm.opFor(id))) return ValidReason::INVALID_LVALUE
 #define CLLR_VALID_VAR(id) if (id == 0 || !isVar(codeAsm.opFor(id))) return ValidReason::INVALID_VAR
-#define CLLR_VALID_OP(id, op) if (id == 0 || codeAsm.opFor(id) != op) return ValidReason::INVALID_REF
+#define CLLR_VALID_REF(id, op) if (id == 0 || codeAsm.opFor(id) != op) return ValidReason::INVALID_REF
 
-#define CLLR_VALID_MAX_REFS(n) if ((i.refs[0] != 0) + (i.refs[1] != 0) + (i.refs[2] != 0) > n) return ValidReason::INVALID_REF
-#define CLLR_VALID_MAX_OPS(n) if ((i.operands[0] != 0) + (i.operands[1] != 0) + (i.operands[2] != 0) > n) return ValidReason::INVALID_OPERAND
+#define CLLR_VALID_MAX_REFS(n) if ((MAX_REFS - std::count(i.refs.begin(), i.refs.end(), 0)) > n) { return ValidReason::INVALID_REF; }
+#define CLLR_VALID_MAX_OPS(n) if ((MAX_OPS - std::count(i.operands.begin(), i.operands.end(), 0)) > n) { return ValidReason::INVALID_REF; }
+
+#define CLLR_VALID_NO_REFS for (size_t off = 0; off < MAX_REFS; ++off) { if (i.refs[off] != 0) { return ValidReason::INVALID_REF; } }
+#define CLLR_VALID_NO_OPS for (size_t off = 0; off < MAX_OPS; ++off) { if (i.operands[off] != 0) { return ValidReason::INVALID_OPERAND; } }
+
+#define CLLR_VALID_OP_RANGE(n, min, max) if (n > max || n < min) return ValidReason::INVALID_OPERAND;
 
 namespace caliburn
 {
