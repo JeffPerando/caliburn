@@ -59,7 +59,7 @@ The Caliburn API is defined in the standalone `caliburn.h` header. No macros are
 #include <caliburn.h>
 ```
 
-It's not recommended to use Caliburn as a static library; however, the library itself is a work-in-progress. To use statically, define the `CBRN_NO_IMPORT` macro:
+It's not recommended to use Caliburn as a static library; however, the library itself is a work-in-progress, so using it as a DLL may be prone to more issues. To use statically, define the `CBRN_NO_IMPORT` macro:
 
 ```cpp
 //Static include
@@ -79,7 +79,7 @@ Compile:
 
 ```cpp
 //Replace "HelloTriangle" with the name of your shader object
-caliburn::ShaderResult result = compiler.compileSrcShaders(src, "HelloTriangle", caliburn::GPUTarget::SPIRV);
+caliburn::ShaderResult result = compiler.compileSrcShaders(src, "HelloTriangle");
 ```
 
 Check for errors:
@@ -100,7 +100,7 @@ Iterate through `result.shaders` and upload to Vulkan:
 VkShaderModule uploadShader(const caliburn::Shader& shader) {
     VkShaderModuleCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    createInfo.codeSize = shader.code->size();
+    createInfo.codeSize = shader.code->size() * 4;
     createInfo.pCode = shader.code->data();
 
     VkShaderModule shaderModule;
