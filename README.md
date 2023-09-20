@@ -71,19 +71,30 @@ Within your program, now you just define your settings and compiler object:
 
 ```cpp
 caliburn::CompilerSettings settings;
+//Edit settings here
 caliburn::Compiler compiler(settings);
 ```
 
 Compile:
 
 ```cpp
-using ShaderList = std::vector<std::unique_ptr<caliburn::Shader>>;
-
 //Replace "HelloTriangle" with the name of your shader object
-ShaderList shaders = compiler.compileSrcShaders(src, "HelloTriangle", caliburn::GPUTarget::SPIRV);
+caliburn::ShaderResult result = compiler.compileSrcShaders(src, "HelloTriangle", caliburn::GPUTarget::SPIRV);
 ```
 
-Iterate through the vector and upload to Vulkan:
+Check for errors:
+
+```cpp
+if (!result.success())
+{
+    for (auto const& errMsg : result.errors)
+    {
+        std::cout << errMsg << '\n';
+    }
+}
+```
+
+Iterate through `result.shaders` and upload to Vulkan:
 
 ```cpp
 VkShaderModule uploadShader(const caliburn::Shader& shader) {

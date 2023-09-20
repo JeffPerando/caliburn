@@ -44,26 +44,24 @@ int testShaderCompile()
 	std::chrono::high_resolution_clock clock{};
 
 	auto startTime = clock.now();
-	auto shaders = cc.compileSrcShaders(src, "TestShader");
+	auto result = cc.compileSrcShaders(src, "TestShader");
 	auto time = clock.now() - startTime;
 
-	auto errors = cc.getErrors();
-
-	if (!errors.empty())
+	if (!result.errors.empty())
 	{
 		std::cout << "Errors found: \n";
-		for (auto const& e : errors)
+		for (auto const& e : result.errors)
 			std::cout << e << '\n';
 
 		return -1;
 	}
 
-	std::cout << "Successfully compiled " << shaders.size() << " shaders!\n";
+	std::cout << "Successfully compiled " << result.shaders.size() << " shaders!\n";
 	std::cout << "Time taken: " << (time.count() * 0.000001f) << " ms\n";
 
 	totalTime += time.count();
 
-	for (auto const& s : shaders)
+	for (auto const& s : result.shaders)
 	{
 		auto name = (std::stringstream() << "./../../../../shader" << ((uint32_t)s->type) << ".spv").str();
 

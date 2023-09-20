@@ -1,9 +1,10 @@
 
 #pragma once
 
-#ifdef __cplusplus
+#ifndef __cplusplus
+#error Caliburn requires C++
 
-#if __cplusplus < 201703L
+#elif __cplusplus < 201703L
 #error Caliburn requires C++17
 
 #ifdef _MSC_VER
@@ -134,11 +135,22 @@ namespace caliburn
 
 	};
 
+	struct CBRN_API ShaderResult
+	{
+		std::vector<std::unique_ptr<Shader>> shaders;
+		std::vector<std::string> errors;
+
+		bool success() const
+		{
+			return errors.empty();
+		}
+
+	};
+
 	struct CBRN_API Compiler
 	{
 	private:
 		std::shared_ptr<CompilerSettings> settings;
-		std::vector<std::string> allErrors;
 		
 	public:
 		Compiler() : settings(std::make_shared<CompilerSettings>()) {}
@@ -177,20 +189,12 @@ namespace caliburn
 		shaderName: The name of the shader object to compile. Cannot be empty.
 		target: The GPU IR to compile to. Currently only SPIR-V is supported
 
-		Returns the set of compiled shaders
+		Returns a ShaderResult, which contains a vector of shaders and error messages.
 		*/
-		std::vector<std::unique_ptr<Shader>> compileSrcShaders(std::string src, std::string shaderName, GPUTarget target = GPUTarget::SPIRV);
+		ShaderResult compileSrcShaders(std::string src, std::string shaderName, GPUTarget target = GPUTarget::SPIRV);
 
-		/*
-		Returns the list of errors produced during the last compilation.
-
-		If empty, it can be assumed that compilation was successful.
-		*/
-		std::vector<std::string> getErrors() const;
-		
 	};
 
 }
 
-#endif
 #endif

@@ -34,7 +34,7 @@ void Compiler::setDynamicType(std::string inner, std::string concrete)
 	settings->dynTypes.emplace(inner, concrete);
 }
 
-std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::string shaderName, GPUTarget target)
+ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName, GPUTarget target)
 {
 	if (shaderName.length() == 0)
 	{
@@ -42,9 +42,9 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 	}
 
 	/*
-	Make the vector now so we have something to return
+	Make the result now so we have something to return
 	*/
-	std::vector<uptr<Shader>> shaders;
+	ShaderResult result;
 
 	auto doc = new_sptr<TextDoc>(src);
 
@@ -53,10 +53,8 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 
 	if (!t.errors->empty())
 	{
-		t.errors->printout(allErrors, *doc, settings->coloredErrors);
-
-		//TODO reconsider
-		return shaders;
+		t.errors->printout(result.errors, *doc, settings->coloredErrors);
+		return result;
 	}
 
 	auto p = Parser(settings, tokens);
@@ -64,10 +62,8 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 
 	if (!p.errors->empty())
 	{
-		p.errors->printout(allErrors, *doc, settings->coloredErrors);
-
-		//TODO reconsider
-		return shaders;
+		p.errors->printout(result.errors, *doc, settings->coloredErrors);
+		return result;
 	}
 
 	//Validate AST
@@ -194,8 +190,8 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 
 	if (shaderStmt == nullptr)
 	{
-		allErrors.push_back(((std::stringstream() << "Caliburn: Shader not found: " << shaderName << '\n').str()));
-		return shaders;
+		result.errors.push_back(((std::stringstream() << "Caliburn: Shader not found: " << shaderName << '\n').str()));
+		return result;
 	}
 
 	shaderStmt->sortStages();
@@ -239,22 +235,17 @@ std::vector<uptr<Shader>> Compiler::compileSrcShaders(std::string src, std::stri
 	}
 
 	std::vector<sptr<Error>> compileErrs;
-	shaders = shaderStmt->compile(table, settings, compileErrs);
+	result.shaders = shaderStmt->compile(table, settings, compileErrs);
 
 	if (!compileErrs.empty())
 	{
 		for (auto const& e : compileErrs)
 		{
-			allErrors.push_back(e->toStr(*doc, settings->coloredErrors));
+			result.errors.push_back(e->toStr(*doc, settings->coloredErrors));
 
 		}
 
 	}
 
-	return shaders;
-}
-
-std::vector<std::string> Compiler::getErrors() const
-{
-	return allErrors;
+	return result;
 }
