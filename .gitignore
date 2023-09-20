@@ -6,7 +6,7 @@ docs/
 *.spv
 *.dis
 
-README.md
+README_OLD.md
 REFERENCE.md
 
 ## CMake
