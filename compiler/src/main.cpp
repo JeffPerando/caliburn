@@ -166,6 +166,7 @@ int main()
 	}
 
 	std::cout << "Average time: " << ((totalTime / static_cast<double>(takes)) * 0.000001) << " ms\n";
-	*/
+	
 	return 0;
+	*/
 }

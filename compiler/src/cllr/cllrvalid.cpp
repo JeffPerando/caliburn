@@ -178,7 +178,7 @@ bool Validator::validate(in<Assembler> codeAsm)
 
 	}
 
-	return !errors->empty();
+	return errors->empty();
 }
 
 bool valid::isType(Opcode op)

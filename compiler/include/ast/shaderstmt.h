@@ -101,7 +101,7 @@ namespace caliburn
 			std::sort(stages.begin(), stages.end());
 		}
 
-		std::vector<uptr<Shader>> compile(sptr<SymbolTable> table, sptr<CompilerSettings> settings, out<std::vector<sptr<Error>>> compileErrs);
+		void compile(sptr<SymbolTable> table, sptr<CompilerSettings> settings, out<std::vector<uptr<Shader>>> shaders, out<std::vector<sptr<Error>>> compileErrs);
 
 	};
 

@@ -233,7 +233,7 @@ ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName
 	}
 
 	std::vector<sptr<Error>> compileErrs;
-	result.shaders = shaderStmt->compile(table, settings, compileErrs);
+	shaderStmt->compile(table, settings, result.shaders, compileErrs);
 
 	if (!compileErrs.empty())
 	{
@@ -244,6 +244,11 @@ ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName
 		}
 
 	}
-
+	/* checking data usage to see if tokens actually need to be shared
+	for (const auto& t : tokens)
+	{
+		std::cout << t->str << ' ' << t.use_count() << '\n';
+	}
+	*/
 	return result;
 }

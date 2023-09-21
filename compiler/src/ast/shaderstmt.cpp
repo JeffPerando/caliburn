@@ -77,10 +77,8 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 	return out;
 }
 
-std::vector<uptr<Shader>> ShaderStatement::compile(sptr<SymbolTable> table, sptr<CompilerSettings> settings, out<std::vector<sptr<Error>>> compileErrs)
+void ShaderStatement::compile(sptr<SymbolTable> table, sptr<CompilerSettings> settings, out<std::vector<uptr<Shader>>> shaders, out<std::vector<sptr<Error>>> compileErrs)
 {
-	std::vector<uptr<Shader>> shaders;
-
 	auto shaderSyms = new_sptr<SymbolTable>(table);
 
 	for (auto const& io : ioVars)
@@ -91,6 +89,11 @@ std::vector<uptr<Shader>> ShaderStatement::compile(sptr<SymbolTable> table, sptr
 	for (auto const& stage : stages)
 	{
 		auto shader = stage->compile(shaderSyms, settings, compileErrs);
+
+		if (shader == nullptr)
+		{
+			continue;
+		}
 
 		uint32_t d = 0;
 
@@ -104,5 +107,4 @@ std::vector<uptr<Shader>> ShaderStatement::compile(sptr<SymbolTable> table, sptr
 
 	}
 
-	return shaders;
 }
