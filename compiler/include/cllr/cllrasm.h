@@ -166,7 +166,6 @@ namespace caliburn
 			Replaces all references to 'in' with 'out'. This includes output types.
 
 			This is not an aliasing method; This will change instructions.
-
 			*/
 			uint32_t replace(SSA in, SSA out);
 
