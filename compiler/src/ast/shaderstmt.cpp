@@ -39,18 +39,25 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::SHADER_STAGE_END, {}, { stageID }));
 
-	auto valid = cllr::Validator(settings);
+	auto validator = cllr::Validator(settings);
+	//std::chrono::high_resolution_clock clock{};
 
-	if (!valid.validate(codeAsm))
+	//auto startTime = clock.now();
+	bool valid = validator.validate(codeAsm);
+	//auto time = clock.now() - startTime;
+
+	//std::cout << "Validation took " << (time.count() * 0.000001f) << " ms\n";
+
+	if (!valid)
 	{
-		valid.errors->dump(allErrs);
+		validator.errors->dump(allErrs);
 		return nullptr;
 	}
 
 	auto op = cllr::Optimizer(settings);
 	op.optimize(codeAsm);
 
-	auto spirvAsm = cllr::SPIRVOutAssembler();
+	auto spirvAsm = cllr::SPIRVOutAssembler(settings);
 
 	auto out = new_uptr<Shader>(type, spirvAsm.translateCLLR(codeAsm));
 	

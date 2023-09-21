@@ -9,7 +9,7 @@
 
 using namespace caliburn;
 
-cllr::SPIRVOutAssembler::SPIRVOutAssembler() : OutAssembler(HostTarget::GPU)
+cllr::SPIRVOutAssembler::SPIRVOutAssembler(sptr<const CompilerSettings> cs) : OutAssembler(cs, HostTarget::GPU)
 {
 	ssaEntries.reserve(128);
 	ssaToSection.reserve(128);

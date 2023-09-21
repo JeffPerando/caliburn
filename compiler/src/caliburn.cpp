@@ -36,24 +36,22 @@ void Compiler::setDynamicType(std::string inner, std::string concrete)
 
 ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName, GPUTarget target)
 {
+	ShaderResult result;
+
 	if (shaderName.length() == 0)
 	{
-		throw std::exception("Caliburn: passed shader name is empty!");
+		result.errors.push_back("Passed shader name is empty!");
+		return result;
 	}
-
-	/*
-	Make the result now so we have something to return
-	*/
-	ShaderResult result;
 
 	auto doc = new_sptr<TextDoc>(src);
 
-	auto t = Tokenizer(doc);
+	auto t = Tokenizer(settings, doc);
 	auto tokens = t.tokenize();
 
 	if (!t.errors->empty())
 	{
-		t.errors->printout(result.errors, *doc, settings->coloredErrors);
+		t.errors->printout(result.errors, *doc);
 		return result;
 	}
 
@@ -62,7 +60,7 @@ ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName
 
 	if (!p.errors->empty())
 	{
-		p.errors->printout(result.errors, *doc, settings->coloredErrors);
+		p.errors->printout(result.errors, *doc);
 		return result;
 	}
 
@@ -190,7 +188,7 @@ ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName
 
 	if (shaderStmt == nullptr)
 	{
-		result.errors.push_back(((std::stringstream() << "Caliburn: Shader not found: " << shaderName << '\n').str()));
+		result.errors.push_back(((std::stringstream() << "Shader not found: " << shaderName).str()));
 		return result;
 	}
 

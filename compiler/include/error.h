@@ -4,6 +4,8 @@
 #include <string>
 #include <sstream>
 
+#define CBRN_NO_IMPORT
+#include "caliburn.h"
 #include "syntax.h"
 
 namespace caliburn
@@ -82,11 +84,14 @@ namespace caliburn
 	*/
 	struct ErrorHandler
 	{
+	private:
+		sptr<const CompilerSettings> settings;
+	public:
 		const CompileStage stage;
 
 		std::vector<sptr<Error>> errors;
 
-		ErrorHandler(CompileStage s) : stage(s) {}
+		ErrorHandler(CompileStage s, sptr<const CompilerSettings> cs) : stage(s), settings(cs) {}
 
 		bool empty() const
 		{
@@ -98,11 +103,11 @@ namespace caliburn
 			out.insert(out.end(), errors.begin(), errors.end());
 		}
 
-		void printout(out<std::vector<std::string>> out, in<TextDoc> doc, bool colored) const
+		void printout(out<std::vector<std::string>> out, in<TextDoc> doc) const
 		{
 			for (auto const& e : errors)
 			{
-				out.push_back(e->toStr(doc, colored));
+				out.push_back(e->toStr(doc, settings->coloredErrors));
 			}
 
 		}

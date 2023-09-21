@@ -223,7 +223,7 @@ namespace caliburn
 
 			spirv::SpvIO builtins = spirv::SpvIO(this);
 
-			SPIRVOutAssembler();
+			SPIRVOutAssembler(sptr<const CompilerSettings> cs);
 			virtual ~SPIRVOutAssembler() {}
 
 			uptr<std::vector<spirv::SSA>> translateCLLR(in<cllr::Assembler> cllrAsm) override;

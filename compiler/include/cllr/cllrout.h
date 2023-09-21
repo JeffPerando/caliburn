@@ -27,10 +27,10 @@ namespace caliburn
 		template<typename OutCode>
 		struct OutAssembler
 		{
-			const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::OUT_EMIT);
+			const uptr<ErrorHandler> errors;
 			const HostTarget target;
 
-			OutAssembler(HostTarget t) : target(t) {}
+			OutAssembler(sptr<const CompilerSettings> cs, HostTarget t) : target(t), errors(new_uptr<ErrorHandler>(CompileStage::OUT_EMIT, cs)) {}
 			virtual ~OutAssembler() {}
 
 			virtual uptr<std::vector<OutCode>> translateCLLR(in<cllr::Assembler> cllrAsm) = 0;

@@ -8,7 +8,7 @@
 
 using namespace caliburn;
 
-Tokenizer::Tokenizer(sptr<TextDoc> t) : doc(t), buf(std::vector<char>(t->text.begin(), t->text.end()))
+Tokenizer::Tokenizer(sptr<const CompilerSettings> cs, sptr<TextDoc> t) : doc(t), buf(std::vector<char>(t->text.begin(), t->text.end())), errors(new_uptr<ErrorHandler>(CompileStage::TOKENIZER, cs))
 {
 	//I'm so sorry for this.
 

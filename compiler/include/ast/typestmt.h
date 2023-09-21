@@ -9,7 +9,7 @@ namespace caliburn
 {
 	struct TypedefStatement : Statement
 	{
-		sptr<CompilerSettings> cs;
+		sptr<const CompilerSettings> settings;
 
 		sptr<Token> first;
 		sptr<Token> name;
@@ -17,8 +17,8 @@ namespace caliburn
 
 		bool isStrong = false;
 		
-		TypedefStatement(sptr<CompilerSettings> sets, sptr<Token> f, sptr<Token> n, sptr<ParsedType> t) :
-			Statement(StatementType::TYPEDEF), cs(sets), first(f), name(n), alias(t)
+		TypedefStatement(sptr<const CompilerSettings> cs, sptr<Token> f, sptr<Token> n, sptr<ParsedType> t) :
+			Statement(StatementType::TYPEDEF), settings(cs), first(f), name(n), alias(t)
 		{
 			isStrong = (first->str == "strong");
 		}
@@ -47,12 +47,11 @@ namespace caliburn
 				return;
 			}
 
-			//We're a dynamic typedef
 			if (alias->name == "dynamic")
 			{
-				auto outTypename = cs->dynTypes.find(name->str);
+				auto outTypename = settings->dynTypes.find(name->str);
 
-				if (outTypename != cs->dynTypes.end())
+				if (outTypename != settings->dynTypes.end())
 				{
 					//In both cases we replace alias
 					alias = new_sptr<ParsedType>(outTypename->second);

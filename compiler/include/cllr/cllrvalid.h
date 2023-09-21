@@ -8,7 +8,9 @@
 #include "cllrasm.h"
 #include "error.h"
 
-#define CLLR_INSTRUCT_VALIDATE(Name) ValidReason Name(ValidationLevel lvl, in<Instruction> i, out<Assembler> codeAsm)
+#define CLLR_INSTRUCT_VALIDATE(Name) ValidReason Name(ValidationLevel lvl, in<Instruction> i, in<Assembler> codeAsm)
+
+#define CLLR_VALID_OP(x) if (i.op != x) throw std::exception("Incorrect opcode! Probably a code regression.");
 
 #define CLLR_VALID_HAS_ID if (i.index == 0) return ValidReason::INVALID_NO_ID
 #define CLLR_VALID_NO_ID if (i.index != 0) return ValidReason::INVALID_MISC
@@ -67,18 +69,18 @@ namespace caliburn
 			INVALID_MISC
 		};
 
-		using ValidFn = ValidReason(*)(ValidationLevel lvl, in<Instruction> i, out<Assembler> codeAsm);
+		using ValidFn = ValidReason(*)(ValidationLevel lvl, in<Instruction> i, in<Assembler> codeAsm);
 
 		struct Validator
 		{
-			const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::CLLR_VALIDATION);
+			const uptr<ErrorHandler> errors;
 			const std::array<ValidFn, (uint64_t)cllr::Opcode::CLLR_OP_COUNT> validators;
 
 			sptr<const CompilerSettings> settings;
 
 			Validator(sptr<const CompilerSettings> cs);
 
-			bool validate(ref<Assembler> codeAsm);
+			bool validate(in<Assembler> codeAsm);
 
 		};
 

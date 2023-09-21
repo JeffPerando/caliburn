@@ -78,7 +78,9 @@ namespace caliburn
 		//Only checks for things a programmer could mess up on;
 		BASIC,
 		//Checks everything
-		FULL
+		FULL,
+		//Checks everything and bugs you if debug symbols are missing
+		DEV
 	};
 
 	struct CBRN_API CompilerSettings

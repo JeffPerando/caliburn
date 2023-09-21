@@ -35,7 +35,7 @@ int testShaderCompile()
 	caliburn::CompilerSettings cs;
 
 	cs.o = caliburn::OptimizeLevel::DEBUG;
-	cs.vLvl = caliburn::ValidationLevel::BASIC;
+	cs.vLvl = caliburn::ValidationLevel::FULL;
 	cs.coloredErrors = true;
 	cs.dynTypes.emplace("FP", "fp16");
 
@@ -72,7 +72,7 @@ int testShaderCompile()
 			continue;
 		}
 
-		out.write((char*)&s->code->at(0), s->code->size() * 4);
+		out.write((char*)s->code->data(), s->code->size() * 4);
 		out.close();
 
 	}
@@ -91,7 +91,7 @@ int testExprParsing()
 
 	auto startTime = clock.now();
 	
-	auto t = caliburn::Tokenizer(doc);
+	auto t = caliburn::Tokenizer(cs, doc);
 	auto tkns = t.tokenize();
 	auto p = caliburn::Parser(cs, tkns);
 	auto v = p.parseAnyValue();
@@ -112,7 +112,7 @@ int testExprParsing()
 
 	std::vector<std::string> errs;
 
-	p.errors->printout(errs, *doc, true);
+	p.errors->printout(errs, *doc);
 
 	for (auto& e : errs)
 	{
@@ -125,8 +125,9 @@ int testExprParsing()
 void printTokens()
 {
 	std::string src = read("expr.txt");
+	auto settings = new_sptr<caliburn::CompilerSettings>();
 	auto doc = new_sptr<caliburn::TextDoc>(src);
-	auto t = caliburn::Tokenizer(doc);
+	auto t = caliburn::Tokenizer(settings, doc);
 	auto tkns = t.tokenize();
 
 	std::cout << "Token count: " << tkns.size() << '\n';
@@ -155,6 +156,7 @@ int main()
 	*/
 	//return testShaderCompile();
 	//return testExprParsing();
+	
 	/*
 	auto const takes = 20;
 
