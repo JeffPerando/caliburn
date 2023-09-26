@@ -8,7 +8,7 @@ namespace caliburn
 {
 	namespace cllr
 	{
-		#define CLLR_OPTIMIZE_PASS(Name) void Name(ref<cllr::Assembler> codeAsm)
+		#define CLLR_OPTIMIZE_PASS(Name) void Name(out<cllr::Assembler> codeAsm)
 
 		struct Optimizer
 		{

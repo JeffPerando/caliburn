@@ -248,7 +248,7 @@ namespace caliburn
 
 			void setMemoryModel(spirv::AddressingModel addr, spirv::MemoryModel mem);
 
-			ref<spirv::EntryPoint> getCurrentEntry()
+			out<spirv::EntryPoint> getCurrentEntry()
 			{
 				if (shaderEntries.empty())
 				{

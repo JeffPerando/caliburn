@@ -31,7 +31,7 @@ namespace caliburn
 			return ss.str();
 		}
 
-		bool operator<(ref<const TextPos> rhs) const
+		bool operator<(in<TextPos> rhs) const
 		{
 			if (line > rhs.line)
 			{
@@ -73,7 +73,7 @@ namespace caliburn
 		//note: all text files have at least one line; adding a 0 to the start enables getLine() to always work.
 		std::vector<size_t> lineOffsets{0};
 
-		TextDoc(ref<const std::string> str) : text(str) {}
+		TextDoc(in<std::string> str) : text(str) {}
 
 		/*
 		Adds a new line at the given offset.

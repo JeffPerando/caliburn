@@ -32,7 +32,7 @@ namespace caliburn
 
 	using GenericResult = std::variant<std::monostate, sptr<ParsedType>, sptr<Value>>;
 
-	std::string parseGeneric(ref<const GenericResult> result);
+	std::string parseGeneric(in<GenericResult> result);
 
 	struct GenericArguments : ParsedObject
 	{
@@ -41,7 +41,7 @@ namespace caliburn
 		std::vector<GenericResult> args;
 
 		GenericArguments() {}
-		GenericArguments(ref<std::vector<GenericResult>> gArgs) : args(gArgs) {}
+		GenericArguments(in<std::vector<GenericResult>> gArgs) : args(gArgs) {}
 
 		sptr<Token> firstTkn() const override
 		{
@@ -53,7 +53,7 @@ namespace caliburn
 			return last;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool empty() const
 		{
@@ -79,6 +79,7 @@ namespace caliburn
 
 			return nullptr;
 		}
+
 		void apply(sptr<GenericSignature> sig, sptr<SymbolTable> symbols) const;
 
 	};
@@ -97,10 +98,10 @@ namespace caliburn
 		const sptr<Token> nameTkn;
 		const GenericResult defaultResult;
 
-		GenericName(sptr<Token> t, sptr<Token> n, ref<GenericResult> res = GenericResult()) :
+		GenericName(sptr<Token> t, sptr<Token> n, in<GenericResult> res = GenericResult()) :
 			typeTkn(t), nameTkn(n), type(GENERIC_SYMBOL_TYPES.find(t->str)->second), name(n->str), defaultResult(res)
 		{}
-		GenericName(GenericSymType t, std::string n, ref<GenericResult> res = GenericResult()) :
+		GenericName(GenericSymType t, std::string n, in<GenericResult> res = GenericResult()) :
 			type(t), name(n), typeTkn(nullptr), nameTkn(nullptr), defaultResult(res)
 		{}
 		~GenericName() {}
@@ -197,10 +198,10 @@ namespace caliburn
 
 		//void set(uint32_t index, )
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		//TODO consider more explicit rejection reasons (for error handling)
-		bool canApply(ref<GenericArguments> args) const;
+		bool canApply(in<GenericArguments> args) const;
 
 	};
 

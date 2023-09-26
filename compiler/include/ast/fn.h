@@ -86,7 +86,7 @@ namespace caliburn
 
 		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
-		virtual cllr::TypedSSA call(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, ref<const std::vector<sptr<Value>>> args);
+		virtual cllr::TypedSSA call(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, in<std::vector<sptr<Value>>> args);
 
 	private:
 		sptr<SymbolTable> fnImplTable = nullptr;

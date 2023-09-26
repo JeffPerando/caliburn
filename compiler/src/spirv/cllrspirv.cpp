@@ -406,7 +406,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpFunction)
 		->setLimit(i.operands[0])
 		->find(inCode.getCode());
 
-	auto fnArgs = cinq::map<Instruction, spirv::SSA>(cllrFnArgs, lambda(ref<const Instruction> i) { return outCode.toSpvID(i.refs[0]); });
+	auto fnArgs = cinq::map<Instruction, spirv::SSA>(cllrFnArgs, lambda(in<Instruction> i) { return outCode.toSpvID(i.refs[0]); });
 
 	//put the return type at the start so we can just pass the whole vector
 	fnArgs.emplace(fnArgs.begin(), t);
@@ -514,7 +514,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCall)
 		->setLimit(i.operands[0])
 		->find(inCode.getCode());
 
-	auto fnArgs = cinq::map<Instruction, spirv::SSA>(cllrFnArgs, lambda(ref<const Instruction&> i) { return outCode.toSpvID(i.refs[0]); });
+	auto fnArgs = cinq::map<Instruction, spirv::SSA>(cllrFnArgs, lambda(in<Instruction> i) { return outCode.toSpvID(i.refs[0]); });
 
 	//push the function ID to pass the whole vector
 	fnArgs.emplace(fnArgs.begin(), fnID);
@@ -601,7 +601,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeStruct)
 		->setLimit(i.operands[0])
 		->find(inCode.getCode());
 
-	auto members = cinq::map<Instruction, spirv::SSA>(cllrMembers, lambda(ref<const Instruction&> i) { return outCode.toSpvID(i.refs[0]); });
+	auto members = cinq::map<Instruction, spirv::SSA>(cllrMembers, lambda(in<Instruction> i) { return outCode.toSpvID(i.refs[0]); });
 
 	auto memCount = (uint32_t)members.size();
 
@@ -783,7 +783,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueConstruct)
 		->setLimit(i.operands[0])
 		->find(inCode.getCode());
 
-	auto args = cinq::map<Instruction, spirv::SSA>(cllrArgs, lambda(ref<const Instruction&> i) { return outCode.toSpvID(i.refs[0]); });
+	auto args = cinq::map<Instruction, spirv::SSA>(cllrArgs, lambda(in<Instruction> i) { return outCode.toSpvID(i.refs[0]); });
 
 	outCode.main->pushTyped(spirv::OpCompositeConstruct((uint32_t)args.size()), t, id, args);
 	//TODO consider calling constructor here. Or inCode the CLLR. idk.
@@ -1055,7 +1055,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueLitArray)
 		->setLimit(i.operands[0])
 		->find(inCode.getCode());
 
-	auto elems = cinq::map<Instruction, spirv::SSA>(cllrElems, lambda(ref<const Instruction&> i) { return outCode.toSpvID(i.refs[0]); });
+	auto elems = cinq::map<Instruction, spirv::SSA>(cllrElems, lambda(in<Instruction> i) { return outCode.toSpvID(i.refs[0]); });
 
 	if (elems.size() < reqLength)
 	{

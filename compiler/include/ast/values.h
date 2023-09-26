@@ -28,7 +28,7 @@ namespace caliburn
 			return lit;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -60,7 +60,7 @@ namespace caliburn
 			return lit;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -92,7 +92,7 @@ namespace caliburn
 			return lit;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -124,7 +124,7 @@ namespace caliburn
 			return lit;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -159,7 +159,7 @@ namespace caliburn
 			return end;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -203,7 +203,7 @@ namespace caliburn
 			return rValue->lastTkn();
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -237,7 +237,7 @@ namespace caliburn
 			return chkType->lastTkn();
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -271,7 +271,7 @@ namespace caliburn
 			return last;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -305,7 +305,7 @@ namespace caliburn
 			return castTarget->lastTkn();
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -338,7 +338,7 @@ namespace caliburn
 			return varTkn;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		//FIXME this got broken by a recent update which removed resolveSymbols()
 		bool isLValue() const override
@@ -378,7 +378,7 @@ namespace caliburn
 			return memberName;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -417,7 +417,7 @@ namespace caliburn
 			return chain.back();
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -456,7 +456,7 @@ namespace caliburn
 			return end;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -496,7 +496,7 @@ namespace caliburn
 			return end;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -531,7 +531,7 @@ namespace caliburn
 			return rhs->firstTkn();
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -564,7 +564,7 @@ namespace caliburn
 			return lit;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -595,7 +595,7 @@ namespace caliburn
 			return nullptr;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -628,7 +628,7 @@ namespace caliburn
 			return target->lastTkn();
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{
@@ -661,7 +661,7 @@ namespace caliburn
 			return target->lastTkn();
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override;
 
 		bool isLValue() const override
 		{

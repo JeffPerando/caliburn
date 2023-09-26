@@ -41,7 +41,7 @@ cllr::SSA FunctionImpl::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assemble
 	return id;
 }
 
-cllr::TypedSSA FunctionImpl::call(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, ref<const std::vector<sptr<Value>>> args)
+cllr::TypedSSA FunctionImpl::call(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, in<std::vector<sptr<Value>>> args)
 {
 	auto fnID = emitDeclCLLR(table, codeAsm);
 

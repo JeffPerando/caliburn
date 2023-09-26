@@ -34,7 +34,7 @@ void GenericArguments::apply(sptr<GenericSignature> sig, sptr<SymbolTable> table
 
 }
 
-void GenericArguments::prettyPrint(ref<std::stringstream> ss) const
+void GenericArguments::prettyPrint(out<std::stringstream> ss) const
 {
 	if (args.size() == 0)
 	{
@@ -61,7 +61,7 @@ void GenericArguments::prettyPrint(ref<std::stringstream> ss) const
 
 }
 
-void GenericSignature::prettyPrint(ref<std::stringstream> ss) const
+void GenericSignature::prettyPrint(out<std::stringstream> ss) const
 {
 	if (names.size() == 0)
 	{
@@ -93,7 +93,7 @@ void GenericSignature::prettyPrint(ref<std::stringstream> ss) const
 
 }
 
-bool GenericSignature::canApply(ref<GenericArguments> genArgs) const
+bool GenericSignature::canApply(in<GenericArguments> genArgs) const
 {
 	auto const& args = genArgs.args;
 
@@ -137,7 +137,7 @@ bool GenericSignature::canApply(ref<GenericArguments> genArgs) const
 	return true;
 }
 
-std::string caliburn::parseGeneric(ref<const GenericResult> result)
+std::string caliburn::parseGeneric(in<GenericResult> result)
 {
 	if (auto vArg = std::get_if<sptr<Value>>(&result))
 	{

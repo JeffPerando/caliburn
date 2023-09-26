@@ -54,7 +54,7 @@ namespace caliburn
 			return base->code->lastTkn();//idk
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override {}
+		void prettyPrint(out<std::stringstream> ss) const override {}
 
 		uptr<Shader> compile(sptr<SymbolTable> table, sptr<const CompilerSettings> settings, out<std::vector<sptr<Error>>> allErrs);
 
