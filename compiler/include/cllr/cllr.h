@@ -205,6 +205,14 @@ namespace caliburn
 			"Discard"
 		};
 
+		bool isType(Opcode op);
+
+		bool isValue(Opcode op);
+
+		bool isLValue(Opcode op);
+
+		bool isVar(Opcode op);
+
 		using OpArray = std::array<uint32_t, MAX_OPS>;
 		using RefArray = std::array<SSA, MAX_REFS>;
 

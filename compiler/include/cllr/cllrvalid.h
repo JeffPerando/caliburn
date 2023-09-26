@@ -86,14 +86,6 @@ namespace caliburn
 
 		namespace valid
 		{
-			bool isType(cllr::Opcode op);
-
-			bool isValue(cllr::Opcode op);
-
-			bool isLValue(cllr::Opcode op);
-
-			bool isVar(cllr::Opcode op);
-
 			//here we go again
 			CLLR_INSTRUCT_VALIDATE(OpUnknown);
 
