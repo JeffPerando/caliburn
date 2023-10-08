@@ -91,7 +91,7 @@ namespace caliburn
 				return push(ins);
 			}
 
-			SSA pushType(in<Instruction> ins);
+			std::pair<SSA, sptr<LowType>> pushType(in<Instruction> ins);
 
 			void pushAll(in<std::vector<Instruction>> code);
 
@@ -189,17 +189,6 @@ namespace caliburn
 			
 		private:
 			void doBookkeeping(in<Instruction> i);
-
-		};
-
-		/*
-		Contract for any struct which emits valid CLLR code.
-
-		Values use a different method due to having to include their type.
-		*/
-		struct Emitter
-		{
-			virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
 
 		};
 

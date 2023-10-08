@@ -56,13 +56,13 @@ SSA Assembler::push(in<Instruction> ins)
 	return ssa;
 }
 
-SSA Assembler::pushType(in<Instruction> ins)
+std::pair<SSA, sptr<LowType>> Assembler::pushType(in<Instruction> ins)
 {
 	auto found = types.find(ins);
 
 	if (found != types.end())
 	{
-		return found->second.first;
+		return found->second;
 	}
 
 	auto id = push(ins);
@@ -85,9 +85,11 @@ SSA Assembler::pushType(in<Instruction> ins)
 		default: break;//TODO complain
 	}
 
-	types.emplace(ins, std::pair(id, t));
+	auto ret = std::pair(id, t);
 
-	return id;
+	types.emplace(ins, ret);
+
+	return ret;
 }
 
 void Assembler::pushAll(in<std::vector<Instruction>> ins)
@@ -293,7 +295,8 @@ void Assembler::doBookkeeping(in<Instruction> ins)
 
 	if (ins.op == Opcode::STRUCT_MEMBER)
 	{
-		getType(ins.refs[0])->addMember(ins.index, getType(ins.refs[1]));
+		//FIXME I forgot about members when writing this code
+		getType(ins.refs[0])->addMember("", ins.index, getType(ins.refs[1]));
 	}
 
 }

@@ -154,7 +154,7 @@ int main()
 	std::cout << sizeof(sptr<caliburn::Token>);
 	std::cout << "\033[0m\n";
 	*/
-	//return testShaderCompile();
+	return testShaderCompile();
 	//return testExprParsing();
 	
 	/*

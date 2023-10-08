@@ -8,65 +8,91 @@ namespace caliburn
 {
 	namespace cllr
 	{
-		struct LowVoid : LowType
+		struct LowPrimitive : LowType
 		{
-			LowVoid() : LowType(Opcode::TYPE_VOID) {}
+			const uint32_t width;
+
+			LowPrimitive(Opcode cat, uint32_t bits) : LowType(cat), width(bits) {}
 
 			uint32_t getBitWidth() const override
 			{
-				return 0;
+				return width;
 			}
 
 			uint32_t getBitAlign() const override
 			{
-				return 0;
+				return width;
 			}
 
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override
+			ConvertResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override = 0;
+
+			OpResult getOp(Operator op, out<cllr::SSA> fnID) const override = 0;
+
+			bool addMember(std::string name, SSA typeID, sptr<const LowType> typeImpl) override
 			{
-				return ConversionResult::INCOMPATIBLE;
+				return false;
+			}
+
+			bool getMember(std::string name, out<std::pair<uint32_t, sptr<LowType>>> member) const override
+			{
+				return false;
+			}
+
+			bool setMemberFns(std::string name, ref<sptr<FunctionGroup>> fn) override
+			{
+				return false;
+			}
+
+			sptr<Function> getMemberFn(std::string name, in<std::vector<TypedSSA>> argTypes) const override
+			{
+				return nullptr;
 			}
 
 		};
 
-		struct LowFloat : LowType
+		struct LowVoid : LowPrimitive
 		{
-			const uint32_t width;
+			LowVoid() : LowPrimitive(Opcode::TYPE_VOID, 0) {}
 
-			LowFloat(uint32_t w) : LowType(Opcode::TYPE_FLOAT), width(w) {}
-
-			uint32_t getBitWidth() const override
+			ConvertResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override
 			{
-				return width;
+				return ConvertResult::INCOMPATIBLE;
 			}
 
-			uint32_t getBitAlign() const override
+			OpResult getOp(Operator op, out<cllr::SSA> fnID) const override
 			{
-				return width;
+				return OpResult::INCOMPATIBLE;
 			}
-
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override;
 
 		};
 
-		struct LowInt : LowType
+		struct LowFloat : LowPrimitive
 		{
-			const uint32_t width;
+			LowFloat(uint32_t w) : LowPrimitive(Opcode::TYPE_FLOAT, w) {}
 
-			LowInt(Opcode cat, uint32_t w) :
-				LowType(cat), width(w) {}
+			ConvertResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override;
 
-			uint32_t getBitWidth() const override
-			{
-				return width;
-			}
+			OpResult getOp(Operator op, out<cllr::SSA> fnID) const override;
 
-			uint32_t getBitAlign() const override
-			{
-				return width;
-			}
+		};
 
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const;
+		struct LowInt : LowPrimitive
+		{
+			LowInt(Opcode cat, uint32_t w) : LowPrimitive(cat, w) {}
+
+			ConvertResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const;
+
+			OpResult getOp(Operator op, out<cllr::SSA> fnID) const override;
+
+		};
+
+		struct LowBool : LowPrimitive
+		{
+			LowBool() : LowPrimitive(Opcode::TYPE_BOOL, 8) {}
+
+			ConvertResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override;
+
+			OpResult getOp(Operator op, out<cllr::SSA> fnID) const override;
 
 		};
 
@@ -89,9 +115,14 @@ namespace caliburn
 				return innerType->getBitAlign();
 			}
 
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override
+			ConvertResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override
 			{
-				return ConversionResult::INCOMPATIBLE;
+				return ConvertResult::INCOMPATIBLE;
+			}
+
+			OpResult getOp(Operator op, out<cllr::SSA> fnID) const override
+			{
+				return OpResult::INCOMPATIBLE;
 			}
 
 		};
@@ -115,9 +146,14 @@ namespace caliburn
 				return innerType->getBitAlign();
 			}
 
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override
+			ConvertResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override
 			{
 				return innerType->isConvertibleTo(other, otherImpl, op);
+			}
+
+			OpResult getOp(Operator op, out<cllr::SSA> fnID) const override
+			{
+				return innerType->getOp(op, fnID);
 			}
 
 		};
@@ -142,9 +178,14 @@ namespace caliburn
 				return innerType->getBitAlign();
 			}
 
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override
+			ConvertResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override
 			{
-				return ConversionResult::INCOMPATIBLE;
+				return innerType->isConvertibleTo(other, otherImpl, op);
+			}
+
+			OpResult getOp(Operator op, out<cllr::SSA> fnID) const override
+			{
+				return innerType->getOp(op, fnID);
 			}
 
 		};
@@ -154,6 +195,9 @@ namespace caliburn
 			uint32_t totalLength = 0;
 			std::vector<sptr<LowType>> memberVars;
 			std::map<SSA, SSA> conversions;
+
+			HashMap<std::string, std::pair<SSA, sptr<LowType>>> members;
+			HashMap<std::string, uptr<FunctionGroup>> memberFns;
 
 			LowStruct() : LowType(Opcode::TYPE_STRUCT) {}
 
@@ -167,24 +211,18 @@ namespace caliburn
 				return memberVars.back()->getBitAlign();
 			}
 
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override;
-		};
+			ConvertResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override;
 
-		struct LowBool : LowType
-		{
-			LowBool() : LowType(Opcode::TYPE_BOOL) {}
-
-			uint32_t getBitWidth() const override
+			OpResult getOp(Operator op, out<cllr::SSA> fnID) const override
 			{
-				return 8;
+				return OpResult::INCOMPATIBLE;
 			}
 
-			uint32_t getBitAlign() const override
-			{
-				return 8;
-			}
+			bool addMember(std::string name, SSA typeID, sptr<const LowType> typeImpl) override;
+			bool getMember(std::string name, out<std::pair<uint32_t, sptr<LowType>>> member) const override;
 
-			ConversionResult isConvertibleTo(SSA other, sptr<const LowType> otherImpl, Operator op) const override;
+			bool setMemberFns(std::string name, ref<sptr<FunctionGroup>> fn) override;
+			sptr<Function> getMemberFn(std::string name, in<std::vector<TypedSSA>> argTypes) const override;
 
 		};
 

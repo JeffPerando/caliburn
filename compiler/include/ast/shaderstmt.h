@@ -48,7 +48,7 @@ namespace caliburn
 		{
 			if (base->code == nullptr)
 			{
-				return base->retType->lastTkn();
+				return base->returnType->lastTkn();
 			}
 
 			return base->code->lastTkn();//idk

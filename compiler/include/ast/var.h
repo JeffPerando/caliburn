@@ -67,7 +67,12 @@ namespace caliburn
 	{
 		const uint32_t argIndex;
 
-		FnArgVariable(uint32_t i) : Variable(), argIndex(i) {}
+		FnArgVariable(in<ParsedFnArg> pArgs, uint32_t i) : Variable(), argIndex(i)
+		{
+			typeHint = pArgs.typeHint;
+			nameTkn = pArgs.name;
+
+		}
 		virtual ~FnArgVariable() {}
 
 		void prettyPrint(out<std::stringstream> ss) const override;

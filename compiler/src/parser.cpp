@@ -942,7 +942,27 @@ uptr<Statement> Parser::parseStruct()
 		}
 		else if (auto fn = parseMethod())
 		{
-			stmt->members.emplace(fn->name->str, fn);
+			std::string memName = fn->name->str;
+			sptr<FunctionGroup> fnName = nullptr;
+
+			if (auto foundName = stmt->members.find(memName); foundName != stmt->members.end())
+			{
+				if (auto fnNamePtr = std::get_if<sptr<FunctionGroup>>(&foundName->second))
+				{
+					fnName = *fnNamePtr;
+				}
+				else
+				{
+					//TODO complain
+				}
+			}
+			else
+			{
+				fnName = new_sptr<FunctionGroup>();
+				stmt->members.emplace(memName, fnName);
+			}
+
+			//TODO can't add functions to FunctionName without CLLR IDs
 
 		}
 		else
@@ -1057,7 +1077,7 @@ uptr<ParsedFn> Parser::parseFnLike()
 
 		if (auto type = parseTypeName())
 		{
-			fn->retType = type;
+			fn->returnType = type;
 		}
 		else
 		{
@@ -1078,7 +1098,7 @@ uptr<ParsedFn> Parser::parseFnLike()
 	}
 	else
 	{
-		fn->retType = new_sptr<ParsedType>("void");
+		fn->returnType = new_sptr<ParsedType>("void");
 	}
 
 	sptr<Token> scopeStart = tkns.cur();

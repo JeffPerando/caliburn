@@ -1,5 +1,8 @@
 
 #include "ast/values.h"
+
+#include <algorithm>
+
 #include "ast/fn.h"
 
 #include "cllr/cllrtype.h"
@@ -285,21 +288,44 @@ cllr::TypedSSA UnaryValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Asse
 
 cllr::TypedSSA FnCallValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
+	//Emit the values now to typecheck later
+	std::vector<cllr::TypedSSA> argIDs(args.size());
+	std::transform(args.begin(), args.end(), std::back_inserter(argIDs), lambda(sptr<Value> v) { return v->emitValueCLLR(table, codeAsm); });
+
+	if (target != nullptr)
+	{
+		auto val = target->emitValueCLLR(table, codeAsm);
+		auto tgtType = codeAsm.getType(val.type);
+		auto memFn = tgtType->getMemberFn(name->str, argIDs);
+		auto memFnImpl = memFn->makeVariant(genArgs);
+
+		return memFnImpl->call(table, codeAsm, argIDs, name);
+	}
+
 	auto sym = table->find(name->str);
+
+	if (std::holds_alternative<std::monostate>(sym))
+	{
+		auto e = codeAsm.errors->err({ "Function name not found:", name->str }, *this);
+		return cllr::TypedSSA();
+	}
 
 	if (auto fn = std::get_if<sptr<Function>>(&sym))
 	{
 		auto fnImpl = (**fn).makeVariant(genArgs);
 
-		return fnImpl->call(table, codeAsm, args);
+		return fnImpl->call(table, codeAsm, argIDs, name);
 	}
-	/*
 	else if (auto t = std::get_if<sptr<BaseType>>(&sym))
 	{
 		auto tReal = (**t).getImpl(genArgs);
 		auto tID = tReal->emitDeclCLLR(table, codeAsm);
+		auto tImpl = codeAsm.getType(tID);
+		auto tCon = tImpl->constructors.find(argIDs, codeAsm);
+		auto conImpl = tCon->makeVariant(nullptr);
+
+		return conImpl->call(table, codeAsm, argIDs, name);
 	}
-	*/
 
 	//TODO complain
 	return cllr::TypedSSA();

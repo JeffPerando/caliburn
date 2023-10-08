@@ -142,7 +142,7 @@ namespace caliburn
 
 	Caliburn separates statements from expressions in part to prevent goofy code.
 	*/
-	struct Statement : Module, ParsedObject, cllr::Emitter
+	struct Statement : Module, ParsedObject
 	{
 		const StatementType type;
 
@@ -179,6 +179,8 @@ namespace caliburn
 		virtual void declareHeader(sptr<SymbolTable> table) {}
 
 		void declareSymbols(sptr<SymbolTable> table) override = 0;
+
+		virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
 
 	};
 

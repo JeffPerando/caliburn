@@ -1,72 +1,111 @@
 
 #include "ast/fn.h"
 
+#include "cllr/cllrtype.h"
+
 using namespace caliburn;
 
-cllr::SSA FunctionImpl::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+cllr::TypedSSA FunctionImpl::emitFnDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	if (id != 0)
 	{
-		return id;
+		return cllr::TypedSSA(retTypeID, id);
 	}
 
-	auto& sig = parent->sig;
-	auto& genSig = sig->genSig;
-	auto& retTypeP = sig->returnType;
+	auto& args = parent->args;
+	auto& genSig = parent->genSig;
+	auto& pRetType = parent->returnType;
 
 	if (fnImplTable == nullptr)
 	{
 		fnImplTable = new_sptr<SymbolTable>();
-
-		genArgs->apply(genSig, fnImplTable);
-
 	}
 
+	genArgs->apply(genSig, fnImplTable);
 	fnImplTable->reparent(table);
 
-	auto retType = retTypeP->resolve(fnImplTable);
-	auto retTID = retType->emitDeclCLLR(table, codeAsm);
+	auto retType = pRetType->resolve(fnImplTable);
 
-	id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::FUNCTION, { (uint32_t)sig->args.size() }, { retTID }));
-
-	for (auto const& arg : sig->args)
+	if (retType == nullptr)
 	{
-		arg->emitDeclCLLR(fnImplTable, codeAsm);
+		auto e = codeAsm.errors->err({ "Could not resolve return type", pRetType->name }, *pRetType);
+
+		return cllr::TypedSSA();
+	}
+
+	retTypeID = retType->emitDeclCLLR(fnImplTable, codeAsm);
+
+	id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::FUNCTION, { (uint32_t)args.size() }, { retTypeID }));
+
+	for (auto i = 0; i < args.size(); ++i)
+	{
+		auto const& arg = args[i];
+		auto fnArg = new_sptr<FnArgVariable>(*arg, i);
+
+		fnImplTable->add(fnArg->nameTkn->str, fnArg);
+
+		fnArg->emitDeclCLLR(fnImplTable, codeAsm);
+
 	}
 
 	parent->code->emitDeclCLLR(fnImplTable, codeAsm);
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::FUNCTION_END, {}, { id }));
 
-	return id;
+	return cllr::TypedSSA(retTypeID, id);
 }
 
-cllr::TypedSSA FunctionImpl::call(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, in<std::vector<sptr<Value>>> args)
+/*
+Making functions responsible for emitting call instructions means we can override this behavior and implement some free inlining
+*/
+cllr::TypedSSA FunctionImpl::call(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, in<std::vector<cllr::TypedSSA>> args, sptr<Token> callTkn)
 {
-	auto fnID = emitDeclCLLR(table, codeAsm);
+	auto fnData = emitFnDeclCLLR(table, codeAsm);
 
-	fnImplTable->reparent(table);
+	auto callID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::CALL, { (uint32_t)args.size() }, { fnData.value }, fnData.type).debug(callTkn));
 
-	if (auto t = parent->sig->returnType->resolve(fnImplTable))
+	for (uint32_t i = 0; i < args.size(); ++i)
 	{
-		auto tID = t->emitDeclCLLR(fnImplTable, codeAsm);
-		auto callID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::CALL, { (uint32_t)args.size() }, { fnID }));
+		codeAsm.push(cllr::Instruction(cllr::Opcode::CALL_ARG, { i }, { args[i].value }));
+	}
 
-		uint32_t index = 0;
+	return cllr::TypedSSA(fnData.type, callID);
+}
 
-		for (auto& arg : args)
+sptr<Function> FunctionGroup::find(in<std::vector<cllr::TypedSSA>> args, in<cllr::Assembler> codeAsm)
+{
+	//TODO score-based system; fewer conversions = higher score, highest-scording function gets returned
+
+	cllr::TypeChecker checker(codeAsm.settings);
+
+	for (auto const& [types, fn] : fns)
+	{
+		if (types.size() != args.size())
 		{
-			auto argID = arg->emitValueCLLR(fnImplTable, codeAsm).value;
+			continue;
+		}
 
-			codeAsm.push(cllr::Instruction(cllr::Opcode::CALL_ARG, { index }, { argID }));
+		bool valid = true;
 
-			++index;
+		for (size_t i = 0; i < args.size(); ++i)
+		{
+			cllr::SSA t = types[i];
+			auto& val = args[i];
+
+			if (checker.lookup(t, val, codeAsm) == cllr::ConvertResult::INCOMPATIBLE)
+			{
+				valid = false;
+				break;
+			}
 
 		}
 
-		return cllr::TypedSSA(tID, callID);
+		if (valid)
+		{
+			return fn;
+		}
+
 	}
 
-	//TODO complain
-	return cllr::TypedSSA();
+	return nullptr;
 }

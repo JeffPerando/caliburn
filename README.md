@@ -16,6 +16,7 @@ Pull requests and issues are always welcomed.
 
 Caliburn is a multi-paradigm shader language. Language features include:
 
+* **Familiar Syntax**: Caliburn's syntax is a blend of C++ and Python, but with further improvements to help with readability.
 * **Functions** via top-level `def`
 * **Objects** via `class`
 * **Generics**: All function and type declarations support both type and constant generics.

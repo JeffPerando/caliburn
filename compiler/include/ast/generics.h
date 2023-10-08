@@ -214,11 +214,14 @@ namespace caliburn
 	template<typename T>
 	struct Generic
 	{
-		const sptr<GenericSignature> genSig;
-		const GenFactoryFn<T> facFn;
-		
+	private:
 		const uptr<GenArgMap<T>> variants = new_uptr<GenArgMap<T>>();
 
+		const GenFactoryFn<T> facFn;
+
+	public:
+		const sptr<GenericSignature> genSig;
+		
 		Generic(sptr<GenericSignature> sig, in<GenFactoryFn<T>> fn) : genSig(sig == nullptr ? new_sptr<GenericSignature>() : sig), facFn(fn) {}
 		virtual ~Generic() {}
 

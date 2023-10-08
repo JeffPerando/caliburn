@@ -1,6 +1,8 @@
 
 #include "types/typestruct.h"
 
+#include "cllr/cllrtype.h"
+
 using namespace caliburn;
 
 cllr::SSA RealStruct::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
@@ -18,18 +20,25 @@ cllr::SSA RealStruct::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler>
 	genArgs->apply(parent->genSig, memberTable);
 
 	std::vector<sptr<Variable>> memberVars;
+	std::vector<std::pair<std::string, sptr<FunctionGroup>>> memberFns;
 
-	for (auto const& [name, mem] : parent->members)
+	for (auto& [name, mem] : parent->members)
 	{
 		if (auto v = std::get_if<sptr<Variable>>(&mem))
 		{
 			memberVars.push_back(*v);
 
 		}
+		else if (auto fn = std::get_if<sptr<FunctionGroup>>(&mem))
+		{
+			memberFns.push_back(std::pair(name, *fn));
+		}
 
 	}
 
-	id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::TYPE_STRUCT, { (uint32_t)memberVars.size() }));
+	auto [typeID, typeImpl] = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_STRUCT, { (uint32_t)memberVars.size() }));
+
+	id = typeID;
 
 	for (auto const& v : memberVars)
 	{
@@ -37,6 +46,11 @@ cllr::SSA RealStruct::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler>
 	}
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::STRUCT_END, {}, { id }));
+
+	for (auto& [name, fn] : memberFns)
+	{
+		typeImpl->setMemberFns(name, fn);
+	}
 
 	return id;
 }

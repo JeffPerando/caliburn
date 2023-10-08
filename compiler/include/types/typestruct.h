@@ -37,16 +37,6 @@ namespace caliburn
 			return members.at(name);
 		}
 
-		cllr::TypedSSA callConstructor(out<cllr::Assembler> codeAsm, in<std::vector<Value>> args) const override
-		{
-			return cllr::TypedSSA();
-		}
-
-		void callDestructor(cllr::SSA val) const override
-		{
-
-		}
-		
 	};
 
 }

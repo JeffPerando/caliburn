@@ -23,6 +23,7 @@ namespace caliburn
 	struct RealType;
 	struct Variable;
 	struct Function;
+	struct FunctionGroup;
 
 	enum class TypeCategory : uint32_t
 	{
@@ -182,7 +183,7 @@ namespace caliburn
 
 	};
 
-	using Member = std::variant<std::monostate, sptr<Variable>, sptr<Function>, sptr<Value>>;//Values are also members so TypeVector can swizzle
+	using Member = std::variant<std::monostate, sptr<Variable>, sptr<FunctionGroup>, sptr<Value>>;//Values are also members so TypeVector can swizzle
 
 	struct BaseType
 	{
@@ -225,16 +226,6 @@ namespace caliburn
 		}
 
 		virtual Member getMember(in<std::string> name) const = 0;
-
-		virtual cllr::TypedSSA callConstructor(out<cllr::Assembler> codeAsm, in<std::vector<Value>> args) const
-		{
-			return cllr::TypedSSA();
-		}
-
-		virtual void callDestructor(cllr::SSA val) const
-		{
-
-		}
 
 		/* TODO reconsider inheritance
 		sptr<BaseType> getSuper()
@@ -280,7 +271,7 @@ namespace caliburn
 
 	};
 
-	struct RealType : cllr::Emitter
+	struct RealType
 	{
 	protected:
 		//FIXME Saving type IDs here isn't thread-safe. So either use atomics or cache types in the cllr::Assembler.
@@ -320,7 +311,7 @@ namespace caliburn
 			return fullName;
 		}
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override = 0;
+		virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
 
 	};
 
