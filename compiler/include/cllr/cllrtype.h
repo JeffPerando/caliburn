@@ -54,7 +54,7 @@ namespace caliburn
 
 			TypeCheckResult lookup(sptr<LowType> targetType, in<TypedSSA> rhs, in<Assembler> codeAsm) const;
 
-			bool check(sptr<LowType> targetType, out<TypedSSA> rhs, out<Assembler> codeAsm, Operator op = Operator::NONE) const;
+			bool check(sptr<LowType> targetType, in<TypedSSA> rhs, out<TypedSSA> result, out<Assembler> codeAsm, Operator op = Operator::NONE) const;
 
 		};
 

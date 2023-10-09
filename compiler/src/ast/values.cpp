@@ -117,14 +117,13 @@ cllr::TypedSSA ExpressionValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr:
 
 	cllr::TypeChecker tc(codeAsm.settings);
 
-	if (!tc.check(lhs.type, rhs, codeAsm, op))
+	cllr::TypedSSA result;
+	if (!tc.check(lhs.type, rhs, result, codeAsm, op))
 	{
 		//TODO complain
 	}
 
-	//TODO consider doing inverse with rhs.type and lhs
-
-	auto vID = codeAsm.pushNew(cllr::Instruction(cllrOp, { (uint32_t)op }, { lhs.value, rhs.value }, lhs.type->id));
+	auto vID = codeAsm.pushNew(cllr::Instruction(cllrOp, { (uint32_t)op }, { lhs.value, result.value }, lhs.type->id));
 
 	//FIXME
 	return cllr::TypedSSA(lhs.type, vID);
@@ -335,19 +334,20 @@ cllr::TypedSSA SetterValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Ass
 
 	cllr::TypeChecker tc(codeAsm.settings);
 
-	if (!tc.check(lvalue.type, rvalue, codeAsm, op))
+	cllr::TypedSSA result;
+	if (!tc.check(lvalue.type, rvalue, result, codeAsm, op))
 	{
 		//TODO complain
 	}
 
 	if (op != Operator::NONE)
 	{
-		auto rvID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_EXPR, { (uint32_t)op }, { lvalue.value, rvalue.value }, lvalue.type->id));
-		rvalue = cllr::TypedSSA(lvalue.type, rvID);
+		auto rvID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_EXPR, { (uint32_t)op }, { lvalue.value, result.value }, lvalue.type->id));
+		result = cllr::TypedSSA(lvalue.type, rvID);
 
 	}
 
-	codeAsm.push(cllr::Instruction(cllr::Opcode::ASSIGN, {}, { lvalue.value, rvalue.value }));
+	codeAsm.push(cllr::Instruction(cllr::Opcode::ASSIGN, {}, { lvalue.value, result.value }));
 
 	return cllr::TypedSSA();
 }

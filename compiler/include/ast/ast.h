@@ -212,78 +212,11 @@ namespace caliburn
 			return last;
 		}
 
-		void prettyPrint(out<std::stringstream> ss) const override
-		{
-			ss << "{\n";
+		void prettyPrint(out<std::stringstream> ss) const override;
 
-			for (auto const& stmt : stmts)
-			{
-				stmt->prettyPrint(ss);
-				ss << ';\n';
-			}
-
-			ss << "}";
-
-		}
+		void declareSymbols(sptr<SymbolTable> table) override;
 		
-		void declareSymbols(sptr<SymbolTable> table) override
-		{
-			if (scopeTable != nullptr)
-			{
-				return;
-			}
-
-			scopeTable = new_sptr<SymbolTable>(table);
-
-			for (auto const& stmt : stmts)
-			{
-				stmt->declareSymbols(scopeTable);
-
-			}
-
-		}
-
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override
-		{
-			scopeTable->reparent(table);
-
-			for (auto const& inner : stmts)
-			{
-				inner->emitDeclCLLR(scopeTable, codeAsm);
-			}
-
-			switch (retMode)
-			{
-				case ReturnMode::NONE:
-				case ReturnMode::UNREACHABLE: break;
-				case ReturnMode::RETURN: {
-					if (retValue != nullptr)
-					{
-						auto ret = retValue->emitValueCLLR(scopeTable, codeAsm);
-
-						codeAsm.push(cllr::Instruction(cllr::Opcode::RETURN_VALUE, {}, { ret.value }));
-
-					}
-					else
-					{
-						codeAsm.push(cllr::Instruction(cllr::Opcode::RETURN));
-
-					}
-					break;
-				};
-				case ReturnMode::CONTINUE:
-					codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP, {}, { codeAsm.getLoopStart() })); break;
-				case ReturnMode::BREAK:
-					codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP, {}, { codeAsm.getLoopEnd() })); break;
-				case ReturnMode::PASS:
-					//TODO implement
-					break;
-				case ReturnMode::DISCARD:
-					codeAsm.push(cllr::Instruction(cllr::Opcode::DISCARD)); break;
-			}
-
-			return 0;
-		}
+		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 	};
 
