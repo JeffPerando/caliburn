@@ -20,13 +20,13 @@ bool cllr::TypeChecker::check(sptr<LowType> targetType, in<TypedSSA> rhs, out<Ty
 {
 	result = rhs;
 
-	if (targetType->id == rhs.type->id)
-	{
-		return true;
-	}
-
 	while (true)
 	{
+		if (result.type->id == targetType->id)
+		{
+			return true;
+		}
+
 		cllr::SSA fnID = 0;
 		
 		switch (result.type->typeCheck(targetType, fnID, op))
