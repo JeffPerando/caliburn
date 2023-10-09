@@ -3,7 +3,7 @@
 
 using namespace caliburn;
 
-cllr::SSA RealArray::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+sptr<cllr::LowType> RealArray::emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	/*
 	auto innerID = ((TypeArray*)base)->innerType->emitDeclCLLR(table, codeAsm);
@@ -11,5 +11,5 @@ cllr::SSA RealArray::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> 
 	//TODO length????
 	return codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_ARRAY, {}, { innerID }));
 	*/
-	return 0;
+	return nullptr;
 }

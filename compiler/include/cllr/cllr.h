@@ -28,19 +28,21 @@ namespace caliburn
 		static auto constexpr MAX_OPS = 4;
 		static auto constexpr MAX_REFS = 4;
 
+		struct LowType;
 		struct Assembler;
 		
 		struct Instruction;
 		using InstructionVec = std::vector<Instruction>;
 
 		using SSA = uint32_t;
+
 		struct TypedSSA
 		{
-			SSA type = 0;
+			sptr<LowType> type = nullptr;
 			SSA value = 0;
 
 			TypedSSA() = default;
-			TypedSSA(SSA t, SSA v) : type(t), value(v) {}
+			TypedSSA(sptr<LowType> t, SSA v) : type(t), value(v) {}
 
 			bool operator==(in<TypedSSA> other) const
 			{

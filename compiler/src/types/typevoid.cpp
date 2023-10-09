@@ -1,14 +1,16 @@
 
 #include "types/typevoid.h"
 
+#include "cllr/cllrtype.h"
+
 using namespace caliburn;
 
-cllr::SSA RealVoid::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+sptr<cllr::LowType> RealVoid::emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
-	if (id == 0)
+	if (impl == 0)
 	{
-		id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::TYPE_VOID));
+		impl = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_VOID));
 	}
 
-	return id;
+	return impl;
 }

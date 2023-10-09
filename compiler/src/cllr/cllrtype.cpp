@@ -2,40 +2,36 @@
 #include "cllr/cllrtype.h"
 
 #include "cllr/cllrasm.h"
-#include "cllr/cllrtype.h"
 
 using namespace caliburn;
 
-cllr::ConvertResult cllr::TypeChecker::lookup(SSA targetType, in<TypedSSA> rhs, in<Assembler> codeAsm) const
+cllr::TypeCheckResult cllr::TypeChecker::lookup(sptr<LowType> targetType, in<TypedSSA> rhs, in<Assembler> codeAsm) const
 {
-	if (targetType == rhs.type)
+	if (targetType->id == rhs.type->id)
 	{
-		return ConvertResult::LGTM;
+		return TypeCheckResult::COMPATIBLE;
 	}
 
-	auto lhsType = codeAsm.getType(targetType);
-	auto rhsType = codeAsm.getType(rhs.type);
-
-	return rhsType->isConvertibleTo(targetType, lhsType, Operator::UNKNOWN);
+	cllr::SSA fnID = 0;
+	return rhs.type->typeCheck(targetType, fnID);
 }
 
-bool cllr::TypeChecker::check(SSA targetType, out<TypedSSA> rhs, out<Assembler> codeAsm, Operator op) const
+bool cllr::TypeChecker::check(sptr<LowType> targetType, out<TypedSSA> rhs, out<Assembler> codeAsm, Operator op) const
 {
-	if (targetType == rhs.type)
+	if (targetType->id == rhs.type->id)
 	{
 		return true;
 	}
 
-	auto lhsType = codeAsm.getType(targetType);
-	auto rhsType = codeAsm.getType(rhs.type);
+	cllr::SSA fnID = 0;
 
-	auto result = rhsType->isConvertibleTo(targetType, lhsType, op);
+	auto result = rhs.type->typeCheck(targetType, fnID, op);
 
-	if (result == ConvertResult::LGTM)
+	if (result == TypeCheckResult::COMPATIBLE)
 	{
 		return true;
 	}
-	else if (result == ConvertResult::INCOMPATIBLE)
+	else if (result == TypeCheckResult::INCOMPATIBLE)
 	{
 		return false;
 	}
@@ -44,37 +40,35 @@ bool cllr::TypeChecker::check(SSA targetType, out<TypedSSA> rhs, out<Assembler> 
 	{
 		switch (result)
 		{
-			case ConvertResult::WIDEN: {
-				auto [t, tImpl] = codeAsm.pushType(Instruction(rhsType->category, {lhsType->getBitWidth()}, {}));
+			case TypeCheckResult::WIDEN: {
+				auto t = codeAsm.pushType(Instruction(rhs.type->category, {targetType->getBitWidth()}, {}));
 				auto v = codeAsm.pushNew(Instruction(Opcode::VALUE_EXPAND, {}, { rhs.value }, 0));
 				rhs = TypedSSA(t, v);
 			}; break;
-			case ConvertResult::BITCAST_TO_INT: {
+			case TypeCheckResult::BITCAST_TO_INT: {
 				//TODO reconsider this conversion method
 				//TODO get power of 2 for getBitWidth(). LowStruct can return a non-power-of-2.
-				auto [t, tImpl] = codeAsm.pushType(Instruction(Opcode::TYPE_INT_SIGN, { lhsType->getBitWidth() }, {}));
-				auto v = codeAsm.pushNew(Instruction(Opcode::VALUE_CAST, {}, { rhs.value }, t));
+				auto t = codeAsm.pushType(Instruction(Opcode::TYPE_INT_SIGN, { targetType->getBitWidth() }, {}));
+				auto v = codeAsm.pushNew(Instruction(Opcode::VALUE_CAST, {}, { rhs.value }, t->id));
 				rhs = TypedSSA(t, v);
 			}; break;
-			case ConvertResult::INT_TO_FLOAT: {
-				auto [t, tImpl] = codeAsm.pushType(Instruction(Opcode::TYPE_FLOAT, { rhsType->getBitWidth() }, {}));
-				auto v = codeAsm.pushNew(Instruction(Opcode::VALUE_INT_TO_FP, {}, { rhs.value }, t));
+			case TypeCheckResult::INT_TO_FLOAT: {
+				auto t = codeAsm.pushType(Instruction(Opcode::TYPE_FLOAT, { rhs.type->getBitWidth() }, {}));
+				auto v = codeAsm.pushNew(Instruction(Opcode::VALUE_INT_TO_FP, {}, { rhs.value }, t->id));
 				rhs = TypedSSA(t, v);
 			}; break;
-			/*case ConvertResult::METHOD_CONVERSION: {
-				auto fnID = rhsType->getConverter(targetType);
+			case TypeCheckResult::METHOD_CALL: {
 				auto callID = codeAsm.pushNew(Instruction(Opcode::CALL, { 1 }, { fnID }));
 				codeAsm.push(Instruction(Opcode::CALL_ARG, { 0 }, { rhs.value }));
 				rhs = TypedSSA(targetType, callID);
-			}; break;*/
-			case ConvertResult::INCOMPATIBLE: return false;
+			}; break;
+			case TypeCheckResult::INCOMPATIBLE: return false;
 			default: break;
 		}
 
-		rhsType = codeAsm.getType(rhs.type);
-		result = rhsType->isConvertibleTo(targetType, lhsType, op);
+		result = rhs.type->typeCheck(targetType, fnID, op);
 
-	} while (result != ConvertResult::LGTM);
+	} while (result != TypeCheckResult::COMPATIBLE);
 
 	return true;
 }

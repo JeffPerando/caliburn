@@ -11,7 +11,7 @@ namespace caliburn
 	{
 		RealArray(ptr<TypeArray> parent, sptr<GenericArguments> gArgs) : RealType((ptr<BaseType>)parent, gArgs) {}
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		sptr<cllr::LowType> emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 	};
 

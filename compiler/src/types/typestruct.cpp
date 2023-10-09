@@ -5,11 +5,11 @@
 
 using namespace caliburn;
 
-cllr::SSA RealStruct::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+sptr<cllr::LowType> RealStruct::emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
-	if (id != 0)
+	if (impl != nullptr)
 	{
-		return id;
+		return impl;
 	}
 	
 	auto const& parent = static_cast<ptr<TypeStruct>>(base);
@@ -36,21 +36,19 @@ cllr::SSA RealStruct::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler>
 
 	}
 
-	auto [typeID, typeImpl] = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_STRUCT, { (uint32_t)memberVars.size() }));
-
-	id = typeID;
+	impl = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_STRUCT, { (uint32_t)memberVars.size() }));
 
 	for (auto const& v : memberVars)
 	{
 		v->emitDeclCLLR(memberTable, codeAsm);
 	}
 
-	codeAsm.push(cllr::Instruction(cllr::Opcode::STRUCT_END, {}, { id }));
+	codeAsm.push(cllr::Instruction(cllr::Opcode::STRUCT_END, {}, { impl->id }));
 
 	for (auto& [name, fn] : memberFns)
 	{
-		typeImpl->setMemberFns(name, fn);
+		impl->setMemberFns(name, fn);
 	}
 
-	return id;
+	return impl;
 }

@@ -1,33 +1,33 @@
 
+#include "cllr/cllrtype.h"
 #include "types/typevector.h"
 
 using namespace caliburn;
 
-cllr::SSA RealVector::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+sptr<cllr::LowType> RealVector::emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
-	if (id == 0)
+	if (impl != nullptr)
 	{
-		auto& t = genArgs->args[0];
+		return impl;
+	}
 
-		if (auto& ptype = std::get<sptr<ParsedType>>(t))
+	auto& t = genArgs->args[0];
+
+	if (auto& ptype = std::get<sptr<ParsedType>>(t))
+	{
+		if (auto type = ptype->resolve(table))
 		{
-			if (auto type = ptype->resolve(table))
-			{
-				/* FIXME
-				((ptr<TypeVector>)base)->elements
-				returns garbage
-				*/
+			auto innerImpl = type->emitTypeCLLR(table, codeAsm);
 
-				id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::TYPE_VECTOR, { length }, { type->emitDeclCLLR(table, codeAsm) }));
-				return id;
-			}
-
+			impl = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_VECTOR, { length }, { innerImpl->id }));
+			return impl;
 		}
 
 		//TODO complain
+
 	}
 
-	return id;
+	return impl;
 }
 
 Member TypeVector::getMember(in<std::string> name) const

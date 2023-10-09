@@ -3,6 +3,8 @@
 
 #include "ast/values.h"
 
+#include "cllr/cllrtype.h"
+
 using namespace caliburn;
 
 //======================================
@@ -44,20 +46,20 @@ cllr::SSA LocalVariable::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembl
 
 	auto v = initValue->emitValueCLLR(table, codeAsm);
 
-	cllr::SSA typeID = 0;
+	sptr<cllr::LowType> type = 0;
 
 	if (typeHint == nullptr)
 	{
-		typeID = v.type;
+		type = v.type;
 
 	}
 	else if (auto t = typeHint->resolve(table))
 	{
-		auto hintID = t->emitDeclCLLR(table, codeAsm);
+		auto hintID = t->emitTypeCLLR(table, codeAsm);
 
 		//TODO check for compatibility with initial value
 
-		typeID = hintID;
+		type = hintID;
 
 	}
 	else
@@ -65,7 +67,7 @@ cllr::SSA LocalVariable::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembl
 		//TODO complain
 	}
 
-	id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VAR_LOCAL, { (uint32_t)mods }, { typeID, v.value }));
+	id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VAR_LOCAL, { (uint32_t)mods }, { type->id, v.value }));
 
 	return id;
 }
@@ -76,10 +78,10 @@ cllr::TypedSSA LocalVariable::emitLoadCLLR(sptr<SymbolTable> table, out<cllr::As
 
 	if (auto t = typeHint->resolve(table))
 	{
-		auto tID = t->emitDeclCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_READ_VAR, {}, { id }, tID));
+		auto tImpl = t->emitTypeCLLR(table, codeAsm);
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_READ_VAR, {}, { id }, tImpl->id));
 
-		return cllr::TypedSSA(tID, vID);
+		return cllr::TypedSSA(tImpl, vID);
 	}
 	
 	//TODO complain
@@ -130,12 +132,12 @@ cllr::SSA MemberVariable::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assemb
 
 	//TODO type check
 
-	auto parentID = parent->emitDeclCLLR(table, codeAsm);
+	auto parentImpl = parent->emitTypeCLLR(table, codeAsm);
 
 	if (auto t = typeHint->resolve(table))
 	{
-		auto typeID = t->emitDeclCLLR(table, codeAsm);
-		id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::STRUCT_MEMBER, { memberIndex }, { parentID, typeID, init.value }));
+		auto type = t->emitTypeCLLR(table, codeAsm);
+		id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::STRUCT_MEMBER, { memberIndex }, { parentImpl->id, type->id, init.value }));
 		return id;
 	}
 
@@ -147,10 +149,10 @@ cllr::TypedSSA MemberVariable::emitLoadCLLR(sptr<SymbolTable> table, out<cllr::A
 {
 	if (auto t = typeHint->resolve(table))
 	{
-		auto tID = t->emitDeclCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { memberIndex }, { target }, tID));
+		auto tImpl = t->emitTypeCLLR(table, codeAsm);
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { memberIndex }, { target }, tImpl->id));
 
-		return cllr::TypedSSA(tID, vID);
+		return cllr::TypedSSA(tImpl, vID);
 	}
 
 	//TODO complain
@@ -181,22 +183,22 @@ cllr::SSA GlobalVariable::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assemb
 		return id;
 	}
 
-	cllr::SSA tID = 0;
+	sptr<cllr::LowType> type = 0;
 	auto v = initValue->emitValueCLLR(table, codeAsm);
 
 	if (auto t = typeHint->resolve(table))
 	{
 		//TODO type check
 
-		tID = t->emitDeclCLLR(table, codeAsm);
+		type = t->emitTypeCLLR(table, codeAsm);
 
 	}
 	else
 	{
-		tID = v.type;
+		type = v.type;
 	}
 
-	id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VAR_GLOBAL, {}, { tID, v.value }));
+	id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VAR_GLOBAL, {}, { type->id, v.value }));
 
 	return id;
 }
@@ -209,10 +211,10 @@ cllr::TypedSSA GlobalVariable::emitLoadCLLR(sptr<SymbolTable> table, out<cllr::A
 
 	if (auto t = typeHint->resolve(table))
 	{
-		auto tID = t->emitDeclCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_READ_VAR, {}, { id }, tID));
+		auto tImpl = t->emitTypeCLLR(table, codeAsm);
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_READ_VAR, {}, { id }, tImpl->id));
 
-		return cllr::TypedSSA(tID, vID);
+		return cllr::TypedSSA(tImpl, vID);
 	}
 
 	//TODO complain
@@ -251,9 +253,9 @@ cllr::SSA FnArgVariable::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembl
 
 	if (auto t = typeHint->resolve(table))
 	{
-		auto tID = t->emitDeclCLLR(table, codeAsm);
+		auto tImpl = t->emitTypeCLLR(table, codeAsm);
 
-		id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VAR_FUNC_ARG, { argIndex }, { tID }));
+		id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VAR_FUNC_ARG, { argIndex }, { tImpl->id }));
 
 		return id;
 	}
@@ -298,17 +300,17 @@ cllr::SSA ShaderIOVariable::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Asse
 
 	if (auto t = typeHint->resolve(table))
 	{
-		auto tID = t->emitDeclCLLR(table, codeAsm);
+		auto tImpl = t->emitTypeCLLR(table, codeAsm);
 
 		std::pair<uint32_t, cllr::SSA> ioData;
 
 		if (ioType == ShaderIOVarType::INPUT)
 		{
-			ioData = codeAsm.pushInput(name, tID);
+			ioData = codeAsm.pushInput(name, tImpl->id);
 		}
 		else
 		{
-			ioData = codeAsm.pushOutput(name, tID);
+			ioData = codeAsm.pushOutput(name, tImpl->id);
 		}
 
 		ioIndex = ioData.first;
@@ -332,10 +334,10 @@ cllr::TypedSSA ShaderIOVariable::emitLoadCLLR(sptr<SymbolTable> table, out<cllr:
 
 	if (auto t = typeHint->resolve(table))
 	{
-		auto tID = t->emitDeclCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_READ_VAR, {}, { emitDeclCLLR(table, codeAsm) }, tID));
+		auto tImpl = t->emitTypeCLLR(table, codeAsm);
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_READ_VAR, {}, { emitDeclCLLR(table, codeAsm) }, tImpl->id));
 
-		return cllr::TypedSSA(tID, vID);
+		return cllr::TypedSSA(tImpl, vID);
 	}
 
 	//TODO complain

@@ -11,7 +11,7 @@ namespace caliburn
 	{
 		RealInt(ptr<TypeInt> parent) : RealType((ptr<BaseType>)parent) {}
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		sptr<cllr::LowType> emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 	};
 

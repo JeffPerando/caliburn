@@ -17,6 +17,11 @@
 
 namespace caliburn
 {
+	namespace cllr
+	{
+		struct LowType;
+	}
+
 	struct Function;
 	
 	enum class FnType : uint32_t
@@ -66,7 +71,7 @@ namespace caliburn
 	private:
 		sptr<SymbolTable> fnImplTable = nullptr;
 		cllr::SSA id = 0;
-		cllr::SSA retTypeID = 0;
+		sptr<cllr::LowType> retType = nullptr;
 
 	};
 

@@ -748,8 +748,8 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 	{
 		switch (cllrOp)
 		{
-			case Operator::AND: op = spirv::OpLogicalAnd(); break;
-			case Operator::OR: op = spirv::OpLogicalOr(); break;
+			case Operator::LOGIC_AND: op = spirv::OpLogicalAnd(); break;
+			case Operator::LOGIC_OR: op = spirv::OpLogicalOr(); break;
 			default: return;//TODO complain
 		}
 

@@ -13,7 +13,7 @@ namespace caliburn
 
 		RealVector(ptr<TypeVector> parent, sptr<GenericArguments> gArgs, uint32_t l) : RealType((ptr<BaseType>)parent, gArgs), length(l) {}
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		sptr<cllr::LowType> emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 	};
 

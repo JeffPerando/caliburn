@@ -189,7 +189,7 @@ namespace caliburn
 	{
 		sptr<Value> lValue = nullptr;
 		sptr<Value> rValue = nullptr;
-		Operator op = Operator::UNKNOWN;
+		Operator op = Operator::NONE;
 
 		ExpressionValue() : Value(ValueType::EXPRESSION) {}
 
@@ -435,7 +435,7 @@ namespace caliburn
 
 	struct UnaryValue : Value
 	{
-		Operator op = Operator::UNKNOWN;
+		Operator op = Operator::NONE;
 		sptr<Token> start = nullptr;
 		sptr<Value> val = nullptr;
 		sptr<Token> end = nullptr;
@@ -516,7 +516,7 @@ namespace caliburn
 	{
 		sptr<Value> lhs = nullptr;
 		sptr<Value> rhs = nullptr;
-		Operator op = Operator::UNKNOWN;
+		Operator op = Operator::NONE;
 
 		SetterValue() : Value(ValueType::UNKNOWN) {}
 		virtual ~SetterValue() {}

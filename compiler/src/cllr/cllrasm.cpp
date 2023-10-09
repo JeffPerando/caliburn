@@ -56,7 +56,7 @@ SSA Assembler::push(in<Instruction> ins)
 	return ssa;
 }
 
-std::pair<SSA, sptr<LowType>> Assembler::pushType(in<Instruction> ins)
+sptr<LowType> Assembler::pushType(in<Instruction> ins)
 {
 	auto found = types.find(ins);
 
@@ -71,25 +71,23 @@ std::pair<SSA, sptr<LowType>> Assembler::pushType(in<Instruction> ins)
 
 	switch (ins.op)
 	{
-		case Opcode::TYPE_VOID: t = new_sptr<LowVoid>(); break;
-		case Opcode::TYPE_FLOAT: t = new_sptr<LowFloat>(ins.operands[0]); break;
+		case Opcode::TYPE_VOID: t = new_sptr<LowVoid>(id); break;
+		case Opcode::TYPE_FLOAT: t = new_sptr<LowFloat>(id, ins.operands[0]); break;
 		case Opcode::TYPE_INT_SIGN: pass;
-		case Opcode::TYPE_INT_UNSIGN: t = new_sptr<LowInt>(ins.op, ins.operands[0]); break;
-		case Opcode::TYPE_ARRAY: t = new_sptr<LowArray>(ins.operands[0], getType(ins.refs[0])); break;
-		case Opcode::TYPE_VECTOR: t = new_sptr<LowVector>(ins.operands[0], getType(ins.refs[0])); break;
-		case Opcode::TYPE_MATRIX: t = new_sptr<LowMatrix>(ins.operands[0], ins.operands[1], getType(ins.refs[0])); break;
-		case Opcode::TYPE_STRUCT: t = new_sptr<LowStruct>(); break;
-		case Opcode::TYPE_BOOL: t = new_sptr<LowBool>(); break;
-		//case Opcode::TYPE_PTR: t = new_sptr<LowPointer>();
-		//case Opcode::TYPE_TUPLE: t = new_sptr<LowTuple>();
+		case Opcode::TYPE_INT_UNSIGN: t = new_sptr<LowInt>(id, ins.op, ins.operands[0]); break;
+		case Opcode::TYPE_ARRAY: t = new_sptr<LowArray>(id, ins.operands[0], getType(ins.refs[0])); break;
+		case Opcode::TYPE_VECTOR: t = new_sptr<LowVector>(id, ins.operands[0], getType(ins.refs[0])); break;
+		case Opcode::TYPE_MATRIX: t = new_sptr<LowMatrix>(id, ins.operands[0], ins.operands[1], getType(ins.refs[0])); break;
+		case Opcode::TYPE_STRUCT: t = new_sptr<LowStruct>(id); break;
+		case Opcode::TYPE_BOOL: t = new_sptr<LowBool>(id); break;
+		//case Opcode::TYPE_PTR: t = new_sptr<LowPointer>(id);
+		//case Opcode::TYPE_TUPLE: t = new_sptr<LowTuple>(id);
 		default: break;//TODO complain
 	}
 
-	auto ret = std::pair(id, t);
+	types.emplace(ins, t);
 
-	types.emplace(ins, ret);
-
-	return ret;
+	return t;
 }
 
 void Assembler::pushAll(in<std::vector<Instruction>> ins)
@@ -112,7 +110,7 @@ sptr<LowType> Assembler::getType(SSA id) const
 		return nullptr;
 	}
 
-	return found->second.second;
+	return found->second;
 }
 
 std::pair<uint32_t, SSA> Assembler::pushInput(in<std::string> name, SSA type)
@@ -296,7 +294,7 @@ void Assembler::doBookkeeping(in<Instruction> ins)
 	if (ins.op == Opcode::STRUCT_MEMBER)
 	{
 		//FIXME I forgot about members when writing this code
-		getType(ins.refs[0])->addMember("", ins.index, getType(ins.refs[1]));
+		//getType(ins.refs[0])->addMember("", ins.index, getType(ins.refs[1]));
 	}
 
 }

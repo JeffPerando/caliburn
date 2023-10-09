@@ -9,7 +9,7 @@ cllr::TypedSSA FunctionImpl::emitFnDeclCLLR(sptr<SymbolTable> table, out<cllr::A
 {
 	if (id != 0)
 	{
-		return cllr::TypedSSA(retTypeID, id);
+		return cllr::TypedSSA(retType, id);
 	}
 
 	auto& args = parent->args;
@@ -33,9 +33,9 @@ cllr::TypedSSA FunctionImpl::emitFnDeclCLLR(sptr<SymbolTable> table, out<cllr::A
 		return cllr::TypedSSA();
 	}
 
-	retTypeID = retType->emitDeclCLLR(fnImplTable, codeAsm);
+	auto retTypeImpl = retType->emitTypeCLLR(fnImplTable, codeAsm);
 
-	id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::FUNCTION, { (uint32_t)args.size() }, { retTypeID }));
+	id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::FUNCTION, { (uint32_t)args.size() }, { retTypeImpl->id }));
 
 	for (auto i = 0; i < args.size(); ++i)
 	{
@@ -52,7 +52,7 @@ cllr::TypedSSA FunctionImpl::emitFnDeclCLLR(sptr<SymbolTable> table, out<cllr::A
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::FUNCTION_END, {}, { id }));
 
-	return cllr::TypedSSA(retTypeID, id);
+	return cllr::TypedSSA(retTypeImpl, id);
 }
 
 /*
@@ -62,7 +62,7 @@ cllr::TypedSSA FunctionImpl::call(sptr<SymbolTable> table, out<cllr::Assembler> 
 {
 	auto fnData = emitFnDeclCLLR(table, codeAsm);
 
-	auto callID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::CALL, { (uint32_t)args.size() }, { fnData.value }, fnData.type).debug(callTkn));
+	auto callID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::CALL, { (uint32_t)args.size() }, { fnData.value }, fnData.type->id).debug(callTkn));
 
 	for (uint32_t i = 0; i < args.size(); ++i)
 	{
@@ -77,7 +77,7 @@ sptr<Function> FunctionGroup::find(in<std::vector<cllr::TypedSSA>> args, in<cllr
 	//TODO score-based system; fewer conversions = higher score, highest-scording function gets returned
 
 	cllr::TypeChecker checker(codeAsm.settings);
-
+	/*
 	for (auto const& [types, fn] : fns)
 	{
 		if (types.size() != args.size())
@@ -106,6 +106,6 @@ sptr<Function> FunctionGroup::find(in<std::vector<cllr::TypedSSA>> args, in<cllr
 		}
 
 	}
-
+	*/
 	return nullptr;
 }

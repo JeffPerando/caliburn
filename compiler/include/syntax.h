@@ -162,7 +162,7 @@ namespace caliburn
 
 	enum class Operator : uint32_t
 	{
-		UNKNOWN,
+		NONE,
 
 		ADD, SUB, MUL, DIV, INTDIV,
 		MOD, POW,
@@ -173,7 +173,7 @@ namespace caliburn
 		COMP_EQ, COMP_NEQ,
 		COMP_GT, COMP_LT,
 		COMP_GTE, COMP_LTE,
-		AND, OR,
+		LOGIC_AND, LOGIC_OR,
 
 		APPEND,
 
@@ -262,8 +262,8 @@ namespace caliburn
 		{"<<",	Operator::SHIFT_LEFT},
 		{">>",	Operator::SHIFT_RIGHT},
 
-		{"&&",	Operator::AND},
-		{"||",	Operator::OR},
+		{"&&",	Operator::LOGIC_AND},
+		{"||",	Operator::LOGIC_OR},
 		{"==",	Operator::COMP_EQ},
 		{"!=",	Operator::COMP_NEQ},
 		{">",	Operator::COMP_GT},
@@ -292,8 +292,8 @@ namespace caliburn
 		{Operator::SHIFT_LEFT,	"<<"},
 		{Operator::SHIFT_RIGHT,	">>"},
 
-		{Operator::AND,			"&&"},
-		{Operator::OR,			"||"},
+		{Operator::LOGIC_AND,	"&&"},
+		{Operator::LOGIC_OR,	"||"},
 		{Operator::COMP_EQ,		"=="},
 		{Operator::COMP_NEQ,	"!="},
 		{Operator::COMP_GT,		">"},
@@ -328,8 +328,8 @@ namespace caliburn
 		{Operator::SHIFT_LEFT,	OpCategory::BITWISE},
 		{Operator::SHIFT_RIGHT,	OpCategory::BITWISE},
 
-		{Operator::AND,			OpCategory::LOGICAL},
-		{Operator::OR,			OpCategory::LOGICAL},
+		{Operator::LOGIC_AND,	OpCategory::LOGICAL},
+		{Operator::LOGIC_OR,	OpCategory::LOGICAL},
 		{Operator::COMP_EQ,		OpCategory::LOGICAL},
 		{Operator::COMP_NEQ,	OpCategory::LOGICAL},
 		{Operator::COMP_GT,		OpCategory::LOGICAL},
@@ -346,8 +346,8 @@ namespace caliburn
 	};
 
 	static const std::map<Operator, uint32_t> OP_PRECEDENCE = {
-		{Operator::AND,			10},
-		{Operator::OR,			9},
+		{Operator::LOGIC_AND,	10},
+		{Operator::LOGIC_OR,	9},
 
 		{Operator::COMP_EQ,		8},
 		{Operator::COMP_NEQ,	8},

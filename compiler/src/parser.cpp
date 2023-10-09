@@ -1699,7 +1699,7 @@ sptr<Value> Parser::parseExpr()
 
 		sptr<Token> opTkn = tkns.cur();
 		sptr<Value> term = nullptr;
-		auto op = Operator::UNKNOWN;
+		auto op = Operator::NONE;
 		
 		if (opTkn->type == TokenType::OPERATOR)
 		{

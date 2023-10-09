@@ -276,7 +276,7 @@ namespace caliburn
 	protected:
 		//FIXME Saving type IDs here isn't thread-safe. So either use atomics or cache types in the cllr::Assembler.
 		//Given this will be read far more than written, using atomics is probably better
-		cllr::SSA id = 0;
+		sptr<cllr::LowType> impl = 0;
 		std::string fullName = "";
 		
 	public:
@@ -311,7 +311,7 @@ namespace caliburn
 			return fullName;
 		}
 
-		virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
+		virtual sptr<cllr::LowType> emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
 
 	};
 

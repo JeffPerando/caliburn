@@ -51,7 +51,7 @@ namespace caliburn
 			std::vector<Opcode> ssaToOp{ Opcode::UNKNOWN };
 			std::vector<uint32_t> ssaRefs{ 0 };
 
-			HashMap<Instruction, std::pair<SSA, sptr<LowType>>, InstructionHash> types;
+			HashMap<Instruction, sptr<LowType>, InstructionHash> types;
 
 			std::vector<std::string> strs;
 			
@@ -91,7 +91,7 @@ namespace caliburn
 				return push(ins);
 			}
 
-			std::pair<SSA, sptr<LowType>> pushType(in<Instruction> ins);
+			sptr<LowType> pushType(in<Instruction> ins);
 
 			void pushAll(in<std::vector<Instruction>> code);
 
