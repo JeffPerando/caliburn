@@ -98,6 +98,53 @@ TypeCheckResult LowBool::typeCheck(sptr<const LowType> target, out<cllr::SSA> fn
 	return TypeCheckResult::INCOMPATIBLE;
 }
 
+LowMember LowVector::getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const
+{
+	static const HashMap<char, uint32_t> comps = {
+		{'x', 0}, {'y', 1}, {'z', 2}, {'w', 3},
+		{'r', 0}, {'g', 1}, {'b', 2}, {'a', 3}
+	};
+	
+	if (name.length() > 4)
+	{
+		//TODO complain
+		return LowMember();
+	}
+
+	if (name.length() == 1)
+	{
+		if (auto comp = comps.find(name[0]); comp != comps.end())
+		{
+			//return a normal member
+			return std::pair(comp->second, innerType);
+		}
+
+		//TODO complain
+		return LowMember();
+	}
+
+	OpArray swizzleComponents = {};
+
+	for (size_t i = 0; i < name.length(); ++i)
+	{
+		if (auto comp = comps.find(name[i]); comp != comps.end())
+		{
+			swizzleComponents[i] = comp->second;
+		}
+		else
+		{
+			//TODO complain
+			return LowMember();
+		}
+
+	}
+
+	auto vecType = codeAsm.pushType(Instruction(Opcode::TYPE_VECTOR, { (uint32_t)name.length() }, { innerType->id }));
+	auto swizzleVal = codeAsm.pushNew(Instruction(Opcode::VALUE_VEC_SWIZZLE, swizzleComponents, { objID }, vecType->id));
+
+	return TypedSSA(vecType, swizzleVal);
+}
+
 TypeCheckResult LowStruct::typeCheck(sptr<const LowType> target, out<cllr::SSA> fnID, Operator op) const
 {
 	//TODO operator overloads
@@ -117,7 +164,7 @@ bool LowStruct::addMember(std::string name, sptr<const LowType> typeImpl)
 	return false;
 }
 
-LowMember LowStruct::getMember(std::string name, out<cllr::Assembler> codeAsm) const
+LowMember LowStruct::getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const
 {
 	return LowMember();
 }

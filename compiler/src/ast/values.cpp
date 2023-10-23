@@ -185,7 +185,7 @@ cllr::TypedSSA VarReadValue::emitValueCLLR(sptr<const SymbolTable> table, out<cl
 cllr::TypedSSA MemberReadValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	cllr::TypedSSA targetValue = target->emitValueCLLR(table, codeAsm);
-	auto mem = targetValue.type->getMember(memberName->str, codeAsm);
+	auto mem = targetValue.type->getMember(targetValue.value, memberName->str, codeAsm);
 
 	if (std::holds_alternative<std::monostate>(mem))
 	{
@@ -251,7 +251,7 @@ cllr::TypedSSA VarChainValue::emitValueCLLR(sptr<const SymbolTable> table, out<c
 	for (size_t i = start; i < chain.size(); ++i)
 	{
 		auto const& tkn = chain[i];
-		auto mem = finalVal.type->getMember(tkn->str, codeAsm);
+		auto mem = finalVal.type->getMember(finalVal.value, tkn->str, codeAsm);
 
 		if (std::holds_alternative<std::monostate>(mem))
 		{

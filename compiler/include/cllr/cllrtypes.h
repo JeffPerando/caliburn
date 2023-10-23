@@ -31,7 +31,7 @@ namespace caliburn
 				return false;
 			}
 
-			LowMember getMember(std::string name, out<cllr::Assembler> codeAsm) const override
+			LowMember getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const override
 			{
 				return LowMember();
 			}
@@ -117,7 +117,7 @@ namespace caliburn
 				return false;
 			}
 
-			LowMember getMember(std::string name, out<cllr::Assembler> codeAsm) const override
+			LowMember getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const override
 			{
 				return LowMember();
 			}
@@ -168,14 +168,11 @@ namespace caliburn
 				return false;
 			}
 
-			LowMember getMember(std::string name, out<cllr::Assembler> codeAsm) const override
-			{
-				return LowMember();
-			}
+			LowMember getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const override;
 
 			std::vector<std::string> getMembers() const override
 			{
-				return std::vector<std::string>();
+				return {"x", "y", "z", "w"};
 			}
 
 			bool setMemberFns(std::string name, sptr<FunctionGroup> fn) override
@@ -220,7 +217,7 @@ namespace caliburn
 				return false;
 			}
 
-			LowMember getMember(std::string name, out<cllr::Assembler> codeAsm) const override
+			LowMember getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const override
 			{
 				return LowMember();
 			}
@@ -266,7 +263,7 @@ namespace caliburn
 			TypeCheckResult typeCheck(sptr<const LowType> target, out<cllr::SSA> fnID, Operator op = Operator::NONE) const override;
 
 			bool addMember(std::string name, sptr<const LowType> type) override;
-			LowMember getMember(std::string name, out<cllr::Assembler> codeAsm) const override;
+			LowMember getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const override;
 			std::vector<std::string> getMembers() const override;
 
 			bool setMemberFns(std::string name, sptr<FunctionGroup> fn) override;

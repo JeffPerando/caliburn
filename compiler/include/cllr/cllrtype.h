@@ -45,7 +45,7 @@ namespace caliburn
 			virtual TypeCheckResult typeCheck(sptr<const LowType> target, out<cllr::SSA> fnID, Operator op = Operator::NONE) const = 0;
 
 			virtual bool addMember(std::string name, sptr<const LowType> type) = 0;
-			virtual LowMember getMember(std::string name, out<cllr::Assembler> codeAsm) const = 0;
+			virtual LowMember getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const = 0;
 			virtual std::vector<std::string> getMembers() const = 0;
 
 			virtual bool setMemberFns(std::string name, sptr<FunctionGroup> fn) = 0;
