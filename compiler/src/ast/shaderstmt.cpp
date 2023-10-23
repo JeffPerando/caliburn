@@ -35,7 +35,7 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 	auto stageID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::SHADER_STAGE, { (uint32_t)type, nameID }, {}));
 
 	base->code->declareSymbols(stageTable);
-	base->code->emitDeclCLLR(stageTable, codeAsm);
+	base->code->emitCodeCLLR(stageTable, codeAsm);
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::SHADER_STAGE_END, {}, { stageID }));
 

@@ -117,12 +117,17 @@ bool LowStruct::addMember(std::string name, sptr<const LowType> typeImpl)
 	return false;
 }
 
-bool LowStruct::getMember(std::string name, out<std::pair<uint32_t, sptr<LowType>>> member) const
+LowMember LowStruct::getMember(std::string name, out<cllr::Assembler> codeAsm) const
 {
-	return false;
+	return LowMember();
 }
 
-bool LowStruct::setMemberFns(std::string name, ref<sptr<FunctionGroup>> fn)
+std::vector<std::string> LowStruct::getMembers() const
+{
+	return std::vector<std::string>();
+}
+
+bool LowStruct::setMemberFns(std::string name, sptr<FunctionGroup> fn)
 {
 	return false;
 }

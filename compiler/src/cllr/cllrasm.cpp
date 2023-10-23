@@ -56,16 +56,23 @@ SSA Assembler::push(in<Instruction> ins)
 	return ssa;
 }
 
-sptr<LowType> Assembler::pushType(in<Instruction> ins)
+//TODO fix impl for structs
+sptr<LowType> Assembler::pushType(out<Instruction> ins)
 {
-	auto found = types.find(ins);
-
-	if (found != types.end())
+	//Structs can be differentiated by their members, which aren't included in the main instruction.
+	//Therefore, this exception was added to prevent all n-member structs from using the same ID
+	if (ins.op != Opcode::TYPE_STRUCT)
 	{
-		return found->second;
-	}
+		auto found = types.find(ins);
 
-	auto id = push(ins);
+		if (found != types.end())
+		{
+			return found->second;
+		}
+
+	}
+	
+	auto id = pushNew(ins);
 
 	sptr<LowType> t = nullptr;
 

@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include <variant>
+
+#include "basic.h"
 #include "error.h"
 #include "langcore.h"
 
@@ -22,6 +25,10 @@ namespace caliburn
 			INCOMPATIBLE
 		};
 
+		struct LowType;
+
+		using LowMember = std::variant<std::monostate, std::pair<uint32_t, sptr<LowType>>, TypedSSA>;
+
 		struct LowType
 		{
 			const SSA id;
@@ -30,7 +37,7 @@ namespace caliburn
 			FunctionGroup constructors;
 			SSA destructor = 0;
 
-			LowType(SSA id, Opcode tc) : id(id), category(tc){}
+			LowType(SSA id, Opcode tc) : id(id), category(tc) {}
 
 			virtual uint32_t getBitWidth() const = 0;
 			virtual uint32_t getBitAlign() const = 0;
@@ -38,9 +45,10 @@ namespace caliburn
 			virtual TypeCheckResult typeCheck(sptr<const LowType> target, out<cllr::SSA> fnID, Operator op = Operator::NONE) const = 0;
 
 			virtual bool addMember(std::string name, sptr<const LowType> type) = 0;
-			virtual bool getMember(std::string name, out<std::pair<uint32_t, sptr<LowType>>> member) const = 0;
+			virtual LowMember getMember(std::string name, out<cllr::Assembler> codeAsm) const = 0;
+			virtual std::vector<std::string> getMembers() const = 0;
 
-			virtual bool setMemberFns(std::string name, ref<sptr<FunctionGroup>> fn) = 0;
+			virtual bool setMemberFns(std::string name, sptr<FunctionGroup> fn) = 0;
 			virtual sptr<Function> getMemberFn(std::string name, in<std::vector<TypedSSA>> argTypes) const = 0;
 
 		};
@@ -59,4 +67,5 @@ namespace caliburn
 		};
 
 	}
+
 }

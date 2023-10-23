@@ -28,27 +28,39 @@ void ParsedType::prettyPrint(out<std::stringstream> ss) const
 
 }
 
-sptr<RealType> ParsedType::resolve(sptr<const SymbolTable> table)
+sptr<BaseType> ParsedType::resolveBase(sptr<const SymbolTable> table)
+{
+	auto typeSym = table->find(name);
+
+	if (auto bType = std::get_if<sptr<BaseType>>(&typeSym))
+	{
+		return *bType;
+	}
+
+	return nullptr;
+}
+
+sptr<cllr::LowType> ParsedType::resolve(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	if (resultType != nullptr)
 	{
 		return resultType;
 	}
 
-	auto cTypeSym = table->find(name);
+	auto typeSym = table->find(name);
 
-	if (auto cType = std::get_if<sptr<RealType>>(&cTypeSym))
+	if (auto lType = std::get_if<sptr<cllr::LowType>>(&typeSym))
 	{
 		if (!genericArgs->empty())
 		{
 			//TODO complain
 		}
 
-		resultType = *cType;
+		resultType = *lType;
 	}
-	else if (auto cType = std::get_if<sptr<BaseType>>(&cTypeSym))
+	else if (auto bType = std::get_if<sptr<BaseType>>(&typeSym))
 	{
-		resultType = (**cType).getImpl(genericArgs);
+		resultType = (**bType).resolve(genericArgs, table, codeAsm);
 	}
 
 	if (resultType == nullptr)

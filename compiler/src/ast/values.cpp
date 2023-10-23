@@ -9,79 +9,72 @@
 
 using namespace caliburn;
 
-cllr::TypedSSA IntLiteralValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA IntLiteralValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
-	auto pType = ParsedType(lit->str.substr(lit->str.find_first_of('_') + 1));
+	auto& [intLit, intType] = splitStr(lit->str, "_");
 
-	if (auto t = pType.resolve(table))
+	auto pType = ParsedType(intType);
+
+	if (auto t = pType.resolve(table, codeAsm))
 	{
 		//Integer literals parse immediately since there's no loss in precision;
 		//Float literals defer parsing since they can lose precision during parsing
 		//Why does it matter? I dunno
-		uint64_t parsedLit = t->base->parseLiteral(lit->str);
 
-		auto tImpl = t->emitTypeCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_INT, { (uint32_t)(parsedLit & 0xFFFFFFFF), (uint32_t)((parsedLit >> 32) & 0xFFFFFFFF) }, {}, tImpl->id));
+		//TODO write an integer-parsing algorithm
+		uint64_t parsedLit = std::stoi(intLit);
 
-		return cllr::TypedSSA(tImpl, vID);
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_INT, { (uint32_t)(parsedLit & 0xFFFFFFFF), (uint32_t)((parsedLit >> 32) & 0xFFFFFFFF) }, {}, t->id));
+
+		return cllr::TypedSSA(t, vID);
 	}
 
 	//TODO complain
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA FloatLiteralValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA FloatLiteralValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	//We defer parsing further! Great success!
 	auto sID = codeAsm.addString(lit->str.substr(0, lit->str.find_first_of('_')));
 	auto pType = ParsedType(lit->str.substr(lit->str.find_first_of('_') + 1));
 
-	if (auto t = pType.resolve(table))
+	if (auto t = pType.resolve(table, codeAsm))
 	{
-		auto tImpl = t->emitTypeCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_FP, { sID }, {}, tImpl->id));
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_FP, { sID }, {}, t->id));
 
-		return cllr::TypedSSA(tImpl, vID);
+		return cllr::TypedSSA(t, vID);
 	}
 
 	//TODO complain
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA StringLitValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA StringLitValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto pType = ParsedType("string");
 
-	if (auto t = pType.resolve(table))
+	if (auto t = pType.resolve(table, codeAsm))
 	{
 		auto sID = codeAsm.addString(lit->str);
-		auto tImpl = t->emitTypeCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_STR, { sID }, {}, tImpl->id));
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_STR, { sID }, {}, t->id));
 
-		return cllr::TypedSSA(tImpl, vID);
+		return cllr::TypedSSA(t, vID);
 	}
 
 	//TODO complain
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA BoolLitValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA BoolLitValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
-	auto pType = ParsedType("bool");
+	auto t = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_BOOL));
+	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_BOOL, { lit->str == "true" }, {}, t->id));
 
-	if (auto t = pType.resolve(table))
-	{
-		auto tImpl = t->emitTypeCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_BOOL, { lit->str == "true" }, {}, tImpl->id));
-
-		return cllr::TypedSSA(tImpl, vID);
-	}
-
-	//TODO complain
-	return cllr::TypedSSA();
+	return cllr::TypedSSA(t, vID);
 }
 
-cllr::TypedSSA ArrayLitValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA ArrayLitValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	//TODO make array type
 	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_ARRAY, { (uint32_t)values.size() }));
@@ -101,7 +94,7 @@ cllr::TypedSSA ArrayLitValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::A
 	return cllr::TypedSSA(0, vID);
 }
 
-cllr::TypedSSA ExpressionValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA ExpressionValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto lhs = lValue->emitValueCLLR(table, codeAsm);
 	auto rhs = rValue->emitValueCLLR(table, codeAsm);
@@ -129,7 +122,7 @@ cllr::TypedSSA ExpressionValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr:
 	return cllr::TypedSSA(lhs.type, vID);
 }
 
-cllr::TypedSSA IsAValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA IsAValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	/*
 	chkType->emitDeclCLLR(table, codeAsm);
@@ -144,7 +137,7 @@ cllr::TypedSSA IsAValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assemb
 	//return codeAsm.pushNew(cllr::Opcode::VALUE_INSTANCEOF, {}, { vID, tID, 0 });;
 }
 
-cllr::TypedSSA SubArrayValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA SubArrayValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto& [aTypeImpl, aID] = array->emitValueCLLR(table, codeAsm);
 	auto& [iTypeImpl, iID] = index->emitValueCLLR(table, codeAsm);
@@ -156,29 +149,28 @@ cllr::TypedSSA SubArrayValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::A
 	return cllr::TypedSSA(outType, vID);
 }
 
-cllr::TypedSSA CastValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA CastValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
-	if (auto t = castTarget->resolve(table))
+	if (auto t = castTarget->resolve(table, codeAsm))
 	{
 		auto& [inTypeID, inID] = lhs->emitValueCLLR(table, codeAsm);
-		auto tImpl = t->emitTypeCLLR(table, codeAsm);
 
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_CAST, {}, { inID }, tImpl->id));
+		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_CAST, {}, { inID }, t->id));
 
-		return cllr::TypedSSA(tImpl, vID);
+		return cllr::TypedSSA(t, vID);
 	}
 
 	//TODO complain
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA VarReadValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA VarReadValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto v = table->find(varTkn->str);
 
 	if (auto varRes = std::get_if<sptr<Variable>>(&v))
 	{
-		return (*varRes)->emitLoadCLLR(table, codeAsm, 0);
+		return (*varRes)->emitLoadCLLR(table, codeAsm);
 	}
 
 	if (auto valRes = std::get_if<sptr<Value>>(&v))
@@ -190,21 +182,34 @@ cllr::TypedSSA VarReadValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::As
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA MemberReadValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA MemberReadValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
-	auto& [targetTypeID, targetID] = target->emitValueCLLR(table, codeAsm);
-	/*
-	if (auto v = std::get_if<sptr<Variable>>(&codeAsm.getType(targetTypeID)->getMember(memberName->str)))
+	cllr::TypedSSA targetValue = target->emitValueCLLR(table, codeAsm);
+	auto mem = targetValue.type->getMember(memberName->str, codeAsm);
+
+	if (std::holds_alternative<std::monostate>(mem))
 	{
-		//FIXME probably not the table to use
-		return (*v)->emitLoadCLLR(table, codeAsm, targetID);
+		//TODO complain
+		return cllr::TypedSSA();
 	}
-	*/
-	//TODO complain
+
+	if (auto v = std::get_if<cllr::TypedSSA>(&mem))
+	{
+		return *v;
+	}
+
+	if (auto m = std::get_if<std::pair<uint32_t, sptr<cllr::LowType>>>(&mem))
+	{
+		auto& [memIndex, memType] = *m;
+		auto v = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { memIndex }, { targetValue.type->id }, memType->id));
+
+		return cllr::TypedSSA(memType, v);
+	}
+
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA VarChainValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA VarChainValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	size_t start = 0;
 	cllr::TypedSSA finalVal;
@@ -215,7 +220,7 @@ cllr::TypedSSA VarChainValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::A
 	}
 	else
 	{
-		sptr<SymbolTable> tbl = table;
+		sptr<const SymbolTable> tbl = table;
 
 		for (size_t i = 0; i < chain.size(); ++i)
 		{
@@ -226,16 +231,15 @@ cllr::TypedSSA VarChainValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::A
 				//TODO complain
 				return finalVal;
 			}
-			if (auto m = std::get_if<sptr<Module>>(&sym))
+			else if (auto m = std::get_if<sptr<Module>>(&sym))
 			{
 				//TODO get symbol table from module
 				++start;
 				return finalVal;
 			}
-
-			if (auto v = std::get_if<sptr<Variable>>(&sym))
+			else if (auto v = std::get_if<sptr<Variable>>(&sym))
 			{
-				finalVal = (*v)->emitLoadCLLR(table, codeAsm, 0);
+				finalVal = (*v)->emitLoadCLLR(table, codeAsm);
 				++start;
 				break;
 			}
@@ -247,24 +251,27 @@ cllr::TypedSSA VarChainValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::A
 	for (size_t i = start; i < chain.size(); ++i)
 	{
 		auto const& tkn = chain[i];
+		auto mem = finalVal.type->getMember(tkn->str, codeAsm);
 
-		/*
-		auto mem = finalVal.typePtr->base->getMember(tkn->str);
-
-		if (auto v = std::get_if<sptr<Variable>>(&mem))
-		{
-			finalVal = (*v)->emitLoadCLLR(table, codeAsm, finalVal.value);
-		}
-		else if (auto val = std::get_if<sptr<Value>>(&mem))
-		{
-			finalVal = (*val)->emitValueCLLR(table, codeAsm);
-		}
-		else
+		if (std::holds_alternative<std::monostate>(mem))
 		{
 			//TODO complain
 			break;
 		}
-		*/
+
+		if (auto v = std::get_if<cllr::TypedSSA>(&mem))
+		{
+			finalVal = *v;
+		}
+
+		if (auto m = std::get_if<std::pair<uint32_t, sptr<cllr::LowType>>>(&mem))
+		{
+			auto& [memIndex, memType] = *m;
+			auto v = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { memIndex }, { finalVal.type->id }, memType->id));
+
+			finalVal = cllr::TypedSSA(memType, v);
+		}
+
 	}
 
 	if (finalVal.value == 0)
@@ -275,7 +282,7 @@ cllr::TypedSSA VarChainValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::A
 	return finalVal;
 }
 
-cllr::TypedSSA UnaryValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA UnaryValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	//TODO sanity check output types
 	auto in = val->emitValueCLLR(table, codeAsm);
@@ -284,7 +291,7 @@ cllr::TypedSSA UnaryValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Asse
 	return cllr::TypedSSA(in.type, outID);
 }
 
-cllr::TypedSSA FnCallValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA FnCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	//Emit the values now to typecheck later
 	std::vector<cllr::TypedSSA> argIDs(args.size());
@@ -294,7 +301,7 @@ cllr::TypedSSA FnCallValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Ass
 	{
 		auto val = target->emitValueCLLR(table, codeAsm);
 		auto memFn = val.type->getMemberFn(name->str, argIDs);
-		auto memFnImpl = memFn->makeVariant(genArgs);
+		auto memFnImpl = memFn->getImpl(genArgs);
 
 		return memFnImpl->call(table, codeAsm, argIDs, name);
 	}
@@ -309,25 +316,24 @@ cllr::TypedSSA FnCallValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Ass
 
 	if (auto fn = std::get_if<sptr<Function>>(&sym))
 	{
-		auto fnImpl = (**fn).makeVariant(genArgs);
+		auto fnImpl = (**fn).getImpl(genArgs);
 
 		return fnImpl->call(table, codeAsm, argIDs, name);
 	}
-	else if (auto t = std::get_if<sptr<BaseType>>(&sym))
+	else if (auto bt = std::get_if<sptr<BaseType>>(&sym))
 	{
-		auto tReal = (**t).getImpl(genArgs);
-		auto tImpl = tReal->emitTypeCLLR(table, codeAsm);
-		auto tCon = tImpl->constructors.find(argIDs, codeAsm);
-		auto conImpl = tCon->makeVariant(nullptr);
+		auto t = (**bt).resolve(genArgs, table, codeAsm);
+		auto tCon = t->constructors.find(argIDs, codeAsm);
+		auto conImpl = tCon->getImpl(nullptr);
 
 		return conImpl->call(table, codeAsm, argIDs, name);
 	}
-
+	
 	//TODO complain
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA SetterValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA SetterValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto lvalue = lhs->emitValueCLLR(table, codeAsm);
 	auto rvalue = rhs->emitValueCLLR(table, codeAsm);
@@ -352,23 +358,23 @@ cllr::TypedSSA SetterValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Ass
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA NullValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA NullValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	//TODO figure out typing
 	return cllr::TypedSSA(0, codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_NULL)));
 }
 
-cllr::TypedSSA ZeroValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA ZeroValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	return cllr::TypedSSA(0, codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_ZERO)));
 }
 
-cllr::TypedSSA SignValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA SignValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA UnsignValue::emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
+cllr::TypedSSA UnsignValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	return cllr::TypedSSA();
 }

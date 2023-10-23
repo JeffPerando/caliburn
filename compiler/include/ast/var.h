@@ -19,17 +19,17 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
-		cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target) override;
+		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target) override;
 
-		void emitStoreCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override;
+		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target, cllr::TypedSSA value) override;
 
 	};
 
 	struct MemberVariable : Variable
 	{
-		sptr<RealType> parent = nullptr;
+		sptr<BaseType> parent = nullptr;
 		uint32_t memberIndex = 0;
 
 		MemberVariable() : Variable() {}
@@ -37,11 +37,11 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
-		cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target) override;
+		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target) override;
 
-		void emitStoreCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override;
+		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target, cllr::TypedSSA value) override;
 
 	};
 
@@ -55,11 +55,11 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
-		cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target) override;
+		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target) override;
 
-		void emitStoreCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override;
+		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target, cllr::TypedSSA value) override;
 
 	};
 
@@ -77,11 +77,11 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
-		cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target) override;
+		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target) override;
 
-		void emitStoreCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override;
+		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target, cllr::TypedSSA value) override;
 
 	};
 
@@ -123,11 +123,11 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
-		cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target) override;
+		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target) override;
 
-		void emitStoreCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override;
+		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target, cllr::TypedSSA value) override;
 
 	};
 
@@ -144,11 +144,11 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
-		cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target) override;
+		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target) override;
 
-		void emitStoreCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) override;
+		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target, cllr::TypedSSA value) override;
 
 	};
 

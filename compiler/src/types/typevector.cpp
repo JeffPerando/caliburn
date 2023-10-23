@@ -4,34 +4,28 @@
 
 using namespace caliburn;
 
-sptr<cllr::LowType> RealVector::emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+sptr<cllr::LowType> TypeVector::resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
-	if (impl != nullptr)
+	if (!genSig->canApply(*gArgs))
 	{
-		return impl;
-	}
-
-	auto& t = genArgs->args[0];
-
-	if (auto& ptype = std::get<sptr<ParsedType>>(t))
-	{
-		if (auto type = ptype->resolve(table))
-		{
-			auto innerImpl = type->emitTypeCLLR(table, codeAsm);
-
-			impl = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_VECTOR, { length }, { innerImpl->id }));
-			return impl;
-		}
-
 		//TODO complain
-
+		return nullptr;
 	}
+
+	if (gArgs->empty())
+	{
+		gArgs = genSig->makeDefaultArgs();
+	}
+
+	if (auto found = variants.find(gArgs); found != variants.end())
+	{
+		return found->second;
+	}
+
+	auto inner = gArgs->getType(0)->resolve(table, codeAsm);
+	auto impl = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_VECTOR, { elements }, { inner->id }));
+
+	variants.insert(std::pair(gArgs, impl));
 
 	return impl;
-}
-
-Member TypeVector::getMember(in<std::string> name) const
-{
-	//TODO swizzle
-	return Member();
 }

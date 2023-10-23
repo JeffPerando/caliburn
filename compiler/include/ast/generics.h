@@ -13,6 +13,11 @@
 
 namespace caliburn
 {
+	namespace cllr
+	{
+		struct Assembler;
+	}
+
 	struct ParsedType;
 	struct Value;
 
@@ -80,7 +85,7 @@ namespace caliburn
 			return nullptr;
 		}
 
-		void apply(sptr<GenericSignature> sig, sptr<SymbolTable> symbols) const;
+		void apply(in<GenericSignature> sig, sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const;
 
 	};
 
@@ -123,7 +128,7 @@ namespace caliburn
 	public:
 		GenericSignature() : GenericSignature(std::vector<GenericName>()) {}
 		GenericSignature(std::initializer_list<GenericName> names) : GenericSignature(std::vector<GenericName>(names)) {}
-		GenericSignature(ref<std::vector<GenericName>> names) : names(names)
+		GenericSignature(in<std::vector<GenericName>> names) : names(names)
 		{
 			uint32_t min = 0;
 
@@ -183,6 +188,7 @@ namespace caliburn
 			{
 				if (std::holds_alternative<std::monostate>(name.defaultResult))
 				{
+					//WHAT???
 					defArgs.shrink_to_fit();
 					break;
 				}
@@ -206,55 +212,6 @@ namespace caliburn
 	};
 
 	template<typename T>
-	using GenFactoryFn = std::function<sptr<T>(sptr<GenericArguments>)>;
-
-	template<typename T>
 	using GenArgMap = HashMap<sptr<GenericArguments>, sptr<T>, GenericArgHash>;
-
-	template<typename T>
-	struct Generic
-	{
-	private:
-		const uptr<GenArgMap<T>> variants = new_uptr<GenArgMap<T>>();
-
-		const GenFactoryFn<T> facFn;
-
-	public:
-		const sptr<GenericSignature> genSig;
-		
-		Generic(sptr<GenericSignature> sig, in<GenFactoryFn<T>> fn) : genSig(sig == nullptr ? new_sptr<GenericSignature>() : sig), facFn(fn) {}
-		virtual ~Generic() {}
-
-		virtual sptr<T> makeVariant(sptr<GenericArguments> args)
-		{
-			//NOTE to future self: DO NOT MOVE THIS TO A .CPP FILE
-			//Due to compiler weirdness, it will cause linking errors.
-
-			if (args == nullptr || args->empty())
-			{
-				args = genSig->makeDefaultArgs();
-			}
-
-			if (!genSig->canApply(*args))
-			{
-				//TODO complain
-				return nullptr;
-			}
-
-			auto found = variants->find(args);
-
-			if (found != variants->end())
-			{
-				return found->second;
-			}
-
-			auto newVar = facFn(args);
-
-			variants->emplace(args, newVar);
-
-			return newVar;
-		}
-
-	};
 
 }

@@ -5,24 +5,22 @@
 
 using namespace caliburn;
 
-sptr<cllr::LowType> RealStruct::emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+sptr<cllr::LowType> TypeStruct::resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
-	if (impl != nullptr)
+	if (auto found = variants.find(gArgs); found != variants.end())
 	{
-		return impl;
+		return found->second;
 	}
-	
-	auto const& parent = static_cast<ptr<TypeStruct>>(base);
 
 	auto memberTable = new_sptr<SymbolTable>(table);
 
 	//populate table with generics and members
-	genArgs->apply(parent->genSig, memberTable);
+	gArgs->apply(*genSig, memberTable, codeAsm);
 
 	std::vector<sptr<Variable>> memberVars;
 	std::vector<std::pair<std::string, sptr<FunctionGroup>>> memberFns;
 
-	for (auto& [name, mem] : parent->members)
+	for (auto& [name, mem] : members)
 	{
 		if (auto v = std::get_if<sptr<Variable>>(&mem))
 		{
@@ -36,11 +34,11 @@ sptr<cllr::LowType> RealStruct::emitTypeCLLR(sptr<SymbolTable> table, out<cllr::
 
 	}
 
-	impl = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_STRUCT, { (uint32_t)memberVars.size() }));
+	auto impl = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_STRUCT, { (uint32_t)memberVars.size() }));
 
 	for (auto const& v : memberVars)
 	{
-		v->emitDeclCLLR(memberTable, codeAsm);
+		v->emitVarCLLR(memberTable, codeAsm);
 	}
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::STRUCT_END, {}, { impl->id }));

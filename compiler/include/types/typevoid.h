@@ -5,21 +5,14 @@
 
 namespace caliburn
 {
-	struct TypeVoid;
-
-	struct RealVoid : RealType
+	struct TypeVoid : BaseType
 	{
-	public:
-		RealVoid(ptr<TypeVoid> parent) : RealType((ptr<BaseType>)parent) {}
+		TypeVoid() : BaseType(TypeCategory::VOID, "void") {}
 
-		sptr<cllr::LowType> emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
-
-	};
-
-	struct TypeVoid : PrimitiveType
-	{
-	public:
-		TypeVoid() : PrimitiveType(TypeCategory::VOID, "void", 0, new_sptr<RealVoid>(this)) {}
+		sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override
+		{
+			return codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_VOID));
+		}
 
 	};
 

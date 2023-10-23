@@ -10,8 +10,6 @@
 
 namespace caliburn
 {
-	struct FunctionImpl;
-
 	struct IntLiteralValue : Value
 	{
 		const sptr<Token> lit;
@@ -40,7 +38,7 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -72,7 +70,7 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -104,7 +102,7 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -136,7 +134,7 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -181,7 +179,7 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -215,7 +213,7 @@ namespace caliburn
 			return lValue->isCompileTimeConst() && rValue->isCompileTimeConst();
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -249,7 +247,7 @@ namespace caliburn
 			return val->isCompileTimeConst();
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -283,7 +281,7 @@ namespace caliburn
 			return array->isCompileTimeConst() && index->isCompileTimeConst();
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -317,7 +315,7 @@ namespace caliburn
 			return lhs->isCompileTimeConst();
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -340,7 +338,6 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 
-		//FIXME this got broken by a recent update which removed resolveSymbols()
 		bool isLValue() const override
 		{
 			return true;
@@ -351,7 +348,7 @@ namespace caliburn
 			return false;
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -390,7 +387,7 @@ namespace caliburn
 			return false;
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 	
@@ -429,7 +426,7 @@ namespace caliburn
 			return false;
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -468,7 +465,7 @@ namespace caliburn
 			return val->isCompileTimeConst();
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -508,7 +505,7 @@ namespace caliburn
 			return false;
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -543,7 +540,7 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -576,7 +573,7 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -607,7 +604,7 @@ namespace caliburn
 			return true;
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -640,7 +637,7 @@ namespace caliburn
 			return target->isCompileTimeConst();
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -673,7 +670,7 @@ namespace caliburn
 			return target->isCompileTimeConst();
 		}
 
-		cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 

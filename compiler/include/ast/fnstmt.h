@@ -24,13 +24,13 @@ namespace caliburn
 			return fn->code->lastTkn();
 		}
 
-		void declareHeader(sptr<SymbolTable> table) override {}
-
-		void declareSymbols(sptr<SymbolTable> table) override
+		void declareHeader(sptr<SymbolTable> table) override
 		{
 			table->add(name->str, fn);
 
 		}
+
+		void declareSymbols(sptr<SymbolTable> table) override {}
 
 		/*
 		ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
@@ -44,10 +44,7 @@ namespace caliburn
 			return body->validate(bodyTypes, bodyModes);
 		}
 		*/
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override
-		{
-			return 0;
-		}
+		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override {}
 
 	};
 

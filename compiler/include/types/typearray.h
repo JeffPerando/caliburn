@@ -5,34 +5,16 @@
 
 namespace caliburn
 {
-	struct TypeArray;
-
-	struct RealArray : RealType
+	struct TypeArray : BaseType
 	{
-		RealArray(ptr<TypeArray> parent, sptr<GenericArguments> gArgs) : RealType((ptr<BaseType>)parent, gArgs) {}
-
-		sptr<cllr::LowType> emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
-
-	};
-
-	struct TypeArray : GenericType<RealArray>
-	{
-		TypeArray() :
-			GenericType(TypeCategory::ARRAY, "array", new_sptr<GenericSignature>(std::initializer_list{
+		const uptr<GenericSignature> sig = new_uptr<GenericSignature>(std::vector{
 				GenericName(GenericSymType::TYPE, "T"),
 				GenericName(GenericSymType::CONST, "N")
-				}),
-				lambda_v(sptr<GenericArguments> gArgs) {
-					return new_sptr<RealArray>(this, gArgs);
-				}
-			)
-		{}
+			});
 
-		Member getMember(in<std::string> name) const override
-		{
-			//TODO get length
-			return Member();
-		}
+		TypeArray() : BaseType(TypeCategory::ARRAY, "array") {}
+
+		sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 	};
 

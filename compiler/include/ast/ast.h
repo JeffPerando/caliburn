@@ -94,7 +94,7 @@ namespace caliburn
 
 	is valid.
 
-	Annotations can have any identifier, minus reserved keywords, and are only visible to the compiler, not any user code.
+	Annotations can have any identifier, minus reserved keywords, and are only visible to the compiler, not to user code.
 	*/
 	struct Annotation : ParsedObject
 	{
@@ -142,7 +142,7 @@ namespace caliburn
 
 	Caliburn separates statements from expressions in part to prevent goofy code.
 	*/
-	struct Statement : Module, ParsedObject
+	struct Statement : ParsedObject
 	{
 		const StatementType type;
 
@@ -178,9 +178,9 @@ namespace caliburn
 		//Only used by top-level statements which declare symbols. The rest, like variables, should use declareSymbols() instead
 		virtual void declareHeader(sptr<SymbolTable> table) {}
 
-		void declareSymbols(sptr<SymbolTable> table) override = 0;
+		virtual void declareSymbols(sptr<SymbolTable> table) = 0;
 
-		virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
+		virtual void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
 
 	};
 
@@ -216,7 +216,7 @@ namespace caliburn
 
 		void declareSymbols(sptr<SymbolTable> table) override;
 		
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 	};
 

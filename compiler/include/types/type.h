@@ -20,7 +20,6 @@
 
 namespace caliburn
 {
-	struct RealType;
 	struct Variable;
 	struct Function;
 	struct FunctionGroup;
@@ -77,7 +76,7 @@ namespace caliburn
 
 		virtual bool isCompileTimeConst() const = 0;
 
-		virtual cllr::TypedSSA emitValueCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const = 0;
+		virtual cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const = 0;
 
 	};
 
@@ -86,7 +85,7 @@ namespace caliburn
 	private:
 		std::string fullName = "";
 	protected:
-		sptr<RealType> resultType = nullptr;
+		sptr<cllr::LowType> resultType = nullptr;
 	public:
 		const std::string name;
 		const sptr<Token> nameTkn;
@@ -122,7 +121,9 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 
-		sptr<RealType> resolve(sptr<const SymbolTable> table);
+		sptr<BaseType> resolveBase(sptr<const SymbolTable> table);
+
+		sptr<cllr::LowType> resolve(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm);
 
 	};
 
@@ -140,8 +141,7 @@ namespace caliburn
 	struct Variable : ParsedObject
 	{
 	protected:
-		cllr::SSA id = 0;
-		cllr::SSA varType = 0;
+		cllr::TypedSSA id;
 
 	public:
 		StmtModifiers mods = {};
@@ -175,28 +175,26 @@ namespace caliburn
 			return nameTkn;
 		}
 
-		virtual cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
+		virtual cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
 
-		virtual cllr::TypedSSA emitLoadCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target) = 0;
+		virtual cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target = cllr::TypedSSA()) = 0;
 
-		virtual void emitStoreCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::SSA target, cllr::SSA value) = 0;
+		virtual void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target, cllr::TypedSSA rhs) = 0;
 
 	};
 
-	using Member = std::variant<std::monostate, sptr<Variable>, sptr<FunctionGroup>, sptr<Value>>;//Values are also members so TypeVector can swizzle
+	using Member = std::variant<std::monostate, sptr<Variable>, sptr<FunctionGroup>>;
 
 	struct BaseType
 	{
 	public:
 		const TypeCategory category;
 		const std::string canonName;
-	protected:
-		const sptr<RealType> defImpl;
 		//sptr<BaseType> superType = nullptr;
 
 	public:
-		BaseType(TypeCategory c, in<std::string> n, sptr<RealType> defaultImpl) :
-			category(c), canonName(n), defImpl(defaultImpl) {}
+		BaseType(TypeCategory c, in<std::string> n) :
+			category(c), canonName(n) {}
 		virtual ~BaseType() {}
 
 		bool operator!=(in<BaseType> rhs) const
@@ -209,23 +207,7 @@ namespace caliburn
 			return canonName == rhs.canonName;
 		}
 
-		virtual uint64_t parseLiteral(in<std::string> lit) const
-		{
-			throw std::exception("Cannot parse literal for type; Please only attempt parsing literals of ints or floats");
-		}
-
-		virtual sptr<RealType> getImpl(sptr<GenericArguments> gArgs)
-		{
-			if (!gArgs->empty())
-			{
-				//TODO complain
-				return nullptr;
-			}
-
-			return defImpl;
-		}
-
-		virtual Member getMember(in<std::string> name) const = 0;
+		virtual sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) = 0;
 
 		/* TODO reconsider inheritance
 		sptr<BaseType> getSuper()
@@ -251,82 +233,6 @@ namespace caliburn
 			return false;
 		}
 		*/
-	};
-
-	template<typename T, typename std::enable_if<std::is_base_of<RealType, T>::value>::type* = nullptr>
-	struct GenericType : BaseType, Generic<T>
-	{
-	public:
-		GenericType(TypeCategory c, in<std::string> n, sptr<GenericSignature> sig, in<GenFactoryFn<T>> facFn) :
-			BaseType(c, n, nullptr),
-			Generic(sig, facFn) {}
-		virtual ~GenericType() {}
-
-		sptr<RealType> getImpl(sptr<GenericArguments> gArgs) override
-		{
-			//hoping the cast no-ops out
-			//else this is just to help the compiler complain less
-			return std::static_pointer_cast<RealType>(this->makeVariant(gArgs));
-		}
-
-	};
-
-	struct RealType
-	{
-	protected:
-		//FIXME Saving type IDs here isn't thread-safe. So either use atomics or cache types in the cllr::Assembler.
-		//Given this will be read far more than written, using atomics is probably better
-		sptr<cllr::LowType> impl = 0;
-		std::string fullName = "";
-		
-	public:
-		std::vector<sptr<Variable>> members;
-
-		const ptr<BaseType> base;
-		const sptr<GenericArguments> genArgs;
-
-		RealType(ptr<BaseType> parent, sptr<GenericArguments> gArgs = new_sptr<GenericArguments>()) : base(parent), genArgs(gArgs) {}
-		virtual ~RealType() {}
-
-		std::string getFullName()
-		{
-			if (genArgs->empty())
-			{
-				return base->canonName;
-			}
-
-			if (fullName.length() > 0)
-			{
-				return fullName;
-			}
-
-			std::stringstream ss;
-
-			ss << base->canonName;
-
-			genArgs->prettyPrint(ss);
-
-			fullName = ss.str();
-
-			return fullName;
-		}
-
-		virtual sptr<cllr::LowType> emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
-
-	};
-
-	struct PrimitiveType : BaseType
-	{
-		const uint32_t width;
-
-		PrimitiveType(TypeCategory c, in<std::string> n, uint32_t bits, sptr<RealType> defaultImpl) : BaseType(c, n, defaultImpl), width(bits) {}
-		virtual ~PrimitiveType() {}
-
-		Member getMember(in<std::string> name) const override
-		{
-			return Member();
-		}
-
 	};
 
 }

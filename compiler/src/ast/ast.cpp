@@ -36,13 +36,13 @@ void ScopeStatement::declareSymbols(sptr<SymbolTable> table)
 
 }
 
-cllr::SSA ScopeStatement::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+void ScopeStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	scopeTable->reparent(table);
 
 	for (auto const& inner : stmts)
 	{
-		inner->emitDeclCLLR(scopeTable, codeAsm);
+		inner->emitCodeCLLR(scopeTable, codeAsm);
 	}
 
 	switch (retMode)
@@ -77,5 +77,4 @@ cllr::SSA ScopeStatement::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assemb
 		codeAsm.push(cllr::Instruction(cllr::Opcode::DISCARD)); break;
 	}
 
-	return 0;
 }

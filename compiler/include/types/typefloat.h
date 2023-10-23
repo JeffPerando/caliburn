@@ -5,19 +5,15 @@
 
 namespace caliburn
 {
-	struct TypeFloat;
-
-	struct RealFloat : RealType
+	struct TypeFloat : BaseType
 	{
-		RealFloat(ptr<TypeFloat> parent) : RealType((ptr<BaseType>)parent) {}
+		const uint32_t width;
+		TypeFloat(uint32_t bits) : BaseType(TypeCategory::FLOAT, "float" + std::to_string(bits)), width(bits) {}
 
-		sptr<cllr::LowType> emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
-
-	};
-
-	struct TypeFloat : PrimitiveType
-	{
-		TypeFloat(uint32_t bits) : PrimitiveType(TypeCategory::FLOAT, "float" + bits, bits, new_sptr<RealFloat>(this)) {}
+		sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override
+		{
+			return codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_FLOAT, { width }));
+		}
 
 	};
 

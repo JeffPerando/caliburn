@@ -153,7 +153,7 @@ std::vector<sptr<Token>> Parser::parseIdentifierList()
 	return ids;
 }
 
-sptr<GenericSignature> Parser::parseGenericSig()
+uptr<GenericSignature> Parser::parseGenericSig()
 {
 	sptr<Token> first = tkns.cur();
 	auto start = tkns.index();
@@ -161,7 +161,7 @@ sptr<GenericSignature> Parser::parseGenericSig()
 	if (first->str != GENERIC_START)
 	{
 		//We return an empty signature since every generic needs one, even a blank one.
-		return new_sptr<GenericSignature>();
+		return new_uptr<GenericSignature>();
 	}
 
 	std::vector<GenericName> names;
@@ -237,7 +237,7 @@ sptr<GenericSignature> Parser::parseGenericSig()
 
 	tkns.consume();
 
-	auto sig = new_sptr<GenericSignature>(names);
+	auto sig = new_uptr<GenericSignature>(names);
 
 	sig->first = first;
 	sig->last = last;

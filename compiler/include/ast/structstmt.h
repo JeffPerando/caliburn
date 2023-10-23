@@ -19,7 +19,8 @@ namespace caliburn
 		sptr<Token> name = nullptr;
 		sptr<Token> last = nullptr;
 		sptr<TypeStruct> innerType = nullptr;
-		sptr<GenericSignature> genSig = nullptr;
+		
+		uptr<GenericSignature> genSig = nullptr;
 
 		std::map<std::string, Member> members;
 
@@ -50,10 +51,8 @@ namespace caliburn
 
 		}
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override
-		{
-			return 0;//Do not implement. We let the innermost RealType declare itself
-		}
+		//Do not implement. We let the innermost RealType declare itself
+		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override {}
 
 		void declareSymbols(sptr<SymbolTable> table) override {}
 

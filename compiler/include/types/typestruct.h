@@ -9,28 +9,20 @@
 
 namespace caliburn
 {
-	struct TypeStruct;
-
-	struct RealStruct : RealType
+	struct TypeStruct : BaseType
 	{
-		RealStruct(ptr<TypeStruct> parent, sptr<GenericArguments> gArgs) : RealType((ptr<BaseType>)parent, gArgs) {}
+		const uptr<GenericSignature> genSig;
 
-		sptr<cllr::LowType> emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
-
-	};
-
-	struct TypeStruct : GenericType<RealStruct>
-	{
 		std::map<std::string, Member> members;
+		GenArgMap<cllr::LowType> variants;
 		std::vector<sptr<Function>> constructors;
 		sptr<Function> destructor = nullptr;
 		
-		TypeStruct(in<std::string> name, sptr<GenericSignature> gSig, in<std::map<std::string, Member>> members)
-			: GenericType(TypeCategory::STRUCT, name, gSig, lambda_v(sptr<GenericArguments> gArgs)
-		{
-			return new_sptr<RealStruct>(this, gArgs);
-		}), members(members) {}
+		TypeStruct(in<std::string> name, out<uptr<GenericSignature>> sig, in<std::map<std::string, Member>> members)
+			: BaseType(TypeCategory::STRUCT, name), genSig(std::move(sig)), members(members) {}
 		virtual ~TypeStruct() {}
+
+		sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 		virtual Member getMember(in<std::string> name) const
 		{

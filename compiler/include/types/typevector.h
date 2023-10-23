@@ -5,35 +5,22 @@
 
 namespace caliburn
 {
-	struct TypeVector;
-
-	struct RealVector : RealType
+	struct TypeVector : BaseType
 	{
-		const uint32_t length;
-
-		RealVector(ptr<TypeVector> parent, sptr<GenericArguments> gArgs, uint32_t l) : RealType((ptr<BaseType>)parent, gArgs), length(l) {}
-
-		sptr<cllr::LowType> emitTypeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
-
-	};
-
-	struct TypeVector : GenericType<RealVector>
-	{
+	private:
+		GenArgMap<cllr::LowType> variants;
+	public:
 		const uint32_t elements;
+		const uptr<GenericSignature> genSig = new_uptr<GenericSignature>(std::initializer_list{
+			GenericName(GenericSymType::TYPE, "T", GenericResult(new_sptr<ParsedType>("fp32")))
+			});
 
 		TypeVector(uint32_t vecElements) :
-			GenericType(TypeCategory::VECTOR, "vec" + vecElements,
-				new_sptr<GenericSignature>(std::initializer_list{
-					GenericName(GenericSymType::TYPE, "T", GenericResult(new_sptr<ParsedType>("float32")))
-				}),
-				lambda_v(sptr<GenericArguments> gArgs) {
-					return new_sptr<RealVector>(this, gArgs, vecElements);
-				}
-			),
+			BaseType(TypeCategory::VECTOR, "vec" + vecElements),
 			elements(vecElements)
 		{}
 
-		virtual Member getMember(in<std::string> name) const override;
+		virtual sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 	};
 

@@ -8,12 +8,16 @@
 
 namespace caliburn
 {
+	namespace cllr
+	{
+		struct LowType;
+	}
+
 	struct Module;
 	struct Function;
 	struct Value;
 	struct Variable;
 	struct BaseType;
-	struct RealType;
 	
 	/*
 	All symbol variants are shared because nothing really owns them. No, not the symbol table, since the table is just
@@ -29,9 +33,9 @@ namespace caliburn
 		//this enables for generic constants
 		sptr<Value>,
 		sptr<Variable>,
-		//honestly I forgot why I added both base types and real types to this.
 		sptr<BaseType>,
-		sptr<RealType>>;
+		//This is only used when working with generics
+		sptr<cllr::LowType>>;
 
 	/*
 	A symbol table is just that: a way to maintain a directory between names and objects.
@@ -43,11 +47,11 @@ namespace caliburn
 	{
 	private:
 		HashMap<std::string, Symbol> symbols;
-		sptr<SymbolTable> parent;
+		sptr<const SymbolTable> parent;
 
 	public:
 		SymbolTable() : parent(nullptr) {}
-		SymbolTable(sptr<SymbolTable> p) : parent(p) {}
+		SymbolTable(sptr<const SymbolTable> p) : parent(p) {}
 		virtual ~SymbolTable() {}
 
 		bool add(in<std::string> symName, in<Symbol> sym)
@@ -105,7 +109,7 @@ namespace caliburn
 		}
 
 		//TODO does not seem to work
-		void reparent(sptr<SymbolTable> p)
+		void reparent(sptr<const SymbolTable> p)
 		{
 			//parent = p;
 		}

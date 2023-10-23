@@ -1,15 +1,17 @@
 
 #include "ast/generics.h"
 
+#include "cllr/cllrasm.h"
+
 #include "types/type.h"
 
 using namespace caliburn;
 
-void GenericArguments::apply(sptr<GenericSignature> sig, sptr<SymbolTable> table) const
+void GenericArguments::apply(in<GenericSignature> sig, sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	for (size_t i = 0; i < args.size(); ++i)
 	{
-		auto const& name = sig->names[i].name;
+		auto const& name = sig.names[i].name;
 		auto const& arg = args[i];
 
 		if (auto vArg = std::get_if<sptr<Value>>(&arg))
@@ -18,11 +20,11 @@ void GenericArguments::apply(sptr<GenericSignature> sig, sptr<SymbolTable> table
 		}
 		else if (auto tArg = std::get_if<sptr<ParsedType>>(&arg))
 		{
-			if (auto t = (**tArg).resolve(table))
+			if (auto t = (**tArg).resolve(table, codeAsm))
 			{
 				table->add(name, t);
 			}
-
+			
 			//TODO complain
 		}
 		else
@@ -107,6 +109,8 @@ bool GenericSignature::canApply(in<GenericArguments> genArgs) const
 		return false;
 	}
 
+	bool valid = true;
+
 	for (size_t i = 0; i < args.size(); ++i)
 	{
 		auto const& arg = args[i];
@@ -114,27 +118,35 @@ bool GenericSignature::canApply(in<GenericArguments> genArgs) const
 
 		if (auto vArg = std::get_if<sptr<Value>>(&arg))
 		{
-			if (name.type == GenericSymType::CONST)
+			if (name.type != GenericSymType::CONST)
 			{
-				continue;
+				valid = false;
+				//TODO complain
 			}
 
-			//TODO complain
+			if (!(**vArg).isCompileTimeConst())
+			{
+				//TODO complain
+			}
 
 		}
 		else if (auto tArg = std::get_if<sptr<ParsedType>>(&arg))
 		{
-			if (name.type == GenericSymType::TYPE)
+			if (name.type != GenericSymType::TYPE)
 			{
-				continue;
+				valid = false;
+				//TODO complain
 			}
 
-			//TODO complain
 		}
-		else return false;
+		else
+		{
+			valid = false;
+		}
+
 	}
 
-	return true;
+	return valid;
 }
 
 std::string caliburn::parseGeneric(in<GenericResult> result)

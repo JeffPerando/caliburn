@@ -10,8 +10,6 @@
 
 namespace caliburn
 {
-	struct RealType;
-
 	/*
 	Caliburn Low-Level Representation (CLLR [pronounced Caller]):
 

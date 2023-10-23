@@ -23,9 +23,9 @@ namespace caliburn
 
 		void declareSymbols(sptr<SymbolTable> table) override {}
 
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override
+		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override
 		{
-			return val->emitValueCLLR(table, codeAsm).value;
+			val->emitValueCLLR(table, codeAsm);
 		}
 
 	};

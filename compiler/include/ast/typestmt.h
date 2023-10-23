@@ -35,7 +35,9 @@ namespace caliburn
 			return alias->lastTkn();
 		}
 
-		void declareHeader(sptr<SymbolTable> table) override
+		void declareHeader(sptr<SymbolTable> table) override {}
+
+		void declareSymbols(sptr<SymbolTable> table) override
 		{
 			//TODO implement strong typing (needs wrapper)
 			//TODO implement error handling for header declaration and QUIT USING STD::COUT
@@ -49,13 +51,11 @@ namespace caliburn
 
 			if (alias->name == "dynamic")
 			{
-				auto outTypename = settings->dynTypes.find(name->str);
+				auto outTypeName = settings->dynTypes.find(name->str);
 
-				if (outTypename != settings->dynTypes.end())
+				if (outTypeName != settings->dynTypes.end())
 				{
-					//In both cases we replace alias
-					alias = new_sptr<ParsedType>(outTypename->second);
-					
+					alias = new_sptr<ParsedType>(outTypeName->second);
 				}
 				else //No default provided
 				{
@@ -76,10 +76,14 @@ namespace caliburn
 					}
 
 				}
-				
+
 			}
-			
-			if (auto t = alias->resolve(table))
+
+			/*
+			At this stage in compilation, the only types in the symbol table are BaseTypes.
+			Therefore, we don't need to worry about full resolving
+			*/
+			if (auto t = alias->resolveBase(table))
 			{
 				table->add(name->str, t);
 			}
@@ -90,12 +94,7 @@ namespace caliburn
 
 		}
 
-		void declareSymbols(sptr<SymbolTable> table) override {}
-
-		cllr::SSA emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override
-		{
-			return 0;
-		}
+		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override {}
 
 	};
 

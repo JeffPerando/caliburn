@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <array>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -9,6 +10,18 @@
 
 namespace caliburn
 {
+	inline std::array<std::string, 2> splitStr(in<std::string> str, in<std::string> delim) noexcept
+	{
+		auto found = str.find_first_of(delim);
+
+		if (found == std::string::npos)
+		{
+			return { str, "" };
+		}
+
+		return { str.substr(0, found), str.substr(found + delim.length()) };
+	}
+
 	/*
 	Stores a line and column within a text file.
 

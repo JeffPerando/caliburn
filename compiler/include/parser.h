@@ -83,7 +83,7 @@ namespace caliburn
 
 		Generally, generic signatures go along with type or function definitions.
 		*/
-		sptr<GenericSignature> parseGenericSig();
+		uptr<GenericSignature> parseGenericSig();
 
 		/*
 		Parses generic arguments. This tends to go with function calls or a type definition.

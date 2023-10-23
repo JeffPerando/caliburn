@@ -3,7 +3,7 @@
 
 using namespace caliburn;
 
-cllr::SSA IfStatement::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+void IfStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	auto cond = condition->emitValueCLLR(table, codeAsm);
 
@@ -16,24 +16,22 @@ cllr::SSA IfStatement::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP_COND, {}, { cID, ifLabel, innerElse ? elseLabel : postLabel }));
 
-	innerIf->emitDeclCLLR(table, codeAsm);
+	innerIf->emitCodeCLLR(table, codeAsm);
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP, {}, { postLabel }));
 
 	if (innerElse != nullptr)
 	{
-		innerElse->emitDeclCLLR(table, codeAsm);
+		innerElse->emitCodeCLLR(table, codeAsm);
 
 	}
 
 	codeAsm.push(cllr::Instruction(postLabel, cllr::Opcode::LABEL));
 
-	return ifLabel;
 }
 
-cllr::SSA ForRangeStatement::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+void ForRangeStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
-	return 0;
 /*
 uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 {
@@ -94,12 +92,11 @@ uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 	//startSSA
 	codeAsm->endScope();
 
-	return startSSA;
 }
 */
 }
 
-cllr::SSA WhileStatement::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+void WhileStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	/*
 	Until CLLR is more fleshed out, we're just going to do the SPIR-V route of putting jumps before labels
@@ -125,7 +122,7 @@ cllr::SSA WhileStatement::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assemb
 
 	codeAsm.setLoop(cont, exit);
 	codeAsm.push(cllr::Instruction(loopLabel, cllr::Opcode::LABEL));
-	loop->emitDeclCLLR(table, codeAsm);
+	loop->emitCodeCLLR(table, codeAsm);
 	codeAsm.exitLoop();
 
 	codeAsm.pushAll({
@@ -135,5 +132,4 @@ cllr::SSA WhileStatement::emitDeclCLLR(sptr<SymbolTable> table, out<cllr::Assemb
 		cllr::Instruction(exit, cllr::Opcode::LABEL)
 	});
 
-	return start;
 }

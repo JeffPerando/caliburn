@@ -54,9 +54,9 @@ namespace caliburn
 			HashMap<Instruction, sptr<LowType>, InstructionHash> types;
 
 			std::vector<std::string> strs;
-			
+
 			std::map<std::string, std::pair<uint32_t, SSA>> inputs, outputs;
-			
+
 			//Makes outputting a shader's 'API' easy.
 			IOList inputNames, outputNames;
 
@@ -91,7 +91,7 @@ namespace caliburn
 				return push(ins);
 			}
 
-			sptr<LowType> pushType(in<Instruction> ins);
+			sptr<LowType> pushType(out<Instruction> ins);
 
 			void pushAll(in<std::vector<Instruction>> code);
 
@@ -112,7 +112,7 @@ namespace caliburn
 
 				return strs.at(index);
 			}
-			
+
 			ref<const IOList> getInputs()
 			{
 				return inputNames;
@@ -127,7 +127,7 @@ namespace caliburn
 			{
 				return *code;
 			}
-			
+
 			void setLoop(SSA start, SSA end)
 			{
 				loops.push(std::pair(start, end));
@@ -176,7 +176,7 @@ namespace caliburn
 
 			SSA:	[1, 2, 3, 4, 5]
 			Refs:	[6, 9, 0, 1, 3]
-			
+
 			flatten() will move #4 to #3, then move #5 to #4, and so on, updating surrounding code to match these changes.
 			Running this on the example above, we get the following results:
 
@@ -186,7 +186,7 @@ namespace caliburn
 			Returns the number of SSAs flattened.
 			*/
 			uint32_t flatten();
-			
+
 		private:
 			void doBookkeeping(in<Instruction> i);
 

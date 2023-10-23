@@ -149,15 +149,20 @@ void printTokens()
 
 int main()
 {
+	auto strs = caliburn::splitStr("", "_");
+
+	std::cout << strs[0] << '\n';
+	std::cout << strs[1] << '\n';
+
 	/*
 	std::cout << "\033[1;31m";
 	std::cout << sizeof(sptr<caliburn::Token>);
 	std::cout << "\033[0m\n";
 	*/
-	return testShaderCompile();
+	//return testShaderCompile();
 	//return testExprParsing();
 	
-	/*
+	
 	auto const takes = 20;
 
 	for (int i = 0; i < takes; ++i)
@@ -168,5 +173,4 @@ int main()
 	std::cout << "Average time: " << ((totalTime / static_cast<double>(takes)) * 0.000001) << " ms\n";
 	
 	return 0;
-	*/
 }
