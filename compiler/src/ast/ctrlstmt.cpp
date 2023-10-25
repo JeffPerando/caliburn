@@ -120,10 +120,10 @@ void WhileStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> 
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP_COND, {}, { cID, loopLabel, exit }));
 
-	codeAsm.setLoop(cont, exit);
+	codeAsm.beginLoop(cont, exit);
 	codeAsm.push(cllr::Instruction(loopLabel, cllr::Opcode::LABEL));
 	loop->emitCodeCLLR(table, codeAsm);
-	codeAsm.exitLoop();
+	codeAsm.endLoop();
 
 	codeAsm.pushAll({
 		cllr::Instruction(cllr::Opcode::JUMP, {}, { cont }),

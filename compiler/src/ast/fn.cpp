@@ -36,6 +36,7 @@ cllr::TypedSSA FunctionImpl::emitFnDeclCLLR(sptr<const SymbolTable> table, out<c
 		return cllr::TypedSSA(retType, id);
 	}
 
+	auto& code = parent->code;
 	auto& args = parent->args;
 	auto& genSig = parent->genSig;
 	auto& pRetType = parent->returnType;
@@ -57,6 +58,8 @@ cllr::TypedSSA FunctionImpl::emitFnDeclCLLR(sptr<const SymbolTable> table, out<c
 		return cllr::TypedSSA();
 	}
 
+	codeAsm.beginSect();
+
 	id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::FUNCTION, { (uint32_t)args.size() }, { retType->id }));
 
 	for (auto i = 0; i < args.size(); ++i)
@@ -70,9 +73,13 @@ cllr::TypedSSA FunctionImpl::emitFnDeclCLLR(sptr<const SymbolTable> table, out<c
 
 	}
 
-	parent->code->emitCodeCLLR(fnImplTable, codeAsm);
+	//TODO does this do anything?
+	//code->declareSymbols(fnImplTable);
+	code->emitCodeCLLR(fnImplTable, codeAsm);
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::FUNCTION_END, {}, { id }));
+
+	codeAsm.endSect();
 
 	return cllr::TypedSSA(retType, id);
 }

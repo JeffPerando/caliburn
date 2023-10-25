@@ -698,7 +698,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 
 	auto spvLhs = outCode.toSpvID(i.refs[0]);
 	auto spvRhs = outCode.toSpvID(i.refs[1]);
-	auto const& outType = inCode.codeFor(i.outType);
+	auto const& outType = inCode.getIns(i.outType);
 
 	auto op = spirv::OpNop();
 	
@@ -806,7 +806,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpand)
 	auto id = outCode.toSpvID(i.index);
 
 	auto inID = outCode.toSpvID(i.refs[0]);
-	auto t = inCode.codeFor(i.outType);
+	auto t = inCode.getIns(i.outType);
 
 	auto spvOp = spirv::OpNop();
 
@@ -835,7 +835,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpand)
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpr)
 {
 	auto id = outCode.toSpvID(i.index);
-	auto const& outType = inCode.codeFor(i.outType);
+	auto const& outType = inCode.getIns(i.outType);
 	auto spvOutType = outCode.toSpvID(outType.index);
 
 	auto cllrOp = (Operator)i.operands[0];
@@ -918,7 +918,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExprUnary)
 
 	auto op = spirv::OpNop();
 
-	auto outType = inCode.codeFor(i.outType);
+	auto outType = inCode.getIns(i.outType);
 
 	if (cllrOp == Operator::ABS)
 	{
@@ -1187,7 +1187,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueSign)
 {
 	auto inValue = outCode.toSpvID(i.refs[0]);
 
-	auto width = inCode.codeFor(i.outType).operands[0];
+	auto width = inCode.getIns(i.outType).operands[0];
 	auto words = (width / 32);
 
 	auto uint = outCode.types.findOrMake(spirv::OpTypeInt(), { width, 0 });
@@ -1259,7 +1259,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueSubarray)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueUnsign)
 {
-	auto width = inCode.codeFor(i.outType).operands[0];
+	auto width = inCode.getIns(i.outType).operands[0];
 
 	auto inValue = outCode.toSpvID(i.refs[0]);
 
@@ -1307,7 +1307,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueUnsign)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueVecSwizzle)
 {
-	auto outVecLen = inCode.codeFor(i.outType).operands[0];
+	auto outVecLen = inCode.getIns(i.outType).operands[0];
 
 	auto id = outCode.toSpvID(i.index);
 	auto t = outCode.toSpvID(i.outType);

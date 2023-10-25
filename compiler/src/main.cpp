@@ -149,11 +149,6 @@ void printTokens()
 
 int main()
 {
-	auto strs = caliburn::splitStr("", "_");
-
-	std::cout << strs[0] << '\n';
-	std::cout << strs[1] << '\n';
-
 	/*
 	std::cout << "\033[1;31m";
 	std::cout << sizeof(sptr<caliburn::Token>);
@@ -161,7 +156,6 @@ int main()
 	*/
 	//return testShaderCompile();
 	//return testExprParsing();
-	
 	
 	auto const takes = 20;
 

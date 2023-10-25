@@ -22,7 +22,7 @@ cllr::TypedSSA IntLiteralValue::emitValueCLLR(sptr<const SymbolTable> table, out
 		//Why does it matter? I dunno
 
 		//TODO write an integer-parsing algorithm
-		uint64_t parsedLit = std::stoi(intLit);
+		uint64_t parsedLit = std::stol(intLit);
 
 		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_INT, { (uint32_t)(parsedLit & 0xFFFFFFFF), (uint32_t)((parsedLit >> 32) & 0xFFFFFFFF) }, {}, t->id));
 
@@ -143,7 +143,7 @@ cllr::TypedSSA SubArrayValue::emitValueCLLR(sptr<const SymbolTable> table, out<c
 	auto& [iTypeImpl, iID] = index->emitValueCLLR(table, codeAsm);
 
 	//FIXME check array type
-	auto outType = codeAsm.getType(codeAsm.codeFor(aID).refs[0]);
+	auto outType = codeAsm.getType(codeAsm.getIns(aID).refs[0]);
 	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_SUBARRAY, {}, { aID, iID }, outType->id));
 
 	return cllr::TypedSSA(outType, vID);

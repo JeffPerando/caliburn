@@ -49,14 +49,14 @@ ptr<Finder> Finder::setLimit(uint32_t max)
 	return this;
 }
 
-InstructionVec Finder::find(in<InstructionVec> code)
+std::vector<Instruction> Finder::find(in<std::vector<Instruction>> code)
 {
 	if (opcodes.empty() && op_args.empty() && refID == 0 && outType == 0)
 	{
 		//TODO complain
 	}
 
-	InstructionVec found;
+	std::vector<Instruction> found;
 
 	for (size_t x = offset; x < code.size(); ++x)
 	{

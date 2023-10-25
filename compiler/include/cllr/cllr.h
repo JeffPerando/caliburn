@@ -30,8 +30,7 @@ namespace caliburn
 		struct Assembler;
 		
 		struct Instruction;
-		using InstructionVec = std::vector<Instruction>;
-
+		
 		using SSA = uint32_t;
 
 		struct TypedSSA
@@ -47,6 +46,11 @@ namespace caliburn
 				return type == other.type && value == other.value;
 			}
 
+		};
+
+		struct Loop
+		{
+			SSA start, end;
 		};
 
 		enum class Opcode : uint32_t
@@ -383,7 +387,7 @@ namespace caliburn
 		struct CompilationUnit
 		{
 			HostTarget target = HostTarget::GPU;
-			uptr<InstructionVec> code;
+			uptr<std::vector<Instruction>> code;
 
 		};
 

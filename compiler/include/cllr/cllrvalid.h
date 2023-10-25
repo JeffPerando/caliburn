@@ -15,16 +15,16 @@
 #define CLLR_VALID_HAS_ID if (i.index == 0) return ValidReason::INVALID_NO_ID
 #define CLLR_VALID_NO_ID if (i.index != 0) return ValidReason::INVALID_MISC
 
-#define CLLR_VALID_HAS_OUT if (i.outType == 0 || !isType(codeAsm.opFor(i.outType))) return ValidReason::INVALID_OUT_TYPE
+#define CLLR_VALID_HAS_OUT if (i.outType == 0 || !isType(codeAsm.getOp(i.outType))) return ValidReason::INVALID_OUT_TYPE
 #define CLLR_VALID_NO_OUT if (i.outType != 0) return ValidReason::INVALID_OUT_TYPE
-#define CLLR_VALID_OUT_TYPE(op) if (i.outType == 0 || (codeAsm.opFor(i.outType) != op)) return ValidReason::INVALID_OUT_TYPE
+#define CLLR_VALID_OUT_TYPE(op) if (i.outType == 0 || (codeAsm.getOp(i.outType) != op)) return ValidReason::INVALID_OUT_TYPE
 
-#define CLLR_VALID_TYPE(id) if (id == 0 || !isType(codeAsm.opFor(id))) return ValidReason::INVALID_TYPE
-#define CLLR_VALID_VALUE(id) if (id == 0 || !isValue(codeAsm.opFor(id))) return ValidReason::INVALID_VALUE
-#define CLLR_VALID_OPT_VALUE(id) if (id != 0 && !isValue(codeAsm.opFor(id))) return ValidReason::INVALID_VALUE
-#define CLLR_VALID_LVALUE(id) if (id == 0 || !isLValue(codeAsm.opFor(id))) return ValidReason::INVALID_LVALUE
-#define CLLR_VALID_VAR(id) if (id == 0 || !isVar(codeAsm.opFor(id))) return ValidReason::INVALID_VAR
-#define CLLR_VALID_REF(id, op) if (id == 0 || codeAsm.opFor(id) != op) return ValidReason::INVALID_REF
+#define CLLR_VALID_TYPE(id) if (id == 0 || !isType(codeAsm.getOp(id))) return ValidReason::INVALID_TYPE
+#define CLLR_VALID_VALUE(id) if (id == 0 || !isValue(codeAsm.getOp(id))) return ValidReason::INVALID_VALUE
+#define CLLR_VALID_OPT_VALUE(id) if (id != 0 && !isValue(codeAsm.getOp(id))) return ValidReason::INVALID_VALUE
+#define CLLR_VALID_LVALUE(id) if (id == 0 || !isLValue(codeAsm.getOp(id))) return ValidReason::INVALID_LVALUE
+#define CLLR_VALID_VAR(id) if (id == 0 || !isVar(codeAsm.getOp(id))) return ValidReason::INVALID_VAR
+#define CLLR_VALID_REF(id, op) if (id == 0 || codeAsm.getOp(id) != op) return ValidReason::INVALID_REF
 
 #define CLLR_VALID_MAX_REFS(n) if ((MAX_REFS - std::count(i.refs.begin(), i.refs.end(), 0)) > n) { return ValidReason::INVALID_REF; }
 #define CLLR_VALID_MAX_OPS(n) if ((MAX_OPS - std::count(i.operands.begin(), i.operands.end(), 0)) > n) { return ValidReason::INVALID_REF; }

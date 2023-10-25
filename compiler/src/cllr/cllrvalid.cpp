@@ -328,7 +328,7 @@ CLLR_INSTRUCT_VALIDATE(valid::OpCall)
 	CLLR_VALID_MAX_OPS(1);
 	CLLR_VALID_MAX_REFS(1);
 
-	auto const& fnCode = codeAsm.codeFor(i.refs[0]);
+	auto const& fnCode = codeAsm.getIns(i.refs[0]);
 
 	if (fnCode.op != Opcode::FUNCTION)
 	{
@@ -921,7 +921,7 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueVecSwizzle)
 	CLLR_VALID_MAX_REFS(1);
 	CLLR_VALID_VALUE(i.refs[0]);
 
-	const uint32_t outVecLen = codeAsm.codeFor(i.outType).operands[0];
+	const uint32_t outVecLen = codeAsm.getIns(i.outType).operands[0];
 
 	for (auto x = 0; x < MAX_OPS; ++x)
 	{

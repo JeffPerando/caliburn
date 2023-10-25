@@ -1,66 +1,106 @@
 
-#include <algorithm>
-
 #include "cllr/cllrasm.h"
 #include "cllr/cllrtypes.h"
 
 using namespace caliburn::cllr;
 
-uint32_t Assembler::addString(in<std::string> str)
+void Assembler::beginSect()
 {
-	auto index = strs.size();
-
-	strs.push_back(str);
-
-	return (uint32_t)index;
+	codeSects.emplace(new Section());
 }
 
-SSA Assembler::createSSA(Opcode op)
+bool Assembler::hasSect() const
 {
-	ssaRefs.push_back(0);
-	ssaToOp.push_back(op);
-	ssaToIndex.push_back(0);
+	return !codeSects.empty();
+}
 
+void Assembler::endSect()
+{
+	auto& sect = codeSects.top();
+
+	allCode.insert(allCode.end(), sect->code.begin(), sect->code.end());
+
+	codeSects.pop();
+}
+
+SSA Assembler::createSSA(in<Instruction> ins)
+{
+	ssaToIns.push_back(ins);
+	ssaRefs.push_back(0);
+	ssaToOp.push_back(ins.op);
+	
 	return nextSSA++;
 }
 
-out<Instruction> Assembler::codeFor(SSA id) const
+Instruction Assembler::getIns(SSA id) const
 {
-	return code->at(ssaToIndex.at(id));
+	if (id == 0)
+	{
+		return Instruction();
+	}
+
+	return ssaToIns.at(id - 1);
 }
 
-out<Instruction> Assembler::codeAt(size_t off) const
-{
-	return code->at(off);
-}
-
-Opcode Assembler::opFor(SSA id) const
+Opcode Assembler::getOp(SSA id) const
 {
 	return ssaToOp.at(id);
 }
 
-SSA Assembler::push(in<Instruction> ins)
+sptr<LowType> Assembler::getType(SSA id) const
 {
-	auto ssa = ins.index;
-
-	//NOTE: ID == 0 is not an error
-
-	if (ssa != 0 && ssaToOp[ssa] != Opcode::UNKNOWN)
+	if (auto& found = ssaToType.find(id); found != ssaToType.end())
 	{
-		//TODO complain
+		return found->second;
 	}
 
-	code->push_back(ins);
-	doBookkeeping(ins);
-
-	return ssa;
+	return nullptr;
 }
 
-//TODO fix impl for structs
+void Assembler::push(in<Instruction> ins)
+{
+	if (!hasSect())
+	{
+		//TODO complain
+		return;
+	}
+
+	codeSects.top()->code.push_back(ins);
+
+	doBookkeeping(ins);
+
+}
+
+void Assembler::pushAll(in<std::vector<Instruction>> ins)
+{
+	if (!hasSect())
+	{
+		//TODO complain
+		return;
+	}
+
+	auto& code = codeSects.top()->code;
+
+	code.insert(code.end(), ins.begin(), ins.end());
+
+	for (auto& i : ins)
+	{
+		doBookkeeping(i);
+	}
+
+}
+
+SSA Assembler::pushNew(out<Instruction> ins)
+{
+	ins.index = createSSA(ins);
+	push(ins);
+	return ins.index;
+}
+
 sptr<LowType> Assembler::pushType(out<Instruction> ins)
 {
-	//Structs can be differentiated by their members, which aren't included in the main instruction.
-	//Therefore, this exception was added to prevent all n-member structs from using the same ID
+	//Structs can have identical operands, so ignore them
+	//All other types have unique operands for a given type
 	if (ins.op != Opcode::TYPE_STRUCT)
 	{
 		auto found = types.find(ins);
@@ -72,7 +112,12 @@ sptr<LowType> Assembler::pushType(out<Instruction> ins)
 
 	}
 	
-	auto id = pushNew(ins);
+	auto id = createSSA(ins.op);
+	ins.index = id;
+
+	//TODO consider just using a type section like in the SPIR-V assembler
+	allCode.push_back(ins);
+	doBookkeeping(ins);
 
 	sptr<LowType> t = nullptr;
 
@@ -93,31 +138,69 @@ sptr<LowType> Assembler::pushType(out<Instruction> ins)
 	}
 
 	types.emplace(ins, t);
+	ssaToType.emplace(id, t);
 
 	return t;
 }
 
-void Assembler::pushAll(in<std::vector<Instruction>> ins)
+void Assembler::beginLoop(SSA start, SSA end)
 {
-	for (auto& i : ins)
+	if (!hasSect())
 	{
-		code->push_back(i);
-		doBookkeeping(i);
-
+		return;
 	}
+
+	codeSects.top()->beginLoop(start, end);
 
 }
 
-sptr<LowType> Assembler::getType(SSA id) const
+SSA Assembler::getLoopStart() const
 {
-	auto& found = types.find(code->at(ssaToIndex[id]));
-
-	if (found == types.end())
+	if (!hasSect())
 	{
-		return nullptr;
+		return 0;
 	}
 
-	return found->second;
+	return codeSects.top()->getLoopStart();
+}
+
+SSA Assembler::getLoopEnd() const
+{
+	if (!hasSect())
+	{
+		return 0;
+	}
+
+	return codeSects.top()->getLoopEnd();
+}
+
+void Assembler::endLoop()
+{
+	if (!hasSect())
+	{
+		return;
+	}
+
+	codeSects.top()->endLoop();
+}
+
+uint32_t Assembler::addString(in<std::string> str)
+{
+	auto index = strs.size();
+
+	strs.push_back(str);
+
+	return (uint32_t)index;
+}
+
+std::string Assembler::getString(uint32_t index) const
+{
+	if (strs.empty() || index >= strs.size())
+	{
+		return "";
+	}
+
+	return strs.at(index);
 }
 
 std::pair<uint32_t, SSA> Assembler::pushInput(in<std::string> name, SSA type)
@@ -188,7 +271,7 @@ uint32_t Assembler::replace(SSA in, SSA out)
 		return 0;
 	}
 
-	for (auto& op : *code)
+	for (auto& op : allCode)
 	{
 		for (size_t i = 0; i < 3; ++i)
 		{
@@ -223,36 +306,37 @@ uint32_t Assembler::replace(SSA in, SSA out)
 	{
 		ssaToOp[out] = ssaToOp[in];
 		ssaRefs[out] += count;
-		ssaToIndex[out] = ssaToIndex[in];
+		ssaToIns[out] = ssaToIns[in];
 		
 	}
 
 	ssaRefs[in] = 0;
 	ssaToOp[in] = Opcode::UNKNOWN;
-	ssaToIndex[in] = 0;
+	ssaToIns[in] = Instruction();
 
 	return count;
 }
 
+//TODO audit implementation
 uint32_t Assembler::flatten()
 {
 	uint32_t replaced = 0;
 	uint32_t lastSSA = nextSSA - 1;
 
-	for (uint32_t i = 1; i < nextSSA; ++i)
+	for (uint32_t ssa = 1; ssa < nextSSA; ++ssa)
 	{
-		if (ssaRefs[i] != 0)
+		if (ssaRefs[ssa] != 0)
 		{
 			continue;
 		}
 		
-		for (uint32_t off = i + 1; off < nextSSA; ++off)
+		for (uint32_t off = ssa + 1; off < nextSSA; ++off)
 		{
 			if (ssaRefs[off] != 0)
 			{
-				replace(off, i);
+				replace(off, ssa);
 				++replaced;
-				lastSSA = i;
+				lastSSA = ssa;
 				break;
 			}
 
@@ -260,29 +344,17 @@ uint32_t Assembler::flatten()
 
 	}
 
-	nextSSA = lastSSA + 1;
+	nextSSA = lastSSA;
 
-	for (size_t i = 0; i < ssaToIndex.size(); ++i)
-	{
-		if (ssaToOp.at(ssaToIndex[i]) == Opcode::UNKNOWN)
-		{
-			ssaToIndex.erase(ssaToIndex.begin() + i);
-		}
-
-	}
+	ssaToOp.resize(lastSSA);
+	ssaToIns.resize(lastSSA);
 
 	return replaced;
 }
 
 void Assembler::doBookkeeping(in<Instruction> ins)
 {
-	if (ins.index != 0)
-	{
-		ssaToIndex[ins.index] = code->size() - 1;
-		ssaToOp[ins.index] = ins.op;
-	}
-
-	for (auto i = 0; i < 3; ++i)
+	for (auto i = 0; i < MAX_REFS; ++i)
 	{
 		auto const& refID = ins.refs[i];
 
@@ -298,10 +370,34 @@ void Assembler::doBookkeeping(in<Instruction> ins)
 		ssaRefs[ins.outType] += 1;
 	}
 
-	if (ins.op == Opcode::STRUCT_MEMBER)
+}
+
+void Section::beginLoop(SSA start, SSA end)
+{
+	loops.push(Loop{ start, end });
+}
+
+SSA Section::getLoopStart() const
+{
+	if (loops.empty())
 	{
-		//FIXME I forgot about members when writing this code
-		//getType(ins.refs[0])->addMember("", ins.index, getType(ins.refs[1]));
+		return 0;
 	}
 
+	return loops.top().start;
+}
+
+SSA Section::getLoopEnd() const
+{
+	if (loops.empty())
+	{
+		return 0;
+	}
+
+	return loops.top().end;
+}
+
+void Section::endLoop()
+{
+	loops.pop();
 }

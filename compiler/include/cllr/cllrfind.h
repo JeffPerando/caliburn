@@ -30,7 +30,7 @@ namespace caliburn
 			ptr<Finder> setOffset(size_t off);
 			ptr<Finder> setLimit(uint32_t max);
 
-			InstructionVec find(in<InstructionVec> code);
+			std::vector<Instruction> find(in<std::vector<Instruction>> code);
 
 		};
 

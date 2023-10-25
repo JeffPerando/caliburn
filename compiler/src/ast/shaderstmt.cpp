@@ -32,12 +32,16 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 	auto fullName = parentName->str + "_" + SHADER_TYPE_NAMES.at(type);
 	auto nameID = codeAsm.addString(fullName);
 
+	codeAsm.beginSect();
+
 	auto stageID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::SHADER_STAGE, { (uint32_t)type, nameID }, {}));
 
 	base->code->declareSymbols(stageTable);
 	base->code->emitCodeCLLR(stageTable, codeAsm);
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::SHADER_STAGE_END, {}, { stageID }));
+
+	codeAsm.endSect();
 
 	auto validator = cllr::Validator(settings);
 	//std::chrono::high_resolution_clock clock{};
