@@ -74,9 +74,10 @@ namespace caliburn
 				return allCode;
 			}
 
-			void beginSect();
+			SSA beginSect(out<Instruction> i);
 			bool hasSect() const;
-			void endSect();
+			Instruction getSectHeader();
+			void endSect(in<Instruction> i);
 
 			SSA createSSA(in<Instruction> ins);
 
@@ -88,7 +89,7 @@ namespace caliburn
 			void pushAll(in<std::vector<Instruction>> code);
 			SSA pushNew(out<Instruction> ins);
 			sptr<LowType> pushType(out<Instruction> ins);
-			
+
 			void beginLoop(SSA start, SSA end);
 			SSA getLoopStart() const;
 			SSA getLoopEnd() const;
@@ -150,9 +151,13 @@ namespace caliburn
 			std::stack<Loop> loops;
 
 		public:
-			Section() {}
+			const Instruction header;
+			Section(in<Instruction> i) : header(i)
+			{
+				code.push_back(i);
+			}
 			virtual ~Section() {}
-			
+
 			void beginLoop(SSA start, SSA end);
 			SSA getLoopStart() const;
 			SSA getLoopEnd() const;

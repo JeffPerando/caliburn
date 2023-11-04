@@ -58,9 +58,7 @@ cllr::TypedSSA FunctionImpl::emitFnDeclCLLR(sptr<const SymbolTable> table, out<c
 		return cllr::TypedSSA();
 	}
 
-	codeAsm.beginSect();
-
-	id = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::FUNCTION, { (uint32_t)args.size() }, { retType->id }));
+	id = codeAsm.beginSect(cllr::Instruction(cllr::Opcode::FUNCTION, { (uint32_t)args.size() }, { retType->id }));
 
 	for (auto i = 0; i < args.size(); ++i)
 	{
@@ -77,9 +75,7 @@ cllr::TypedSSA FunctionImpl::emitFnDeclCLLR(sptr<const SymbolTable> table, out<c
 	//code->declareSymbols(fnImplTable);
 	code->emitCodeCLLR(fnImplTable, codeAsm);
 
-	codeAsm.push(cllr::Instruction(cllr::Opcode::FUNCTION_END, {}, { id }));
-
-	codeAsm.endSect();
+	codeAsm.endSect(cllr::Instruction(cllr::Opcode::FUNCTION_END, {}, { id }));
 
 	return cllr::TypedSSA(retType, id);
 }

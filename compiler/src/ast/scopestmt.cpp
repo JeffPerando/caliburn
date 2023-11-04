@@ -49,37 +49,95 @@ void ScopeStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeA
 
 void BreakStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
-	codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP, {}, { codeAsm.getLoopEnd() }));
+	cllr::SSA label = codeAsm.getLoopEnd();
+
+	if (label == 0)
+	{
+		codeAsm.errors->err("Break used outside of a loop", tkn);
+	}
+
+	codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP, {}, { label }));
 }
 
 void ContinueStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
-	codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP, {}, { codeAsm.getLoopStart() }));
+	cllr::SSA label = codeAsm.getLoopStart();
+
+	if (label == 0)
+	{
+		codeAsm.errors->err("Continue used outside of a loop", tkn);
+	}
+
+	codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP, {}, { label }));
 }
 
 void DiscardStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
+	auto h = codeAsm.getSectHeader();
+
+	if (h.op != cllr::Opcode::SHADER_STAGE)
+	{
+		codeAsm.errors->err("Discard used outside of a shader stage", tkn);
+	}
+
+	if (h.operands[0] != (uint32_t)ShaderType::FRAGMENT)
+	{
+		codeAsm.errors->err("Discard used outside of a fragment shader", tkn);
+	}
+
 	codeAsm.push(cllr::Instruction(cllr::Opcode::DISCARD));
 }
 
 void ReturnStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
+	auto h = codeAsm.getSectHeader();
+
+	if (h.op != cllr::Opcode::FUNCTION && h.op != cllr::Opcode::SHADER_STAGE)
+	{
+		codeAsm.errors->err("Return used outside of a function", first);
+	}
+
+	auto retID = h.refs[0];
+	auto retType = codeAsm.getType(retID);
+
 	if (retValue != nullptr)
 	{
+		if (retID == 0)
+		{
+			codeAsm.errors->err("Cannot return a value in a void function", *this);
+			//emit *something*
+			codeAsm.push(cllr::Instruction(cllr::Opcode::RETURN));
+			return;
+		}
+
 		MATCH(retValue->emitValueCLLR(table, codeAsm), cllr::TypedSSA, ret)
 		{
-			codeAsm.push(cllr::Instruction(cllr::Opcode::RETURN_VALUE, {}, { ret->value }));
+			cllr::TypeChecker tc(codeAsm.settings);
+			cllr::TypedSSA result;
+
+			if (!tc.check(retType, *ret, result, codeAsm))
+			{
+				//TODO complain
+			}
+
+			codeAsm.push(cllr::Instruction(cllr::Opcode::RETURN_VALUE, {}, { result.value }));
 
 		}
+		else
+		{
+			codeAsm.errors->err("Invalid return value", *retValue);
+		}
+		
+	}
 	else
 	{
-		codeAsm.errors->err("Invalid return value", *retValue);
-	}
+		if (retID != 0)
+		{
+			codeAsm.errors->err("Must return a value in a non-void function", first);
+		}
 
-	}
-	else
-	{
 		codeAsm.push(cllr::Instruction(cllr::Opcode::RETURN));
+
 	}
 
 }

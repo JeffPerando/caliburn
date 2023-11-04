@@ -4,9 +4,11 @@
 
 using namespace caliburn::cllr;
 
-void Assembler::beginSect()
+SSA Assembler::beginSect(out<Instruction> i)
 {
-	codeSects.emplace(new Section());
+	SSA id = pushNew(i);
+	codeSects.emplace(new Section(i));
+	return id;
 }
 
 bool Assembler::hasSect() const
@@ -14,10 +16,16 @@ bool Assembler::hasSect() const
 	return !codeSects.empty();
 }
 
-void Assembler::endSect()
+Instruction Assembler::getSectHeader()
+{
+	return codeSects.top()->header;
+}
+
+void Assembler::endSect(in<Instruction> i)
 {
 	auto& sect = codeSects.top();
 
+	sect->code.push_back(i);
 	allCode.insert(allCode.end(), sect->code.begin(), sect->code.end());
 
 	codeSects.pop();
