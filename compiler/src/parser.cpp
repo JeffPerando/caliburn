@@ -1145,6 +1145,8 @@ uptr<Statement> Parser::parseScopeEnd()
 		return nullptr;
 	}
 
+	tkns.consume();
+
 	if (first->str == "return")
 	{
 		auto retStmt = new_uptr<ReturnStmt>(first);
@@ -1181,6 +1183,8 @@ uptr<Statement> Parser::parseScopeEnd()
 	{
 		return new_uptr<UnreachableStmt>(first);
 	}
+
+	tkns.rewind();
 
 	return nullptr;
 }
