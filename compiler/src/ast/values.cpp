@@ -295,7 +295,7 @@ cllr::TypedSSA FnCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cll
 {
 	//Emit the values now to typecheck later
 	std::vector<cllr::TypedSSA> argIDs(args.size());
-	std::transform(args.begin(), args.end(), std::back_inserter(argIDs), lambda(sptr<Value> v) { return v->emitValueCLLR(table, codeAsm); });
+	std::transform(args.begin(), args.end(), std::back_inserter(argIDs), LAMBDA(sptr<Value> v) { return v->emitValueCLLR(table, codeAsm); });
 
 	if (target != nullptr)
 	{

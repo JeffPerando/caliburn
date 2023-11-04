@@ -102,14 +102,14 @@ ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName
 
 	//Conditional compilation
 	/*
-	auto sortAST = lambda() {
-		std::sort(ast.begin(), ast.end(), lambda(const uptr<Statement> a, const uptr<Statement> b)
+	auto sortAST = LAMBDA() {
+		std::sort(ast.begin(), ast.end(), LAMBDA(const uptr<Statement> a, const uptr<Statement> b)
 			{
 				return a->type > b->type;
 			});
 	};
 
-	auto insertCode = lambda(uptr<ScopeStatement> stmt) {
+	auto insertCode = LAMBDA(uptr<ScopeStatement> stmt) {
 		auto inner = &stmt->stmts;
 		ast.insert(ast.end(), inner->begin(), inner->end());
 		sortAST();

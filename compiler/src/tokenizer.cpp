@@ -69,7 +69,7 @@ bool Tokenizer::findFloatFrac(out<std::stringstream> ss)
 {
 	bool isFloat = false;
 
-	auto const isInt = lambda(char chr)
+	auto const isInt = LAMBDA(char chr)
 	{
 		return std::binary_search(DEC_INTS.begin(), DEC_INTS.end(), chr);
 	};
@@ -142,7 +142,7 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 {
 	auto validIntChars = &DEC_INTS;
 
-	auto const isInt = lambda(char chr)
+	auto const isInt = LAMBDA(char chr)
 	{
 		return std::binary_search(validIntChars->begin(), validIntChars->end(), chr);
 	};

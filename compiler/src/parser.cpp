@@ -1023,7 +1023,7 @@ uptr<ParsedFn> Parser::parseFnLike()
 
 		if (gpuDim->str == "[")
 		{
-			parseAnyBetween("[", lambda(){
+			parseAnyBetween("[", LAMBDA(){
 				fn->invokeDims = parseIdentifierList();
 			}, "]");
 
@@ -1065,7 +1065,7 @@ uptr<ParsedFn> Parser::parseFnLike()
 
 	}
 	
-	parseAnyBetween("(", lambda(){
+	parseAnyBetween("(", LAMBDA(){
 		fn->args = parseFnArgs();
 	}, ")");
 
@@ -1199,7 +1199,7 @@ uptr<Statement> Parser::parseIf()
 
 	stmt->first = first;
 
-	parseAnyBetween("(", lambda() {
+	parseAnyBetween("(", LAMBDA() {
 		stmt->condition = parseAnyValue();
 	}, ")");
 
@@ -1239,7 +1239,7 @@ uptr<Statement> Parser::parseWhile()
 	
 	stmt->first = first;
 
-	parseAnyBetween("(", lambda() {
+	parseAnyBetween("(", LAMBDA() {
 		stmt->condition = parseAnyValue();
 	}, ")");
 
@@ -1275,7 +1275,7 @@ uptr<Statement> Parser::parseDoWhile()
 
 	tkns.consume();
 
-	parseAnyBetween("(", lambda() {
+	parseAnyBetween("(", LAMBDA() {
 		ret->condition = parseAnyValue();
 	}, ")");
 
@@ -1374,7 +1374,7 @@ sptr<Value> Parser::parseTerm()
 
 			subA->array = v;
 
-			parseAnyBetween("[", lambda() {
+			parseAnyBetween("[", LAMBDA() {
 				if (auto i = parseAnyValue())
 				{
 					subA->index = i;
@@ -1478,7 +1478,7 @@ sptr<Value> Parser::parseLiteral()
 
 		arrLit->start = first;
 		
-		parseAnyBetween("[", lambda() {
+		parseAnyBetween("[", LAMBDA() {
 			auto xs = parseValueList(true);
 
 			if (xs.empty())
@@ -1672,7 +1672,7 @@ sptr<Value> Parser::parseExpr()
 
 	values.push(start);
 	
-	const auto makeExpr = lambda()
+	const auto makeExpr = LAMBDA()
 	{
 		auto popOp = ops.top();
 		ops.pop();
@@ -1779,7 +1779,7 @@ sptr<Value> Parser::parseFnCall(sptr<Value> start)
 		return nullptr;
 	}
 
-	if (!parseAnyBetween("(", lambda() {
+	if (!parseAnyBetween("(", LAMBDA() {
 		fnCall->args = parseValueList(false);
 	}, ")"))
 	{

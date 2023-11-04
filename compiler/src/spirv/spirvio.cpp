@@ -45,9 +45,9 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 
 	switch (b)
 	{
-	case BuiltIn::Position: pass;
-	case BuiltIn::PointSize: pass;
-	case BuiltIn::ClipDistance: pass; //TODO this seems to be used by frag shaders as well
+	case BuiltIn::Position: PASS;
+	case BuiltIn::PointSize: PASS;
+	case BuiltIn::ClipDistance: PASS; //TODO this seems to be used by frag shaders as well
 	case BuiltIn::CullDistance: { //vertex
 		//TODO this struct is used by multiple kinds of IO. It's also inside arrays.
 		auto f32 = t.typeFP();

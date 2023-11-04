@@ -11,6 +11,7 @@ and some handy functions
 #include <memory>
 #include <stdint.h>
 #include <unordered_map>
+#include <variant>
 
 /*
 It's very handy in a project like this, to have a simple way to check for powers of 2.
@@ -53,7 +54,7 @@ Back when I was writing this header, I wanted to alias the std::make_... functio
 
 Turns out, templates are really goofy. So I sacked it. But the length of the existing functions still bugged me.
 
-It's June 13th, 2023 and I'm tired. This is the closest I can get to truly aliasing them.
+It's 13 June 2023 and I'm tired. This is the closest I can get to truly aliasing them.
 */
 
 #define new_sptr std::make_shared
@@ -67,7 +68,7 @@ using HashMap = std::unordered_map<K, V, H>;
 template<typename T>
 using atom = std::atomic<T>;
 
-#define pass [[fallthrough]]
+#define PASS [[fallthrough]]
 
 /*
 Lambda syntax is so goofy, this was inevitable.
@@ -75,5 +76,7 @@ Lambda syntax is so goofy, this was inevitable.
 The good news is, this is quite possibly the best part of this header.
 */
 
-#define lambda(...) [&](__VA_ARGS__)
-#define lambda_v(...) [=](__VA_ARGS__)
+#define LAMBDA(...) [&](__VA_ARGS__)
+#define LAMBDA_V(...) [=](__VA_ARGS__)
+
+#define MATCH(VALUE, TYPE, NAME) if (auto NAME = std::get_if<TYPE>(&VALUE))

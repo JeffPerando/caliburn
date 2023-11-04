@@ -34,7 +34,7 @@ SSA Assembler::createSSA(in<Instruction> ins)
 
 Instruction Assembler::getIns(SSA id) const
 {
-	if (id == 0)
+	if (id == 0 || ssaToIns.size() >= id)
 	{
 		return Instruction();
 	}
@@ -44,7 +44,7 @@ Instruction Assembler::getIns(SSA id) const
 
 Opcode Assembler::getOp(SSA id) const
 {
-	return ssaToOp.at(id);
+	return ssaToOp.at(id - 1);
 }
 
 sptr<LowType> Assembler::getType(SSA id) const
@@ -125,7 +125,7 @@ sptr<LowType> Assembler::pushType(out<Instruction> ins)
 	{
 		case Opcode::TYPE_VOID: t = new_sptr<LowVoid>(id); break;
 		case Opcode::TYPE_FLOAT: t = new_sptr<LowFloat>(id, ins.operands[0]); break;
-		case Opcode::TYPE_INT_SIGN: pass;
+		case Opcode::TYPE_INT_SIGN: PASS;
 		case Opcode::TYPE_INT_UNSIGN: t = new_sptr<LowInt>(id, ins.op, ins.operands[0]); break;
 		case Opcode::TYPE_ARRAY: t = new_sptr<LowArray>(id, ins.operands[0], getType(ins.refs[0])); break;
 		case Opcode::TYPE_VECTOR: t = new_sptr<LowVector>(id, ins.operands[0], getType(ins.refs[0])); break;
@@ -344,7 +344,7 @@ uint32_t Assembler::flatten()
 
 	}
 
-	nextSSA = lastSSA;
+	nextSSA = lastSSA + 1;
 
 	ssaToOp.resize(lastSSA);
 	ssaToIns.resize(lastSSA);
