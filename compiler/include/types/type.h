@@ -21,8 +21,8 @@
 namespace caliburn
 {
 	struct Variable;
-	struct Function;
 	struct FunctionGroup;
+	struct BaseType;
 
 	enum class TypeCategory : uint32_t
 	{
@@ -65,6 +65,15 @@ namespace caliburn
 
 	};
 
+	using ValueResult = std::variant<
+		std::monostate,
+		cllr::TypedSSA,
+		sptr<BaseType>,
+		sptr<cllr::LowType>,
+		sptr<Module>,
+		sptr<FunctionGroup>
+	>;
+
 	struct Value : ParsedObject
 	{
 		const ValueType vType;
@@ -76,7 +85,7 @@ namespace caliburn
 
 		virtual bool isCompileTimeConst() const = 0;
 
-		virtual cllr::TypedSSA emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const = 0;
+		virtual ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const = 0;
 
 	};
 

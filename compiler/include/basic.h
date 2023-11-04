@@ -80,3 +80,5 @@ The good news is, this is quite possibly the best part of this header.
 #define LAMBDA_V(...) [=](__VA_ARGS__)
 
 #define MATCH(VALUE, TYPE, NAME) if (auto NAME = std::get_if<TYPE>(&VALUE))
+#define MATCH_EMPTY(VALUE) if (std::holds_alternative<std::monostate>(VALUE))
+#define MATCH_VALID(VALUE) if (!std::holds_alternative<std::monostate>(VALUE))

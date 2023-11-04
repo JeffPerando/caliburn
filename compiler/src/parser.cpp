@@ -1594,17 +1594,36 @@ sptr<Value> Parser::parseParenValue()
 
 sptr<Value> Parser::parseAnyAccess()
 {
-	return parseAccess(nullptr);
+	sptr<Value> target = nullptr;
+
+	if (tkns.cur()->type == TokenType::IDENTIFIER)
+	{
+		target = new_sptr<VarReadValue>(tkns.cur());
+		tkns.consume();
+	}
+
+	return parseAccess(target);
 }
 
 sptr<Value> Parser::parseAccess(sptr<Value> target)
 {
-	sptr<Token> first = tkns.cur();
-
-	if (first->type != TokenType::IDENTIFIER)
+	if (!tkns.hasRem(2))
 	{
 		return target;
 	}
+
+	if (tkns.cur()->type != TokenType::PERIOD)
+	{
+		return target;
+	}
+
+	if (tkns.peek(1)->type != TokenType::IDENTIFIER)
+	{
+		//TODO complain
+		return target;
+	}
+
+	tkns.consume();
 
 	auto access = new_sptr<VarChainValue>();
 
@@ -1612,11 +1631,17 @@ sptr<Value> Parser::parseAccess(sptr<Value> target)
 	
 	while (true)
 	{
+		sptr<Token> name = tkns.cur();
+
+		if (name->type != TokenType::IDENTIFIER)
+		{
+			break;
+		}
+
 		//check for method call
 		if (tkns.hasRem(3))
 		{
 			auto& fwd = tkns.peek(1);
-
 			if (fwd->str == GENERIC_START || fwd->type == TokenType::START_PAREN)
 			{
 				if (auto fnCall = parseFnCall(access->chain.empty() ? target : access))
@@ -1631,27 +1656,15 @@ sptr<Value> Parser::parseAccess(sptr<Value> target)
 			}
 
 		}
+
+		access->chain.push_back(name);
 		
-		access->chain.push_back(tkns.cur());
+		if (tkns.next()->type != TokenType::PERIOD)
+		{
+			break;
+		}
 
 		tkns.consume();
-
-		if (!tkns.hasRem(2))
-		{
-			break;
-		}
-
-		if (tkns.peek(1)->type != TokenType::PERIOD)
-		{
-			break;
-		}
-
-		if (tkns.peek(2)->type != TokenType::IDENTIFIER)
-		{
-			break;
-		}
-
-		tkns.consume(2);
 
 	}
 
@@ -1754,9 +1767,9 @@ sptr<Value> Parser::parseFnCall(sptr<Value> start)
 		return nullptr;
 	}
 
-	sptr<Token> name = tkns.cur();
+	sptr<Value> name = parseAnyAccess();
 
-	if (name->type != TokenType::IDENTIFIER)
+	if (name == nullptr)
 	{
 		return nullptr;
 	}
@@ -1765,22 +1778,25 @@ sptr<Value> Parser::parseFnCall(sptr<Value> start)
 
 	auto fnCall = new_sptr<FnCallValue>();
 
+	auto& args = fnCall->args;
+	auto& genArgs = fnCall->genArgs;
+
 	fnCall->name = name;
 	fnCall->target = start;
 
 	sptr<Token> genArgStart = tkns.cur();
 
-	fnCall->genArgs = parseGenericArgs();
+	genArgs = parseGenericArgs();
 
-	if (fnCall->genArgs == nullptr)
+	if (genArgs == nullptr)
 	{
-		auto e = errors->err("Invalid generic argument start", genArgStart);
+		auto e = errors->err("Invalid generic arguments starting here", genArgStart);
 
 		return nullptr;
 	}
 
 	if (!parseAnyBetween("(", LAMBDA() {
-		fnCall->args = parseValueList(false);
+		args = parseValueList(false);
 	}, ")"))
 	{
 		return nullptr;

@@ -26,7 +26,7 @@ namespace caliburn
 
 		void declareHeader(sptr<SymbolTable> table) override
 		{
-			table->add(name->str, fn);
+			//table->add(name->str, fn);
 
 		}
 

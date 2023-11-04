@@ -48,7 +48,18 @@ cllr::TypedSSA LocalVariable::emitVarCLLR(sptr<const SymbolTable> table, out<cll
 		initValue = new_sptr<ZeroValue>();
 	}
 
-	auto v = initValue->emitValueCLLR(table, codeAsm);
+	auto initRes = initValue->emitValueCLLR(table, codeAsm);
+	cllr::TypedSSA v;
+
+	MATCH(initRes, cllr::TypedSSA, valPtr)
+	{
+		v = *valPtr;
+	}
+	else
+	{
+		codeAsm.errors->err("Invalid variable initializer", *initValue);
+		return cllr::TypedSSA();
+	}
 
 	sptr<cllr::LowType> type = nullptr;
 
@@ -190,7 +201,19 @@ cllr::TypedSSA GlobalVariable::emitVarCLLR(sptr<const SymbolTable> table, out<cl
 	}
 
 	sptr<cllr::LowType> type = 0;
-	auto v = initValue->emitValueCLLR(table, codeAsm);
+
+	auto initRes = initValue->emitValueCLLR(table, codeAsm);
+	cllr::TypedSSA v;
+
+	MATCH(initRes, cllr::TypedSSA, valPtr)
+	{
+		v = *valPtr;
+	}
+	else
+	{
+		codeAsm.errors->err("Invalid variable initializer", *initValue);
+		return cllr::TypedSSA();
+	}
 
 	if (auto t = typeHint->resolve(table, codeAsm))
 	{

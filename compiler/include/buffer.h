@@ -32,7 +32,7 @@ namespace caliburn
 		*/
 		bool hasRem(size_t count) const
 		{
-			return remaining() > 0;
+			return remaining() >= count;
 		}
 
 		/*
@@ -52,7 +52,7 @@ namespace caliburn
 		}
 
 		/*
-		Incrments offset, then returns the element at it.
+		Increments offset, then returns the element at the current offset.
 		*/
 		const T& next()
 		{
@@ -61,7 +61,7 @@ namespace caliburn
 		}
 
 		/*
-		Returns the element at (offset + offset).
+		Returns the element at (index + offset).
 		*/
 		const T& peek(size_t off) const
 		{

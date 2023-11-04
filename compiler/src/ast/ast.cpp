@@ -54,8 +54,18 @@ void ScopeStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> 
 		{
 			//TODO where... where's the function?
 
-			auto ret = retValue->emitValueCLLR(scopeTable, codeAsm);
+			auto valRes = retValue->emitValueCLLR(scopeTable, codeAsm);
+			cllr::TypedSSA ret;
 
+			MATCH(valRes, cllr::TypedSSA, valPtr)
+			{
+				ret = *valPtr;
+			}
+			else
+			{
+				codeAsm.errors->err("Invalid return value", *retValue);
+			}
+			
 			codeAsm.push(cllr::Instruction(cllr::Opcode::RETURN_VALUE, {}, { ret.value }));
 
 		}
@@ -70,7 +80,7 @@ void ScopeStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> 
 		codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP, {}, { codeAsm.getLoopStart() })); break;
 	case ReturnMode::BREAK:
 		codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP, {}, { codeAsm.getLoopEnd() })); break;
-	case ReturnMode::PASS:
+	case ReturnMode::PASSTHROUGH:
 		//TODO implement
 		break;
 	case ReturnMode::DISCARD:

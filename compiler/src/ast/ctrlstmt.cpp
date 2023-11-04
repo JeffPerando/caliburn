@@ -5,7 +5,18 @@ using namespace caliburn;
 
 void IfStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
-	auto cond = condition->emitValueCLLR(table, codeAsm);
+	auto condRes = condition->emitValueCLLR(table, codeAsm);
+	cllr::TypedSSA cond;
+
+	MATCH(condRes, cllr::TypedSSA, condPtr)
+	{
+		cond = *condPtr;
+	}
+	else
+	{
+		codeAsm.errors->err("Invalid conditional", *condition);
+		return;
+	}
 
 	//TODO type check
 	auto cID = cond.value;
@@ -113,7 +124,18 @@ void WhileStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> 
 		cllr::Instruction(cllr::Opcode::LOOP, {}, { exit, cont, loopLabel }),
 	});
 
-	auto cond = condition->emitValueCLLR(table, codeAsm);
+	auto condRes = condition->emitValueCLLR(table, codeAsm);
+	cllr::TypedSSA cond;
+	
+	MATCH(condRes, cllr::TypedSSA, condPtr)
+	{
+		cond = *condPtr;
+	}
+	else
+	{
+		codeAsm.errors->err("Invalid conditional", *condition);
+		return;
+	}
 
 	//TODO type check
 	auto cID = cond.value;

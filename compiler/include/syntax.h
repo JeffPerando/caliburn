@@ -204,7 +204,7 @@ namespace caliburn
 		RETURN,
 		CONTINUE,
 		BREAK,
-		PASS,
+		PASSTHROUGH,
 		UNREACHABLE,
 		DISCARD
 	};
@@ -308,7 +308,7 @@ namespace caliburn
 		{"return",		ReturnMode::RETURN},
 		{"continue",	ReturnMode::CONTINUE},
 		{"break",		ReturnMode::BREAK},
-		{"pass",		ReturnMode::PASS},
+		{"pass",		ReturnMode::PASSTHROUGH},
 		{"unreachable",	ReturnMode::UNREACHABLE},
 		{"discard",		ReturnMode::DISCARD}
 	};

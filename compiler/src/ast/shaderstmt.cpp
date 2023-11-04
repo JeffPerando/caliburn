@@ -7,8 +7,6 @@
 
 #include "spirv/cllrspirv.h"
 
-#include "types/cbrn_std.h"
-
 using namespace caliburn;
 
 uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSettings> settings, out<std::vector<sptr<Error>>> allErrs)

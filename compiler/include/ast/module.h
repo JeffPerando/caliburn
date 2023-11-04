@@ -15,7 +15,7 @@ namespace caliburn
 		Module() = default;
 		virtual ~Module() {}
 
-		virtual void declareSymbols(sptr<SymbolTable> table) = 0;
+		virtual sptr<SymbolTable> getTable() const = 0;
 
 	};
 

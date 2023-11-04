@@ -27,7 +27,8 @@ namespace caliburn
 
 		struct LowType;
 
-		using LowMember = std::variant<std::monostate, std::pair<uint32_t, sptr<LowType>>, TypedSSA>;
+		using IndexedMember = std::pair<uint32_t, sptr<LowType>>;
+		using LowMember = std::variant<std::monostate, IndexedMember, TypedSSA>;
 
 		struct LowType
 		{

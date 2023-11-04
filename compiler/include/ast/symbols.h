@@ -14,7 +14,7 @@ namespace caliburn
 	}
 
 	struct Module;
-	struct Function;
+	struct FunctionGroup;
 	struct Value;
 	struct Variable;
 	struct BaseType;
@@ -27,9 +27,10 @@ namespace caliburn
 	more expensive in memory. Variants are always the size of their biggest version, even in Rust. So this way, we keep our
 	memory footprint down, at the expense of a little (debatable) code wonkiness.
 	*/
-	using Symbol = std::variant<std::monostate,
+	using Symbol = std::variant<
+		std::monostate,
 		sptr<Module>,
-		sptr<Function>,
+		sptr<FunctionGroup>,
 		//this enables for generic constants
 		sptr<Value>,
 		sptr<Variable>,

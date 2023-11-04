@@ -50,8 +50,8 @@ namespace caliburn
 
 			uint32_t nextSSA = 1;
 
-			std::vector<Instruction> ssaToIns{};
-			std::vector<Opcode> ssaToOp{ Opcode::UNKNOWN };
+			std::vector<Instruction> ssaToIns;
+			std::vector<Opcode> ssaToOp;
 			std::vector<uint32_t> ssaRefs{ 0 };
 
 			HashMap<Instruction, sptr<LowType>, InstructionHash> types;
