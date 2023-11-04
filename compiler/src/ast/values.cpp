@@ -260,47 +260,59 @@ ValueResult VarChainValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr
 
 	auto tgtRes = target->emitValueCLLR(table, codeAsm);
 
-	MATCH(tgtRes, sptr<Module>, mod)
+	MATCH_WHILE(tgtRes, sptr<Module>, mod)
 	{
-		auto modTbl = (*mod)->getTable();
-
-		sptr<Token> chainStart = chain[0];
-		Symbol targetSym = modTbl->find(chainStart->str);
-
-		MATCH_VALID(targetSym)
+		if (start == chain.size())
 		{
-			MATCH(targetSym, sptr<Variable>, var)
-			{
-				++start;
-				targetValue = (*var)->emitLoadCLLR(table, codeAsm);
-			}
-			else if (chain.size() > 1)
-			{
-				codeAsm.errors->err("Will be unable to access this member", chain[1]);
-				return ValueResult();
-			}
-
-			MATCH(targetSym, sptr<FunctionGroup>, fn)
-			{
-				return *fn;
-			}
-			else MATCH(targetSym, sptr<Module>, mod)
-			{
-				return *mod;
-			}
-			else MATCH(targetSym, sptr<BaseType>, t)
-			{
-				return *t;
-			}
-			else MATCH(targetSym, sptr<cllr::LowType>, lt)
-			{
-				return *lt;
-			}
-
+			return *mod;
 		}
 
+		sptr<Token> chainStart = chain[start];
+		Symbol targetSym = (*mod)->getTable()->find(chainStart->str);
+
+		MATCH(targetSym, sptr<Module>, mod)
+		{
+			++start;
+			//Modules within modules! what a crazy world!
+			tgtRes = *mod;
+			continue;
+		}
+
+		MATCH(targetSym, sptr<Variable>, var)
+		{
+			++start;
+			targetValue = (*var)->emitLoadCLLR(table, codeAsm);
+			break;
+		}
+
+		size_t next = start + 1;
+		
+		if (chain.size() > next)
+		{
+			codeAsm.errors->err("Will be unable to access this member", chain[next]);
+			return ValueResult();
+		}
+
+		MATCH(targetSym, sptr<FunctionGroup>, fn)
+		{
+			return *fn;
+		}
+		
+		MATCH(targetSym, sptr<BaseType>, t)
+		{
+			return *t;
+		}
+		
+		MATCH(targetSym, sptr<cllr::LowType>, lt)
+		{
+			return *lt;
+		}
+
+		codeAsm.errors->err({ "Could not find symbol", chainStart->str, "in module" }, *target);
+		return ValueResult();
 	}
-	else MATCH(tgtRes, cllr::TypedSSA, val)
+	
+	MATCH(tgtRes, cllr::TypedSSA, val)
 	{
 		targetValue = *val;
 	}
@@ -315,12 +327,6 @@ ValueResult VarChainValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr
 		sptr<Token> nameTkn = chain[i];
 		cllr::LowMember mem = targetValue.type->getMember(targetValue.value, nameTkn->str, codeAsm);
 
-		MATCH_EMPTY(mem)
-		{
-			codeAsm.errors->err("Member not found:", nameTkn);
-			return ValueResult();
-		}
-
 		MATCH(mem, cllr::TypedSSA, valPtr)
 		{
 			targetValue = *valPtr;
@@ -334,7 +340,8 @@ ValueResult VarChainValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr
 		}
 		else
 		{
-			//TODO complain
+			codeAsm.errors->err("Member not found:", nameTkn);
+			return ValueResult();
 		}
 
 	}
@@ -382,17 +389,17 @@ ValueResult FnCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::
 	{
 		MATCH(target->emitValueCLLR(table, codeAsm), cllr::TypedSSA, tgtVal)
 		{
-			cllr::TypedSSA methodTarget = *tgtVal;
+			argIDs.emplace(argIDs.begin(), *tgtVal);
 
-			argIDs.emplace(argIDs.begin(), methodTarget);
-
-		}
-		else
-		{
-			codeAsm.errors->err("Invalid method target", *target);
-			return ValueResult();
 		}
 		
+		/*
+		TODO test and see if target is always a valid value
+
+		We don't care about invalid targets since they're probably the result of bad parsing anyway.
+		In theory, at least...
+		*/
+
 	}
 
 	auto fnName = name->emitValueCLLR(table, codeAsm);

@@ -81,4 +81,4 @@ The good news is, this is quite possibly the best part of this header.
 
 #define MATCH(VALUE, TYPE, NAME) if (auto NAME = std::get_if<TYPE>(&VALUE))
 #define MATCH_EMPTY(VALUE) if (std::holds_alternative<std::monostate>(VALUE))
-#define MATCH_VALID(VALUE) if (!std::holds_alternative<std::monostate>(VALUE))
+#define MATCH_WHILE(VALUE, TYPE, NAME) while (auto NAME = std::get_if<TYPE>(&VALUE))
