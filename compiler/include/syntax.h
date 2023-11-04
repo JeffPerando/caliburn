@@ -196,20 +196,6 @@ namespace caliburn
 	};
 
 	/*
-	A return mode is a statement which ends a scope.
-	*/
-	enum class ReturnMode
-	{
-		NONE,
-		RETURN,
-		CONTINUE,
-		BREAK,
-		PASSTHROUGH,
-		UNREACHABLE,
-		DISCARD
-	};
-
-	/*
 	This enables for an arbitrary string to have a specific token type
 	*/
 	static const HashMap<std::string_view, TokenType> TOKEN_TYPE_OVERRIDES = {
@@ -302,15 +288,6 @@ namespace caliburn
 		{Operator::COMP_LTE,	"<="},
 
 		{Operator::APPEND,		"++"}
-	};
-
-	static const HashMap<std::string, ReturnMode> RETURN_MODES = {
-		{"return",		ReturnMode::RETURN},
-		{"continue",	ReturnMode::CONTINUE},
-		{"break",		ReturnMode::BREAK},
-		{"pass",		ReturnMode::PASSTHROUGH},
-		{"unreachable",	ReturnMode::UNREACHABLE},
-		{"discard",		ReturnMode::DISCARD}
 	};
 
 	static const std::map<Operator, OpCategory> OP_CATEGORIES = {

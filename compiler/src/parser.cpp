@@ -352,41 +352,6 @@ void Parser::parseSemicolon()
 
 }
 
-bool Parser::parseScopeEnd(out<ScopeStatement> stmt)
-{
-	sptr<Token> first = tkns.cur();
-	auto tknIndex = tkns.index();
-	
-	if (first->type != TokenType::KEYWORD)
-	{
-		return false;
-	}
-
-	tkns.consume();
-
-	auto retMode = RETURN_MODES.find(first->str);
-
-	if (retMode == RETURN_MODES.end())
-	{
-		auto e = errors->err("Not a valid statement or end of scope", first);
-
-		tkns.revertTo(tknIndex);
-
-		return false;
-	}
-
-	stmt.retMode = retMode->second;
-
-	if (stmt.retMode == ReturnMode::RETURN)
-	{
-		stmt.retValue = parseExpr();
-	}
-	
-	parseSemicolon();
-
-	return true;
-}
-
 StmtModifiers Parser::parseStmtMods()
 {
 	StmtModifiers mods = {};
@@ -414,7 +379,7 @@ StmtModifiers Parser::parseStmtMods()
 	return mods;
 }
 
-uptr<ScopeStatement> Parser::parseScope(in<std::vector<ParseMethod<uptr<Statement>>>> pms, bool err)
+uptr<ScopeStmt> Parser::parseScope(in<std::vector<ParseMethod<uptr<Statement>>>> pms, bool err)
 {
 	auto mods = parseStmtMods();
 
@@ -435,26 +400,12 @@ uptr<ScopeStatement> Parser::parseScope(in<std::vector<ParseMethod<uptr<Statemen
 
 	tkns.consume();
 
-	auto scope = new_uptr<ScopeStatement>();
+	auto scope = new_uptr<ScopeStmt>();
 
 	scope->first = first;
 
 	while (tkns.hasCur())
 	{
-		if (parseScopeEnd(*scope))
-		{
-			if (tkns.cur()->type != TokenType::END_SCOPE)
-			{
-				auto e = errors->err("Found an end-scope statement, but it did not end the scope", tkns.cur());
-				continue;
-			}
-
-			scope->last = tkns.cur();
-
-			tkns.consume();
-			break;
-		}
-
 		if (tkns.cur()->type == TokenType::END_SCOPE)
 		{
 			tkns.consume();
@@ -611,7 +562,7 @@ uptr<Statement> Parser::parseImport()
 
 	tkns.consume();
 
-	auto ret = new_uptr<ImportStatement>(first);
+	auto ret = new_uptr<ImportStmt>(first);
 
 	ret->name = modName;
 
@@ -659,7 +610,7 @@ uptr<Statement> Parser::parseModuleDef()
 		return nullptr;
 	}
 
-	return new_uptr<ModuleStatement>(start, name);
+	return new_uptr<ModuleStmt>(start, name);
 }
 
 uptr<Statement> Parser::parseTypedef()
@@ -707,7 +658,7 @@ uptr<Statement> Parser::parseTypedef()
 
 	if (sptr<ParsedType> aliasedType = parseTypeName())
 	{
-		return new_uptr<TypedefStatement>(settings, start, name, aliasedType);
+		return new_uptr<TypedefStmt>(settings, start, name, aliasedType);
 	}
 	else
 	{
@@ -755,7 +706,7 @@ uptr<Statement> Parser::parseShader()
 
 	}
 
-	auto shader = new_uptr<ShaderStatement>();
+	auto shader = new_uptr<ShaderStmt>();
 
 	shader->first = first;
 	shader->name = name;
@@ -870,22 +821,22 @@ uptr<Statement> Parser::parseStruct()
 		return nullptr;
 	}
 
-	auto stmtType = StatementType::STRUCT;
+	auto stmtType = StmtType::STRUCT;
 
 	if (first->str == "record")
 	{
-		stmtType = StatementType::RECORD;
+		stmtType = StmtType::RECORD;
 	}
 	else if (first->str == "class")
 	{
-		stmtType = StatementType::CLASS;
+		stmtType = StmtType::CLASS;
 	}
 	else if (first->str != "struct")
 	{
 		return nullptr;
 	}
 
-	auto stmt = new_uptr<StructStatement>(stmtType);
+	auto stmt = new_uptr<StructStmt>(stmtType);
 
 	stmt->first = first;
 	
@@ -932,7 +883,7 @@ uptr<Statement> Parser::parseStruct()
 
 		if (auto v = parseMemberVar())
 		{
-			if (stmtType == StatementType::RECORD)
+			if (stmtType == StmtType::RECORD)
 			{
 				v->isConst = true;
 			}
@@ -987,7 +938,7 @@ uptr<Statement> Parser::parseFnStmt()
 		return nullptr;
 	}
 
-	auto stmt = new_uptr<FunctionStatement>();
+	auto stmt = new_uptr<FnStmt>();
 
 	stmt->first = fnLike->first;
 	stmt->name = fnLike->name;
@@ -1162,6 +1113,7 @@ uptr<Statement> Parser::parseControl()
 		&Parser::parseWhile,
 		&Parser::parseDoWhile,
 		//&Parser::parseSwitch
+		&Parser::parseScopeEnd,
 	};
 
 	auto ctrl = parseAny(methods);
@@ -1182,6 +1134,55 @@ uptr<Statement> Parser::parseControl()
 	}
 
 	return ctrl;
+}
+
+uptr<Statement> Parser::parseScopeEnd()
+{
+	sptr<Token> first = tkns.cur();
+
+	if (first->type != TokenType::KEYWORD)
+	{
+		return nullptr;
+	}
+
+	if (first->str == "return")
+	{
+		auto retStmt = new_uptr<ReturnStmt>(first);
+
+		if (auto v = parseExpr())
+		{
+			retStmt->retValue = v;
+		}
+
+		return retStmt;
+	}
+
+	if (first->str == "break")
+	{
+		return new_uptr<BreakStmt>(first);
+	}
+
+	if (first->str == "continue")
+	{
+		return new_uptr<ContinueStmt>(first);
+	}
+
+	if (first->str == "discard")
+	{
+		return new_uptr<DiscardStmt>(first);
+	}
+
+	if (first->str == "pass")
+	{
+		return new_uptr<PassStmt>(first);
+	}
+
+	if (first->str == "unreachable")
+	{
+		return new_uptr<UnreachableStmt>(first);
+	}
+
+	return nullptr;
 }
 
 uptr<Statement> Parser::parseIf()
@@ -1291,7 +1292,7 @@ uptr<Statement> Parser::parseValueStmt()
 
 	if (auto val = parseAny(methods))
 	{
-		return new_uptr<ValueStatement>(val);
+		return new_uptr<ValueStmt>(val);
 	}
 
 	return nullptr;
@@ -1303,7 +1304,7 @@ uptr<Statement> Parser::parseGlobalVarStmt()
 
 	if (auto v = parseGlobalVar())
 	{
-		auto stmt = new_uptr<VariableStatement>();
+		auto stmt = new_uptr<VarStmt>();
 
 		stmt->first = first;
 		stmt->vars.push_back(v);
@@ -1328,7 +1329,7 @@ uptr<Statement> Parser::parseLocalVarStmt()
 		return nullptr;
 	}
 
-	auto stmt = new_uptr<VariableStatement>();
+	auto stmt = new_uptr<VarStmt>();
 
 	stmt->first = tkns.cur();
 	stmt->vars = parseLocalVars();

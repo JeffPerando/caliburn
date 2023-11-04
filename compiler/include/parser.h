@@ -11,6 +11,7 @@
 #include "ast/ast.h"
 #include "ast/fn.h"
 #include "ast/generics.h"
+#include "ast/scopestmt.h"
 #include "ast/var.h"
 
 namespace caliburn
@@ -103,15 +104,6 @@ namespace caliburn
 		void parseSemicolon();
 
 		/*
-		Looks for an end-of-scope statement, like return, break, pass, etc.
-
-		Returns true if one was found, false otherwise.
-
-		The results are stored inside the passed scope statement.
-		*/
-		bool parseScopeEnd(out<ScopeStatement> stmt);
-
-		/*
 		Parses a type name.
 
 		Generally it's only a good idea to use this when one is expected, since there can be overlap with construction.
@@ -130,7 +122,7 @@ namespace caliburn
 
 		Hypothetically there are contexts where errors are unneeded, hence the error flag.
 		*/
-		uptr<ScopeStatement> parseScope(in<std::vector<ParseMethod<uptr<Statement>>>> pms, bool err = true);
+		uptr<ScopeStmt> parseScope(in<std::vector<ParseMethod<uptr<Statement>>>> pms, bool err = true);
 
 		/*
 		Parses a top-level declaration according to the Caliburn standard.
@@ -204,9 +196,14 @@ namespace caliburn
 		uptr<Statement> parseLogic();
 
 		/*
-		Parses control-flow statements. Things like if, for, and while.
+		Parses logical statements. Things like if, for, and while.
 		*/
 		uptr<Statement> parseControl();
+
+		/*
+		Parses a statement which traditionally ends a scope, like return, break, continue, etc.
+		*/
+		uptr<Statement> parseScopeEnd();
 
 		/*
 		Parses an if statement.

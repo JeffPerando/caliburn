@@ -69,7 +69,7 @@ ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName
 	/*auto astErrs = new_sptr<ErrorHandler>(CompileStage::AST_VALIDATION);
 	for (auto const& stmt : ast)
 	{
-		std::set<StatementType> topStmts = TOP_STMT_TYPES;
+		std::set<StmtType> topStmts = TOP_STMT_TYPES;
 
 		if (topStmts.find(stmt->type) == topStmts.end())
 		{
@@ -122,12 +122,12 @@ ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName
 		auto stmt = ast.at(i);
 
 		//TODO compile-time evalation
-		if (stmt->type == StatementType::VARIABLE)
+		if (stmt->type == StmtType::VARIABLE)
 		{
 			continue;
 		}
 
-		if (stmt->type != StatementType::IF)
+		if (stmt->type != StmtType::IF)
 		{
 			break;
 		}
@@ -162,14 +162,14 @@ ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName
 
 	//COMPILE
 
-	ptr<ShaderStatement> shaderStmt = nullptr;
+	ptr<ShaderStmt> shaderStmt = nullptr;
 
 	for (auto const& stmt : ast)
 	{
 		//where the real magic happens
-		if (stmt->type == StatementType::SHADER)
+		if (stmt->type == StmtType::SHADER)
 		{
-			auto shadDecl = static_cast<ptr<ShaderStatement>>(stmt.get());
+			auto shadDecl = static_cast<ptr<ShaderStmt>>(stmt.get());
 
 			if (shadDecl->name->str != shaderName)
 			{

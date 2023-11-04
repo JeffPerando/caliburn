@@ -7,7 +7,7 @@
 
 namespace caliburn
 {
-	struct TypedefStatement : Statement
+	struct TypedefStmt : Statement
 	{
 		sptr<const CompilerSettings> settings;
 
@@ -17,13 +17,13 @@ namespace caliburn
 
 		bool isStrong = false;
 		
-		TypedefStatement(sptr<const CompilerSettings> cs, sptr<Token> f, sptr<Token> n, sptr<ParsedType> t) :
-			Statement(StatementType::TYPEDEF), settings(cs), first(f), name(n), alias(t)
+		TypedefStmt(sptr<const CompilerSettings> cs, sptr<Token> f, sptr<Token> n, sptr<ParsedType> t) :
+			Statement(StmtType::TYPEDEF), settings(cs), first(f), name(n), alias(t)
 		{
 			isStrong = (first->str == "strong");
 		}
 
-		virtual ~TypedefStatement() {}
+		virtual ~TypedefStmt() {}
 
 		sptr<Token> firstTkn() const override
 		{

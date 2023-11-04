@@ -5,14 +5,14 @@
 
 namespace caliburn
 {
-	struct ImportStatement : Statement
+	struct ImportStmt : Statement
 	{
 		const sptr<Token> first;
 		sptr<Token> name = nullptr;
 		sptr<Token> alias = nullptr;
 
-		ImportStatement(sptr<Token> f) : Statement(StatementType::IMPORT), first(f) {}
-		virtual ~ImportStatement() {}
+		ImportStmt(sptr<Token> f) : Statement(StmtType::IMPORT), first(f) {}
+		virtual ~ImportStmt() {}
 
 		sptr<Token> firstTkn() const override
 		{
@@ -35,12 +35,12 @@ namespace caliburn
 
 	};
 
-	struct ModuleStatement : Statement
+	struct ModuleStmt : Statement
 	{
 		const sptr<Token> first, name;
 
-		ModuleStatement(sptr<Token> s, sptr<Token> n) : Statement(StatementType::MODULE), first(s), name(n) {}
-		virtual ~ModuleStatement() {}
+		ModuleStmt(sptr<Token> s, sptr<Token> n) : Statement(StmtType::MODULE), first(s), name(n) {}
+		virtual ~ModuleStmt() {}
 
 		sptr<Token> firstTkn() const override
 		{

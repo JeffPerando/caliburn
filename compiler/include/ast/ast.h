@@ -23,7 +23,7 @@ namespace caliburn
 	/*
 	All statements have a corresponding type. This is currently unused.
 	*/
-	enum class StatementType
+	enum class StmtType
 	{
 		UNKNOWN,
 
@@ -69,13 +69,13 @@ namespace caliburn
 	This was previously used for AST validation, but that code is currently non-existant.
 	*/
 	constexpr auto TOP_STMT_TYPES = {
-		StatementType::VARIABLE,
-		//StatementType::IF, //conditional compilation
-		StatementType::MODULE, StatementType::IMPORT,
-		StatementType::FUNCTION,
-		StatementType::SHADER,
-		StatementType::STRUCT, StatementType::RECORD, StatementType::CLASS,
-		//StatementType::ENUM,
+		StmtType::VARIABLE,
+		//StmtType::IF, //conditional compilation
+		StmtType::MODULE, StmtType::IMPORT,
+		StmtType::FUNCTION,
+		StmtType::SHADER,
+		StmtType::STRUCT, StmtType::RECORD, StmtType::CLASS,
+		//StmtType::ENUM,
 	};
 
 	/*
@@ -144,12 +144,12 @@ namespace caliburn
 	*/
 	struct Statement : ParsedObject
 	{
-		const StatementType type;
+		const StmtType type;
 
 		StmtModifiers mods = {};
 		std::map<std::string, uptr<Annotation>> annotations;
 
-		Statement(StatementType stmtType) : type(stmtType) {}
+		Statement(StmtType stmtType) : type(stmtType) {}
 		virtual ~Statement() {}
 		
 		ptr<Annotation> getAnnotation(in<std::string> name) const
@@ -181,42 +181,6 @@ namespace caliburn
 		virtual void declareSymbols(sptr<SymbolTable> table) = 0;
 
 		virtual void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
-
-	};
-
-	/*
-	Defines a scope, which contains its own symbol table. Said table can shadow other symbols.
-	*/
-	struct ScopeStatement : Statement
-	{
-		sptr<Token> first = nullptr;
-		sptr<Token> last = nullptr;
-
-		std::vector<uptr<Statement>> stmts;
-		
-		sptr<SymbolTable> scopeTable = nullptr;
-
-		ReturnMode retMode = ReturnMode::NONE;
-		sptr<Value> retValue = nullptr;
-
-		ScopeStatement(StatementType stmtType = StatementType::SCOPE) : Statement(stmtType) {}
-		virtual ~ScopeStatement() {}
-
-		sptr<Token> firstTkn() const override
-		{
-			return first;
-		}
-
-		sptr<Token> lastTkn() const override
-		{
-			return last;
-		}
-
-		void prettyPrint(out<std::stringstream> ss) const override;
-
-		void declareSymbols(sptr<SymbolTable> table) override;
-		
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 	};
 

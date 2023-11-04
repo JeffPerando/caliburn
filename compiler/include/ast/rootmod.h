@@ -53,7 +53,7 @@ namespace caliburn
 		HashMap<std::string, sptr<Variable>> vars;
 		HashMap<std::string, sptr<BaseType>> types;
 		HashMap<std::string, sptr<Function>> fns;
-		HashMap<std::string, sptr<ShaderStatement>> shaders;
+		HashMap<std::string, sptr<ShaderStmt>> shaders;
 
 		CompiledModule() {}
 		virtual ~CompiledModule() {}

@@ -11,6 +11,8 @@
 #include "symbols.h"
 #include "var.h"
 
+#include "ast/scopestmt.h"
+
 #include "cllr/cllrasm.h"
 
 #include "types/type.h"
@@ -49,7 +51,7 @@ namespace caliburn
 		std::vector<uptr<ParsedFnArg>> args;
 		sptr<ParsedType> returnType;
 		uptr<GenericSignature> genSig;
-		uptr<ScopeStatement> code;
+		uptr<ScopeStmt> code;
 
 	};
 
@@ -66,7 +68,7 @@ namespace caliburn
 		std::vector<uptr<ParsedFnArg>> args;
 		sptr<ParsedType> returnType;
 		uptr<GenericSignature> genSig;
-		uptr<ScopeStatement> code;
+		uptr<ScopeStmt> code;
 
 		Function(ref<ParsedFn> fn) : type(fn.type) {
 			first = fn.first;

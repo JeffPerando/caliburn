@@ -5,11 +5,11 @@
 
 namespace caliburn
 {
-	struct ValueStatement : Statement
+	struct ValueStmt : Statement
 	{
 		const sptr<Value> val;
 
-		ValueStatement(sptr<Value> v) : Statement(StatementType::UNKNOWN), val(v) {}
+		ValueStmt(sptr<Value> v) : Statement(StmtType::UNKNOWN), val(v) {}
 
 		sptr<Token> firstTkn() const override
 		{
@@ -29,4 +29,5 @@ namespace caliburn
 		}
 
 	};
+
 }

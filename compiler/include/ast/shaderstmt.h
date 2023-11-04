@@ -60,7 +60,7 @@ namespace caliburn
 
 	};
 
-	struct ShaderStatement : Statement
+	struct ShaderStmt : Statement
 	{
 		sptr<Token> first = nullptr;
 		sptr<Token> name = nullptr;
@@ -72,8 +72,8 @@ namespace caliburn
 
 		std::vector<sptr<ShaderIOVariable>> ioVars;
 
-		ShaderStatement() : Statement(StatementType::SHADER) {}
-		virtual ~ShaderStatement() {}
+		ShaderStmt() : Statement(StmtType::SHADER) {}
+		virtual ~ShaderStmt() {}
 
 		sptr<Token> firstTkn() const override
 		{

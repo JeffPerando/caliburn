@@ -6,13 +6,13 @@
 
 namespace caliburn
 {
-	struct FunctionStatement : Statement
+	struct FnStmt : Statement
 	{
 		sptr<Token> first = nullptr;
 		sptr<Token> name = nullptr;
 		sptr<Function> fn = nullptr;
 
-		FunctionStatement() : Statement(StatementType::FUNCTION) {}
+		FnStmt() : Statement(StmtType::FUNCTION) {}
 
 		sptr<Token> firstTkn() const override
 		{
@@ -33,9 +33,9 @@ namespace caliburn
 		void declareSymbols(sptr<SymbolTable> table) override {}
 
 		/*
-		ValidationData validate(ref<const std::set<StatementType>> types, ref<const std::set<ReturnMode>> retModes) const override
+		ValidationData validate(ref<const std::set<StmtType>> types, ref<const std::set<ReturnMode>> retModes) const override
 		{
-			std::set<StatementType> bodyTypes = LOGIC_STMT_TYPES;
+			std::set<StmtType> bodyTypes = LOGIC_STMT_TYPES;
 			std::set<ReturnMode> bodyModes = { ReturnMode::RETURN };
 
 			bodyTypes.insert(types.begin(), types.end());

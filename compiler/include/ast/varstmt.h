@@ -6,14 +6,14 @@
 
 namespace caliburn
 {
-	struct VariableStatement : Statement
+	struct VarStmt : Statement
 	{
 		sptr<Token> first = nullptr;
 		std::vector<sptr<Variable>> vars;
 
 	public:
-		VariableStatement() : Statement(StatementType::VARIABLE) {}
-		virtual ~VariableStatement() {}
+		VarStmt() : Statement(StmtType::VARIABLE) {}
+		virtual ~VarStmt() {}
 
 		sptr<Token> firstTkn() const override
 		{

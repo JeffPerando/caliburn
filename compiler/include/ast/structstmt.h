@@ -11,7 +11,7 @@
 
 namespace caliburn
 {
-	struct StructStatement : Statement
+	struct StructStmt : Statement
 	{
 		const bool isConst;
 
@@ -24,10 +24,10 @@ namespace caliburn
 
 		std::map<std::string, Member> members;
 
-		StructStatement(StatementType type = StatementType::STRUCT) : Statement(type),
-			isConst(type == StatementType::RECORD) {}
+		StructStmt(StmtType type = StmtType::STRUCT) : Statement(type),
+			isConst(type == StmtType::RECORD) {}
 
-		virtual ~StructStatement() {}
+		virtual ~StructStmt() {}
 
 		sptr<Token> firstTkn() const override
 		{
