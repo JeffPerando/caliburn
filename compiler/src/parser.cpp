@@ -313,7 +313,7 @@ std::vector<sptr<Value>> Parser::parseValueList(bool commaOptional)
 
 	while (tkns.hasCur())
 	{
-		auto v = parseAnyValue();
+		auto v = parseExpr();
 
 		if (v == nullptr)
 		{
@@ -379,7 +379,7 @@ bool Parser::parseScopeEnd(out<ScopeStatement> stmt)
 
 	if (stmt.retMode == ReturnMode::RETURN)
 	{
-		stmt.retValue = parseAnyValue();
+		stmt.retValue = parseExpr();
 	}
 	
 	parseSemicolon();
@@ -505,7 +505,7 @@ sptr<ParsedType> Parser::parseTypeName()
 
 		if (tkns.cur()->type != TokenType::END_BRACKET)
 		{
-			if (auto len = parseAnyValue())
+			if (auto len = parseExpr())
 			{
 				if (!len->isCompileTimeConst())
 				{
@@ -1200,7 +1200,7 @@ uptr<Statement> Parser::parseIf()
 	stmt->first = first;
 
 	parseAnyBetween("(", LAMBDA() {
-		stmt->condition = parseAnyValue();
+		stmt->condition = parseExpr();
 	}, ")");
 
 	stmt->innerIf = parseScope({&Parser::parseDecl});
@@ -1240,7 +1240,7 @@ uptr<Statement> Parser::parseWhile()
 	stmt->first = first;
 
 	parseAnyBetween("(", LAMBDA() {
-		stmt->condition = parseAnyValue();
+		stmt->condition = parseExpr();
 	}, ")");
 
 	stmt->loop = parseScope({ &Parser::parseLogic });
@@ -1276,7 +1276,7 @@ uptr<Statement> Parser::parseDoWhile()
 	tkns.consume();
 
 	parseAnyBetween("(", LAMBDA() {
-		ret->condition = parseAnyValue();
+		ret->condition = parseExpr();
 	}, ")");
 
 	return ret;
@@ -1336,21 +1336,94 @@ uptr<Statement> Parser::parseLocalVarStmt()
 	return stmt;
 }
 
-sptr<Value> Parser::parseAnyValue()
+sptr<Value> Parser::parseExpr()
 {
-	std::vector<ParseMethod<sptr<Value>>> methods = {
-		&Parser::parseExpr,//this will call the other two and look for an expression
-		&Parser::parseLiteral,
-		&Parser::parseAnyFnCall,
+	auto start = parseTerm();
+
+	if (start == nullptr)
+	{
+		return nullptr;
+	}
+
+	std::stack<sptr<Value>> values;
+	std::stack<Operator> ops;
+
+	values.push(start);
+
+	const auto makeExpr = LAMBDA()
+	{
+		auto popOp = ops.top();
+		ops.pop();
+
+		auto rhs = values.top();
+		values.pop();
+
+		auto lhs = values.top();
+		values.pop();
+
+		auto expr = new_sptr<ExpressionValue>();
+
+		expr->lValue = lhs;
+		expr->op = popOp;
+		expr->rValue = rhs;
+
+		values.push(expr);
+
 	};
 
-	return parseAny(methods);
+	while (tkns.hasRem(2))
+	{
+		//size_t last = tkns.currentIndex();
+
+		sptr<Token> opTkn = tkns.cur();
+		sptr<Value> term = nullptr;
+		auto op = Operator::NONE;
+
+		if (opTkn->type == TokenType::OPERATOR)
+		{
+			if (auto found = INFIX_OPS.find(opTkn->str); found != INFIX_OPS.end())
+			{
+				tkns.consume();
+				op = found->second;
+				term = parseTerm();
+			}
+			else break;
+		}
+		else if (opTkn->type == TokenType::START_PAREN)
+		{
+			op = Operator::MUL;
+			term = parseParenValue();
+		}
+		else break;
+
+		if (term == nullptr)
+		{
+			auto e = errors->err("Expected a value after here", opTkn);
+			break;
+		}
+
+		if (!ops.empty() && OP_PRECEDENCE.at(ops.top()) >= OP_PRECEDENCE.at(op))
+		{
+			makeExpr();
+		}
+
+		ops.push(op);
+		values.push(term);
+
+	}
+
+	while (values.size() > 1)
+	{
+		makeExpr();
+	}
+
+	return values.top();
 }
 
 sptr<Value> Parser::parseTerm()
 {
 	std::vector<ParseMethod<sptr<Value>>> initParsers =
-		{ &Parser::parseParenValue, &Parser::parseUnaryValue, &Parser::parseLiteral, &Parser::parseAnyFnCall, &Parser::parseAnyAccess };
+		{ &Parser::parseParenValue, &Parser::parseUnaryValue, &Parser::parseLiteral, &Parser::parseAnyAccess };
 
 	sptr<Value> v = parseAny(initParsers);
 
@@ -1363,7 +1436,30 @@ sptr<Value> Parser::parseTerm()
 	{
 		sptr<Token> tkn = tkns.cur();
 
-		if (tkn->type == TokenType::PERIOD && tkns.peek(1)->type == TokenType::IDENTIFIER)
+		if (tkn->type == TokenType::END)
+		{
+			return v;
+		}
+
+		if (tkn->type == TokenType::START_PAREN || tkn->str == GENERIC_START)
+		{
+			//so we don't confuse a multiply with a function call
+			//TODO consider if this is a good idea.
+			if (tkns.peekBack(1)->type == TokenType::IDENTIFIER)
+			{
+				auto fnCall = parseFnCall(v);
+
+				if (fnCall == nullptr)
+				{
+					//10:1 the generic start was actually a comparison. whoopsie...
+					break;
+				}
+
+				v = fnCall;
+			}
+
+		}
+		else if (tkn->type == TokenType::PERIOD && tkns.peek(1)->type == TokenType::IDENTIFIER)
 		{
 			tkns.consume();
 			v = parseAccess(v);
@@ -1375,7 +1471,7 @@ sptr<Value> Parser::parseTerm()
 			subA->array = v;
 
 			parseAnyBetween("[", LAMBDA() {
-				if (auto i = parseAnyValue())
+				if (auto i = parseExpr())
 				{
 					subA->index = i;
 				}
@@ -1404,7 +1500,7 @@ sptr<Value> Parser::parseTerm()
 		
 	}
 
-	while (tkns.hasCur())
+	while (tkns.hasRem(2))
 	{
 		auto& keywd = tkns.cur();
 
@@ -1576,7 +1672,7 @@ sptr<Value> Parser::parseParenValue()
 
 	tkns.consume();
 
-	auto v = parseAnyValue();
+	auto v = parseExpr();
 
 	//TODO tuple literals go here
 
@@ -1629,130 +1725,27 @@ sptr<Value> Parser::parseAccess(sptr<Value> target)
 
 	access->target = target;
 	
-	while (true)
+	while (tkns.hasRem(2))
 	{
-		sptr<Token> name = tkns.cur();
+		if (tkns.cur()->type != TokenType::PERIOD)
+		{
+			break;
+		}
+
+		sptr<Token> name = tkns.peek(1);
 
 		if (name->type != TokenType::IDENTIFIER)
 		{
 			break;
 		}
 
-		//check for method call
-		if (tkns.hasRem(3))
-		{
-			auto& fwd = tkns.peek(1);
-			if (fwd->str == GENERIC_START || fwd->type == TokenType::START_PAREN)
-			{
-				if (auto fnCall = parseFnCall(access->chain.empty() ? target : access))
-				{
-					return fnCall;
-				}
-				else
-				{
-					//TODO complain?
-				}
-
-			}
-
-		}
-
 		access->chain.push_back(name);
 		
-		if (tkns.next()->type != TokenType::PERIOD)
-		{
-			break;
-		}
-
-		tkns.consume();
+		tkns.consume(2);
 
 	}
 
 	return access;
-}
-
-sptr<Value> Parser::parseExpr()
-{
-	auto start = parseTerm();
-
-	if (start == nullptr)
-	{
-		return nullptr;
-	}
-
-	std::stack<sptr<Value>> values;
-	std::stack<Operator> ops;
-
-	values.push(start);
-	
-	const auto makeExpr = LAMBDA()
-	{
-		auto popOp = ops.top();
-		ops.pop();
-
-		auto rhs = values.top();
-		values.pop();
-
-		auto lhs = values.top();
-		values.pop();
-
-		auto expr = new_sptr<ExpressionValue>();
-
-		expr->lValue = lhs;
-		expr->op = popOp;
-		expr->rValue = rhs;
-
-		values.push(expr);
-
-	};
-
-	while (tkns.hasRem(2))
-	{
-		//size_t last = tkns.currentIndex();
-
-		sptr<Token> opTkn = tkns.cur();
-		sptr<Value> term = nullptr;
-		auto op = Operator::NONE;
-		
-		if (opTkn->type == TokenType::OPERATOR)
-		{
-			if (auto found = INFIX_OPS.find(opTkn->str); found != INFIX_OPS.end())
-			{
-				tkns.consume();
-				op = found->second;
-				term = parseTerm();
-			}
-			else break;
-		}
-		else if (opTkn->type == TokenType::START_PAREN)
-		{
-			op = Operator::MUL;
-			term = parseParenValue();
-		}
-		else break;
-
-		if (term == nullptr)
-		{
-			auto e = errors->err("Expected a value after here", opTkn);
-			break;
-		}
-
-		if (!ops.empty() && OP_PRECEDENCE.at(ops.top()) >= OP_PRECEDENCE.at(op))
-		{
-			makeExpr();
-		}
-
-		ops.push(op);
-		values.push(term);
-
-	}
-	
-	while (values.size() > 1)
-	{
-		makeExpr();
-	}
-
-	return values.top();
 }
 
 sptr<Value> Parser::parseAnyFnCall()
@@ -1866,7 +1859,7 @@ sptr<Variable> Parser::parseGlobalVar()
 
 	tkns.consume();
 
-	if (auto init = parseAnyValue())
+	if (auto init = parseExpr())
 	{
 		if (!init->isCompileTimeConst())
 		{
@@ -1933,7 +1926,7 @@ sptr<Variable> Parser::parseMemberVar()
 	{
 		tkns.consume();
 
-		v->initValue = parseAnyValue();
+		v->initValue = parseExpr();
 	}
 
 	return v;
@@ -2003,7 +1996,7 @@ std::vector<sptr<ParsedVar>> Parser::parseLocalVarLike()
 	{
 		sptr<Token> valStart = tkns.next();
 
-		if (auto v = parseAnyValue())
+		if (auto v = parseExpr())
 		{
 			initValue = v;
 		}
@@ -2067,7 +2060,7 @@ std::vector<sptr<ParsedVar>> Parser::parseMemberVarLike()
 
 	if (tkns.cur()->type == TokenType::SETTER)
 	{
-		if (auto v = parseAnyValue())
+		if (auto v = parseExpr())
 		{
 			initValue = v;
 

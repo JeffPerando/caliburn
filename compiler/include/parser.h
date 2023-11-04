@@ -254,9 +254,9 @@ namespace caliburn
 		uptr<Statement> parseLocalVarStmt();
 
 		/*
-		Parses, quite literally, any value. Please use this method and not one of the ones below.
+		Parses math expressions. This is the primary method for reading values.
 		*/
-		sptr<Value> parseAnyValue();
+		sptr<Value> parseExpr();
 
 		/*
 		Parses high-precedent values which can be terms in a math expression.
@@ -287,11 +287,6 @@ namespace caliburn
 		Internal method for parsing member accesses. Also checks for function/method calls
 		*/
 		sptr<Value> parseAccess(sptr<Value> target);
-
-		/*
-		Parses math expressions.
-		*/
-		sptr<Value> parseExpr();
 
 		/*
 		Parses function calls; includes generic arguments

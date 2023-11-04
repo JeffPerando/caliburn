@@ -94,7 +94,7 @@ int testExprParsing()
 	auto t = caliburn::Tokenizer(cs, doc);
 	auto tkns = t.tokenize();
 	auto p = caliburn::Parser(cs, tkns);
-	auto v = p.parseAnyValue();
+	auto v = p.parseExpr();
 
 	auto time = clock.now() - startTime;
 
