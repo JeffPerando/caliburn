@@ -252,40 +252,6 @@ ValueResult VarReadValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr:
 	return ValueResult();
 }
 
-ValueResult MemberReadValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
-{
-	auto targetResult = target->emitValueCLLR(table, codeAsm);
-	
-	MATCH(targetResult, cllr::TypedSSA, targetValue)
-	{
-		auto mem = targetValue->type->getMember(targetValue->value, memberName->str, codeAsm);
-
-		if (std::holds_alternative<std::monostate>(mem))
-		{
-			//TODO complain
-			return ValueResult();
-		}
-
-		if (auto v = std::get_if<cllr::TypedSSA>(&mem))
-		{
-			return *v;
-		}
-
-		if (auto m = std::get_if<std::pair<uint32_t, sptr<cllr::LowType>>>(&mem))
-		{
-			auto& [memIndex, memType] = *m;
-			auto v = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { memIndex }, { targetValue->type->id }, memType->id));
-
-			return cllr::TypedSSA(memType, v);
-		}
-
-		return ValueResult();
-	}
-
-	//TODO match against other ValueResults
-
-}
-
 ValueResult VarChainValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	ValueResult finalRes;
@@ -682,16 +648,6 @@ void SubArrayValue::prettyPrint(out<std::stringstream> ss) const
 void VarReadValue::prettyPrint(out<std::stringstream> ss) const
 {
 	ss << varTkn->str;
-}
-
-void MemberReadValue::prettyPrint(out<std::stringstream> ss) const
-{
-	target->prettyPrint(ss);
-
-	ss << '.';
-
-	ss << memberName->str;
-
 }
 
 void VarChainValue::prettyPrint(out<std::stringstream> ss) const

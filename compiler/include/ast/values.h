@@ -352,45 +352,6 @@ namespace caliburn
 
 	};
 
-	struct MemberReadValue : Value
-	{
-		sptr<Value> target = nullptr;
-		sptr<Token> memberName = nullptr;
-
-		MemberReadValue() : Value(ValueType::UNKNOWN) {}
-		MemberReadValue(sptr<Value> t, sptr<Token> n) : MemberReadValue()
-		{
-			target = t;
-			memberName = n;
-		}
-		virtual ~MemberReadValue() {}
-
-		sptr<Token> firstTkn() const override
-		{
-			return target->firstTkn();
-		}
-
-		sptr<Token> lastTkn() const override
-		{
-			return memberName;
-		}
-
-		void prettyPrint(out<std::stringstream> ss) const override;
-
-		bool isLValue() const override
-		{
-			return true;
-		}
-
-		bool isCompileTimeConst() const override
-		{
-			return false;
-		}
-
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
-
-	};
-	
 	struct VarChainValue : Value
 	{
 		sptr<Value> target = nullptr;
