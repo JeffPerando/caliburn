@@ -39,7 +39,9 @@ Tokenizer::Tokenizer(sptr<const CompilerSettings> cs, sptr<TextDoc> t) : doc(t),
 
 	asciiTypes['\''] = CharType::STRING_DELIM;
 	asciiTypes['\"'] = CharType::STRING_DELIM;
+	
 	asciiTypes['#'] = CharType::COMMENT;
+
 	asciiTypes['('] = CharType::SPECIAL;
 	asciiTypes[')'] = CharType::SPECIAL;
 	asciiTypes[','] = CharType::SPECIAL;
@@ -210,9 +212,8 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 		isFloat = findFloatFrac(ss);
 	}
 
-	auto typeName = "int";
-	auto width = 32;
-
+	auto typeName = isFloat ? "fp32" : "int32";
+	
 	/*
 	Caliburn outer-facing int literals have C-like suffixes. This bit of code finds one.
 
@@ -227,27 +228,28 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 
 		if (suffix == 'f')
 		{
-			isFloat = true;
+			typeName = "fp32";
 		}
 		else if (suffix == 'd')
 		{
-			width = 64;
-			isFloat = true;
+			typeName = "fp64";
 		}
 		else if (suffix == 'u')
 		{
-			typeName = "uint";
-
-			if (buf.hasCur() && std::tolower(buf.cur()) == 'l')
+			if (buf.hasRem(2) && std::tolower(buf.peek(1)) == 'l')
 			{
 				buf.consume();
-				width = 64;
+				typeName = "uint64";
+			}
+			else
+			{
+				typeName = "uint32";
 			}
 
 		}
 		else if (suffix == 'l')
 		{
-			width = 64;
+			typeName = "int64";
 		}
 		else
 		{
@@ -256,16 +258,9 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 		
 	}
 
-	//This code is not useless, KEEP IT
-	//remember earlier when we checked for a fractional part? Yeah...
-	if (isFloat)
-	{
-		typeName = "fp";
-	}
-
 	//Attach type information to the end of the literal
 	//No, I don't want to expose this syntactically. Those literals look so ugly.
-	ss << '_' << typeName << width;
+	ss << '_' << typeName;
 
 	lit = ss.str();
 	type = isFloat ? TokenType::LITERAL_FLOAT : TokenType::LITERAL_INT;
@@ -347,16 +342,17 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 		}
 		else if (type == CharType::COMMENT)
 		{
+			buf.consume();
+
 			//skip to the end of the line, which will later invoke the whitespace code above
 			while (buf.hasCur())
 			{
-				char commentChar = buf.cur();
-
-				if (commentChar == '\n')
+				if (buf.cur() == '\n')
 				{
 					break;
 				}
-				else if (commentChar != '\r')
+
+				if (buf.cur() != '\r')
 				{
 					pos.move();
 				}
