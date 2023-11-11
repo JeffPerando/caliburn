@@ -5,7 +5,7 @@
 
 using namespace caliburn;
 
-sptr<FunctionImpl> Function::getImpl(sptr<GenericArguments> gArgs)
+sptr<FnImpl> UserFn::getImpl(sptr<GenericArguments> gArgs)
 {
 	if (!genSig->canApply(*gArgs))
 	{
@@ -22,14 +22,14 @@ sptr<FunctionImpl> Function::getImpl(sptr<GenericArguments> gArgs)
 		return found->second;
 	}
 
-	auto impl = new_sptr<FunctionImpl>(this, gArgs);
+	auto impl = new_sptr<UserFnImpl>(this, gArgs);
 
 	variants.insert(std::pair(gArgs, impl));
 
 	return impl;
 }
 
-cllr::TypedSSA FunctionImpl::emitFnDeclCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
+cllr::TypedSSA UserFnImpl::emitFnDeclCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	if (id != 0)
 	{
@@ -83,7 +83,7 @@ cllr::TypedSSA FunctionImpl::emitFnDeclCLLR(sptr<const SymbolTable> table, out<c
 /*
 Making functions responsible for emitting call instructions means we can override this behavior and implement some free inlining
 */
-cllr::TypedSSA FunctionImpl::call(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, in<std::vector<cllr::TypedSSA>> args, sptr<Token> callTkn)
+cllr::TypedSSA UserFnImpl::call(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, in<std::vector<cllr::TypedSSA>> args, sptr<Token> callTkn)
 {
 	auto fnData = emitFnDeclCLLR(table, codeAsm);
 
@@ -133,4 +133,34 @@ sptr<Function> FunctionGroup::find(in<std::vector<cllr::TypedSSA>> args, in<cllr
 	}
 	
 	return nullptr;
+}
+
+sptr<FnImpl> BuiltinFn::getImpl(sptr<GenericArguments> gArgs)
+{
+	auto found = genericImpls.find(gArgs);
+
+	if (found != genericImpls.end())
+	{
+		return found->second;
+	}
+
+	auto impl = new_sptr<BuiltinFnImpl>(gArgs, this);
+
+	genericImpls[gArgs] = impl;
+
+	return impl;
+}
+
+cllr::TypedSSA BuiltinFnImpl::call(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, in<std::vector<cllr::TypedSSA>> args, sptr<Token> callTkn)
+{
+	if (!genArgs->empty())
+	{
+		auto genSyms = new_sptr<SymbolTable>(table);
+
+		genArgs->apply(*parent->genSig, genSyms, codeAsm);
+
+		return parent->fnImpl(genSyms, codeAsm, args);
+	}
+
+	return parent->fnImpl(table, codeAsm, args);
 }

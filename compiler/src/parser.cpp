@@ -360,6 +360,11 @@ StmtModifiers Parser::parseStmtMods()
 	{
 		auto& mod = tkns.cur();
 
+		if (mod->type != TokenType::KEYWORD)
+		{
+			break;
+		}
+
 		if (mod->str == "public")
 			mods.PUBLIC = 1;
 		else if (mod->str == "private")
@@ -893,14 +898,13 @@ uptr<Statement> Parser::parseStruct()
 		}
 		else if (auto fn = parseMethod())
 		{
-			std::string memName = fn->name->str;
-			sptr<FunctionGroup> fnName = nullptr;
+			sptr<FunctionGroup> fnGroup = nullptr;
 
-			if (auto foundName = stmt->members.find(memName); foundName != stmt->members.end())
+			if (auto foundName = stmt->members.find(fn->name); foundName != stmt->members.end())
 			{
-				if (auto fnNamePtr = std::get_if<sptr<FunctionGroup>>(&foundName->second))
+				MATCH(foundName->second, sptr<FunctionGroup>, fnNamePtr)
 				{
-					fnName = *fnNamePtr;
+					fnGroup = *fnNamePtr;
 				}
 				else
 				{
@@ -909,11 +913,11 @@ uptr<Statement> Parser::parseStruct()
 			}
 			else
 			{
-				fnName = new_sptr<FunctionGroup>();
-				stmt->members.emplace(memName, fnName);
+				fnGroup = new_sptr<FunctionGroup>();
+				stmt->members.emplace(fn->name, fnGroup);
 			}
 
-			//TODO can't add functions to FunctionName without CLLR IDs
+			fnGroup->add(fn);
 
 		}
 		else
@@ -942,7 +946,7 @@ uptr<Statement> Parser::parseFnStmt()
 
 	stmt->first = fnLike->first;
 	stmt->name = fnLike->name;
-	stmt->fn = new_sptr<Function>(*fnLike);
+	stmt->fn = new_sptr<UserFn>(*fnLike);
 
 	return stmt;
 }

@@ -17,11 +17,11 @@ Pull requests and issues are always welcomed.
 Caliburn is a multi-paradigm shader language. Language features include:
 
 * **Familiar Syntax**: Caliburn's syntax is a blend of C++ and Python, but with further improvements to help with readability.
-* **Functions** via top-level `def`
-* **Objects** via `class`
-* **Generics**: All function and type declarations support both type and constant generics.
-* **Shader Pipeline Objects**: A `shader` doesn't just define one named shader, but rather it can define an entire named pipeline, managing inputs and outputs for you to enable for better maintainability.
+* **Functions** defined using `def`
+* **Objects** defined using `class`
 * **Immutable Structs**: `record` defines an immutable data struct. There's also `struct` in case you need mutability.
+* **Generics**: All function and type declarations support both type and constant generics.
+* **Shader Pipeline Objects**: A `shader` doesn't just define one named shader, but rather it defines an entire named pipeline, managing inputs and outputs for you to enable for better maintainability.
 * **Type Aliasing**: `type` lets you define an alias.
 * **Type Replacement**: Define a `type` alias as `dynamic`, and the type can be changed at compilation time via the compiler settings. `dynamic` also has a generic component which defines a default type, e.g. `dynamic<int32>`.
 

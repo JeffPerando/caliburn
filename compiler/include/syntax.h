@@ -138,17 +138,6 @@ namespace caliburn
 
 		virtual sptr<Token> lastTkn() const = 0;
 
-		virtual size_t totalParsedLen() const
-		{
-			auto first = firstTkn();
-			auto last = lastTkn();
-			if (first == nullptr || last == nullptr)
-			{
-				return 0;
-			}
-			return last->textEnd - first->textStart;
-		}
-
 		virtual void prettyPrint(out<std::stringstream> ss) const = 0;
 
 		virtual std::string prettyStr() const

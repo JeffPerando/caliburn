@@ -1,6 +1,7 @@
 
 ClosureIdea.py
-docs/
+docs/ 
+wip/
 
 ## Hide compiled shaders and disassemblies
 *.spv

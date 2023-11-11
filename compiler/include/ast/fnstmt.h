@@ -10,7 +10,7 @@ namespace caliburn
 	{
 		sptr<Token> first = nullptr;
 		sptr<Token> name = nullptr;
-		sptr<Function> fn = nullptr;
+		sptr<UserFn> fn = nullptr;
 
 		FnStmt() : Statement(StmtType::FUNCTION) {}
 
