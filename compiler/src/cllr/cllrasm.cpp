@@ -18,17 +18,29 @@ bool Assembler::hasSect() const
 
 Instruction Assembler::getSectHeader()
 {
+	if (codeSects.empty())
+	{
+		return Instruction();
+	}
+
 	return codeSects.top()->header;
 }
 
 void Assembler::endSect(in<Instruction> i)
 {
-	auto& sect = codeSects.top();
+	if (codeSects.empty())
+	{
+		errors->err({ "Code section ended but no code section found. Footer:", i.toStr() }, nullptr);
+		return;
+	}
 
-	sect->code.push_back(i);
-	allCode.insert(allCode.end(), sect->code.begin(), sect->code.end());
+	auto& code = codeSects.top()->code;
+
+	code.push_back(i);
+	allCode.insert(allCode.end(), code.begin(), code.end());
 
 	codeSects.pop();
+
 }
 
 SSA Assembler::createSSA(in<Instruction> ins)
