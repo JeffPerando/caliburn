@@ -131,6 +131,8 @@ namespace caliburn
 
             SSA typeArray(uint32_t len, SSA inner);
 
+            SSA typeRunArray(SSA inner);
+
             SSA typeStruct(in<std::vector<uint32_t>> members, in<std::vector<BuiltIn>> decs = {});
 
             SSA typePtr(SSA inner, StorageClass sc);

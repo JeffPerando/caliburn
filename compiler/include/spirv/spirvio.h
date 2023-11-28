@@ -15,10 +15,16 @@ namespace caliburn
 
 	namespace spirv
 	{
+		struct BuiltinVar
+		{
+			StorageClass kind;
+			SSA typeID;
+			std::vector<ExecutionModel> execs;
+			std::vector<Capability> caps;
+		};
+
 		/*
 		Maintains the shader inputs and outputs, as well as builtin variables
-
-		Most builtins are not currently supported in any meaningful way
 		*/
 		class SpvIO
 		{

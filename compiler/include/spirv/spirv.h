@@ -227,6 +227,8 @@ namespace caliburn
             ShaderClockKHR = 5055,
             ShaderViewportIndexLayerEXT = 5254,
             FragmentFullyCoveredEXT = 5265,
+            MeshShadingNV = 5266,
+            ImageFootprintNV = 5282,
             FragmentBarycentricKHR = 5284,
             FragmentDensityEXT = 5291,
             ShaderNonUniform = 5301,
