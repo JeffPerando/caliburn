@@ -84,6 +84,12 @@ SSA TypeSection::typeUInt(uint32_t width)
 	return findOrMake(OpTypeInt(), { width, 0 });
 }
 
+SSA TypeSection::typeSizeT()
+{
+	//FIXME use OpMemoryModel to determine size_t
+	return findOrMake(OpTypeInt(), { 32, 0 });
+}
+
 SSA TypeSection::typeFP(uint32_t width)
 {
 	return findOrMake(OpTypeFloat(), { width });

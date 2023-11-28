@@ -129,35 +129,58 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	case BuiltIn::FragDepth: { //frag
 		id = makeOutVar(t.typeFP());
 	}; break;
-	case BuiltIn::HelperInvocation: {}; break;
+	case BuiltIn::HelperInvocation: {
+		id = makeInVar(t.typeBool());
+	}; break;
 	case BuiltIn::NumWorkgroups: { //GLCompute
-		id = makeInVar(t.typeVec(3, u32));
+		id = makeInVar(t.typeVec(3, t.typeSizeT()));
 	}; break;
 	case BuiltIn::WorkgroupSize: { //GLCompute
 		//FIXME this is a compile-time constant, not a variable
-		id = makeInVar(t.typeVec(3, u32));
+		id = makeInVar(t.typeVec(3, t.typeSizeT()));
 	}; break;
 	case BuiltIn::WorkgroupId: { //GLCompute
-		id = makeInVar(t.typeVec(3, u32));
+		id = makeInVar(t.typeVec(3, t.typeSizeT()));
 	}; break;
 	case BuiltIn::LocalInvocationId: { //GLCompute
-		id = makeInVar(t.typeVec(3, u32));
+		id = makeInVar(t.typeVec(3, t.typeSizeT()));
 	}; break;
 	case BuiltIn::GlobalInvocationId: { //GLCompute
-		id = makeInVar(t.typeVec(3, u32));
+		id = makeInVar(t.typeVec(3, t.typeSizeT()));
 	}; break;
 	case BuiltIn::LocalInvocationIndex: { //GLCompute
+		id = makeInVar(t.typeSizeT());
+	}; break;
+	//Below is all Kernel stuff
+	//see https://registry.khronos.org/OpenCL/specs/3.0-unified/html/OpenCL_Env.html#_built_in_variables
+	case BuiltIn::WorkDim: {
 		id = makeInVar(u32);
 	}; break;
-	case BuiltIn::WorkDim: {}; break;
-	case BuiltIn::GlobalSize: {}; break;
-	case BuiltIn::EnqueuedWorkgroupSize: {}; break;
-	case BuiltIn::GlobalOffset: {}; break;
-	case BuiltIn::GlobalLinearId: {}; break;
-	case BuiltIn::SubgroupSize: {}; break;
-	case BuiltIn::SubgroupMaxSize: {}; break;
-	case BuiltIn::NumSubgroups: {}; break;
-	case BuiltIn::NumEnqueuedSubgroups: {}; break;
+	case BuiltIn::GlobalSize: {
+		id = makeInVar(t.typeVec(3, t.typeSizeT()));
+	}; break;
+	case BuiltIn::EnqueuedWorkgroupSize: {
+		id = makeInVar(t.typeVec(3, t.typeSizeT()));
+	}; break;
+	case BuiltIn::GlobalOffset: {
+		id = makeInVar(t.typeVec(3, t.typeSizeT()));
+	}; break;
+	case BuiltIn::GlobalLinearId: {
+		id = makeInVar(t.typeSizeT());
+	}; break;
+	case BuiltIn::SubgroupSize: {
+		id = makeInVar(u32);
+	}; break;
+	case BuiltIn::SubgroupMaxSize: {
+		id = makeInVar(u32);
+	}; break;
+	case BuiltIn::NumSubgroups: {
+		id = makeInVar(u32);
+	}; break;
+	case BuiltIn::NumEnqueuedSubgroups: {
+		id = makeInVar(u32);
+	}; break;
+	//end kernel builtins
 	//see https://github.com/KhronosGroup/GLSL/blob/master/extensions/khr/GL_KHR_shader_subgroup.txt
 	case BuiltIn::SubgroupId: {
 		id = makeInVar(u32);

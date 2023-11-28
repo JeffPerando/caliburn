@@ -121,6 +121,8 @@ namespace caliburn
 
             SSA typeUInt(uint32_t width = 32);
 
+            SSA typeSizeT();
+
             SSA typeFP(uint32_t width = 32);
 
             SSA typeBool();
