@@ -17,6 +17,7 @@ namespace caliburn
 	{
 		struct BuiltinVar
 		{
+			std::vector<BuiltIn> builtins;
 			StorageClass kind;
 			SSA typeID;
 			std::vector<ExecutionModel> execs;

@@ -25,7 +25,7 @@ SSA SpvIO::makeOutVar(SSA type)
 	return makeVar(spvAsm->types.typeOutPtr(type), spirv::StorageClass::Output);
 }
 
-//See https://www.khronos.org/opengl/wiki/Built-in_Variable_(GLSL)
+//See "https://www.khronos.org/opengl/wiki/Built-in_Variable_(GLSL)"
 SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 {
 	auto found = builtinIOs.find(b);
@@ -46,10 +46,9 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	{
 	case BuiltIn::Position: PASS;
 	case BuiltIn::PointSize: PASS;
-	case BuiltIn::ClipDistance: PASS; //TODO this seems to be used by frag shaders as well
+	case BuiltIn::ClipDistance: PASS;
 	case BuiltIn::CullDistance: {
-		//TODO this struct is used by multiple kinds of IO. It's also inside arrays.
-		auto f32 = t.typeFP();
+		auto f32 = t.typeFP(32);
 		auto v4_f32 = t.typeVec(4, f32);
 		auto arr_f32 = t.typeRunArray(f32);
 
@@ -64,10 +63,12 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 		auto gl_PerVertex = t.typeStruct({ v4_f32, f32, arr_f32, arr_f32 }, { BuiltIn::Position, BuiltIn::PointSize, BuiltIn::ClipDistance, BuiltIn::CullDistance });
 
 		data = BuiltinVar{
+			{ BuiltIn::Position, BuiltIn::PointSize, BuiltIn::ClipDistance, BuiltIn::CullDistance },
 			model == ExecutionModel::Fragment ? StorageClass::Input : StorageClass::Output,
 			gl_PerVertex,
-			{ ExecutionModel::Vertex, ExecutionModel::Fragment, ExecutionModel::TessellationControl,
-			ExecutionModel::TessellationEvaluation, ExecutionModel::Geometry },
+			{ ExecutionModel::Vertex,
+			ExecutionModel::TessellationControl, ExecutionModel::TessellationEvaluation,
+			ExecutionModel::Geometry, ExecutionModel::Fragment },
 			{ Capability::Shader, Capability::ClipDistance, Capability::CullDistance }
 		};
 
@@ -76,6 +77,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::VertexId: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::Vertex },
@@ -84,6 +86,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::InstanceId: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::Vertex },
@@ -92,6 +95,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::PrimitiveId: {
 		data = BuiltinVar{
+			{ b },
 			model == ExecutionModel::Geometry ? StorageClass::Output : StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::TessellationControl, ExecutionModel::TessellationEvaluation,
@@ -102,6 +106,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::InvocationId: {
 		data = BuiltinVar{
+			{ b },
 			model == ExecutionModel::Fragment ? StorageClass::Input : StorageClass::Output,
 			t.typeUInt(32),
 			{ ExecutionModel::Geometry, ExecutionModel::TessellationControl },
@@ -110,6 +115,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::Layer: {
 		data = BuiltinVar{
+			{ b },
 			model == ExecutionModel::Fragment ? StorageClass::Input : StorageClass::Output,
 			t.typeUInt(32),
 			{ ExecutionModel::Vertex,
@@ -121,6 +127,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::ViewportIndex: {
 		data = BuiltinVar{
+			{ b },
 			model == ExecutionModel::Fragment ? StorageClass::Input : StorageClass::Output,
 			t.typeUInt(32),
 			{ ExecutionModel::Vertex,
@@ -132,30 +139,34 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::TessLevelOuter: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Output,
-			t.typeArray(4, t.typeFP()),
+			t.typeArray(4, t.typeFP(32)),
 			{ ExecutionModel::TessellationControl },
 			{ Capability::Tessellation }
 		};
 	}; break;
 	case BuiltIn::TessLevelInner: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Output,
-			t.typeArray(2, t.typeFP()),
+			t.typeArray(2, t.typeFP(32)),
 			{ ExecutionModel::TessellationControl },
 			{ Capability::Tessellation }
 		};
 	}; break;
 	case BuiltIn::TessCoord: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
-			t.typeVec(3, t.typeFP()),
+			t.typeVec(3, t.typeFP(32)),
 			{ ExecutionModel::TessellationEvaluation },
 			{ Capability::Tessellation }
 		};
 	}; break;
 	case BuiltIn::PatchVertices: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::TessellationControl },
@@ -164,22 +175,25 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::FragCoord: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
-			t.typeVec(4, t.typeFP()),
+			t.typeVec(4, t.typeFP(32)),
 			{ ExecutionModel::Fragment },
 			{ Capability::Shader }
 		};
 	}; break;
 	case BuiltIn::PointCoord: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
-			t.typeVec(2, t.typeFP()),
+			t.typeVec(2, t.typeFP(32)),
 			{ ExecutionModel::Fragment },
 			{ Capability::Shader }
 		};
 	}; break;
 	case BuiltIn::FrontFacing: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeBool(),
 			{ ExecutionModel::Fragment },
@@ -188,6 +202,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::SampleId: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::Fragment },
@@ -196,14 +211,16 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::SamplePosition: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
-			t.typeVec(2, t.typeFP()),
+			t.typeVec(2, t.typeFP(32)),
 			{ ExecutionModel::Fragment },
 			{ Capability::SampleRateShading }
 		};
 	}; break;
 	case BuiltIn::SampleMask: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Output,
 			t.typeRunArray(t.typeUInt(32)),
 			{ ExecutionModel::Fragment },
@@ -212,14 +229,16 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::FragDepth: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Output,
-			t.typeFP(),
+			t.typeFP(32),
 			{ ExecutionModel::Fragment },
 			{ Capability::Shader }
 		};
 	}; break;
 	case BuiltIn::HelperInvocation: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeBool(),
 			{ ExecutionModel::Fragment },
@@ -230,6 +249,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	//see https://registry.khronos.org/OpenCL/specs/3.0-unified/html/OpenCL_Env.html#_built_in_variables
 	case BuiltIn::NumWorkgroups: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeVec(3, t.typeSizeT()),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -239,6 +259,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	case BuiltIn::WorkgroupSize: {
 		//FIXME this is a compile-time constant, not a variable
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeVec(3, t.typeSizeT()),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -247,6 +268,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::WorkgroupId: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeVec(3, t.typeSizeT()),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -255,6 +277,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::LocalInvocationId: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeVec(3, t.typeSizeT()),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -263,6 +286,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::GlobalInvocationId: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeVec(3, t.typeSizeT()),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -271,6 +295,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::LocalInvocationIndex: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeVec(3, t.typeSizeT()),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -279,6 +304,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::WorkDim: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -287,6 +313,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::GlobalSize: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeVec(3, t.typeSizeT()),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -295,6 +322,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::EnqueuedWorkgroupSize: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeVec(3, t.typeSizeT()),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -303,6 +331,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::GlobalOffset: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeVec(3, t.typeSizeT()),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -311,6 +340,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::GlobalLinearId: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeSizeT(),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -319,6 +349,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::SubgroupSize: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -327,6 +358,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::SubgroupMaxSize: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -335,6 +367,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::NumSubgroups: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -343,6 +376,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::NumEnqueuedSubgroups: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -352,6 +386,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	//see https://github.com/KhronosGroup/GLSL/blob/master/extensions/khr/GL_KHR_shader_subgroup.txt
 	case BuiltIn::SubgroupId: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -360,6 +395,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::SubgroupLocalInvocationId: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::GLCompute, ExecutionModel::Kernel },
@@ -369,6 +405,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	case BuiltIn::VertexIndex: {
 		//see https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VertexIndex.html
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::Vertex },
@@ -378,6 +415,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	case BuiltIn::InstanceIndex: {
 		//see https://registry.khronos.org/VulkanSC/specs/1.0-extensions/man/html/InstanceIndex.html
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::Vertex },
@@ -387,6 +425,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	//see https://github.com/KhronosGroup/GLSL/blob/master/extensions/khr/GL_KHR_shader_subgroup.txt
 	case BuiltIn::SubgroupEqMask: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeVec(4, t.typeUInt(32)),
 			{},
@@ -395,6 +434,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::SubgroupGeMask: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeVec(4, t.typeUInt(32)),
 			{},
@@ -403,6 +443,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::SubgroupGtMask: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeVec(4, t.typeUInt(32)),
 			{},
@@ -411,6 +452,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::SubgroupLeMask: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeVec(4, t.typeUInt(32)),
 			{},
@@ -419,6 +461,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	}; break;
 	case BuiltIn::SubgroupLtMask: {
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeVec(4, t.typeUInt(32)),
 			{},
@@ -429,6 +472,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 		//see https://registry.khronos.org/VulkanSC/specs/1.0-extensions/man/html/BaseVertex.html
 
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::Vertex },
@@ -439,6 +483,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 		//see https://registry.khronos.org/VulkanSC/specs/1.0-extensions/man/html/BaseInstance.html
 
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::Vertex },
@@ -449,6 +494,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 		//see https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/DrawIndex.html
 
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Input,
 			t.typeUInt(32),
 			{ ExecutionModel::Vertex, ExecutionModel::TaskEXT, ExecutionModel::MeshEXT },
@@ -459,6 +505,7 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 		//see https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/PrimitiveShadingRateKHR.html
 
 		data = BuiltinVar{
+			{ b },
 			StorageClass::Output,
 			t.typeUInt(32),
 			{ ExecutionModel::Vertex, ExecutionModel::Geometry, ExecutionModel::MeshEXT },
@@ -480,14 +527,19 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 
 	//TODO use data.caps
 
-	if (std::find(data.execs.begin(), data.execs.end(), model) == data.execs.end())
+	if (!data.execs.empty() && !std::binary_search(data.execs.begin(), data.execs.end(), model))
 	{
 		throw std::runtime_error("Builtin SPIR-V variable used with inappropriate shader type");
 	}
 
 	auto id = makeVar(data.typeID, data.kind);
 
-	builtinIOs.emplace(b, id);
+	//One builtin can have multiple associated builtins; So we add this ID to all of them
+	//This really only applies to the per-vertex builtin
+	for (auto bn : data.builtins)
+	{
+		builtinIOs.emplace(bn, id);
+	}
 
 	if (normalDecorate)
 	{
@@ -497,16 +549,15 @@ SSA SpvIO::getBuiltinVar(ExecutionModel model, BuiltIn b)
 	return id;
 }
 
+//TODO finish
 SSA SpvIO::getOutputFor(ExecutionModel type, out<SSA> outType, uint32_t loc)
 {
-	auto found = shaderOuts.find(type);
-
-	if (found != shaderOuts.end())
+	if (auto found = shaderOuts.find(type); found != shaderOuts.end())
 	{
 		return found->second;
 	}
 
-	auto& code = *spvAsm->main.get();
+	auto& code = *spvAsm->main;
 	auto& t = spvAsm->types;
 	auto& d = spvAsm->decs;
 
