@@ -86,6 +86,7 @@ namespace caliburn
 			TYPE_ARRAY,
 			TYPE_VECTOR,
 			TYPE_MATRIX,
+			TYPE_TEXTURE,
 
 			TYPE_STRUCT,
 			STRUCT_MEMBER,

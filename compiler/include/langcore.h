@@ -26,6 +26,12 @@ namespace caliburn
 	auto static constexpr MIN_VECTOR_LEN = 2;
 	auto static constexpr MAX_VECTOR_LEN = 4;
 
+	//TODO audit these texture variants
+	enum class TextureKind
+	{
+		_1D, _2D, _3D, CUBEMAP, _1D_BUF
+	};
+
 	static const HashMap<std::string_view, ShaderType> SHADER_TYPES = {
 		//{"main",		ShaderType::COMPUTE},
 		{"vertex",		ShaderType::VERTEX},

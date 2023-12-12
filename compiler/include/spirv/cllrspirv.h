@@ -25,9 +25,12 @@ namespace caliburn
 		using SPIRVOutFn = void(in<cllr::Instruction> i, size_t off, in<cllr::Assembler> inCode, out<SPIRVOutAssembler> outCode);
 		using SPIRVOpList = std::initializer_list<spirv::SpvOp>;
 
+		using SPIRVExprFn = spirv::SpvOp(in<Instruction> i, Operator op, spirv::SSA lhs, spirv::SSA rhs, in<cllr::Assembler> inCode, out<SPIRVOutAssembler> outCode);
+
 		//Macro shorthand for implementation signature
 		#define CLLR_SPIRV_IMPL(Name) void Name(in<Instruction> i, size_t off, in<cllr::Assembler> inCode, out<SPIRVOutAssembler> outCode)
-		
+		#define CLLR_EXPR_IMPL(Name) spirv::SpvOp Name(in<Instruction> i, Operator op, spirv::SSA lhs, spirv::SSA rhs, in<cllr::Assembler> inCode, out<SPIRVOutAssembler> outCode)
+
 		//I hate how wordy modern C++ can be...
 		#define SPIRV_CODE_SECTION(...) new_uptr<spirv::CodeSection>(__VA_ARGS__)
 
@@ -47,6 +50,19 @@ namespace caliburn
 				{ShaderType::RT_MISS, spirv::ExecutionModel::MissKHR},
 				{ShaderType::TASK, spirv::ExecutionModel::TaskEXT},
 				{ShaderType::MESH, spirv::ExecutionModel::MeshEXT}
+			};
+
+			struct ExprArgs
+			{
+				Instruction i;
+				Operator op;
+				TypedSSA lhs;
+				Opcode lhsType;
+				TypedSSA rhs;
+				Opcode rhsType;
+				spirv::SSA spvLhs;
+				spirv::SSA spvRhs;
+
 			};
 
 			CLLR_SPIRV_IMPL(OpUnknown);
@@ -78,13 +94,14 @@ namespace caliburn
 			CLLR_SPIRV_IMPL(OpTypeArray);
 			CLLR_SPIRV_IMPL(OpTypeVector);
 			CLLR_SPIRV_IMPL(OpTypeMatrix);
-			CLLR_SPIRV_IMPL(OpTypeStruct);
+			CLLR_SPIRV_IMPL(OpTypeTexture);
 
 			CLLR_SPIRV_IMPL(OpTypeBool);
 			CLLR_SPIRV_IMPL(OpTypePtr);
 			CLLR_SPIRV_IMPL(OpTypeTuple);
 			//CLLR_SPIRV_IMPL(OpTypeString);
 
+			CLLR_SPIRV_IMPL(OpTypeStruct);
 			CLLR_SPIRV_IMPL(OpStructMember);
 			CLLR_SPIRV_IMPL(OpStructEnd);
 
@@ -123,6 +140,13 @@ namespace caliburn
 			CLLR_SPIRV_IMPL(OpReturn);
 			CLLR_SPIRV_IMPL(OpReturnValue);
 			CLLR_SPIRV_IMPL(OpDiscard);
+
+			CLLR_EXPR_IMPL(OpExprFloat);
+			CLLR_EXPR_IMPL(OpExprIntSign);
+			CLLR_EXPR_IMPL(OpExprIntUnsign);
+			CLLR_EXPR_IMPL(OpExprBool);
+			CLLR_EXPR_IMPL(OpExprVector);
+			CLLR_EXPR_IMPL(OpExprMatrix);
 
 		}
 		
@@ -196,7 +220,7 @@ namespace caliburn
 			spirv::MemoryModel memModel = spirv::MemoryModel::GLSL450;
 
 			OutImpls<SPIRVOutFn> impls = {};
-
+			
 			constexpr uint32_t maxSSA() const
 			{
 				return nextSSA + 1;
@@ -222,6 +246,8 @@ namespace caliburn
 			spirv::ConstSection consts = spirv::ConstSection(this);
 
 			spirv::SpvIO builtins = spirv::SpvIO(this);
+
+			std::map<cllr::Opcode, SPIRVExprFn> exprImpls;
 
 			SPIRVOutAssembler(sptr<const CompilerSettings> cs);
 			virtual ~SPIRVOutAssembler() {}

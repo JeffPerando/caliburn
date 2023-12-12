@@ -271,6 +271,50 @@ namespace caliburn
 
 		};
 
+		struct LowTexture : LowType
+		{
+			const TextureKind tex;
+
+			HashMap<std::string, std::pair<SSA, sptr<LowType>>> members;
+			HashMap<std::string, uptr<FunctionGroup>> memberFns;
+
+			LowTexture(SSA id, TextureKind tk) : LowType(id, Opcode::TYPE_TEXTURE), tex(tk) {}
+
+			uint32_t getBitWidth() const override
+			{
+				return 8;
+			}
+
+			uint32_t getBitAlign() const override
+			{
+				return 8;
+			}
+
+			TypeCheckResult typeCheck(sptr<const LowType> target, out<cllr::SSA> fnID, Operator op = Operator::NONE) const override
+			{
+				return TypeCheckResult::INCOMPATIBLE;
+			}
+
+			bool addMember(std::string name, sptr<const LowType> type) override
+			{
+				return false;
+			}
+
+			LowMember getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const override
+			{
+				return LowMember();
+			}
+
+			std::vector<std::string> getMembers() const override
+			{
+				return std::vector<std::string>();
+			}
+
+			bool setMemberFns(std::string name, sptr<FunctionGroup> fn) override;
+			sptr<Function> getMemberFn(std::string name, in<std::vector<TypedSSA>> argTypes) const override;
+
+		};
+
 	}
 
 }

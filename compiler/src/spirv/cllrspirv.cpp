@@ -39,6 +39,7 @@ cllr::SPIRVOutAssembler::SPIRVOutAssembler(sptr<const CompilerSettings> cs) : Ou
 	impls[(uint32_t)Opcode::TYPE_ARRAY] = spirv_impl::OpTypeArray;
 	impls[(uint32_t)Opcode::TYPE_VECTOR] = spirv_impl::OpTypeVector;
 	impls[(uint32_t)Opcode::TYPE_MATRIX] = spirv_impl::OpTypeMatrix;
+	impls[(uint32_t)Opcode::TYPE_TEXTURE] = spirv_impl::OpTypeTexture;
 
 	impls[(uint32_t)Opcode::TYPE_STRUCT] = spirv_impl::OpTypeStruct;
 	impls[(uint32_t)Opcode::STRUCT_MEMBER] = spirv_impl::OpStructMember;
@@ -83,6 +84,13 @@ cllr::SPIRVOutAssembler::SPIRVOutAssembler(sptr<const CompilerSettings> cs) : Ou
 	impls[(uint32_t)Opcode::RETURN] = spirv_impl::OpReturn;
 	impls[(uint32_t)Opcode::RETURN_VALUE] = spirv_impl::OpReturnValue;
 	impls[(uint32_t)Opcode::DISCARD] = spirv_impl::OpDiscard;
+
+	//Expression implementations
+	exprImpls.emplace(Opcode::TYPE_FLOAT, spirv_impl::OpExprFloat);
+	exprImpls.emplace(Opcode::TYPE_INT_SIGN, spirv_impl::OpExprIntSign);
+	exprImpls.emplace(Opcode::TYPE_INT_UNSIGN, spirv_impl::OpExprIntUnsign);
+	exprImpls.emplace(Opcode::TYPE_VECTOR, spirv_impl::OpExprVector);
+	exprImpls.emplace(Opcode::TYPE_MATRIX, spirv_impl::OpExprMatrix);
 
 }
 
@@ -590,6 +598,25 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeMatrix)
 
 }
 
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeTexture)
+{
+	auto elemColorType = outCode.types.typeFP(32);
+	auto tid = outCode.types.findOrMake(spirv::OpTypeImage(0), { elemColorType, i.operands[0],
+		//depth
+		0,
+		//arrayed
+		0,
+		//multisample
+		0,
+		//sampling status
+		0,
+		//image format (unknown)
+		0 });
+
+	outCode.setSpvSSA(i.index, tid);
+
+}
+
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeStruct)
 {
 	//It's tempting to replace this with actually implementing OpStructMember
@@ -851,51 +878,15 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpr)
 		return;
 	}
 
-	auto op = spirv::OpNop();
+	auto exprFn = outCode.exprImpls.find(i.op);
 
-	switch (outType.op)
+	if (exprFn == outCode.exprImpls.end())
 	{
-		case Opcode::TYPE_FLOAT: {
-			switch (cllrOp)
-			{
-				case Operator::ADD: op = spirv::OpFAdd(); break;
-				case Operator::SUB: op = spirv::OpFSub(); break;
-				case Operator::MUL: op = spirv::OpFMul(); break;
-				case Operator::DIV: op = spirv::OpFDiv(); break;
-				case Operator::MOD: op = spirv::OpFMod(); break;
-			}
-		}; break;
-		case Opcode::TYPE_INT_SIGN: {
-			switch (cllrOp)
-			{
-				case Operator::ADD: op = spirv::OpIAdd(); break;
-				case Operator::SUB: op = spirv::OpISub(); break;
-				case Operator::MUL: op = spirv::OpIMul(); break;
-				case Operator::INTDIV: op = spirv::OpSDiv(); break;
-				case Operator::MOD: op = spirv::OpSMod(); break;
-				case Operator::BIT_AND: op = spirv::OpBitwiseAnd(); break;
-				case Operator::BIT_OR: op = spirv::OpBitwiseOr(); break;
-				case Operator::BIT_XOR: op = spirv::OpBitwiseXor(); break;
-			}
-		}; break;
-		case Opcode::TYPE_INT_UNSIGN: {
-			switch (cllrOp)
-			{
-				case Operator::ADD: op = spirv::OpIAdd(); break;
-				case Operator::SUB: op = spirv::OpISub(); break;
-				case Operator::MUL: op = spirv::OpIMul(); break;
-				case Operator::INTDIV: op = spirv::OpUDiv(); break;
-				case Operator::MOD: op = spirv::OpUMod(); break;
-				case Operator::BIT_AND: op = spirv::OpBitwiseAnd(); break;
-				case Operator::BIT_OR: op = spirv::OpBitwiseOr(); break;
-				case Operator::BIT_XOR: op = spirv::OpBitwiseXor(); break;
-			}
-		}; break;
-		case Opcode::TYPE_VECTOR: PASS;
-		case Opcode::TYPE_MATRIX: PASS;
-		case Opcode::TYPE_BOOL: PASS;
-		default: return;
+		//TODO complain
+		return;
 	}
+
+	auto op = exprFn->second(i, spvLhs, spvRhs, inCode, outCode);
 
 	if (op == spirv::OpNop())
 	{
@@ -1016,7 +1007,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueInvokePos)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueInvokeSize)
 {
-	//TODO I don't think this works inCode non-compute shaders
+	//TODO I don't think this works for non-compute shaders
 
 	auto id = outCode.toSpvID(i.index);
 	auto t = outCode.toSpvID(i.outType);
@@ -1358,5 +1349,63 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpDiscard)
 	//outCode.main->push(spirv::OpTerminateInvocation(), 0, {});
 	//I know it's deprecated, but like... eh.
 	outCode.main->push(spirv::OpKill(), 0, {});
+
+}
+
+CLLR_EXPR_IMPL(cllr::spirv_impl::OpExprFloat)
+{
+	switch (op)
+	{
+		case Operator::ADD: return spirv::OpFAdd();
+		case Operator::SUB: return spirv::OpFSub();
+		case Operator::MUL: return spirv::OpFMul();
+		case Operator::DIV: return spirv::OpFDiv();
+		case Operator::MOD: return spirv::OpFMod();
+	}
+
+	return spirv::OpNop();
+}
+
+CLLR_EXPR_IMPL(cllr::spirv_impl::OpExprIntSign)
+{
+	switch (op)
+	{
+		case Operator::ADD: return spirv::OpIAdd();
+		case Operator::SUB: return spirv::OpISub();
+		case Operator::MUL: return spirv::OpIMul();
+		case Operator::INTDIV: return spirv::OpSDiv();
+		case Operator::MOD: return spirv::OpSMod();
+		case Operator::BIT_AND: return spirv::OpBitwiseAnd();
+		case Operator::BIT_OR: return spirv::OpBitwiseOr();
+		case Operator::BIT_XOR: return spirv::OpBitwiseXor();
+	}
+
+	return spirv::OpNop();
+}
+
+CLLR_EXPR_IMPL(cllr::spirv_impl::OpExprIntUnsign)
+{
+	switch (op)
+	{
+		case Operator::ADD: return spirv::OpIAdd();
+		case Operator::SUB: return spirv::OpISub();
+		case Operator::MUL: return spirv::OpIMul();
+		case Operator::INTDIV: return spirv::OpUDiv();
+		case Operator::MOD: return spirv::OpUMod();
+		case Operator::BIT_AND: return spirv::OpBitwiseAnd();
+		case Operator::BIT_OR: return spirv::OpBitwiseOr();
+		case Operator::BIT_XOR: return spirv::OpBitwiseXor();
+	}
+
+	return spirv::OpNop();
+}
+
+CLLR_EXPR_IMPL(cllr::spirv_impl::OpExprVector)
+{
+
+}
+
+CLLR_EXPR_IMPL(cllr::spirv_impl::OpExprMatrix)
+{
 
 }
