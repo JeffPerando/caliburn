@@ -886,7 +886,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueExpr)
 		return;
 	}
 
-	auto op = exprFn->second(i, spvLhs, spvRhs, inCode, outCode);
+	auto op = exprFn->second(i, cllrOp, spvLhs, spvRhs, inCode, outCode);
 
 	if (op == spirv::OpNop())
 	{
@@ -1402,10 +1402,10 @@ CLLR_EXPR_IMPL(cllr::spirv_impl::OpExprIntUnsign)
 
 CLLR_EXPR_IMPL(cllr::spirv_impl::OpExprVector)
 {
-
+	return 0;
 }
 
 CLLR_EXPR_IMPL(cllr::spirv_impl::OpExprMatrix)
 {
-
+	return 0;
 }

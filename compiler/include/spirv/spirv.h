@@ -27,11 +27,11 @@ namespace caliburn
 
         The individual characters are packed into the words of the file (which are type uint32)
         Then, if the packed word count is divisible by 4, one more word is added as a null terminator.
-        If it's not divisible by 4, then the strings ends with one more packed character for the null terminator.
+        If it's not divisible by 4, then the string ends with one more packed character for the null terminator.
         */
         inline uint32_t SpvStrLen(const std::string& str)
         {
-            return (uint32_t)((str.length() >> 2) + ((str.length() & 0x3) == 0));
+            return (uint32_t)((str.length() / 4) + ((str.length() % 4) == 0));
         }
 
         struct SpvOp
@@ -225,6 +225,7 @@ namespace caliburn
             StencilExportEXT = 5013,
             Int64ImageEXT = 5016,
             ShaderClockKHR = 5055,
+            ShaderEnqueueAMDX = 5067,
             ShaderViewportIndexLayerEXT = 5254,
             FragmentFullyCoveredEXT = 5265,
             MeshShadingNV = 5266,
@@ -297,6 +298,10 @@ namespace caliburn
             Image = 11,
             //version >= 1.3
             StorageBuffer = 12,
+
+            NodePayloadAMDX = 5068,
+            NodeOutputPayloadAMDX = 5076,
+
             CallableDataKHR = 5328,
             IncomingCallableDataKHR = 5329,
             RayPayloadKHR = 5338,
@@ -336,7 +341,9 @@ namespace caliburn
             None = 0xFFFFFFFF
         };
         
-        //Nvidia's labels are all the same ID, so we don't bother.
+        /*
+        Consumed by OpEntryPoint
+        */
         enum class ExecutionModel : uint32_t
         {
             Vertex = 0,
@@ -346,15 +353,107 @@ namespace caliburn
             Fragment = 4,
             GLCompute = 5,
             Kernel = 6,
+
+            //Nvidia's labels are all the same ID, so we don't bother.
+
             RayGenerationKHR = 5313,
             IntersectionKHR = 5314,
             AnyHitKHR = 5315,
             ClosestHitKHR = 5316,
             MissKHR = 5317,
             CallableKHR = 5318,
+
             //I had to dig way too deep to find these
             TaskEXT = 5364,
             MeshEXT = 5365
+        };
+
+        /*
+        Different from the ExecutionModel above; these are consumed by OpExecutionMode and OpExecutionModeId
+        */
+        enum class ExecutionMode : uint32_t
+        {
+            Invocations = 0,
+            SpacingEqual = 1,
+            SpacingFractionalEven = 2,
+            SpacingFractionalOdd = 3,
+            VertexOrderCw = 4,
+            VertexOrderCcw = 5,
+            PixelCenterInteger = 6,
+            OriginUpperLeft = 7,
+            OriginLowerLeft = 8,
+            EarlyFragmentTests = 9,
+            PointMode = 10,
+            Xfb = 11,
+            DepthReplacing = 12,
+            //ID 13 is missing
+            DepthGreater = 14,
+            DepthLess = 15,
+            DepthUnchanged = 16,
+            LocalSize = 17,
+            LocalSizeHint = 18,
+            InputPoints = 19,
+            InputLines = 20,
+            InputLinesAdjacency = 21,
+            Triangles = 22,
+            InputTrianglesAdjacency = 23,
+            Quads = 24,
+            Isolines = 25,
+            OutputVertices = 26,
+            OutputPoints = 27,
+            OutputLineStrip = 28,
+            OutputTriangleStrip = 29,
+            VecTypeHint = 30,
+            ContractionOff = 31,
+            //ID 32 is missing
+            Initializer = 33,
+            Finalizer = 34,
+            SubgroupSize = 35,
+            SubgroupsPerWorkgroup = 36,
+            SubgroupsPerWorkgroupId = 37,
+            LocalSizeId = 38,
+            LocalSizeHintId = 39,
+
+            NonCoherentColorAttachmentReadEXT = 4169,
+            NonCoherentDepthAttachmentReadEXT = 4170,
+            NonCoherentStencilAttachmentReadEXT = 4171,
+            SubgroupUniformControlFlowKHR = 4421,
+            PostDepthCoverage = 4446,
+            DenormPreserve = 4459,
+            DenormFlushToZero = 4460,
+            SignedZeroInfNanPreserve = 4461,
+            RoundingModeRTE = 4462,
+            RoundingModeRTZ = 4463,
+
+            EarlyAndLateFragmentTestsAMD = 5017,
+            StencilRefReplacingEXT = 5027,
+
+            CoalescingAMDX = 5069,
+            MaxNodeRecursionAMDX = 5071,
+            StaticNumWorkgroupsAMDX = 5072,
+            ShaderIndexAMDX = 5073,
+            MaxNumWorkgroupsAMDX = 5077,
+
+            StencilRefUnchangedFrontAMD = 5079,
+            StencilRefGreaterFrontAMD = 5080,
+            StencilRefLessFrontAMD = 5081,
+            StencilRefUnchangedBackAMD = 5082,
+            StencilRefGreaterBackAMD = 5083,
+            StencilRefLessBackAMD = 5084,
+
+            OutputLinesEXT = 5269,
+            OutputPrimitivesEXT = 5270,
+            DerivativeGroupQuadsNV = 5289,
+            DerivativeGroupLinearNV = 5290,
+
+            OutputTrianglesEXT = 5298,
+            PixelInterlockOrderedEXT = 5366,
+            PixelInterlockUnorderedEXT = 5367,
+            SampleInterlockOrderedEXT = 5368,
+            SampleInterlockUnorderedEXT = 5369,
+            ShadingRateInterlockOrderedEXT = 5370,
+            ShadingRateInterlockUnorderedEXT = 5371,
+
         };
 
         enum class Dim : uint32_t
@@ -375,6 +474,12 @@ namespace caliburn
             Clamp = 2,
             Repeat = 3,
             RepeatMirrored = 4
+        };
+
+        enum class SamplerFilterMode : uint32_t
+        {
+            Nearest = 0,
+            Linear = 1
         };
 
         enum class Scope : uint32_t
@@ -606,47 +711,96 @@ namespace caliburn
 
         enum class ImageFormat : uint32_t
         {
-            Rgba32f,
-            Rgba16f,
-            R32f,
-            Rgba8,
-            Rgba8Snorm,
-            Rg32f,
-            Rg16f,
-            R11fG11fB10f,
-            R16f,
-            Rgba16,
-            Rgb10A2,
-            Rg16,
-            Rg8,
-            R16,
-            R8,
-            Rgba16Snorm,
-            Rg16Snorm,
-            Rg8Snorm,
-            R16Snorm,
-            R8Snorm,
-            Rgba32i,
-            Rgba16i,
-            Rgba8i,
-            R32i,
-            Rg32i,
-            Rg16i,
-            Rg8i,
-            R16i,
-            R8i,
-            Rgba32ui,
-            Rgba16ui,
-            Rgba8ui,
-            R32ui,
-            Rgb10a2ui,
-            Rg32ui,
-            Rg16ui,
-            Rg8ui,
-            R16ui,
-            R8ui,
-            R64ui,
-            R64i
+            Unknown = 0,
+            Rgba32f = 1,
+            Rgba16f = 2,
+            R32f = 3,
+            Rgba8 = 4,
+            Rgba8Snorm = 5,
+            Rg32f = 6,
+            Rg16f = 7,
+            R11fG11fB10f = 8,
+            R16f = 9,
+            Rgba16 = 10,
+            Rgb10A2 = 11,
+            Rg16 = 12,
+            Rg8 = 13,
+            R16 = 14,
+            R8 = 15,
+            Rgba16Snorm = 16,
+            Rg16Snorm = 17,
+            Rg8Snorm = 18,
+            R16Snorm = 19,
+            R8Snorm = 20,
+            Rgba32i = 21,
+            Rgba16i = 22,
+            Rgba8i = 23,
+            R32i = 24,
+            Rg32i = 25,
+            Rg16i = 26,
+            Rg8i = 27,
+            R16i = 28,
+            R8i = 29,
+            Rgba32ui = 30,
+            Rgba16ui = 31,
+            Rgba8ui = 32,
+            R32ui = 33,
+            Rgb10a2ui = 34,
+            Rg32ui = 35,
+            Rg16ui = 36,
+            Rg8ui = 37,
+            R16ui = 38,
+            R8ui = 39,
+            R64ui = 40,
+            R64i = 41
+        };
+
+        enum class ImageChannelOrder : uint32_t
+        {
+            R = 0,
+            A = 1,
+            RG = 2,
+            RA = 3,
+            RGB = 4,
+            RGBA = 5,
+            BGRA = 6,
+            ARGB = 7,
+            Intensity = 8,
+            Luminance = 9,
+            Rx = 10,
+            RGx = 11,
+            RGBx = 12,
+            Depth = 13,
+            DepthStencil = 14,
+            sRGB = 15,
+            sRGBx = 16,
+            sRGBA = 17,
+            sBGRA = 18,
+            ABGR = 19,
+        };
+
+        enum class ImageChannelDataType : uint32_t
+        {
+            SnormInt8 = 0,
+            SnormInt16 = 1,
+            UnormInt8 = 2,
+            UnormInt16 = 3,
+            UnormShort565 = 4,
+            UnormShort555 = 5,
+            UnormInt101010 = 6,
+            SignedInt8 = 7,
+            SignedInt16 = 8,
+            SignedInt32 = 9,
+            UnsignedInt8 = 10,
+            UnsignedInt16 = 11,
+            UnsignedInt32 = 12,
+            HalfFloat = 13,
+            Float = 14,
+            UnormInt24 = 15,
+            UnormInt101010_2 = 16,
+            UnsignedIntRaw10EXT = 19,
+            UnsignedIntRaw12EXT = 20
+
         };
 
         struct ImageOperand
@@ -665,8 +819,9 @@ namespace caliburn
                 VolatileTexel : 1,
                 SignExtend : 1,
                 ZeroExtend : 1,
-                //Version >= 1.6
-                Nontemporal : 1;
+                Nontemporal : 1, //Version >= 1.6
+                RESERVED_1 : 1, //Needs to exist because Offsets is 0x10000
+                Offsets : 1;
 
             operator uint32_t() const
             {
@@ -729,6 +884,14 @@ namespace caliburn
                 return *(uint32_t*)this;
             }
 
+        };
+
+        enum class FPRoundingMode : uint32_t
+        {
+            RTE = 0,
+            RTZ = 1,
+            RTP = 2,
+            RTN = 3
         };
 
         struct RayFlags

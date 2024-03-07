@@ -247,7 +247,7 @@ namespace caliburn
 
 			spirv::SpvIO builtins = spirv::SpvIO(this);
 
-			std::map<cllr::Opcode, SPIRVExprFn> exprImpls;
+			std::map<cllr::Opcode, ptr<SPIRVExprFn>> exprImpls;
 
 			SPIRVOutAssembler(sptr<const CompilerSettings> cs);
 			virtual ~SPIRVOutAssembler() {}
