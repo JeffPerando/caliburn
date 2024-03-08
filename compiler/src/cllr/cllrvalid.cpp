@@ -2,81 +2,85 @@
 #include "cllr/cllrvalid.h"
 
 #include <algorithm>
+#include <iostream>
 
 using namespace caliburn::cllr;
 
-Validator::Validator(sptr<const CompilerSettings> cs) : settings(cs), errors(new_uptr<ErrorHandler>(CompileStage::CLLR_VALIDATION, cs)), validators({
-	&valid::OpUnknown,
+Validator::Validator(sptr<const CompilerSettings> cs) : settings(cs), errors(new_uptr<ErrorHandler>(CompileStage::CLLR_VALIDATION, cs))
+{
+	validators.emplace(Opcode::UNKNOWN, &valid::OpUnknown);
 
-	&valid::OpShaderStage,
-	&valid::OpShaderStageEnd,
-	&valid::OpFunction,
-	&valid::OpVarFuncArg,
-	&valid::OpFunctionEnd,
+	validators.emplace(Opcode::SHADER_STAGE, &valid::OpShaderStage);
+	validators.emplace(Opcode::SHADER_STAGE_END, &valid::OpShaderStageEnd);
+	
+	validators.emplace(Opcode::FUNCTION, &valid::OpFunction);
+	validators.emplace(Opcode::VAR_FUNC_ARG, &valid::OpVarFuncArg);
+	validators.emplace(Opcode::FUNCTION_END, &valid::OpFunctionEnd);
 
-	&valid::OpVarLocal,
-	&valid::OpVarGlobal,
-	&valid::OpVarShaderIn,
-	&valid::OpVarShaderOut,
-	&valid::OpVarDescriptor,
+	validators.emplace(Opcode::VAR_LOCAL, &valid::OpVarLocal);
+	validators.emplace(Opcode::VAR_GLOBAL, &valid::OpVarGlobal);
+	validators.emplace(Opcode::VAR_SHADER_IN, &valid::OpVarShaderIn);
+	validators.emplace(Opcode::VAR_SHADER_OUT, &valid::OpVarShaderOut);
+	validators.emplace(Opcode::VAR_DESCRIPTOR, &valid::OpVarDescriptor);
 
-	&valid::OpCall,
-	&valid::OpCallArg,
+	validators.emplace(Opcode::CALL, &valid::OpCall);
+	validators.emplace(Opcode::CALL_ARG, &valid::OpCallArg);
 
-	&valid::OpTypeVoid,
-	&valid::OpTypeFloat,
-	&valid::OpTypeIntSign,
-	&valid::OpTypeIntUnsign,
-	&valid::OpTypeArray,
-	&valid::OpTypeVector,
-	&valid::OpTypeMatrix,
+	validators.emplace(Opcode::TYPE_VOID, &valid::OpTypeVoid);
+	validators.emplace(Opcode::TYPE_FLOAT, &valid::OpTypeFloat);
+	validators.emplace(Opcode::TYPE_INT_SIGN, &valid::OpTypeIntSign);
+	validators.emplace(Opcode::TYPE_INT_UNSIGN, &valid::OpTypeIntUnsign);
+	validators.emplace(Opcode::TYPE_ARRAY, &valid::OpTypeArray);
+	validators.emplace(Opcode::TYPE_VECTOR, &valid::OpTypeVector);
+	validators.emplace(Opcode::TYPE_MATRIX, &valid::OpTypeMatrix);
+	//validators.emplace(Opcode::TYPE_TEXTURE, &valid::OpTypeMatrix);
 
-	&valid::OpTypeStruct,
-	&valid::OpStructMember,
-	&valid::OpStructEnd,
+	validators.emplace(Opcode::TYPE_STRUCT, &valid::OpTypeStruct);
+	validators.emplace(Opcode::STRUCT_MEMBER, &valid::OpStructMember);
+	validators.emplace(Opcode::STRUCT_END, &valid::OpStructEnd);
 
-	&valid::OpTypeBool,
-	&valid::OpTypePtr,
-	&valid::OpTypeTuple,
+	validators.emplace(Opcode::TYPE_BOOL, &valid::OpTypeBool);
+	validators.emplace(Opcode::TYPE_PTR, &valid::OpTypePtr);
+	validators.emplace(Opcode::TYPE_TUPLE, &valid::OpTypeTuple);
 
-	&valid::OpLabel,
-	&valid::OpJump,
-	&valid::OpJumpCond,
-	&valid::OpLoop,
+	validators.emplace(Opcode::LABEL, &valid::OpLabel);
+	validators.emplace(Opcode::JUMP, &valid::OpJump);
+	validators.emplace(Opcode::JUMP_COND, &valid::OpJumpCond);
+	validators.emplace(Opcode::LOOP, &valid::OpLoop);
 
-	&valid::OpAssign,
-	&valid::OpCompare,
+	validators.emplace(Opcode::ASSIGN, &valid::OpAssign);
+	validators.emplace(Opcode::COMPARE, &valid::OpCompare);
 
-	&valid::OpValueCast,
-	&valid::OpValueConstruct,
-	&valid::OpConstructArg,
-	&valid::OpValueDeref,
-	&valid::OpValueExpand,
-	&valid::OpValueExpr,
-	&valid::OpValueExprUnary,
-	&valid::OpValueIntToFP,
-	&valid::OpValueInvokePos,
-	&valid::OpValueInvokeSize,
-	&valid::OpValueLitArray,
-	&valid::OpLitArrayElem,
-	&valid::OpValueLitBool,
-	&valid::OpValueLitFloat,
-	&valid::OpValueLitInt,
-	&valid::OpValueLitStr,
-	&valid::OpValueMember,
-	&valid::OpValueNull,
-	&valid::OpValueReadVar,
-	&valid::OpValueSign,
-	&valid::OpValueSubarray,
-	&valid::OpValueUnsign,
-	&valid::OpValueVecSwizzle,
-	&valid::OpValueZero,
+	validators.emplace(Opcode::VALUE_CAST, &valid::OpValueCast);
+	validators.emplace(Opcode::VALUE_CONSTRUCT, &valid::OpValueConstruct);
+	validators.emplace(Opcode::CONSTRUCT_ARG, &valid::OpConstructArg);
+	validators.emplace(Opcode::VALUE_DEREF, &valid::OpValueDeref);
+	validators.emplace(Opcode::VALUE_EXPAND, &valid::OpValueExpand);
+	validators.emplace(Opcode::VALUE_EXPR, &valid::OpValueExpr);
+	validators.emplace(Opcode::VALUE_EXPR_UNARY, &valid::OpValueExprUnary);
+	validators.emplace(Opcode::VALUE_INT_TO_FP, &valid::OpValueIntToFP);
+	validators.emplace(Opcode::VALUE_INVOKE_POS, &valid::OpValueInvokePos);
+	validators.emplace(Opcode::VALUE_INVOKE_SIZE, &valid::OpValueInvokeSize);
+	validators.emplace(Opcode::VALUE_LIT_ARRAY, &valid::OpValueLitArray);
+	validators.emplace(Opcode::LIT_ARRAY_ELEM, &valid::OpLitArrayElem);
+	validators.emplace(Opcode::VALUE_LIT_BOOL, &valid::OpValueLitBool);
+	validators.emplace(Opcode::VALUE_LIT_FP, &valid::OpValueLitFloat);
+	validators.emplace(Opcode::VALUE_LIT_INT, &valid::OpValueLitInt);
+	validators.emplace(Opcode::VALUE_LIT_STR, &valid::OpValueLitStr);
+	validators.emplace(Opcode::VALUE_MEMBER, &valid::OpValueMember);
+	validators.emplace(Opcode::VALUE_NULL, &valid::OpValueNull);
+	validators.emplace(Opcode::VALUE_READ_VAR, &valid::OpValueReadVar);
+	validators.emplace(Opcode::VALUE_SIGN, &valid::OpValueSign);
+	validators.emplace(Opcode::VALUE_SUBARRAY, &valid::OpValueSubarray);
+	validators.emplace(Opcode::VALUE_UNSIGN, &valid::OpValueUnsign);
+	validators.emplace(Opcode::VALUE_VEC_SWIZZLE, &valid::OpValueVecSwizzle);
+	validators.emplace(Opcode::VALUE_ZERO, &valid::OpValueZero);
 
-	&valid::OpReturn,
-	&valid::OpReturnValue,
-	&valid::OpDiscard
+	validators.emplace(Opcode::RETURN, &valid::OpReturn);
+	validators.emplace(Opcode::RETURN_VALUE, &valid::OpReturnValue);
+	validators.emplace(Opcode::DISCARD, &valid::OpDiscard);
 
-}) {}
+}
 
 bool Validator::validate(in<Assembler> codeAsm)
 {
@@ -124,27 +128,43 @@ bool Validator::validate(in<Assembler> codeAsm)
 			continue;
 		}
 
-		auto const reason = validators[(int)i.op](lvl, i, codeAsm);
-
-		if (reason != ValidReason::VALID)
+		try
 		{
-			auto e = errors->err({ VALIDATION_REASONS[(int)reason] }, i.debugTkn);
+			if (auto fn = validators.find(i.op); fn != validators.end())
+			{
+				auto const reason = (*fn->second)(lvl, i, codeAsm);
 
-			if (reason == ValidReason::INVALID_NO_ID)
-			{
-				e->note("This opcode requires a unique ID. This is a codegen error. Please file an issue on the official Caliburn GitHub repo");
-			}
-			else if (reason == ValidReason::INVALID_VAR)
-			{
-				e->note("Check to see if the debug token is pointing to a variable or not");
-			}
-			else if (reason == ValidReason::INVALID_LVALUE)
-			{
-				e->note("One of the references has to be an lvalue.");
-			}
+				if (reason != ValidReason::VALID)
+				{
+					auto e = errors->err({ VALIDATION_REASONS[(int)reason] }, i.debugTkn);
 
-			e->note(i.toStr());
+					if (reason == ValidReason::INVALID_NO_ID)
+					{
+						e->note("This opcode requires a unique ID. This is a codegen error. Please file an issue on the official Caliburn GitHub repo");
+					}
+					else if (reason == ValidReason::INVALID_VAR)
+					{
+						e->note("Check to see if the debug token is pointing to a variable or not");
+					}
+					else if (reason == ValidReason::INVALID_LVALUE)
+					{
+						e->note("One of the references has to be an lvalue.");
+					}
+
+					e->note(i.toStr());
+
+				}
+
+			}
+			else
+			{
+				std::cout << "Op " << SCAST<int>(i.op) << " does not have a validator function\n";
+			}
 			
+		}
+		catch (std::exception e)
+		{
+			std::cout << e.what() << '\n';
 		}
 
 		if (lvl != ValidationLevel::DEV)

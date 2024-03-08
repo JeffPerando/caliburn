@@ -85,6 +85,7 @@ namespace caliburn
 
 	struct CBRN_API CompilerSettings
 	{
+		GPUTarget gpuTarget = GPUTarget::SPIRV;
 		OptimizeLevel o = OptimizeLevel::DEBUG;
 		ValidationLevel vLvl = ValidationLevel::BASIC;
 		std::map<std::string, std::string> dynTypes;
@@ -128,12 +129,12 @@ namespace caliburn
 	struct CBRN_API Shader
 	{
 		const ShaderType type;
-		const std::unique_ptr<std::vector<uint32_t>> code;
+		const std::vector<uint8_t> code;
 
 		std::vector<VertexInputAttribute> inputs;
 		std::vector<DescriptorSet> sets;
 
-		Shader(ShaderType t, std::unique_ptr<std::vector<uint32_t>>& c) : type(t), code(std::move(c)) {}
+		Shader(ShaderType t, const std::vector<uint8_t>& c) : type(t), code(c) {}
 
 	};
 
@@ -189,11 +190,10 @@ namespace caliburn
 
 		src: The source code, in ASCII. UTF-8 is currently not supported.
 		shaderName: The name of the shader object to compile. Cannot be empty.
-		target: The GPU IR to compile to. Currently only SPIR-V is supported
-
+		
 		Returns a ShaderResult, which contains a vector of shaders and error messages.
 		*/
-		ShaderResult compileSrcShaders(std::string src, std::string shaderName, GPUTarget target = GPUTarget::SPIRV);
+		ShaderResult compileSrcShaders(std::string src, std::string shaderName);
 
 	};
 

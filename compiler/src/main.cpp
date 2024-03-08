@@ -72,7 +72,7 @@ int testShaderCompile()
 			continue;
 		}
 
-		out.write(RCAST<char*>(s->code->data()), s->code->size() * 4);
+		out.write(RCAST<ptr<const char>>(s->code.data()), s->code.size() * 4);
 		out.close();
 
 	}

@@ -55,24 +55,35 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 	auto op = cllr::Optimizer(settings);
 	op.optimize(codeAsm);
 
-	auto spirvAsm = cllr::SPIRVOutAssembler(settings);
+	uptr<Shader> outShader;
 
-	auto out = new_uptr<Shader>(type, spirvAsm.translateCLLR(codeAsm));
+	if (settings->gpuTarget == GPUTarget::SPIRV)
+	{
+		auto spirvAsm = cllr::SPIRVOutAssembler(settings);
+		auto spirvCode = spirvAsm.translateCLLR(codeAsm);
+		
+		outShader = new_uptr<Shader>(type, spirvCode);
+
+		spirvAsm.errors->dump(allErrs);
+
+	}
+	else
+	{
+		//TODO complain
+	}
 	
-	spirvAsm.errors->dump(allErrs);
-
 	if (type == ShaderType::VERTEX)
 	{
 		for (auto const& [name, index] : codeAsm.getInputs())
 		{
 			//TODO assign input format
-			out->inputs.push_back(VertexInputAttribute{ name, index, 0 });
+			outShader->inputs.push_back(VertexInputAttribute{ name, index, 0 });
 
 		}
 
 	}
 
-	return out;
+	return outShader;
 }
 
 void ShaderStmt::compile(sptr<SymbolTable> table, sptr<CompilerSettings> settings, out<std::vector<uptr<Shader>>> shaders, out<std::vector<sptr<Error>>> compileErrs)

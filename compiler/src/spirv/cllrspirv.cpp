@@ -94,7 +94,7 @@ cllr::SPIRVOutAssembler::SPIRVOutAssembler(sptr<const CompilerSettings> cs) : Ou
 
 }
 
-uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(in<cllr::Assembler> cllrAsm)
+std::vector<uint8_t> cllr::SPIRVOutAssembler::translateCLLR(in<cllr::Assembler> cllrAsm)
 {
 	auto const& code = cllrAsm.getCode();
 
@@ -115,14 +115,14 @@ uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(in<cllr::Asse
 	{
 		spvHeader->push(spirv::OpCapability(), 0, { (uint32_t)cap });
 	}
-	
+
 	//Extensions
 	for (in<std::string> ext : extensions)
 	{
 		spvHeader->pushRaw({ spirv::OpExtension(spirv::SpvStrLen(ext)) });
 		spvHeader->pushStr(ext);
 	}
-	
+
 	//Imports (see spvImports)
 
 	//from hereon we use spvMisc
@@ -138,7 +138,7 @@ uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(in<cllr::Asse
 			entry.name = (std::string("CBRN_") + SHADER_TYPE_NAMES.at(cllrAsm.type));
 		}
 
-		spvMisc->push(spirv::OpEntryPoint((uint32_t)entry.io.size() + spirv::SpvStrLen(entry.name)), 0, {(uint32_t)entry.type, entry.func});
+		spvMisc->push(spirv::OpEntryPoint((uint32_t)entry.io.size() + spirv::SpvStrLen(entry.name)), 0, { (uint32_t)entry.type, entry.func });
 		spvMisc->pushStr(entry.name);
 		spvMisc->pushRaw(entry.io);
 
@@ -156,19 +156,21 @@ uptr<std::vector<uint32_t>> cllr::SPIRVOutAssembler::translateCLLR(in<cllr::Asse
 		len += (*sec)->code.size();
 	}
 
-	auto shader = new_uptr<std::vector<uint32_t>>();
+	std::vector<uint32_t> shader;
 
-	shader->reserve(shader->size() + len);
+	shader.reserve(len);
 
 	//Magic numbers
-	shader->insert(shader->begin(), { spirv::SPIRV_FILE_MAGIC_NUMBER, spirv::Version(1, 5), spirv::CALIBURN_GENERATOR_MAGIC_NUMBER, maxSSA(), 0 });
+	shader.insert(shader.begin(), { spirv::SPIRV_FILE_MAGIC_NUMBER, spirv::Version(1, 5), spirv::CALIBURN_GENERATOR_MAGIC_NUMBER, maxSSA(), 0 });
 
 	for (auto const& sec : codeSecs)
 	{
-		(*sec)->dump(*shader);
+		(*sec)->dump(shader);
 	}
 
-	return shader;
+	auto shadBytes = shader.data();
+
+	return std::vector<uint8_t>(shadBytes, shadBytes + (shader.size() * 4));
 }
 
 spirv::SSA cllr::SPIRVOutAssembler::createSSA()

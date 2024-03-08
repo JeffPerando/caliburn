@@ -150,7 +150,7 @@ namespace caliburn
 
 		}
 		
-		struct SPIRVOutAssembler : cllr::OutAssembler<uint32_t>
+		struct SPIRVOutAssembler : cllr::OutAssembler
 		{
 		private:
 			const uptr<spirv::CodeSection> spvHeader = SPIRV_CODE_SECTION(spirv::SpvSection::HEADER, this, SPIRVOpList{
@@ -252,7 +252,7 @@ namespace caliburn
 			SPIRVOutAssembler(sptr<const CompilerSettings> cs);
 			virtual ~SPIRVOutAssembler() {}
 
-			uptr<std::vector<spirv::SSA>> translateCLLR(in<cllr::Assembler> cllrAsm) override;
+			std::vector<uint8_t> translateCLLR(in<cllr::Assembler> cllrAsm);
 
 			spirv::SSA createSSA();
 

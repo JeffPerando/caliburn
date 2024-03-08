@@ -74,7 +74,8 @@ namespace caliburn
 		struct Validator
 		{
 			const uptr<ErrorHandler> errors;
-			const std::array<ValidFn, (uint64_t)cllr::Opcode::CLLR_OP_COUNT> validators;
+			
+			std::map<cllr::Opcode, ValidFn> validators;
 
 			sptr<const CompilerSettings> settings;
 

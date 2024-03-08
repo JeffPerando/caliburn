@@ -34,7 +34,7 @@ void Compiler::setDynamicType(std::string inner, std::string concrete)
 	settings->dynTypes.emplace(inner, concrete);
 }
 
-ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName, GPUTarget target)
+ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName)
 {
 	ShaderResult result;
 
@@ -169,7 +169,7 @@ ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName
 		//where the real magic happens
 		if (stmt->type == StmtType::SHADER)
 		{
-			auto shadDecl = static_cast<ptr<ShaderStmt>>(stmt.get());
+			auto shadDecl = RCAST<ptr<ShaderStmt>>(stmt.get());
 
 			if (shadDecl->name->str != shaderName)
 			{
