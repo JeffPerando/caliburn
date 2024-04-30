@@ -5,15 +5,16 @@
 
 namespace caliburn
 {
-	struct ParsedFnArg
+	struct FnArg
 	{
 		sptr<ParsedType> typeHint;
-		sptr<Token> name;
+		std::string name;
+
 	};
 
 	struct LocalVariable : Variable
 	{
-		LocalVariable() : Variable() {}
+		LocalVariable(in<std::string> name) : Variable(name) {}
 		LocalVariable(in<ParsedVar> v) : Variable(v) {}
 		virtual ~LocalVariable() {}
 
@@ -32,7 +33,7 @@ namespace caliburn
 		sptr<BaseType> parent = nullptr;
 		uint32_t memberIndex = 0;
 
-		MemberVariable() : Variable() {}
+		MemberVariable(in<std::string> name) : Variable(name) {}
 		virtual ~MemberVariable() {}
 
 		void prettyPrint(out<std::stringstream> ss) const override;
@@ -47,7 +48,7 @@ namespace caliburn
 
 	struct GlobalVariable : Variable
 	{
-		GlobalVariable() : Variable()
+		GlobalVariable(in<std::string> name) : Variable(name)
 		{
 			isConst = true;
 		}
@@ -67,10 +68,9 @@ namespace caliburn
 	{
 		const uint32_t argIndex;
 
-		FnArgVariable(in<ParsedFnArg> pArgs, uint32_t i) : Variable(), argIndex(i)
+		FnArgVariable(in<FnArg> data, uint32_t i) : Variable(data.name), argIndex(i)
 		{
-			typeHint = pArgs.typeHint;
-			nameTkn = pArgs.name;
+			typeHint = data.typeHint;
 
 		}
 		virtual ~FnArgVariable() {}
@@ -94,21 +94,17 @@ namespace caliburn
 
 	struct ShaderIOVariable : Variable
 	{
-	private:
 		ShaderIOVarType ioType = ShaderIOVarType::UNKNOWN;
 		uint32_t ioIndex = 0;
 
-	public:
-		const std::string name;
-
-		ShaderIOVariable(std::string n) : Variable(), name(n) {}
-		ShaderIOVariable(in<ParsedVar> v) : Variable(v), name(v.name->str) {}
-		ShaderIOVariable(ShaderIOVarType t, out<ParsedFnArg> v) : Variable(), ioType(t), name(v.name->str)
+		ShaderIOVariable(std::string n) : Variable(n) {}
+		ShaderIOVariable(in<ParsedVar> v) : Variable(v) {}
+		ShaderIOVariable(ShaderIOVarType t, in<FnArg> v) : Variable(v.name), ioType(t)
 		{
 			typeHint = v.typeHint;
 
 		}
-
+		
 		virtual ~ShaderIOVariable() {}
 
 		ShaderIOVarType getIOType()
@@ -133,10 +129,8 @@ namespace caliburn
 
 	struct DescriptorVariable : Variable
 	{
-		const std::string name;
-
-		DescriptorVariable(std::string n) : name(n) {}
-		DescriptorVariable(sptr<Token> n) : name(n->str)
+		DescriptorVariable(std::string n) : Variable(n) {}
+		DescriptorVariable(sptr<Token> n) : Variable(n->str)
 		{
 			nameTkn = n;
 		}

@@ -13,77 +13,78 @@ cllr::SPIRVOutAssembler::SPIRVOutAssembler(sptr<const CompilerSettings> cs) : Ou
 {
 	ssaEntries.reserve(128);
 	ssaToSection.reserve(128);
-	
+
 	//here we go...
 
-	impls[(uint32_t)Opcode::SHADER_STAGE] = spirv_impl::OpShaderStage;
-	impls[(uint32_t)Opcode::SHADER_STAGE_END] = spirv_impl::OpShaderStageEnd;
+	setImpl(Opcode::SHADER_STAGE, spirv_impl::OpShaderStage);
+	setImpl(Opcode::SHADER_STAGE_END, spirv_impl::OpShaderStageEnd);
 
-	impls[(uint32_t)Opcode::FUNCTION] = spirv_impl::OpFunction;
-	impls[(uint32_t)Opcode::VAR_FUNC_ARG] = spirv_impl::OpVarFuncArg;
-	impls[(uint32_t)Opcode::FUNCTION_END] = spirv_impl::OpFunctionEnd;
+	setImpl(Opcode::FUNCTION, spirv_impl::OpFunction);
+	setImpl(Opcode::VAR_FUNC_ARG, spirv_impl::OpVarFuncArg);
+	setImpl(Opcode::FUNCTION_END, spirv_impl::OpFunctionEnd);
 
-	impls[(uint32_t)Opcode::VAR_LOCAL] = spirv_impl::OpVarLocal;
-	impls[(uint32_t)Opcode::VAR_GLOBAL] = spirv_impl::OpVarGlobal;
-	impls[(uint32_t)Opcode::VAR_SHADER_IN] = spirv_impl::OpVarShaderIn;
-	impls[(uint32_t)Opcode::VAR_SHADER_OUT] = spirv_impl::OpVarShaderOut;
-	impls[(uint32_t)Opcode::VAR_DESCRIPTOR] = spirv_impl::OpVarDescriptor;
+	setImpl(Opcode::VAR_LOCAL, spirv_impl::OpVarLocal);
+	setImpl(Opcode::VAR_GLOBAL, spirv_impl::OpVarGlobal);
+	setImpl(Opcode::VAR_SHADER_IN, spirv_impl::OpVarShaderIn);
+	setImpl(Opcode::VAR_SHADER_OUT, spirv_impl::OpVarShaderOut);
+	setImpl(Opcode::VAR_DESCRIPTOR, spirv_impl::OpVarDescriptor);
 
-	impls[(uint32_t)Opcode::CALL] = spirv_impl::OpCall;
-	impls[(uint32_t)Opcode::CALL_ARG] = spirv_impl::OpCallArg;
+	setImpl(Opcode::CALL, spirv_impl::OpCall);
+	setImpl(Opcode::CALL_ARG, spirv_impl::OpCallArg);
 
-	impls[(uint32_t)Opcode::TYPE_VOID] = spirv_impl::OpTypeVoid;
-	impls[(uint32_t)Opcode::TYPE_FLOAT] = spirv_impl::OpTypeFloat;
-	impls[(uint32_t)Opcode::TYPE_INT_SIGN] = spirv_impl::OpTypeIntSign;
-	impls[(uint32_t)Opcode::TYPE_INT_UNSIGN] = spirv_impl::OpTypeIntUnsign;
-	impls[(uint32_t)Opcode::TYPE_ARRAY] = spirv_impl::OpTypeArray;
-	impls[(uint32_t)Opcode::TYPE_VECTOR] = spirv_impl::OpTypeVector;
-	impls[(uint32_t)Opcode::TYPE_MATRIX] = spirv_impl::OpTypeMatrix;
-	impls[(uint32_t)Opcode::TYPE_TEXTURE] = spirv_impl::OpTypeTexture;
+	setImpl(Opcode::TYPE_VOID, spirv_impl::OpTypeVoid);
+	setImpl(Opcode::TYPE_FLOAT, spirv_impl::OpTypeFloat);
+	setImpl(Opcode::TYPE_INT_SIGN, spirv_impl::OpTypeIntSign);
+	setImpl(Opcode::TYPE_INT_UNSIGN, spirv_impl::OpTypeIntUnsign);
+	setImpl(Opcode::TYPE_ARRAY, spirv_impl::OpTypeArray);
+	setImpl(Opcode::TYPE_VECTOR, spirv_impl::OpTypeVector);
+	setImpl(Opcode::TYPE_MATRIX, spirv_impl::OpTypeMatrix);
+	setImpl(Opcode::TYPE_TEXTURE, spirv_impl::OpTypeTexture);
 
-	impls[(uint32_t)Opcode::TYPE_STRUCT] = spirv_impl::OpTypeStruct;
-	impls[(uint32_t)Opcode::STRUCT_MEMBER] = spirv_impl::OpStructMember;
-	impls[(uint32_t)Opcode::STRUCT_END] = spirv_impl::OpStructEnd;
+	setImpl(Opcode::TYPE_STRUCT, spirv_impl::OpTypeStruct);
+	setImpl(Opcode::STRUCT_MEMBER, spirv_impl::OpStructMember);
+	setImpl(Opcode::STRUCT_END, spirv_impl::OpStructEnd);
 
-	impls[(uint32_t)Opcode::TYPE_BOOL] = spirv_impl::OpTypeBool;
-	impls[(uint32_t)Opcode::TYPE_PTR] = spirv_impl::OpTypePtr;
-	impls[(uint32_t)Opcode::TYPE_TUPLE] = spirv_impl::OpTypeTuple;
-	//impls[(uint32_t)Opcode::TYPE_STRING] = spirv_impl::OpTypeString;
+	setImpl(Opcode::TYPE_BOOL, spirv_impl::OpTypeBool);
+	setImpl(Opcode::TYPE_PTR, spirv_impl::OpTypePtr);
+	setImpl(Opcode::TYPE_TUPLE, spirv_impl::OpTypeTuple);
+	//setImpl(Opcode::TYPE_STRING, spirv_impl::OpTypeString);
 
-	impls[(uint32_t)Opcode::LABEL] = spirv_impl::OpLabel;
-	impls[(uint32_t)Opcode::JUMP] = spirv_impl::OpJump;
-	impls[(uint32_t)Opcode::JUMP_COND] = spirv_impl::OpJumpCond;
-	impls[(uint32_t)Opcode::LOOP] = spirv_impl::OpLoop;
+	setImpl(Opcode::LABEL, spirv_impl::OpLabel);
+	setImpl(Opcode::JUMP, spirv_impl::OpJump);
+	setImpl(Opcode::JUMP_COND, spirv_impl::OpJumpCond);
+	setImpl(Opcode::LOOP, spirv_impl::OpLoop);
 
-	impls[(uint32_t)Opcode::ASSIGN] = spirv_impl::OpAssign;
-	impls[(uint32_t)Opcode::COMPARE] = spirv_impl::OpCompare;
-	impls[(uint32_t)Opcode::VALUE_CAST] = spirv_impl::OpValueCast;
-	impls[(uint32_t)Opcode::VALUE_CONSTRUCT] = spirv_impl::OpValueConstruct;
-	impls[(uint32_t)Opcode::CONSTRUCT_ARG] = spirv_impl::OpConstructArg;
-	impls[(uint32_t)Opcode::VALUE_DEREF] = spirv_impl::OpValueDeref;
-	impls[(uint32_t)Opcode::VALUE_EXPAND] = spirv_impl::OpValueExpand;
-	impls[(uint32_t)Opcode::VALUE_EXPR] = spirv_impl::OpValueExpr;
-	impls[(uint32_t)Opcode::VALUE_EXPR_UNARY] = spirv_impl::OpValueExprUnary;
-	impls[(uint32_t)Opcode::VALUE_INVOKE_POS] = spirv_impl::OpValueInvokePos;
-	impls[(uint32_t)Opcode::VALUE_INVOKE_SIZE] = spirv_impl::OpValueInvokeSize;
-	impls[(uint32_t)Opcode::VALUE_LIT_ARRAY] = spirv_impl::OpValueLitArray;
-	impls[(uint32_t)Opcode::LIT_ARRAY_ELEM] = spirv_impl::OpLitArrayElem;
-	impls[(uint32_t)Opcode::VALUE_LIT_BOOL] = spirv_impl::OpValueLitBool;
-	impls[(uint32_t)Opcode::VALUE_LIT_FP] = spirv_impl::OpValueLitFloat;
-	impls[(uint32_t)Opcode::VALUE_LIT_INT] = spirv_impl::OpValueLitInt;
-	impls[(uint32_t)Opcode::VALUE_LIT_STR] = spirv_impl::OpValueLitStr;
-	impls[(uint32_t)Opcode::VALUE_MEMBER] = spirv_impl::OpValueMember;
-	impls[(uint32_t)Opcode::VALUE_NULL] = spirv_impl::OpValueNull;
-	impls[(uint32_t)Opcode::VALUE_READ_VAR] = spirv_impl::OpValueReadVar;
-	impls[(uint32_t)Opcode::VALUE_SIGN] = spirv_impl::OpValueSign;
-	impls[(uint32_t)Opcode::VALUE_SUBARRAY] = spirv_impl::OpValueSubarray;
-	impls[(uint32_t)Opcode::VALUE_UNSIGN] = spirv_impl::OpValueUnsign;
-	impls[(uint32_t)Opcode::VALUE_VEC_SWIZZLE] = spirv_impl::OpValueVecSwizzle;
-	impls[(uint32_t)Opcode::VALUE_ZERO] = spirv_impl::OpValueZero;
+	setImpl(Opcode::ASSIGN, spirv_impl::OpAssign);
+	setImpl(Opcode::COMPARE, spirv_impl::OpCompare);
+	setImpl(Opcode::VALUE_CAST, spirv_impl::OpValueCast);
+	setImpl(Opcode::VALUE_CONSTRUCT, spirv_impl::OpValueConstruct);
+	setImpl(Opcode::CONSTRUCT_ARG, spirv_impl::OpConstructArg);
+	setImpl(Opcode::VALUE_DEREF, spirv_impl::OpValueDeref);
+	setImpl(Opcode::VALUE_EXPAND, spirv_impl::OpValueExpand);
+	setImpl(Opcode::VALUE_EXPR, spirv_impl::OpValueExpr);
+	setImpl(Opcode::VALUE_EXPR_UNARY, spirv_impl::OpValueExprUnary);
+	setImpl(Opcode::VALUE_INVOKE_POS, spirv_impl::OpValueInvokePos);
+	setImpl(Opcode::VALUE_INVOKE_SIZE, spirv_impl::OpValueInvokeSize);
+	setImpl(Opcode::VALUE_LIT_ARRAY, spirv_impl::OpValueLitArray);
+	setImpl(Opcode::LIT_ARRAY_ELEM, spirv_impl::OpLitArrayElem);
+	setImpl(Opcode::VALUE_LIT_BOOL, spirv_impl::OpValueLitBool);
+	setImpl(Opcode::VALUE_LIT_FP, spirv_impl::OpValueLitFloat);
+	setImpl(Opcode::VALUE_LIT_INT, spirv_impl::OpValueLitInt);
+	setImpl(Opcode::VALUE_LIT_STR, spirv_impl::OpValueLitStr);
+	setImpl(Opcode::VALUE_MEMBER, spirv_impl::OpValueMember);
+	setImpl(Opcode::VALUE_NULL, spirv_impl::OpValueNull);
+	setImpl(Opcode::VALUE_READ_VAR, spirv_impl::OpValueReadVar);
+	setImpl(Opcode::VALUE_SAMPLE, spirv_impl::OpValueSample);
+	setImpl(Opcode::VALUE_SIGN, spirv_impl::OpValueSign);
+	setImpl(Opcode::VALUE_SUBARRAY, spirv_impl::OpValueSubarray);
+	setImpl(Opcode::VALUE_UNSIGN, spirv_impl::OpValueUnsign);
+	setImpl(Opcode::VALUE_VEC_SWIZZLE, spirv_impl::OpValueVecSwizzle);
+	setImpl(Opcode::VALUE_ZERO, spirv_impl::OpValueZero);
 
-	impls[(uint32_t)Opcode::RETURN] = spirv_impl::OpReturn;
-	impls[(uint32_t)Opcode::RETURN_VALUE] = spirv_impl::OpReturnValue;
-	impls[(uint32_t)Opcode::DISCARD] = spirv_impl::OpDiscard;
+	setImpl(Opcode::RETURN, spirv_impl::OpReturn);
+	setImpl(Opcode::RETURN_VALUE, spirv_impl::OpReturnValue);
+	setImpl(Opcode::DISCARD, spirv_impl::OpDiscard);
 
 	//Expression implementations
 	exprImpls.emplace(Opcode::TYPE_FLOAT, spirv_impl::OpExprFloat);
@@ -113,7 +114,7 @@ std::vector<uint8_t> cllr::SPIRVOutAssembler::translateCLLR(in<cllr::Assembler> 
 	//Capabilities
 	for (auto cap : capabilities)
 	{
-		spvHeader->push(spirv::OpCapability(), 0, { (uint32_t)cap });
+		spvHeader->push(spirv::OpCapability(), 0, { SCAST<uint32_t>(cap) });
 	}
 
 	//Extensions
@@ -128,7 +129,7 @@ std::vector<uint8_t> cllr::SPIRVOutAssembler::translateCLLR(in<cllr::Assembler> 
 	//from hereon we use spvMisc
 
 	//Memory model
-	spvMisc->push(spirv::OpMemoryModel(), 0, { (uint32_t)addrModel, (uint32_t)memModel });
+	spvMisc->push(spirv::OpMemoryModel(), 0, { SCAST<uint32_t>(addrModel), SCAST<uint32_t>(memModel) });
 
 	//Entry points
 	for (auto& entry : shaderEntries)
@@ -138,7 +139,7 @@ std::vector<uint8_t> cllr::SPIRVOutAssembler::translateCLLR(in<cllr::Assembler> 
 			entry.name = (std::string("CBRN_") + SHADER_TYPE_NAMES.at(cllrAsm.type));
 		}
 
-		spvMisc->push(spirv::OpEntryPoint((uint32_t)entry.io.size() + spirv::SpvStrLen(entry.name)), 0, { (uint32_t)entry.type, entry.func });
+		spvMisc->push(spirv::OpEntryPoint((uint32_t)entry.io.size() + spirv::SpvStrLen(entry.name)), 0, { SCAST<uint32_t>(entry.type), entry.func });
 		spvMisc->pushStr(entry.name);
 		spvMisc->pushRaw(entry.io);
 
@@ -333,19 +334,19 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpShaderStage)
 	//TODO get output type for shader
 	auto fp = outCode.types.findOrMake(spirv::OpTypeFloat(), { 32 });
 	auto v4 = outCode.types.findOrMake(spirv::OpTypeVector(), { fp, 4 });
-	
+
 	auto fn_v4 = outCode.types.findOrMake(spirv::OpTypeFunction(0), { v4 });
 
 	spirv::FuncControl fnctrl;
 
 	fnctrl.Inline = 1;
 
-	outCode.main->pushTyped(spirv::OpFunction(), v4, id, {fnctrl, fn_v4});
+	outCode.main->pushTyped(spirv::OpFunction(), v4, id, { fnctrl, fn_v4 });
 
 	outCode.shaderEntries.push_back(spirv::EntryPoint
-	{
-		id, ex, inCode.getString(i.operands[1])
-	});
+		{
+			id, ex, inCode.getString(i.operands[1])
+		});
 
 }
 
@@ -681,9 +682,38 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeTuple)
 /*
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeString)
 {
-	//TODO figure outCode strings inCode SPIR-V
+	//TODO figure out strings inCode SPIR-V
 }
 */
+
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpScopeBegin)
+{
+	outCode.main->push(spirv::OpLabel(), outCode.toSpvID(i.index));
+
+}
+
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpScopeEnd)
+{
+	auto id = outCode.toSpvID(i.index);
+
+	//TODO turn this into a function somewhere
+	//these are all block-terminating instructions
+	switch (outCode.main->getLastOp().op)
+	{
+	case spirv::OpReturn().op: break;
+	case spirv::OpReturnValue().op: break;
+	case spirv::OpKill().op: break;
+	case spirv::OpUnreachable().op: break;
+	case spirv::OpTerminateInvocation().op: break;
+	case spirv::OpBranch().op: break;
+	case spirv::OpBranchConditional(0).op: break;
+	case spirv::OpSwitch(0).op: break;
+	default: outCode.main->push(spirv::OpBranch(), 0, { id });
+	}
+
+	outCode.main->push(spirv::OpLabel(), id);
+
+}
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpLabel)
 {
@@ -730,18 +760,18 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 	auto const& outType = inCode.getIns(i.outType);
 
 	auto op = spirv::OpNop();
-	
+
 	if (outType.op == Opcode::TYPE_FLOAT)
 	{
 		switch (cllrOp)
 		{
-			case Operator::COMP_EQ: op = spirv::OpFOrdEqual(); break;
-			case Operator::COMP_NEQ: op = spirv::OpFOrdNotEqual(); break;
-			case Operator::COMP_GT: op = spirv::OpFOrdGreaterThan(); break;
-			case Operator::COMP_GTE: op = spirv::OpFOrdGreaterThanEqual(); break;
-			case Operator::COMP_LT: op = spirv::OpFOrdLessThan(); break;
-			case Operator::COMP_LTE: op = spirv::OpFOrdLessThanEqual(); break;
-			default: return;//TODO complain
+		case Operator::COMP_EQ: op = spirv::OpFOrdEqual(); break;
+		case Operator::COMP_NEQ: op = spirv::OpFOrdNotEqual(); break;
+		case Operator::COMP_GT: op = spirv::OpFOrdGreaterThan(); break;
+		case Operator::COMP_GTE: op = spirv::OpFOrdGreaterThanEqual(); break;
+		case Operator::COMP_LT: op = spirv::OpFOrdLessThan(); break;
+		case Operator::COMP_LTE: op = spirv::OpFOrdLessThanEqual(); break;
+		default: return;//TODO complain
 		}
 
 	}
@@ -749,13 +779,13 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 	{
 		switch (cllrOp)
 		{
-			case Operator::COMP_EQ: op = spirv::OpIEqual(); break;
-			case Operator::COMP_NEQ: op = spirv::OpINotEqual(); break;
-			case Operator::COMP_GT: op = spirv::OpSGreaterThan(); break;
-			case Operator::COMP_GTE: op = spirv::OpSGreaterThanEqual(); break;
-			case Operator::COMP_LT: op = spirv::OpSLessThan(); break;
-			case Operator::COMP_LTE: op = spirv::OpSLessThanEqual(); break;
-			default: return;//TODO complain
+		case Operator::COMP_EQ: op = spirv::OpIEqual(); break;
+		case Operator::COMP_NEQ: op = spirv::OpINotEqual(); break;
+		case Operator::COMP_GT: op = spirv::OpSGreaterThan(); break;
+		case Operator::COMP_GTE: op = spirv::OpSGreaterThanEqual(); break;
+		case Operator::COMP_LT: op = spirv::OpSLessThan(); break;
+		case Operator::COMP_LTE: op = spirv::OpSLessThanEqual(); break;
+		default: return;//TODO complain
 		}
 
 	}
@@ -763,13 +793,13 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 	{
 		switch (cllrOp)
 		{
-			case Operator::COMP_EQ: op = spirv::OpIEqual(); break;
-			case Operator::COMP_NEQ: op = spirv::OpINotEqual(); break;
-			case Operator::COMP_GT: op = spirv::OpUGreaterThan(); break;
-			case Operator::COMP_GTE: op = spirv::OpUGreaterThanEqual(); break;
-			case Operator::COMP_LT: op = spirv::OpULessThan(); break;
-			case Operator::COMP_LTE: op = spirv::OpULessThanEqual(); break;
-			default: return;//TODO complain
+		case Operator::COMP_EQ: op = spirv::OpIEqual(); break;
+		case Operator::COMP_NEQ: op = spirv::OpINotEqual(); break;
+		case Operator::COMP_GT: op = spirv::OpUGreaterThan(); break;
+		case Operator::COMP_GTE: op = spirv::OpUGreaterThanEqual(); break;
+		case Operator::COMP_LT: op = spirv::OpULessThan(); break;
+		case Operator::COMP_LTE: op = spirv::OpULessThanEqual(); break;
+		default: return;//TODO complain
 		}
 
 	}
@@ -777,9 +807,9 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpCompare)
 	{
 		switch (cllrOp)
 		{
-			case Operator::LOGIC_AND: op = spirv::OpLogicalAnd(); break;
-			case Operator::LOGIC_OR: op = spirv::OpLogicalOr(); break;
-			default: return;//TODO complain
+		case Operator::LOGIC_AND: op = spirv::OpLogicalAnd(); break;
+		case Operator::LOGIC_OR: op = spirv::OpLogicalOr(); break;
+		default: return;//TODO complain
 		}
 
 	}
@@ -1162,7 +1192,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueNull)
 	auto id = outCode.toSpvID(i.index);
 	auto t = outCode.toSpvID(i.outType);
 
-	outCode.main->push(spirv::OpConstantNull(), id, { t });
+	outCode.main->pushTyped(spirv::OpConstantNull(), t, id, {});
 
 }
 
@@ -1173,6 +1203,18 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueReadVar)
 	auto outType = outCode.toSpvID(i.outType);
 
 	outCode.main->pushTyped(spirv::OpLoad(0), outType, outVal, { inVal });
+
+}
+
+CLLR_SPIRV_IMPL(cllr::spirv_impl::OpValueSample)
+{
+	auto outID = outCode.toSpvID(i.index);
+	auto outType = outCode.toSpvID(i.outType);
+
+	auto tex = outCode.toSpvID(i.refs[0]);
+	auto uv = outCode.toSpvID(i.refs[1]);
+
+	outCode.main->pushTyped(spirv::OpImageSampleImplicitLod(0), outType, outID, { tex, uv });
 
 }
 
@@ -1358,11 +1400,11 @@ CLLR_EXPR_IMPL(cllr::spirv_impl::OpExprFloat)
 {
 	switch (op)
 	{
-		case Operator::ADD: return spirv::OpFAdd();
-		case Operator::SUB: return spirv::OpFSub();
-		case Operator::MUL: return spirv::OpFMul();
-		case Operator::DIV: return spirv::OpFDiv();
-		case Operator::MOD: return spirv::OpFMod();
+	case Operator::ADD: return spirv::OpFAdd();
+	case Operator::SUB: return spirv::OpFSub();
+	case Operator::MUL: return spirv::OpFMul();
+	case Operator::DIV: return spirv::OpFDiv();
+	case Operator::MOD: return spirv::OpFMod();
 	}
 
 	return spirv::OpNop();
@@ -1372,14 +1414,14 @@ CLLR_EXPR_IMPL(cllr::spirv_impl::OpExprIntSign)
 {
 	switch (op)
 	{
-		case Operator::ADD: return spirv::OpIAdd();
-		case Operator::SUB: return spirv::OpISub();
-		case Operator::MUL: return spirv::OpIMul();
-		case Operator::INTDIV: return spirv::OpSDiv();
-		case Operator::MOD: return spirv::OpSMod();
-		case Operator::BIT_AND: return spirv::OpBitwiseAnd();
-		case Operator::BIT_OR: return spirv::OpBitwiseOr();
-		case Operator::BIT_XOR: return spirv::OpBitwiseXor();
+	case Operator::ADD: return spirv::OpIAdd();
+	case Operator::SUB: return spirv::OpISub();
+	case Operator::MUL: return spirv::OpIMul();
+	case Operator::INTDIV: return spirv::OpSDiv();
+	case Operator::MOD: return spirv::OpSMod();
+	case Operator::BIT_AND: return spirv::OpBitwiseAnd();
+	case Operator::BIT_OR: return spirv::OpBitwiseOr();
+	case Operator::BIT_XOR: return spirv::OpBitwiseXor();
 	}
 
 	return spirv::OpNop();
@@ -1389,14 +1431,14 @@ CLLR_EXPR_IMPL(cllr::spirv_impl::OpExprIntUnsign)
 {
 	switch (op)
 	{
-		case Operator::ADD: return spirv::OpIAdd();
-		case Operator::SUB: return spirv::OpISub();
-		case Operator::MUL: return spirv::OpIMul();
-		case Operator::INTDIV: return spirv::OpUDiv();
-		case Operator::MOD: return spirv::OpUMod();
-		case Operator::BIT_AND: return spirv::OpBitwiseAnd();
-		case Operator::BIT_OR: return spirv::OpBitwiseOr();
-		case Operator::BIT_XOR: return spirv::OpBitwiseXor();
+	case Operator::ADD: return spirv::OpIAdd();
+	case Operator::SUB: return spirv::OpISub();
+	case Operator::MUL: return spirv::OpIMul();
+	case Operator::INTDIV: return spirv::OpUDiv();
+	case Operator::MOD: return spirv::OpUMod();
+	case Operator::BIT_AND: return spirv::OpBitwiseAnd();
+	case Operator::BIT_OR: return spirv::OpBitwiseOr();
+	case Operator::BIT_XOR: return spirv::OpBitwiseXor();
 	}
 
 	return spirv::OpNop();

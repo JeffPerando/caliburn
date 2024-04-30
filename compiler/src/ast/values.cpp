@@ -149,21 +149,6 @@ ValueResult ExpressionValue::emitValueCLLR(sptr<const SymbolTable> table, out<cl
 	return cllr::TypedSSA(lhsVal.type, vID);
 }
 
-ValueResult IsAValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
-{
-	/*
-	chkType->emitDeclCLLR(table, codeAsm);
-	auto vID = val->emitValueCLLR(table, codeAsm);
-	auto tID = chkType->id;
-
-	TODO:
-	Emit the bool literal of whether or not type A is an instance of type B.
-
-	*/
-	return ValueResult();
-	//return codeAsm.pushNew(cllr::Opcode::VALUE_INSTANCEOF, {}, { vID, tID, 0 });;
-}
-
 ValueResult SubArrayValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	MATCH(array->emitValueCLLR(table, codeAsm), cllr::TypedSSA, arrVal)
@@ -414,7 +399,7 @@ ValueResult FnCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::
 
 	MATCH(fnName, sptr<FunctionGroup>, fnGroup)
 	{
-		fn = (*fnGroup)->find(argIDs, codeAsm);
+		fn = (*fnGroup)->find(argIDs, table, codeAsm);
 
 		if (fn == nullptr)
 		{
@@ -448,7 +433,7 @@ ValueResult FnCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::
 			return ValueResult();
 		}
 
-		auto ctor = lType->constructors.find(argIDs, codeAsm);
+		auto ctor = lType->constructors.find(argIDs, table, codeAsm);
 
 		if (ctor == nullptr)
 		{
@@ -618,16 +603,6 @@ void ExpressionValue::prettyPrint(out<std::stringstream> ss) const
 		ss << ')';
 	}
 	
-}
-
-void IsAValue::prettyPrint(out<std::stringstream> ss) const
-{
-	val->prettyPrint(ss);
-
-	ss << " is ";
-
-	chkType->prettyPrint(ss);
-
 }
 
 void CastValue::prettyPrint(out<std::stringstream> ss) const

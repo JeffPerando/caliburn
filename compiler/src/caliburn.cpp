@@ -9,13 +9,7 @@
 #include "ast/rootmod.h"
 #include "ast/ctrlstmt.h"
 #include "ast/modstmts.h"
-
-#include "types/typearray.h"
-#include "types/typebool.h"
-#include "types/typefloat.h"
-#include "types/typeint.h"
-#include "types/typevector.h"
-#include "types/typevoid.h"
+#include "ast/stdlib.h"
 
 using namespace caliburn;
 
@@ -46,14 +40,8 @@ ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName
 
 	auto doc = new_sptr<TextDoc>(src);
 
-	auto t = Tokenizer(settings, doc);
+	auto t = Tokenizer(doc);
 	auto tokens = t.tokenize();
-
-	if (!t.errors->empty())
-	{
-		t.errors->printout(result.errors, *doc);
-		return result;
-	}
 
 	auto p = Parser(settings, tokens);
 	auto ast = p.parse();
@@ -196,28 +184,7 @@ ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName
 
 	//Populate the built-in symbols table
 
-	auto root = new_sptr<SymbolTable>();
-
-	root->add("array", new_sptr<TypeArray>());
-	root->add("bool", new_sptr<TypeBool>());
-	root->add("void", new_sptr<TypeVoid>());
-
-	for (auto bits = MIN_INT_BITS; bits <= MAX_INT_BITS; bits *= 2)
-	{
-		root->add((std::stringstream() << "int" << bits).str(), new_sptr<TypeInt>(bits, true));
-		root->add((std::stringstream() << "uint" << bits).str(), new_sptr<TypeInt>(bits, false));
-	}
-
-	for (auto bits = MIN_FLOAT_BITS; bits <= MAX_FLOAT_BITS; bits *= 2)
-	{
-		root->add((std::stringstream() << "fp" << bits).str(), new_sptr<TypeFloat>(bits));
-	}
-
-	for (auto len = MIN_VECTOR_LEN; len <= MAX_VECTOR_LEN; ++len)
-	{
-		root->add((std::stringstream() << "vec" << len).str(), new_sptr<TypeVector>(len));
-	}
-
+	auto root = makeStdLib(settings);
 	auto table = new_sptr<SymbolTable>(root);
 
 	//Declare headers

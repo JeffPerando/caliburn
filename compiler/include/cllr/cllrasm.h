@@ -88,6 +88,7 @@ namespace caliburn
 			void push(in<Instruction> ins);
 			void pushAll(in<std::vector<Instruction>> code);
 			SSA pushNew(out<Instruction> ins);
+			TypedSSA pushValue(out<Instruction> ins, sptr<LowType> type);
 			sptr<LowType> pushType(out<Instruction> ins);
 
 			void beginLoop(SSA start, SSA end);

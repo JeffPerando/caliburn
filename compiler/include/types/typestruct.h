@@ -23,12 +23,7 @@ namespace caliburn
 		virtual ~TypeStruct() {}
 
 		sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
-
-		virtual Member getMember(in<std::string> name) const
-		{
-			return members.at(name);
-		}
-
+		
 	};
 
 }

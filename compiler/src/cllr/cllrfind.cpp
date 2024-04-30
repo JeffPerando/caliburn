@@ -49,7 +49,7 @@ ptr<Finder> Finder::setLimit(uint32_t max)
 	return this;
 }
 
-std::vector<Instruction> Finder::find(in<std::vector<Instruction>> code)
+std::vector<Instruction> Finder::find(in<std::vector<Instruction>> code) const
 {
 	if (opcodes.empty() && op_args.empty() && refID == 0 && outType == 0)
 	{

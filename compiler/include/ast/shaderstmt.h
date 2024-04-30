@@ -27,7 +27,7 @@ namespace caliburn
 
 			for (auto const& a : base->args)
 			{
-				vtxInputs.push_back(new_sptr<ShaderIOVariable>(ShaderIOVarType::INPUT, *a));
+				vtxInputs.push_back(new_sptr<ShaderIOVariable>(ShaderIOVarType::INPUT, a));
 
 			}
 

@@ -8,9 +8,7 @@
 #include "cllrasm.h"
 #include "error.h"
 
-#define CLLR_INSTRUCT_VALIDATE(Name) ValidReason Name(ValidationLevel lvl, in<Instruction> i, in<Assembler> codeAsm)
-
-#define CLLR_VALID_OP(x) if (i.op != x) throw std::exception("Incorrect opcode! Probably a code regression.");
+#define CLLR_VALID_FN(Name) ValidReason Name(ValidationLevel lvl, in<Instruction> i, in<Assembler> codeAsm)
 
 #define CLLR_VALID_HAS_ID if (i.index == 0) return ValidReason::INVALID_NO_ID
 #define CLLR_VALID_NO_ID if (i.index != 0) return ValidReason::INVALID_MISC
@@ -33,6 +31,7 @@
 #define CLLR_VALID_NO_OPS for (size_t off = 0; off < MAX_OPS; ++off) { if (i.operands[off] != 0) { return ValidReason::INVALID_OPERAND; } }
 
 #define CLLR_VALID_OP_RANGE(n, min, max) if (n > max || n < min) return ValidReason::INVALID_OPERAND;
+#define CLLR_VALID_OP_NONZERO(n) if (n == 0) return ValidReason::INVALID_OPERAND;
 
 namespace caliburn
 {
@@ -69,13 +68,14 @@ namespace caliburn
 			INVALID_MISC
 		};
 
-		using ValidFn = ValidReason(*)(ValidationLevel lvl, in<Instruction> i, in<Assembler> codeAsm);
+		using ValidFn = ValidReason(Validator::*)(ValidationLevel lvl, in<Instruction> i, in<Assembler> codeAsm);
 
 		struct Validator
 		{
 			const uptr<ErrorHandler> errors;
-			
+
 			std::map<cllr::Opcode, ValidFn> validators;
+			std::stack<SSA> scopes;
 
 			sptr<const CompilerSettings> settings;
 
@@ -83,83 +83,84 @@ namespace caliburn
 
 			bool validate(in<Assembler> codeAsm);
 
-		};
-
-		namespace valid
-		{
 			//here we go again
-			CLLR_INSTRUCT_VALIDATE(OpUnknown);
+			CLLR_VALID_FN(OpUnknown);
 
-			CLLR_INSTRUCT_VALIDATE(OpShaderStage);
-			CLLR_INSTRUCT_VALIDATE(OpShaderStageEnd);
+			CLLR_VALID_FN(OpShaderStage);
+			CLLR_VALID_FN(OpShaderStageEnd);
 
-			CLLR_INSTRUCT_VALIDATE(OpFunction);
-			CLLR_INSTRUCT_VALIDATE(OpVarFuncArg);
-			CLLR_INSTRUCT_VALIDATE(OpFunctionEnd);
+			CLLR_VALID_FN(OpFunction);
+			CLLR_VALID_FN(OpVarFuncArg);
+			CLLR_VALID_FN(OpFunctionEnd);
 
-			CLLR_INSTRUCT_VALIDATE(OpVarLocal);
-			CLLR_INSTRUCT_VALIDATE(OpVarGlobal);
-			CLLR_INSTRUCT_VALIDATE(OpVarShaderIn);
-			CLLR_INSTRUCT_VALIDATE(OpVarShaderOut);
-			CLLR_INSTRUCT_VALIDATE(OpVarDescriptor);
+			CLLR_VALID_FN(OpVarLocal);
+			CLLR_VALID_FN(OpVarGlobal);
+			CLLR_VALID_FN(OpVarShaderIn);
+			CLLR_VALID_FN(OpVarShaderOut);
+			CLLR_VALID_FN(OpVarDescriptor);
 
-			CLLR_INSTRUCT_VALIDATE(OpCall);
-			CLLR_INSTRUCT_VALIDATE(OpCallArg);
+			CLLR_VALID_FN(OpCall);
+			CLLR_VALID_FN(OpCallArg);
 
-			CLLR_INSTRUCT_VALIDATE(OpTypeVoid);
-			CLLR_INSTRUCT_VALIDATE(OpTypeFloat);
-			CLLR_INSTRUCT_VALIDATE(OpTypeIntSign);
-			CLLR_INSTRUCT_VALIDATE(OpTypeIntUnsign);
-			CLLR_INSTRUCT_VALIDATE(OpTypeArray);
-			CLLR_INSTRUCT_VALIDATE(OpTypeVector);
-			CLLR_INSTRUCT_VALIDATE(OpTypeMatrix);
-			CLLR_INSTRUCT_VALIDATE(OpTypeStruct);
+			CLLR_VALID_FN(OpTypeVoid);
+			CLLR_VALID_FN(OpTypeFloat);
+			CLLR_VALID_FN(OpTypeIntSign);
+			CLLR_VALID_FN(OpTypeIntUnsign);
+			CLLR_VALID_FN(OpTypeArray);
+			CLLR_VALID_FN(OpTypeVector);
+			CLLR_VALID_FN(OpTypeMatrix);
+			CLLR_VALID_FN(OpTypeTexture);
+			CLLR_VALID_FN(OpTypeStruct);
 
-			CLLR_INSTRUCT_VALIDATE(OpTypeBool);
-			CLLR_INSTRUCT_VALIDATE(OpTypePtr);
-			CLLR_INSTRUCT_VALIDATE(OpTypeTuple);
+			CLLR_VALID_FN(OpTypeBool);
+			CLLR_VALID_FN(OpTypePtr);
+			CLLR_VALID_FN(OpTypeTuple);
 
-			CLLR_INSTRUCT_VALIDATE(OpStructMember);
-			CLLR_INSTRUCT_VALIDATE(OpStructEnd);
+			CLLR_VALID_FN(OpStructMember);
+			CLLR_VALID_FN(OpStructEnd);
 
-			CLLR_INSTRUCT_VALIDATE(OpLabel);
-			CLLR_INSTRUCT_VALIDATE(OpJump);
-			CLLR_INSTRUCT_VALIDATE(OpJumpCond);
-			CLLR_INSTRUCT_VALIDATE(OpLoop);
+			CLLR_VALID_FN(OpScopeBegin);
+			CLLR_VALID_FN(OpScopeEnd);
 
-			CLLR_INSTRUCT_VALIDATE(OpAssign);
-			CLLR_INSTRUCT_VALIDATE(OpCompare);
+			CLLR_VALID_FN(OpLabel);
+			CLLR_VALID_FN(OpJump);
+			CLLR_VALID_FN(OpJumpCond);
+			CLLR_VALID_FN(OpLoop);
 
-			CLLR_INSTRUCT_VALIDATE(OpValueCast);
-			CLLR_INSTRUCT_VALIDATE(OpValueConstruct);
-			CLLR_INSTRUCT_VALIDATE(OpConstructArg);
-			CLLR_INSTRUCT_VALIDATE(OpValueDeref);
-			CLLR_INSTRUCT_VALIDATE(OpValueExpand);
-			CLLR_INSTRUCT_VALIDATE(OpValueExpr);
-			CLLR_INSTRUCT_VALIDATE(OpValueExprUnary);
-			CLLR_INSTRUCT_VALIDATE(OpValueIntToFP);
-			CLLR_INSTRUCT_VALIDATE(OpValueInvokePos);
-			CLLR_INSTRUCT_VALIDATE(OpValueInvokeSize);
-			CLLR_INSTRUCT_VALIDATE(OpValueLitArray);
-			CLLR_INSTRUCT_VALIDATE(OpLitArrayElem);
-			CLLR_INSTRUCT_VALIDATE(OpValueLitBool);
-			CLLR_INSTRUCT_VALIDATE(OpValueLitFloat);
-			CLLR_INSTRUCT_VALIDATE(OpValueLitInt);
-			CLLR_INSTRUCT_VALIDATE(OpValueLitStr);
-			CLLR_INSTRUCT_VALIDATE(OpValueMember);
-			CLLR_INSTRUCT_VALIDATE(OpValueNull);
-			CLLR_INSTRUCT_VALIDATE(OpValueReadVar);
-			CLLR_INSTRUCT_VALIDATE(OpValueSign);
-			CLLR_INSTRUCT_VALIDATE(OpValueSubarray);
-			CLLR_INSTRUCT_VALIDATE(OpValueUnsign);
-			CLLR_INSTRUCT_VALIDATE(OpValueVecSwizzle);
-			CLLR_INSTRUCT_VALIDATE(OpValueZero);
+			CLLR_VALID_FN(OpAssign);
+			CLLR_VALID_FN(OpCompare);
 
-			CLLR_INSTRUCT_VALIDATE(OpReturn);
-			CLLR_INSTRUCT_VALIDATE(OpReturnValue);
-			CLLR_INSTRUCT_VALIDATE(OpDiscard);
+			CLLR_VALID_FN(OpValueCast);
+			CLLR_VALID_FN(OpValueConstruct);
+			CLLR_VALID_FN(OpConstructArg);
+			CLLR_VALID_FN(OpValueDeref);
+			CLLR_VALID_FN(OpValueExpand);
+			CLLR_VALID_FN(OpValueExpr);
+			CLLR_VALID_FN(OpValueExprUnary);
+			CLLR_VALID_FN(OpValueIntToFP);
+			CLLR_VALID_FN(OpValueInvokePos);
+			CLLR_VALID_FN(OpValueInvokeSize);
+			CLLR_VALID_FN(OpValueLitArray);
+			CLLR_VALID_FN(OpLitArrayElem);
+			CLLR_VALID_FN(OpValueLitBool);
+			CLLR_VALID_FN(OpValueLitFloat);
+			CLLR_VALID_FN(OpValueLitInt);
+			CLLR_VALID_FN(OpValueLitStr);
+			CLLR_VALID_FN(OpValueMember);
+			CLLR_VALID_FN(OpValueNull);
+			CLLR_VALID_FN(OpValueReadVar);
+			CLLR_VALID_FN(OpValueSample);
+			CLLR_VALID_FN(OpValueSign);
+			CLLR_VALID_FN(OpValueSubarray);
+			CLLR_VALID_FN(OpValueUnsign);
+			CLLR_VALID_FN(OpValueVecSwizzle);
+			CLLR_VALID_FN(OpValueZero);
 
-		}
+			CLLR_VALID_FN(OpReturn);
+			CLLR_VALID_FN(OpReturnValue);
+			CLLR_VALID_FN(OpDiscard);
+
+		};
 
 	}
 

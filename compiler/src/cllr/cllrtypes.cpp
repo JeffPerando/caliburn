@@ -98,7 +98,7 @@ TypeCheckResult LowBool::typeCheck(sptr<const LowType> target, out<cllr::SSA> fn
 	return TypeCheckResult::INCOMPATIBLE;
 }
 
-LowMember LowVector::getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const
+LowMember LowVector::getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const
 {
 	static const HashMap<char, uint32_t> comps = {
 		{'x', 0}, {'y', 1}, {'z', 2}, {'w', 3},
@@ -159,12 +159,12 @@ TypeCheckResult LowStruct::typeCheck(sptr<const LowType> target, out<cllr::SSA> 
 
 //TODO finish implementing
 
-bool LowStruct::addMember(std::string name, sptr<const LowType> typeImpl)
+bool LowStruct::addMember(in<std::string> name, sptr<const LowType> typeImpl)
 {
 	return false;
 }
 
-LowMember LowStruct::getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const
+LowMember LowStruct::getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const
 {
 	return LowMember();
 }
@@ -174,12 +174,17 @@ std::vector<std::string> LowStruct::getMembers() const
 	return std::vector<std::string>();
 }
 
-bool LowStruct::setMemberFns(std::string name, sptr<FunctionGroup> fn)
+bool LowStruct::addMemberFn(sptr<Function> fn)
 {
 	return false;
 }
 
-sptr<caliburn::Function> LowStruct::getMemberFn(std::string name, in<std::vector<TypedSSA>> argTypes) const
+bool LowStruct::setMemberFns(in<std::string> name, sptr<FunctionGroup> fn)
+{
+	return false;
+}
+
+sptr<caliburn::Function> LowStruct::getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const
 {
 	return nullptr;
 }

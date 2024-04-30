@@ -30,11 +30,12 @@ namespace caliburn
 	they are reserved to enable for internal use.
 	*/
 	static const std::unordered_set<std::string_view> KEYWORDS = {
-		"array", "as",
+		//Array is a keyword not because it's used, but because it's an internal type
+		"array",
 		"break",
-		"case", "class", "const", "construct", "continue",
-		"def", "default", "delete", "destruct", "discard", "do", "dynamic",
-		"enum", "extends",
+		"case", "class", "const", "continue",
+		"def", "default", "delete", "discard", "do", "dynamic",
+		"enum",
 		"false", "for",
 		"if", "import", "in", "is",
 		"module",
@@ -42,7 +43,7 @@ namespace caliburn
 		"op", "override",
 		"pass", "private", "public",
 		"record", "return",
-		"shader", "shared", "sign", "strong", "struct", "switch",
+		"self", "shader", "shared", "sign", "strong", "struct", "switch",
 		"this", "true", "type",
 		"unreachable", "unsign", "uses",
 		"var", "void",

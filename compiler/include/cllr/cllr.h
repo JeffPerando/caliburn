@@ -28,9 +28,9 @@ namespace caliburn
 
 		struct LowType;
 		struct Assembler;
-		
+
 		struct Instruction;
-		
+
 		using SSA = uint32_t;
 
 		struct TypedSSA
@@ -78,7 +78,6 @@ namespace caliburn
 			CALL_ARG,
 
 			//These should match the TypeCategory in langcore.h
-			//enum class TypeCategory { VOID, FLOAT, INT, VECTOR, MATRIX, ARRAY, STRUCT, BOOLEAN, POINTER, TUPLE, STRING };
 			TYPE_VOID,
 			TYPE_FLOAT,
 			TYPE_INT_SIGN,
@@ -96,6 +95,9 @@ namespace caliburn
 			TYPE_PTR,
 			TYPE_TUPLE,
 			//TYPE_STRING,
+
+			SCOPE_BEGIN,
+			SCOPE_END,
 
 			LABEL,
 			JUMP,
@@ -124,6 +126,7 @@ namespace caliburn
 			VALUE_MEMBER,
 			VALUE_NULL,
 			VALUE_READ_VAR,
+			VALUE_SAMPLE,
 			VALUE_SIGN,
 			VALUE_SUBARRAY,
 			VALUE_UNSIGN,
@@ -137,77 +140,81 @@ namespace caliburn
 			CLLR_OP_COUNT
 
 		};
-		
-		static const std::vector<std::string_view> OP_NAMES = {
-			"Unknown",
 
-			"Shader_Stage",
-			"Shader_Stage_End",
-			"Function",
-			"Var_Func_Arg",
-			"Function_End",
+		static const std::map<Opcode, std::string_view> OP_NAMES = {
+			{Opcode::UNKNOWN, "Unknown"},
 
-			"Var_Local",
-			"Var_Global",
-			"Var_Shader_In",
-			"Var_Shader_Out",
-			"Var_Descriptor",
+			{Opcode::SHADER_STAGE, "Shader_Stage"},
+			{Opcode::SHADER_STAGE_END, "Shader_Stage_End"},
+			{Opcode::FUNCTION, "Function"},
+			{Opcode::VAR_FUNC_ARG, "Var_Func_Arg"},
+			{Opcode::FUNCTION_END, "Function_End"},
 
-			"Call",
-			"Call_Arg",
+			{Opcode::VAR_LOCAL, "Var_Local"},
+			{Opcode::VAR_GLOBAL, "Var_Global"},
+			{Opcode::VAR_SHADER_IN, "Var_Shader_In"},
+			{Opcode::VAR_SHADER_OUT, "Var_Shader_Out"},
+			{Opcode::VAR_DESCRIPTOR, "Var_Descriptor"},
 
-			"Type_Void",
-			"Type_Float",
-			"Type_Int_Sign",
-			"Type_Int_Unsign",
-			"Type_Array",
-			"Type_Vector",
-			"Type_Matrix",
+			{Opcode::CALL, "Call"},
+			{Opcode::CALL_ARG, "Call_Arg"},
 
-			"Type_Struct",
-			"Struct_Member",
-			"Struct_End",
+			{Opcode::TYPE_VOID, "Type_Void"},
+			{Opcode::TYPE_FLOAT, "Type_Float"},
+			{Opcode::TYPE_INT_SIGN, "Type_Int_Sign"},
+			{Opcode::TYPE_INT_UNSIGN, "Type_Int_Unsign"},
+			{Opcode::TYPE_ARRAY, "Type_Array"},
+			{Opcode::TYPE_VECTOR, "Type_Vector"},
+			{Opcode::TYPE_MATRIX, "Type_Matrix"},
+			{Opcode::TYPE_TEXTURE, "Type_Texture"},
 
-			"Type_Bool",
-			"Type_Ptr",
-			"Type_Tuple",
+			{Opcode::TYPE_STRUCT, "Type_Struct"},
+			{Opcode::STRUCT_MEMBER, "Struct_Member"},
+			{Opcode::SCOPE_END, "Struct_End"},
 
-			"Label",
-			"Jump",
-			"Jump_Cond",
-			"Loop",
+			{Opcode::TYPE_BOOL, "Type_Bool"},
+			{Opcode::TYPE_PTR, "Type_Ptr"},
+			{Opcode::TYPE_TUPLE, "Type_Tuple"},
 
-			"Assign",
-			"Compare",
+			{Opcode::SCOPE_BEGIN, "Scope_Start"},
+			{Opcode::SCOPE_END, "Scope_End"},
+			{Opcode::LABEL, "Label"},
+			{Opcode::JUMP, "Jump"},
+			{Opcode::JUMP_COND, "Jump_Cond"},
+			{Opcode::LOOP, "Loop"},
 
-			"Value_Cast",
-			"Value_Construct",
-			"Construct_Arg",
-			"Value_Deref",
-			"Value_Expand",
-			"Value_Expr",
-			"Value_Expr_Unary",
-			"Value_Int_To_Fp",
-			"Value_Invoke_Pos",
-			"Value_Invoke_Size",
-			"Value_Lit_Array",
-			"Lit_Array_Elem",
-			"Value_Lit_Bool",
-			"Value_Lit_Fp",
-			"Value_Lit_Int",
-			"Value_Lit_Str",
-			"Value_Member",
-			"Value_Null",
-			"Value_Read_Var",
-			"Value_Sign",
-			"Value_Subarray",
-			"Value_Unsign",
-			"Value_Vec_Swizzle",
-			"Value_Zero",
+			{Opcode::ASSIGN, "Assign"},
+			{Opcode::COMPARE, "Compare"},
 
-			"Return",
-			"Return_Value",
-			"Discard"
+			{Opcode::VALUE_CAST, "Value_Cast"},
+			{Opcode::VALUE_CONSTRUCT, "Value_Construct"},
+			{Opcode::CONSTRUCT_ARG, "Construct_Arg"},
+			{Opcode::VALUE_DEREF, "Value_Deref"},
+			{Opcode::VALUE_EXPAND, "Value_Expand"},
+			{Opcode::VALUE_EXPR, "Value_Expr"},
+			{Opcode::VALUE_EXPR_UNARY, "Value_Expr_Unary"},
+			{Opcode::VALUE_INT_TO_FP, "Value_Int_To_Fp"},
+			{Opcode::VALUE_INVOKE_POS, "Value_Invoke_Pos"},
+			{Opcode::VALUE_INVOKE_SIZE, "Value_Invoke_Size"},
+			{Opcode::VALUE_LIT_ARRAY, "Value_Lit_Array"},
+			{Opcode::LIT_ARRAY_ELEM, "Lit_Array_Elem"},
+			{Opcode::VALUE_LIT_BOOL, "Value_Lit_Bool"},
+			{Opcode::VALUE_LIT_FP, "Value_Lit_Fp"},
+			{Opcode::VALUE_LIT_INT, "Value_Lit_Int"},
+			{Opcode::VALUE_LIT_STR, "Value_Lit_Str"},
+			{Opcode::VALUE_MEMBER, "Value_Member"},
+			{Opcode::VALUE_NULL, "Value_Null"},
+			{Opcode::VALUE_READ_VAR, "Value_Read_Var"},
+			{Opcode::VALUE_SAMPLE, "Value_Sample"},
+			{Opcode::VALUE_SIGN, "Value_Sign"},
+			{Opcode::VALUE_SUBARRAY, "Value_Subarray"},
+			{Opcode::VALUE_UNSIGN, "Value_Unsign"},
+			{Opcode::VALUE_VEC_SWIZZLE, "Value_Vec_Swizzle"},
+			{Opcode::VALUE_ZERO, "Value_Zero"},
+
+			{Opcode::RETURN, "Return"},
+			{Opcode::RETURN_VALUE, "Return_Value"},
+			{Opcode::DISCARD, "Discard"},
 		};
 
 		bool isType(Opcode op);
@@ -269,7 +276,7 @@ namespace caliburn
 					ss << '#' << index << ": ";
 				}
 
-				ss << OP_NAMES[(uint32_t)op];
+				ss << OP_NAMES.at(op);
 
 				ss << " [";
 				for (size_t i = 0; i < MAX_OPS; ++i)
@@ -360,7 +367,7 @@ namespace caliburn
 			size_t operator()(in<Instruction> i) const
 			{
 				size_t hash = ((size_t)i.op & 0xFFFF);
-				
+
 				hash |= ((size_t)i.outType & 0xFFFF) << 16;
 
 				size_t opHash = 0;
@@ -379,7 +386,7 @@ namespace caliburn
 
 				hash |= (opHash & 0xFFFF) << 32;
 				hash |= (refHash & 0xFFFF) << 48;
-				
+
 				return hash;
 			}
 

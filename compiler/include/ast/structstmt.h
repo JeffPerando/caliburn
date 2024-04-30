@@ -51,7 +51,7 @@ namespace caliburn
 
 		}
 
-		//Do not implement. We let the innermost RealType declare itself
+		//Do not implement. We let the innermost type declare itself
 		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override {}
 
 		void declareSymbols(sptr<SymbolTable> table) override {}

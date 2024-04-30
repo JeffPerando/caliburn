@@ -6,79 +6,84 @@
 
 using namespace caliburn::cllr;
 
+#define CLLR_VALID_IMPL(Name) ValidReason Validator::Name(ValidationLevel lvl, in<Instruction> i, in<Assembler> codeAsm)
+
 Validator::Validator(sptr<const CompilerSettings> cs) : settings(cs), errors(new_uptr<ErrorHandler>(CompileStage::CLLR_VALIDATION, cs))
 {
-	validators.emplace(Opcode::UNKNOWN, &valid::OpUnknown);
+	validators.emplace(Opcode::UNKNOWN, &Validator::OpUnknown);
 
-	validators.emplace(Opcode::SHADER_STAGE, &valid::OpShaderStage);
-	validators.emplace(Opcode::SHADER_STAGE_END, &valid::OpShaderStageEnd);
-	
-	validators.emplace(Opcode::FUNCTION, &valid::OpFunction);
-	validators.emplace(Opcode::VAR_FUNC_ARG, &valid::OpVarFuncArg);
-	validators.emplace(Opcode::FUNCTION_END, &valid::OpFunctionEnd);
+	validators.emplace(Opcode::SHADER_STAGE, &Validator::OpShaderStage);
+	validators.emplace(Opcode::SHADER_STAGE_END, &Validator::OpShaderStageEnd);
 
-	validators.emplace(Opcode::VAR_LOCAL, &valid::OpVarLocal);
-	validators.emplace(Opcode::VAR_GLOBAL, &valid::OpVarGlobal);
-	validators.emplace(Opcode::VAR_SHADER_IN, &valid::OpVarShaderIn);
-	validators.emplace(Opcode::VAR_SHADER_OUT, &valid::OpVarShaderOut);
-	validators.emplace(Opcode::VAR_DESCRIPTOR, &valid::OpVarDescriptor);
+	validators.emplace(Opcode::FUNCTION, &Validator::OpFunction);
+	validators.emplace(Opcode::VAR_FUNC_ARG, &Validator::OpVarFuncArg);
+	validators.emplace(Opcode::FUNCTION_END, &Validator::OpFunctionEnd);
 
-	validators.emplace(Opcode::CALL, &valid::OpCall);
-	validators.emplace(Opcode::CALL_ARG, &valid::OpCallArg);
+	validators.emplace(Opcode::VAR_LOCAL, &Validator::OpVarLocal);
+	validators.emplace(Opcode::VAR_GLOBAL, &Validator::OpVarGlobal);
+	validators.emplace(Opcode::VAR_SHADER_IN, &Validator::OpVarShaderIn);
+	validators.emplace(Opcode::VAR_SHADER_OUT, &Validator::OpVarShaderOut);
+	validators.emplace(Opcode::VAR_DESCRIPTOR, &Validator::OpVarDescriptor);
 
-	validators.emplace(Opcode::TYPE_VOID, &valid::OpTypeVoid);
-	validators.emplace(Opcode::TYPE_FLOAT, &valid::OpTypeFloat);
-	validators.emplace(Opcode::TYPE_INT_SIGN, &valid::OpTypeIntSign);
-	validators.emplace(Opcode::TYPE_INT_UNSIGN, &valid::OpTypeIntUnsign);
-	validators.emplace(Opcode::TYPE_ARRAY, &valid::OpTypeArray);
-	validators.emplace(Opcode::TYPE_VECTOR, &valid::OpTypeVector);
-	validators.emplace(Opcode::TYPE_MATRIX, &valid::OpTypeMatrix);
-	//validators.emplace(Opcode::TYPE_TEXTURE, &valid::OpTypeMatrix);
+	validators.emplace(Opcode::CALL, &Validator::OpCall);
+	validators.emplace(Opcode::CALL_ARG, &Validator::OpCallArg);
 
-	validators.emplace(Opcode::TYPE_STRUCT, &valid::OpTypeStruct);
-	validators.emplace(Opcode::STRUCT_MEMBER, &valid::OpStructMember);
-	validators.emplace(Opcode::STRUCT_END, &valid::OpStructEnd);
+	validators.emplace(Opcode::TYPE_VOID, &Validator::OpTypeVoid);
+	validators.emplace(Opcode::TYPE_FLOAT, &Validator::OpTypeFloat);
+	validators.emplace(Opcode::TYPE_INT_SIGN, &Validator::OpTypeIntSign);
+	validators.emplace(Opcode::TYPE_INT_UNSIGN, &Validator::OpTypeIntUnsign);
+	validators.emplace(Opcode::TYPE_ARRAY, &Validator::OpTypeArray);
+	validators.emplace(Opcode::TYPE_VECTOR, &Validator::OpTypeVector);
+	validators.emplace(Opcode::TYPE_MATRIX, &Validator::OpTypeMatrix);
+	validators.emplace(Opcode::TYPE_TEXTURE, &Validator::OpTypeTexture);
 
-	validators.emplace(Opcode::TYPE_BOOL, &valid::OpTypeBool);
-	validators.emplace(Opcode::TYPE_PTR, &valid::OpTypePtr);
-	validators.emplace(Opcode::TYPE_TUPLE, &valid::OpTypeTuple);
+	validators.emplace(Opcode::TYPE_STRUCT, &Validator::OpTypeStruct);
+	validators.emplace(Opcode::STRUCT_MEMBER, &Validator::OpStructMember);
+	validators.emplace(Opcode::STRUCT_END, &Validator::OpStructEnd);
 
-	validators.emplace(Opcode::LABEL, &valid::OpLabel);
-	validators.emplace(Opcode::JUMP, &valid::OpJump);
-	validators.emplace(Opcode::JUMP_COND, &valid::OpJumpCond);
-	validators.emplace(Opcode::LOOP, &valid::OpLoop);
+	validators.emplace(Opcode::TYPE_BOOL, &Validator::OpTypeBool);
+	validators.emplace(Opcode::TYPE_PTR, &Validator::OpTypePtr);
+	validators.emplace(Opcode::TYPE_TUPLE, &Validator::OpTypeTuple);
 
-	validators.emplace(Opcode::ASSIGN, &valid::OpAssign);
-	validators.emplace(Opcode::COMPARE, &valid::OpCompare);
+	validators.emplace(Opcode::SCOPE_BEGIN, &Validator::OpScopeBegin);
+	validators.emplace(Opcode::SCOPE_END, &Validator::OpScopeEnd);
 
-	validators.emplace(Opcode::VALUE_CAST, &valid::OpValueCast);
-	validators.emplace(Opcode::VALUE_CONSTRUCT, &valid::OpValueConstruct);
-	validators.emplace(Opcode::CONSTRUCT_ARG, &valid::OpConstructArg);
-	validators.emplace(Opcode::VALUE_DEREF, &valid::OpValueDeref);
-	validators.emplace(Opcode::VALUE_EXPAND, &valid::OpValueExpand);
-	validators.emplace(Opcode::VALUE_EXPR, &valid::OpValueExpr);
-	validators.emplace(Opcode::VALUE_EXPR_UNARY, &valid::OpValueExprUnary);
-	validators.emplace(Opcode::VALUE_INT_TO_FP, &valid::OpValueIntToFP);
-	validators.emplace(Opcode::VALUE_INVOKE_POS, &valid::OpValueInvokePos);
-	validators.emplace(Opcode::VALUE_INVOKE_SIZE, &valid::OpValueInvokeSize);
-	validators.emplace(Opcode::VALUE_LIT_ARRAY, &valid::OpValueLitArray);
-	validators.emplace(Opcode::LIT_ARRAY_ELEM, &valid::OpLitArrayElem);
-	validators.emplace(Opcode::VALUE_LIT_BOOL, &valid::OpValueLitBool);
-	validators.emplace(Opcode::VALUE_LIT_FP, &valid::OpValueLitFloat);
-	validators.emplace(Opcode::VALUE_LIT_INT, &valid::OpValueLitInt);
-	validators.emplace(Opcode::VALUE_LIT_STR, &valid::OpValueLitStr);
-	validators.emplace(Opcode::VALUE_MEMBER, &valid::OpValueMember);
-	validators.emplace(Opcode::VALUE_NULL, &valid::OpValueNull);
-	validators.emplace(Opcode::VALUE_READ_VAR, &valid::OpValueReadVar);
-	validators.emplace(Opcode::VALUE_SIGN, &valid::OpValueSign);
-	validators.emplace(Opcode::VALUE_SUBARRAY, &valid::OpValueSubarray);
-	validators.emplace(Opcode::VALUE_UNSIGN, &valid::OpValueUnsign);
-	validators.emplace(Opcode::VALUE_VEC_SWIZZLE, &valid::OpValueVecSwizzle);
-	validators.emplace(Opcode::VALUE_ZERO, &valid::OpValueZero);
+	validators.emplace(Opcode::LABEL, &Validator::OpLabel);
+	validators.emplace(Opcode::JUMP, &Validator::OpJump);
+	validators.emplace(Opcode::JUMP_COND, &Validator::OpJumpCond);
+	validators.emplace(Opcode::LOOP, &Validator::OpLoop);
 
-	validators.emplace(Opcode::RETURN, &valid::OpReturn);
-	validators.emplace(Opcode::RETURN_VALUE, &valid::OpReturnValue);
-	validators.emplace(Opcode::DISCARD, &valid::OpDiscard);
+	validators.emplace(Opcode::ASSIGN, &Validator::OpAssign);
+	validators.emplace(Opcode::COMPARE, &Validator::OpCompare);
+
+	validators.emplace(Opcode::VALUE_CAST, &Validator::OpValueCast);
+	validators.emplace(Opcode::VALUE_CONSTRUCT, &Validator::OpValueConstruct);
+	validators.emplace(Opcode::CONSTRUCT_ARG, &Validator::OpConstructArg);
+	validators.emplace(Opcode::VALUE_DEREF, &Validator::OpValueDeref);
+	validators.emplace(Opcode::VALUE_EXPAND, &Validator::OpValueExpand);
+	validators.emplace(Opcode::VALUE_EXPR, &Validator::OpValueExpr);
+	validators.emplace(Opcode::VALUE_EXPR_UNARY, &Validator::OpValueExprUnary);
+	validators.emplace(Opcode::VALUE_INT_TO_FP, &Validator::OpValueIntToFP);
+	validators.emplace(Opcode::VALUE_INVOKE_POS, &Validator::OpValueInvokePos);
+	validators.emplace(Opcode::VALUE_INVOKE_SIZE, &Validator::OpValueInvokeSize);
+	validators.emplace(Opcode::VALUE_LIT_ARRAY, &Validator::OpValueLitArray);
+	validators.emplace(Opcode::LIT_ARRAY_ELEM, &Validator::OpLitArrayElem);
+	validators.emplace(Opcode::VALUE_LIT_BOOL, &Validator::OpValueLitBool);
+	validators.emplace(Opcode::VALUE_LIT_FP, &Validator::OpValueLitFloat);
+	validators.emplace(Opcode::VALUE_LIT_INT, &Validator::OpValueLitInt);
+	validators.emplace(Opcode::VALUE_LIT_STR, &Validator::OpValueLitStr);
+	validators.emplace(Opcode::VALUE_MEMBER, &Validator::OpValueMember);
+	validators.emplace(Opcode::VALUE_NULL, &Validator::OpValueNull);
+	validators.emplace(Opcode::VALUE_READ_VAR, &Validator::OpValueReadVar);
+	validators.emplace(Opcode::VALUE_SIGN, &Validator::OpValueSign);
+	validators.emplace(Opcode::VALUE_SUBARRAY, &Validator::OpValueSubarray);
+	validators.emplace(Opcode::VALUE_UNSIGN, &Validator::OpValueUnsign);
+	validators.emplace(Opcode::VALUE_VEC_SWIZZLE, &Validator::OpValueVecSwizzle);
+	validators.emplace(Opcode::VALUE_ZERO, &Validator::OpValueZero);
+
+	validators.emplace(Opcode::RETURN, &Validator::OpReturn);
+	validators.emplace(Opcode::RETURN_VALUE, &Validator::OpReturnValue);
+	validators.emplace(Opcode::DISCARD, &Validator::OpDiscard);
 
 }
 
@@ -87,7 +92,7 @@ bool Validator::validate(in<Assembler> codeAsm)
 	auto const codeGenErr = "This is generally a code generation error. You should file an issue on the official Caliburn GitHub repo";
 	auto const& is = codeAsm.getCode();
 	auto const lvl = settings->vLvl;
-	
+
 	if (lvl == ValidationLevel::NONE)
 	{
 		return true;
@@ -132,7 +137,7 @@ bool Validator::validate(in<Assembler> codeAsm)
 		{
 			if (auto fn = validators.find(i.op); fn != validators.end())
 			{
-				auto const reason = (*fn->second)(lvl, i, codeAsm);
+				auto const reason = (*this.*fn->second)(lvl, i, codeAsm);
 
 				if (reason != ValidReason::VALID)
 				{
@@ -160,7 +165,7 @@ bool Validator::validate(in<Assembler> codeAsm)
 			{
 				std::cout << "Op " << SCAST<int>(i.op) << " does not have a validator function\n";
 			}
-			
+
 		}
 		catch (std::exception e)
 		{
@@ -180,7 +185,7 @@ bool Validator::validate(in<Assembler> codeAsm)
 
 			if (i.index == 0)
 			{
-				msg.push_back(std::string(OP_NAMES[(int)i.op]));
+				msg.push_back(std::string(OP_NAMES.at(i.op)));
 			}
 			else
 			{
@@ -193,7 +198,7 @@ bool Validator::validate(in<Assembler> codeAsm)
 
 			e->note(codeGenErr);
 			e->note(i.toStr());
-			
+
 		}
 
 	}
@@ -201,20 +206,18 @@ bool Validator::validate(in<Assembler> codeAsm)
 	return errors->empty();
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpUnknown)
+CLLR_VALID_IMPL(OpUnknown)
 {
-	CLLR_VALID_OP(Opcode::UNKNOWN);
 	CLLR_VALID_NO_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
 	CLLR_VALID_NO_REFS;
-	
+
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpShaderStage)
+CLLR_VALID_IMPL(OpShaderStage)
 {
-	CLLR_VALID_OP(Opcode::SHADER_STAGE);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -225,9 +228,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpShaderStage)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpShaderStageEnd)
+CLLR_VALID_IMPL(OpShaderStageEnd)
 {
-	CLLR_VALID_OP(Opcode::SHADER_STAGE_END);
 	CLLR_VALID_NO_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -236,9 +238,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpShaderStageEnd)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpFunction)
+CLLR_VALID_IMPL(OpFunction)
 {
-	CLLR_VALID_OP(Opcode::FUNCTION);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -249,9 +250,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpFunction)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpVarFuncArg)
+CLLR_VALID_IMPL(OpVarFuncArg)
 {
-	CLLR_VALID_OP(Opcode::VAR_FUNC_ARG);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -262,9 +262,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpVarFuncArg)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpFunctionEnd)
+CLLR_VALID_IMPL(OpFunctionEnd)
 {
-	CLLR_VALID_OP(Opcode::FUNCTION_END);
 	CLLR_VALID_NO_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -275,23 +274,20 @@ CLLR_INSTRUCT_VALIDATE(valid::OpFunctionEnd)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpVarLocal)
+CLLR_VALID_IMPL(OpVarLocal)
 {
-	CLLR_VALID_OP(Opcode::VAR_LOCAL);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
 	CLLR_VALID_MAX_REFS(2);
 
 	CLLR_VALID_TYPE(i.refs[0]);
-	CLLR_VALID_OPT_VALUE(i.refs[1]);
 
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpVarGlobal)
+CLLR_VALID_IMPL(OpVarGlobal)
 {
-	CLLR_VALID_OP(Opcode::VAR_GLOBAL);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -303,9 +299,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpVarGlobal)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpVarShaderIn)
+CLLR_VALID_IMPL(OpVarShaderIn)
 {
-	CLLR_VALID_OP(Opcode::VAR_SHADER_IN);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -316,9 +311,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpVarShaderIn)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpVarShaderOut)
+CLLR_VALID_IMPL(OpVarShaderOut)
 {
-	CLLR_VALID_OP(Opcode::VAR_SHADER_OUT);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -327,9 +321,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpVarShaderOut)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpVarDescriptor)
+CLLR_VALID_IMPL(OpVarDescriptor)
 {
-	CLLR_VALID_OP(Opcode::VAR_DESCRIPTOR);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -340,9 +333,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpVarDescriptor)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpCall)
+CLLR_VALID_IMPL(OpCall)
 {
-	CLLR_VALID_OP(Opcode::CALL);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -364,9 +356,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpCall)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpCallArg)
+CLLR_VALID_IMPL(OpCallArg)
 {
-	CLLR_VALID_OP(Opcode::CALL_ARG);
 	CLLR_VALID_NO_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_MAX_REFS(2);
@@ -377,9 +368,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpCallArg)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpTypeVoid)
+CLLR_VALID_IMPL(OpTypeVoid)
 {
-	CLLR_VALID_OP(Opcode::TYPE_VOID);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_REFS;
@@ -388,9 +378,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypeVoid)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpTypeFloat)
+CLLR_VALID_IMPL(OpTypeFloat)
 {
-	CLLR_VALID_OP(Opcode::TYPE_FLOAT);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_REFS;
@@ -410,9 +399,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypeFloat)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpTypeIntSign)
+CLLR_VALID_IMPL(OpTypeIntSign)
 {
-	CLLR_VALID_OP(Opcode::TYPE_INT_SIGN);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -433,9 +421,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypeIntSign)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpTypeIntUnsign)
+CLLR_VALID_IMPL(OpTypeIntUnsign)
 {
-	CLLR_VALID_OP(Opcode::TYPE_INT_UNSIGN);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -456,9 +443,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypeIntUnsign)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpTypeArray)
+CLLR_VALID_IMPL(OpTypeArray)
 {
-	CLLR_VALID_OP(Opcode::TYPE_ARRAY);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -470,13 +456,12 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypeArray)
 	{
 		return ValidReason::INVALID_OPERAND;
 	}
-	
+
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpTypeVector)
+CLLR_VALID_IMPL(OpTypeVector)
 {
-	CLLR_VALID_OP(Opcode::TYPE_VECTOR);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -484,14 +469,12 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypeVector)
 
 	CLLR_VALID_TYPE(i.refs[0]);
 
-	CLLR_VALID_OP_RANGE(i.operands[0], caliburn::MIN_VECTOR_LEN, caliburn::MAX_VECTOR_LEN);
-	
+
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpTypeMatrix)
+CLLR_VALID_IMPL(OpTypeMatrix)
 {
-	CLLR_VALID_OP(Opcode::TYPE_MATRIX);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_MAX_OPS(2);
@@ -504,9 +487,22 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypeMatrix)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpTypeStruct)
+CLLR_VALID_IMPL(OpTypeTexture)
 {
-	CLLR_VALID_OP(Opcode::TYPE_STRUCT);
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_MAX_OPS(2);
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_OP_NONZERO(i.operands[0]);
+
+	//TODO consider matrix semantics
+
+	return ValidReason::VALID;
+}
+
+CLLR_VALID_IMPL(OpTypeStruct)
+{
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -521,9 +517,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypeStruct)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpTypeBool)
+CLLR_VALID_IMPL(OpTypeBool)
 {
-	CLLR_VALID_OP(Opcode::TYPE_BOOL);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -532,9 +527,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypeBool)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpTypePtr)
+CLLR_VALID_IMPL(OpTypePtr)
 {
-	CLLR_VALID_OP(Opcode::TYPE_PTR);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -545,19 +539,17 @@ CLLR_INSTRUCT_VALIDATE(valid::OpTypePtr)
 	return ValidReason::VALID;
 }
 
-//TOOD oops, I haven't begun to implement this yet
-CLLR_INSTRUCT_VALIDATE(valid::OpTypeTuple)
+//TOOD oops, I haven'typeHint begun to implement this yet
+CLLR_VALID_IMPL(OpTypeTuple)
 {
-	CLLR_VALID_OP(Opcode::TYPE_TUPLE);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpStructMember)
+CLLR_VALID_IMPL(OpStructMember)
 {
-	CLLR_VALID_OP(Opcode::STRUCT_MEMBER);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -569,9 +561,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpStructMember)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpStructEnd)
+CLLR_VALID_IMPL(OpStructEnd)
 {
-	CLLR_VALID_OP(Opcode::STRUCT_END);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -582,9 +573,39 @@ CLLR_INSTRUCT_VALIDATE(valid::OpStructEnd)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpLabel)
+CLLR_VALID_IMPL(OpScopeBegin)
 {
-	CLLR_VALID_OP(Opcode::LABEL);
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_NO_OPS;
+	CLLR_VALID_NO_REFS;
+
+	scopes.push(i.index);
+
+	return ValidReason::VALID;
+}
+
+CLLR_VALID_IMPL(OpScopeEnd)
+{
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_NO_OUT;
+	CLLR_VALID_NO_OPS;
+	CLLR_VALID_MAX_REFS(1);
+
+	CLLR_VALID_REF(i.refs[0], Opcode::SCOPE_BEGIN);
+
+	if (scopes.top() != i.refs[0])
+	{
+		return ValidReason::INVALID_MISC;
+	}
+
+	scopes.pop();
+
+	return ValidReason::VALID;
+}
+
+CLLR_VALID_IMPL(OpLabel)
+{
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -593,9 +614,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpLabel)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpJump)
+CLLR_VALID_IMPL(OpJump)
 {
-	CLLR_VALID_OP(Opcode::JUMP);
 	CLLR_VALID_NO_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -606,9 +626,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpJump)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpJumpCond)
+CLLR_VALID_IMPL(OpJumpCond)
 {
-	CLLR_VALID_OP(Opcode::JUMP_COND);
 	CLLR_VALID_NO_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -620,9 +639,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpJumpCond)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpLoop)
+CLLR_VALID_IMPL(OpLoop)
 {
-	CLLR_VALID_OP(Opcode::LOOP);
 	CLLR_VALID_NO_ID;
 	CLLR_VALID_NO_OUT;
 	//TODO recall loop semantics
@@ -632,9 +650,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpLoop)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpAssign)
+CLLR_VALID_IMPL(OpAssign)
 {
-	CLLR_VALID_OP(Opcode::ASSIGN);
 	CLLR_VALID_NO_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -648,13 +665,12 @@ CLLR_INSTRUCT_VALIDATE(valid::OpAssign)
 	{
 		return ValidReason::INVALID_MISC;
 	}
-	
+
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpCompare)
+CLLR_VALID_IMPL(OpCompare)
 {
-	CLLR_VALID_OP(Opcode::COMPARE);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_NO_OPS;
@@ -666,9 +682,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpCompare)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueCast)
+CLLR_VALID_IMPL(OpValueCast)
 {
-	CLLR_VALID_OP(Opcode::VALUE_CAST);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_NO_OPS;
@@ -680,9 +695,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueCast)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueConstruct)
+CLLR_VALID_IMPL(OpValueConstruct)
 {
-	CLLR_VALID_OP(Opcode::VALUE_CONSTRUCT);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -691,9 +705,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueConstruct)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpConstructArg)
+CLLR_VALID_IMPL(OpConstructArg)
 {
-	CLLR_VALID_OP(Opcode::CONSTRUCT_ARG);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -702,9 +715,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpConstructArg)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueDeref)
+CLLR_VALID_IMPL(OpValueDeref)
 {
-	CLLR_VALID_OP(Opcode::VALUE_DEREF);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_NO_OPS;
@@ -713,9 +725,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueDeref)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueExpand)
+CLLR_VALID_IMPL(OpValueExpand)
 {
-	CLLR_VALID_OP(Opcode::VALUE_EXPAND);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_NO_OPS;
@@ -724,9 +735,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueExpand)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueExpr)
+CLLR_VALID_IMPL(OpValueExpr)
 {
-	CLLR_VALID_OP(Opcode::VALUE_EXPR);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -738,9 +748,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueExpr)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueExprUnary)
+CLLR_VALID_IMPL(OpValueExprUnary)
 {
-	CLLR_VALID_OP(Opcode::VALUE_EXPR_UNARY);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -751,9 +760,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueExprUnary)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueIntToFP)
+CLLR_VALID_IMPL(OpValueIntToFP)
 {
-	CLLR_VALID_OP(Opcode::VALUE_INT_TO_FP);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_NO_OPS;
@@ -764,9 +772,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueIntToFP)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueInvokePos)
+CLLR_VALID_IMPL(OpValueInvokePos)
 {
-	CLLR_VALID_OP(Opcode::VALUE_INVOKE_POS);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -775,9 +782,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueInvokePos)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueInvokeSize)
+CLLR_VALID_IMPL(OpValueInvokeSize)
 {
-	CLLR_VALID_OP(Opcode::VALUE_INVOKE_SIZE);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -786,9 +792,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueInvokeSize)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueLitArray)
+CLLR_VALID_IMPL(OpValueLitArray)
 {
-	CLLR_VALID_OP(Opcode::VALUE_LIT_ARRAY);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -797,9 +802,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueLitArray)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpLitArrayElem)
+CLLR_VALID_IMPL(OpLitArrayElem)
 {
-	CLLR_VALID_OP(Opcode::LIT_ARRAY_ELEM);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -811,9 +815,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpLitArrayElem)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueLitBool)
+CLLR_VALID_IMPL(OpValueLitBool)
 {
-	CLLR_VALID_OP(Opcode::VALUE_LIT_BOOL);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -822,9 +825,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueLitBool)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueLitFloat)
+CLLR_VALID_IMPL(OpValueLitFloat)
 {
-	CLLR_VALID_OP(Opcode::VALUE_LIT_FP);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_MAX_OPS(2);
@@ -833,9 +835,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueLitFloat)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueLitInt)
+CLLR_VALID_IMPL(OpValueLitInt)
 {
-	CLLR_VALID_OP(Opcode::VALUE_LIT_INT);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_MAX_OPS(2);
@@ -844,9 +845,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueLitInt)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueLitStr)
+CLLR_VALID_IMPL(OpValueLitStr)
 {
-	CLLR_VALID_OP(Opcode::VALUE_LIT_STR);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -856,9 +856,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueLitStr)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueMember)
+CLLR_VALID_IMPL(OpValueMember)
 {
-	CLLR_VALID_OP(Opcode::VALUE_MEMBER);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_MAX_OPS(1);
@@ -869,9 +868,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueMember)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueNull)
+CLLR_VALID_IMPL(OpValueNull)
 {
-	CLLR_VALID_OP(Opcode::VALUE_NULL);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_NO_OPS;
@@ -880,9 +878,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueNull)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueReadVar)
+CLLR_VALID_IMPL(OpValueReadVar)
 {
-	CLLR_VALID_OP(Opcode::VALUE_READ_VAR);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_NO_OPS;
@@ -893,9 +890,19 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueReadVar)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueSign)
+CLLR_VALID_IMPL(OpValueSample)
 {
-	CLLR_VALID_OP(Opcode::VALUE_SIGN);
+	CLLR_VALID_HAS_ID;
+	CLLR_VALID_HAS_OUT;
+
+	CLLR_VALID_VALUE(i.refs[0]);
+	CLLR_VALID_VALUE(i.refs[1]);
+
+	return ValidReason::VALID;
+}
+
+CLLR_VALID_IMPL(OpValueSign)
+{
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_NO_OPS;
@@ -906,9 +913,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueSign)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueSubarray)
+CLLR_VALID_IMPL(OpValueSubarray)
 {
-	CLLR_VALID_OP(Opcode::VALUE_SUBARRAY);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_NO_OPS;
@@ -916,13 +922,12 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueSubarray)
 
 	CLLR_VALID_VALUE(i.refs[0]);
 	CLLR_VALID_VALUE(i.refs[1]);
-	
+
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueUnsign)
+CLLR_VALID_IMPL(OpValueUnsign)
 {
-	CLLR_VALID_OP(Opcode::VALUE_UNSIGN);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_NO_OPS;
@@ -933,9 +938,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueUnsign)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueVecSwizzle)
+CLLR_VALID_IMPL(OpValueVecSwizzle)
 {
-	CLLR_VALID_OP(Opcode::VALUE_VEC_SWIZZLE);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_OUT_TYPE(Opcode::TYPE_VECTOR);
 	CLLR_VALID_MAX_REFS(1);
@@ -954,9 +958,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueVecSwizzle)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpValueZero)
+CLLR_VALID_IMPL(OpValueZero)
 {
-	CLLR_VALID_OP(Opcode::VALUE_ZERO);
 	CLLR_VALID_HAS_ID;
 	CLLR_VALID_HAS_OUT;
 	CLLR_VALID_NO_OPS;
@@ -965,9 +968,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpValueZero)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpReturn)
+CLLR_VALID_IMPL(OpReturn)
 {
-	CLLR_VALID_OP(Opcode::RETURN);
 	CLLR_VALID_NO_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -976,9 +978,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpReturn)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpReturnValue)
+CLLR_VALID_IMPL(OpReturnValue)
 {
-	CLLR_VALID_OP(Opcode::RETURN_VALUE);
 	CLLR_VALID_NO_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;
@@ -989,9 +990,8 @@ CLLR_INSTRUCT_VALIDATE(valid::OpReturnValue)
 	return ValidReason::VALID;
 }
 
-CLLR_INSTRUCT_VALIDATE(valid::OpDiscard)
+CLLR_VALID_IMPL(OpDiscard)
 {
-	CLLR_VALID_OP(Opcode::DISCARD);
 	CLLR_VALID_NO_ID;
 	CLLR_VALID_NO_OUT;
 	CLLR_VALID_NO_OPS;

@@ -78,7 +78,7 @@ namespace caliburn
             std::vector<SpvOp> validOps;
             //the actual code this section contains
             std::vector<uint32_t> code;
-            
+
             //SSA to variable data
             std::map<SSA, VarData> varMeta;
 
@@ -97,6 +97,11 @@ namespace caliburn
                     std::sort(validOps.begin(), validOps.end());
                 }
 
+            }
+
+            SpvOp getLastOp() const
+            {
+                return lastOp;
             }
 
             /*

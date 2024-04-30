@@ -91,6 +91,8 @@ namespace caliburn
 
 		std::vector<sptr<Error>> errors;
 
+		ErrorHandler(CompileStage s) : stage(s), settings(new_sptr<CompilerSettings>()) {}
+
 		ErrorHandler(CompileStage s, sptr<const CompilerSettings> cs) : stage(s), settings(cs) {}
 
 		bool empty() const

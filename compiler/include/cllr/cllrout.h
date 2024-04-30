@@ -23,10 +23,14 @@ namespace caliburn
 		*/
 		struct OutAssembler
 		{
+		protected:
+			sptr<const CompilerSettings> settings;
+		public:
 			const uptr<ErrorHandler> errors;
 			const HostTarget target;
 
-			OutAssembler(sptr<const CompilerSettings> cs, HostTarget t) : target(t), errors(new_uptr<ErrorHandler>(CompileStage::OUT_EMIT, cs)) {}
+			OutAssembler(sptr<const CompilerSettings> cs, HostTarget t) :
+				settings(cs), target(t), errors(new_uptr<ErrorHandler>(CompileStage::OUT_EMIT, cs)) {}
 			virtual ~OutAssembler() {}
 
 			virtual std::vector<uint8_t> translateCLLR(in<cllr::Assembler> cllrAsm) = 0;

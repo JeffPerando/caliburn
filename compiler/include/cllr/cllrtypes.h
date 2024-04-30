@@ -26,12 +26,12 @@ namespace caliburn
 
 			TypeCheckResult typeCheck(sptr<const LowType> target, out<cllr::SSA> fnID, Operator op = Operator::NONE) const override = 0;
 
-			bool addMember(std::string name, sptr<const LowType> type) override
+			bool addMember(in<std::string> name, sptr<const LowType> type) override
 			{
 				return false;
 			}
 
-			LowMember getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const override
+			LowMember getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const override
 			{
 				return LowMember();
 			}
@@ -41,12 +41,17 @@ namespace caliburn
 				return std::vector<std::string>();
 			}
 
-			bool setMemberFns(std::string name, sptr<FunctionGroup> fn) override
+			bool addMemberFn(sptr<Function> fn) override
 			{
 				return false;
 			}
 
-			sptr<Function> getMemberFn(std::string name, in<std::vector<TypedSSA>> argTypes) const override
+			bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) override
+			{
+				return false;
+			}
+
+			sptr<Function> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
 			{
 				return nullptr;
 			}
@@ -112,12 +117,12 @@ namespace caliburn
 				return TypeCheckResult::INCOMPATIBLE;
 			}
 
-			bool addMember(std::string name, sptr<const LowType> type) override
+			bool addMember(in<std::string> name, sptr<const LowType> type) override
 			{
 				return false;
 			}
 
-			LowMember getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const override
+			LowMember getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const override
 			{
 				return LowMember();
 			}
@@ -127,12 +132,17 @@ namespace caliburn
 				return std::vector<std::string>();
 			}
 
-			bool setMemberFns(std::string name, sptr<FunctionGroup> fn) override
+			bool addMemberFn(sptr<Function> fn) override
 			{
 				return false;
 			}
 
-			sptr<Function> getMemberFn(std::string name, in<std::vector<TypedSSA>> argTypes) const override
+			bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) override
+			{
+				return false;
+			}
+
+			sptr<Function> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
 			{
 				return nullptr;
 			}
@@ -163,24 +173,29 @@ namespace caliburn
 				return innerType->typeCheck(target, fnID, op);
 			}
 
-			bool addMember(std::string name, sptr<const LowType> type) override
+			bool addMember(in<std::string> name, sptr<const LowType> type) override
 			{
 				return false;
 			}
 
-			LowMember getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const override;
+			LowMember getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const override;
 
 			std::vector<std::string> getMembers() const override
 			{
 				return {"x", "y", "z", "w"};
 			}
 
-			bool setMemberFns(std::string name, sptr<FunctionGroup> fn) override
+			bool addMemberFn(sptr<Function> fn) override
 			{
 				return false;
 			}
 
-			sptr<Function> getMemberFn(std::string name, in<std::vector<TypedSSA>> argTypes) const override
+			bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) override
+			{
+				return false;
+			}
+
+			sptr<Function> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
 			{
 				return nullptr;
 			}
@@ -212,12 +227,12 @@ namespace caliburn
 				return innerType->typeCheck(target, fnID, op);
 			}
 
-			bool addMember(std::string name, sptr<const LowType> type) override
+			bool addMember(in<std::string> name, sptr<const LowType> type) override
 			{
 				return false;
 			}
 
-			LowMember getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const override
+			LowMember getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const override
 			{
 				return LowMember();
 			}
@@ -227,12 +242,17 @@ namespace caliburn
 				return std::vector<std::string>();
 			}
 
-			bool setMemberFns(std::string name, sptr<FunctionGroup> fn) override
+			bool addMemberFn(sptr<Function> fn) override
 			{
 				return false;
 			}
 
-			sptr<Function> getMemberFn(std::string name, in<std::vector<TypedSSA>> argTypes) const override
+			bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) override
+			{
+				return false;
+			}
+
+			sptr<Function> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
 			{
 				return nullptr;
 			}
@@ -262,12 +282,13 @@ namespace caliburn
 
 			TypeCheckResult typeCheck(sptr<const LowType> target, out<cllr::SSA> fnID, Operator op = Operator::NONE) const override;
 
-			bool addMember(std::string name, sptr<const LowType> type) override;
-			LowMember getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const override;
+			bool addMember(in<std::string> name, sptr<const LowType> type) override;
+			LowMember getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const override;
 			std::vector<std::string> getMembers() const override;
 
-			bool setMemberFns(std::string name, sptr<FunctionGroup> fn) override;
-			sptr<Function> getMemberFn(std::string name, in<std::vector<TypedSSA>> argTypes) const override;
+			bool addMemberFn(sptr<Function> fn) override;
+			bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) override;
+			sptr<Function> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override;
 
 		};
 
@@ -295,12 +316,12 @@ namespace caliburn
 				return TypeCheckResult::INCOMPATIBLE;
 			}
 
-			bool addMember(std::string name, sptr<const LowType> type) override
+			bool addMember(in<std::string> name, sptr<const LowType> type) override
 			{
 				return false;
 			}
 
-			LowMember getMember(SSA objID, std::string name, out<cllr::Assembler> codeAsm) const override
+			LowMember getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const override
 			{
 				return LowMember();
 			}
@@ -310,8 +331,8 @@ namespace caliburn
 				return std::vector<std::string>();
 			}
 
-			bool setMemberFns(std::string name, sptr<FunctionGroup> fn) override;
-			sptr<Function> getMemberFn(std::string name, in<std::vector<TypedSSA>> argTypes) const override;
+			bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) override;
+			sptr<Function> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override;
 
 		};
 

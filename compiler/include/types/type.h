@@ -34,7 +34,8 @@ namespace caliburn
 		ARRAY,
 		STRUCT,
 		BOOLEAN,
-		POINTER
+		POINTER,
+		TEXTURE
 		//TUPLE
 		//STRING
 
@@ -50,7 +51,6 @@ namespace caliburn
 		BOOL_LITERAL,
 		ARRAY_LITERAL,
 		EXPRESSION,
-		INHERITANCE_CHECK,
 		CAST,
 		SUB_ARRAY,
 		VAR_READ,
@@ -134,6 +134,8 @@ namespace caliburn
 
 		sptr<cllr::LowType> resolve(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm);
 
+		static sptr<ParsedType> parse(in<std::string> str);
+
 	};
 
 	struct ParsedVar
@@ -153,6 +155,8 @@ namespace caliburn
 		cllr::TypedSSA id;
 
 	public:
+		const std::string name;
+
 		StmtModifiers mods = {};
 		sptr<Token> first = nullptr;
 		sptr<Token> nameTkn = nullptr;
@@ -161,8 +165,9 @@ namespace caliburn
 		sptr<Value> initValue = nullptr;
 		bool isConst = false;
 
-		Variable() = default;
-		Variable(in<ParsedVar> v)
+		Variable(in<std::string> n) : name(n) {}
+
+		Variable(in<ParsedVar> v) : name(v.name->str)
 		{
 			mods = v.mods;
 			isConst = v.isConst;
@@ -172,6 +177,7 @@ namespace caliburn
 			initValue = v.initValue;
 
 		}
+
 		virtual ~Variable() {}
 
 		sptr<Token> firstTkn() const override
@@ -199,8 +205,7 @@ namespace caliburn
 	public:
 		const TypeCategory category;
 		const std::string canonName;
-		//sptr<BaseType> superType = nullptr;
-
+		
 	public:
 		BaseType(TypeCategory c, in<std::string> n) :
 			category(c), canonName(n) {}
@@ -217,31 +222,7 @@ namespace caliburn
 		}
 
 		virtual sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) = 0;
-
-		/* TODO reconsider inheritance
-		sptr<BaseType> getSuper()
-		{
-			return superType;
-		}
-
-		bool isSuperOf(sptr<BaseType> type)
-		{
-			ptr<BaseType> head = this;
-
-			while (head)
-			{
-				if (type.get() == head)
-				{
-					return true;
-				}
-
-				head = head->superType.get();
-
-			}
-
-			return false;
-		}
-		*/
+		
 	};
 
 }

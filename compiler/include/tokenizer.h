@@ -6,7 +6,6 @@
 
 #include "basic.h"
 #include "buffer.h"
-#include "error.h"
 #include "syntax.h"
 
 namespace caliburn
@@ -47,13 +46,11 @@ namespace caliburn
 		}
 
 	public:
-		const uptr<ErrorHandler> errors;
-
 		sptr<TextDoc> doc;
 
 		//TODO use 32-bit wide chars for UTF-8 support
 		//or, y'know, find a UTF-8 library (NOT BOOST)
-		Tokenizer(sptr<const CompilerSettings> cs, sptr<TextDoc> doc);
+		Tokenizer(sptr<TextDoc> doc);
 
 		virtual ~Tokenizer() {}
 

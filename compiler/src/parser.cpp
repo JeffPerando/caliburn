@@ -1518,19 +1518,7 @@ sptr<Value> Parser::parseTerm()
 			break;
 		}
 
-		if (keywd->str == "is")
-		{
-			tkns.consume();
-
-			auto isa = new_sptr<IsAValue>();
-
-			isa->val = v;
-			isa->chkType = parseTypeName();
-
-			v = isa;
-
-		}
-		else if (keywd->str == "as")
+		if (keywd->str == "as")
 		{
 			tkns.consume();
 
@@ -1825,6 +1813,7 @@ std::vector<sptr<Variable>> Parser::parseLocalVars()
 sptr<Variable> Parser::parseGlobalVar()
 {
 	sptr<Token> first = tkns.cur();
+	sptr<ParsedType> typeHint = nullptr;
 
 	if (first->type != TokenType::KEYWORD)
 	{
@@ -1836,13 +1825,9 @@ sptr<Variable> Parser::parseGlobalVar()
 		return nullptr;
 	}
 
-	auto v = new_sptr<GlobalVariable>();
-
-	v->first = first;
-
 	if (tkns.cur()->str == ":")
 	{
-		v->typeHint = parseTypeName();
+		typeHint = parseTypeName();
 	}
 
 	sptr<Token> name = tkns.cur();
@@ -1853,7 +1838,11 @@ sptr<Variable> Parser::parseGlobalVar()
 		return nullptr;
 	}
 
+	auto v = new_sptr<GlobalVariable>(name->str);
+
+	v->first = first;
 	v->nameTkn = name;
+	v->typeHint = typeHint;
 
 	sptr<Token> eqSign = tkns.next();
 
@@ -1923,7 +1912,7 @@ sptr<Variable> Parser::parseMemberVar()
 
 	tkns.consume();
 
-	auto v = new_sptr<MemberVariable>();
+	auto v = new_sptr<MemberVariable>(name->str);
 
 	v->mods = mods;
 	v->first = start;
@@ -2098,33 +2087,34 @@ std::vector<sptr<ParsedVar>> Parser::parseMemberVarLike()
 	return vars;
 }
 
-std::vector<uptr<ParsedFnArg>> Parser::parseFnArgs()
+std::vector<FnArg> Parser::parseFnArgs()
 {
-	std::vector<uptr<ParsedFnArg>> fnArgs;
+	std::vector<FnArg> fnArgs;
 
 	while (tkns.hasCur())
 	{
 		auto argType = parseTypeName();
+		auto name = tkns.cur();
 
 		if (argType == nullptr)
 		{
 			break;
 		}
 
-		auto arg = new_uptr<ParsedFnArg>();
-
-		arg->typeHint = argType;
-		arg->name = tkns.cur();
-
-		if (arg->name->type != TokenType::IDENTIFIER)
+		if (name->type != TokenType::IDENTIFIER)
 		{
-			errors->err("Not a valid argument name", arg->name);
+			errors->err("Not a valid argument name", name);
 			break;
 		}
 
 		tkns.consume();
 
-		fnArgs.push_back(std::move(arg));
+		auto arg = FnArg();
+
+		arg.typeHint = argType;
+		arg.name = name->str;
+
+		fnArgs.push_back(arg);
 
 		if (tkns.cur()->type == TokenType::COMMA)
 		{

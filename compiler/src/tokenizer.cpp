@@ -8,7 +8,7 @@
 
 using namespace caliburn;
 
-Tokenizer::Tokenizer(sptr<const CompilerSettings> cs, sptr<TextDoc> t) : doc(t), buf(std::vector<char>(t->text.begin(), t->text.end())), errors(new_uptr<ErrorHandler>(CompileStage::TOKENIZER, cs))
+Tokenizer::Tokenizer(sptr<TextDoc> t) : doc(t), buf(std::vector<char>(t->text.begin(), t->text.end()))
 {
 	//I'm so sorry for this.
 
@@ -64,6 +64,11 @@ Tokenizer::Tokenizer(sptr<const CompilerSettings> cs, sptr<TextDoc> t) : doc(t),
 
 CharType Tokenizer::getType(char chr) const
 {
+	if (chr > 127)
+	{
+		return CharType::IDENTIFIER;
+	}
+
 	return asciiTypes[chr];
 }
 
@@ -302,15 +307,6 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 		const TextPos startPos = pos;
 		const char current = buf.cur();
 
-		//Caliburn currently only supports ASCII
-		if (current > 127)
-		{
-			errors->err("Unidentifiable character", makeCharTkn(TokenType::UNKNOWN));
-			buf.consume();
-			pos.move();
-			continue;
-		}
-
 		const CharType type = getType(current);
 
 		auto tknType = TokenType::UNKNOWN;
@@ -381,11 +377,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 			if (intLen == 0 && wordLen == 0)
 			{
-				//I don't know how this could be possible. Maybe a code regression?
-				errors->err("Zero-width identifier/integer found", makeCharTkn(TokenType::UNKNOWN));
-				buf.consume();
-				pos.move();
-				continue;
+				throw std::runtime_error((std::stringstream() << "Zero width identifier found at " << pos.toStr()).str());
 			}
 
 			if (wordLen > intLen)
@@ -479,8 +471,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 			if (!foundDelim)
 			{
-				errors->err("Unescaped string", delimTkn);
-				break;
+				throw std::runtime_error((std::stringstream() << "Unescaped string starts at " << delimTkn->pos.toStr()).str());
 			}
 
 			tknType = TokenType::LITERAL_STR;

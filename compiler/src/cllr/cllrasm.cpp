@@ -117,6 +117,12 @@ SSA Assembler::pushNew(out<Instruction> ins)
 	return ins.index;
 }
 
+TypedSSA Assembler::pushValue(out<Instruction> ins, sptr<LowType> type)
+{
+	ins.outType = type->id;
+	return TypedSSA(type, pushNew(ins));
+}
+
 sptr<LowType> Assembler::pushType(out<Instruction> ins)
 {
 	//Structs can have identical operands, so ignore them
@@ -152,6 +158,7 @@ sptr<LowType> Assembler::pushType(out<Instruction> ins)
 		case Opcode::TYPE_MATRIX: t = new_sptr<LowMatrix>(id, ins.operands[0], ins.operands[1], getType(ins.refs[0])); break;
 		case Opcode::TYPE_STRUCT: t = new_sptr<LowStruct>(id); break;
 		case Opcode::TYPE_BOOL: t = new_sptr<LowBool>(id); break;
+		case Opcode::TYPE_TEXTURE: t = new_sptr<LowTexture>(id, SCAST<TextureKind>(ins.operands[0])); break;
 		//case Opcode::TYPE_PTR: t = new_sptr<LowPointer>(id);
 		//case Opcode::TYPE_TUPLE: t = new_sptr<LowTuple>(id);
 		default: break;//TODO complain

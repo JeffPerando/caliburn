@@ -3,6 +3,9 @@
 
 #include "ast/ast.h"
 
+#include "parser.h"
+#include "tokenizer.h"
+
 using namespace caliburn;
 
 void ParsedType::prettyPrint(out<std::stringstream> ss) const
@@ -69,4 +72,27 @@ sptr<cllr::LowType> ParsedType::resolve(sptr<const SymbolTable> table, out<cllr:
 	}
 
 	return resultType;
+}
+
+sptr<ParsedType> ParsedType::parse(in<std::string> str)
+{
+	//Not a fan of doing this, BUT the code reuse is super easy
+	Tokenizer t(new_sptr<TextDoc>(str));
+	Parser p(t.tokenize());
+
+	auto pt = p.parseTypeName();
+
+	if (p.errors->empty())
+	{
+		//TODO do something with errors
+		return nullptr;
+	}
+
+	if (p.hasTknsRem())
+	{
+		//TODO complain
+		return nullptr;
+	}
+
+	return pt;
 }

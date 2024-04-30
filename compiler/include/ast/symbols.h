@@ -55,65 +55,14 @@ namespace caliburn
 		SymbolTable(sptr<const SymbolTable> p) : parent(p) {}
 		virtual ~SymbolTable() {}
 
-		bool add(in<std::string> symName, in<Symbol> sym)
-		{
-			if (symbols.find(symName) != symbols.end())
-			{
-				return false;
-			}
+		void reparent(sptr<const SymbolTable> p);
 
-			symbols.emplace(symName, sym);
+		bool add(in<std::string> symName, in<Symbol> sym);
+		bool addType(sptr<BaseType> t);
 
-			return true;
-		}
-
-		Symbol find(in<std::string> symName) const
-		{
-			auto result = symbols.find(symName);
-
-			if (result != symbols.end())
-			{
-				return result->second;
-			}
-			
-			if (parent != nullptr)
-			{
-				return parent->find(symName);
-			}
-
-			return Symbol();
-		}
-
-		bool has(in<std::string> symName) const
-		{
-			return !std::holds_alternative<std::monostate>(find(symName));
-		}
-
-		bool isChildOf(sptr<SymbolTable> table) const
-		{
-			if (table == nullptr)
-			{
-				return false;
-			}
-
-			if (parent == nullptr)
-			{
-				return table.get() == this;
-			}
-
-			if (table == parent)
-			{
-				return true;
-			}
-
-			return parent->isChildOf(table);
-		}
-
-		//TODO does not seem to work
-		void reparent(sptr<const SymbolTable> p)
-		{
-			//parent = p;
-		}
+		Symbol find(in<std::string> symName) const;
+		bool has(in<std::string> symName) const;
+		bool isChildOf(sptr<SymbolTable> table) const;
 
 	};
 

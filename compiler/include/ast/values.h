@@ -1,4 +1,5 @@
 
+
 #pragma once
 
 #include "basic.h"
@@ -211,40 +212,6 @@ namespace caliburn
 		bool isCompileTimeConst() const override
 		{
 			return lValue->isCompileTimeConst() && rValue->isCompileTimeConst();
-		}
-
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
-
-	};
-
-	struct IsAValue : Value
-	{
-		sptr<Value> val = nullptr;
-		sptr<ParsedType> chkType = nullptr;
-
-		IsAValue() : Value(ValueType::INHERITANCE_CHECK) {}
-		virtual ~IsAValue() {}
-
-		sptr<Token> firstTkn() const override
-		{
-			return val->firstTkn();
-		}
-
-		sptr<Token> lastTkn() const override
-		{
-			return chkType->lastTkn();
-		}
-
-		void prettyPrint(out<std::stringstream> ss) const override;
-
-		bool isLValue() const override
-		{
-			return false;
-		}
-
-		bool isCompileTimeConst() const override
-		{
-			return val->isCompileTimeConst();
 		}
 
 		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;

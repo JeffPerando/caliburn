@@ -40,7 +40,16 @@ namespace caliburn
 
 		Parser(sptr<const CompilerSettings> cs, in<std::vector<sptr<Token>>> tokenVec) :
 			settings(cs), tkns(tokenVec), errors(new_uptr<ErrorHandler>(CompileStage::PARSER, cs)) {}
+
+		Parser(in<std::vector<sptr<Token>>> tokenVec) :
+			settings(nullptr), tkns(tokenVec), errors(new_uptr<ErrorHandler>(CompileStage::PARSER)) {}
+
 		virtual ~Parser() {}
+
+		bool hasTknsRem()
+		{
+			return tkns.hasRem(1);
+		}
 
 		/*
 		Goes through the token buffer until it hits a semicolon.
@@ -336,7 +345,7 @@ namespace caliburn
 		/*
 		Parses function arguments; These have an identical structure to member var-likes, but have a much simpler output type
 		*/
-		std::vector<uptr<ParsedFnArg>> parseFnArgs();
+		std::vector<FnArg> parseFnArgs();
 
 		/*
 		This method parses all of the annotations preceding a statement.

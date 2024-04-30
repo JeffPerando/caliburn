@@ -32,7 +32,7 @@ namespace caliburn
 		#define CLLR_EXPR_IMPL(Name) spirv::SpvOp Name(in<Instruction> i, Operator op, spirv::SSA lhs, spirv::SSA rhs, in<cllr::Assembler> inCode, out<SPIRVOutAssembler> outCode)
 
 		//I hate how wordy modern C++ can be...
-		#define SPIRV_CODE_SECTION(...) new_uptr<spirv::CodeSection>(__VA_ARGS__)
+		#define SPV_CODE_SECT(...) new_uptr<spirv::CodeSection>(__VA_ARGS__)
 
 		namespace spirv_impl
 		{
@@ -105,6 +105,9 @@ namespace caliburn
 			CLLR_SPIRV_IMPL(OpStructMember);
 			CLLR_SPIRV_IMPL(OpStructEnd);
 
+			CLLR_SPIRV_IMPL(OpScopeBegin);
+			CLLR_SPIRV_IMPL(OpScopeEnd);
+
 			CLLR_SPIRV_IMPL(OpLabel);
 			CLLR_SPIRV_IMPL(OpJump);
 			CLLR_SPIRV_IMPL(OpJumpCond);
@@ -131,6 +134,7 @@ namespace caliburn
 			CLLR_SPIRV_IMPL(OpValueMember);
 			CLLR_SPIRV_IMPL(OpValueNull);
 			CLLR_SPIRV_IMPL(OpValueReadVar);
+			CLLR_SPIRV_IMPL(OpValueSample);
 			CLLR_SPIRV_IMPL(OpValueSign);
 			CLLR_SPIRV_IMPL(OpValueSubarray);
 			CLLR_SPIRV_IMPL(OpValueUnsign);
@@ -149,24 +153,24 @@ namespace caliburn
 			CLLR_EXPR_IMPL(OpExprMatrix);
 
 		}
-		
+
 		struct SPIRVOutAssembler : cllr::OutAssembler
 		{
 		private:
-			const uptr<spirv::CodeSection> spvHeader = SPIRV_CODE_SECTION(spirv::SpvSection::HEADER, this, SPIRVOpList{
+			const uptr<spirv::CodeSection> spvHeader = SPV_CODE_SECT(spirv::SpvSection::HEADER, this, SPIRVOpList{
 				spirv::OpCapability(),
 				spirv::OpExtension(0)
 			});
-			const uptr<spirv::CodeSection> spvImports = SPIRV_CODE_SECTION(spirv::SpvSection::IMPORT, this, SPIRVOpList{
+			const uptr<spirv::CodeSection> spvImports = SPV_CODE_SECT(spirv::SpvSection::IMPORT, this, SPIRVOpList{
 				spirv::OpExtInstImport(0)
 			});
-			const uptr<spirv::CodeSection> spvMisc = SPIRV_CODE_SECTION(spirv::SpvSection::HEADER2, this, SPIRVOpList{
+			const uptr<spirv::CodeSection> spvMisc = SPV_CODE_SECT(spirv::SpvSection::HEADER2, this, SPIRVOpList{
 				spirv::OpMemoryModel(),
 				spirv::OpEntryPoint(0),
 				spirv::OpExecutionMode(0),
 				spirv::OpExecutionModeId(0)
 			});
-			const uptr<spirv::CodeSection> spvDebug = SPIRV_CODE_SECTION(spirv::SpvSection::DEBUG, this, SPIRVOpList{
+			const uptr<spirv::CodeSection> spvDebug = SPV_CODE_SECT(spirv::SpvSection::DEBUG, this, SPIRVOpList{
 				spirv::OpString(0),
 				spirv::OpSource(0),
 				spirv::OpSourceExtension(0),
@@ -175,7 +179,7 @@ namespace caliburn
 				spirv::OpMemberName(0),
 				spirv::OpModuleProcessed(0)
 			});
-			const uptr<spirv::CodeSection> spvTypes = SPIRV_CODE_SECTION(spirv::SpvSection::TYPE, this, SPIRVOpList{
+			const uptr<spirv::CodeSection> spvTypes = SPV_CODE_SECT(spirv::SpvSection::TYPE, this, SPIRVOpList{
 				spirv::OpTypeArray(),
 				spirv::OpTypeBool(),
 				spirv::OpTypeFloat(),
@@ -192,7 +196,7 @@ namespace caliburn
 				spirv::OpLine(),
 				spirv::OpNoLine()
 			});
-			const uptr<spirv::CodeSection> spvConsts = SPIRV_CODE_SECTION(spirv::SpvSection::CONST, this, SPIRVOpList{
+			const uptr<spirv::CodeSection> spvConsts = SPV_CODE_SECT(spirv::SpvSection::CONST, this, SPIRVOpList{
 				spirv::OpConstant(0),
 				spirv::OpConstantComposite(0),
 				spirv::OpConstantFalse(),
@@ -220,16 +224,21 @@ namespace caliburn
 			spirv::MemoryModel memModel = spirv::MemoryModel::GLSL450;
 
 			OutImpls<SPIRVOutFn> impls = {};
-			
+
 			constexpr uint32_t maxSSA() const
 			{
 				return nextSSA + 1;
 			}
 
+			void setImpl(cllr::Opcode op, SPIRVOutFn impl)
+			{
+				impls[SCAST<uint32_t>(op)] = impl;
+			}
+
 		public:
 			std::vector<spirv::EntryPoint> shaderEntries;
 
-			const uptr<spirv::CodeSection> decs = SPIRV_CODE_SECTION(spirv::SpvSection::DECORATION, this, SPIRVOpList{
+			const uptr<spirv::CodeSection> decs = SPV_CODE_SECT(spirv::SpvSection::DECORATION, this, SPIRVOpList{
 				spirv::OpDecorate(0),
 				spirv::OpGroupDecorate(0),
 				spirv::OpGroupMemberDecorate(0),
@@ -237,11 +246,11 @@ namespace caliburn
 				spirv::OpMemberDecorateString(0),
 				spirv::OpDecorationGroup()
 			});
-			const uptr<spirv::CodeSection> gloVars = SPIRV_CODE_SECTION(spirv::SpvSection::GLOBAL_VAR, this, SPIRVOpList{
+			const uptr<spirv::CodeSection> gloVars = SPV_CODE_SECT(spirv::SpvSection::GLOBAL_VAR, this, SPIRVOpList{
 				spirv::OpVariable(0)
 			});
-			const uptr<spirv::CodeSection> main = SPIRV_CODE_SECTION(spirv::SpvSection::MAIN, this, SPIRVOpList{});
-			
+			const uptr<spirv::CodeSection> main = SPV_CODE_SECT(spirv::SpvSection::MAIN, this, SPIRVOpList{});
+
 			spirv::TypeSection types = spirv::TypeSection(this);
 			spirv::ConstSection consts = spirv::ConstSection(this);
 

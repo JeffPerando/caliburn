@@ -46,7 +46,7 @@ namespace caliburn
 		sptr<Token> first;
 		sptr<Token> name;
 		std::vector<sptr<Token>> invokeDims;
-		std::vector<uptr<ParsedFnArg>> args;
+		std::vector<FnArg> args;
 		sptr<ParsedType> returnType;
 		uptr<GenericSignature> genSig;
 		uptr<ScopeStmt> code;
@@ -68,11 +68,14 @@ namespace caliburn
 	struct Function
 	{
 		const std::string name;
+		const std::vector<FnArg> args;
+		const sptr<ParsedType> retType;
 
-		Function(in<std::string> n) : name(n) {}
+		Function(in<std::string> n, in<std::vector<FnArg>> as, sptr<ParsedType> rt) : name(n), args(as), retType(rt) {}
 		virtual ~Function() = default;
 
 		virtual sptr<FnImpl> getImpl(sptr<GenericArguments> gArgs) = 0;
+
 	};
 
 	struct UserFnImpl;
@@ -87,17 +90,13 @@ namespace caliburn
 		sptr<Token> first;
 		sptr<Token> name;
 		std::vector<sptr<Token>> invokeDims;
-		std::vector<uptr<ParsedFnArg>> args;
-		sptr<ParsedType> returnType;
 		uptr<GenericSignature> genSig;
 		uptr<ScopeStmt> code;
 
-		UserFn(ref<ParsedFn> fn) : Function(name->str), type(fn.type) {
+		UserFn(ref<ParsedFn> fn) : Function(name->str, fn.args, fn.returnType), type(fn.type) {
 			first = fn.first;
 			name = fn.name;
 			invokeDims = fn.invokeDims;
-			args = std::move(fn.args);
-			returnType = fn.returnType;
 			genSig = std::move(fn.genSig);
 			code = std::move(fn.code);
 		}
@@ -129,7 +128,7 @@ namespace caliburn
 
 	};
 
-	using BnFnImplLambda = std::function<cllr::TypedSSA(sptr<const SymbolTable>, out<cllr::Assembler>, in<std::vector<cllr::TypedSSA>>)>;
+	using BnFnImplLambda = std::function<cllr::TypedSSA(sptr<const SymbolTable>, out<cllr::Assembler>, in<std::vector<cllr::TypedSSA>>, sptr<cllr::LowType> outType)>;
 	
 	struct BuiltinFn;
 
@@ -147,14 +146,18 @@ namespace caliburn
 
 	struct BuiltinFn : Function
 	{
+	public:
 		const BnFnImplLambda fnImpl;
 		const uptr<GenericSignature> genSig;
-
+		
 		GenArgMap<BuiltinFnImpl> genericImpls;
 
-		BuiltinFn(in<std::string> name, in<BnFnImplLambda> impl) : Function(name), fnImpl(impl) {}
-		BuiltinFn(in<std::string> name, in<BnFnImplLambda> impl, out<uptr<GenericSignature>> gSig) : Function(name), fnImpl(impl),
-			genSig(gSig != nullptr ? std::move(gSig) : nullptr) {}
+		BuiltinFn(in<std::string> name, in<std::vector<FnArg>> args, sptr<ParsedType> rt, in<BnFnImplLambda> impl) :
+			Function(name, args, rt), fnImpl(impl), genSig(nullptr) {}
+
+		BuiltinFn(in<std::string> name, in<std::vector<FnArg>> args, sptr<ParsedType> rt, in<BnFnImplLambda> impl, in<GenericSignature> gSig) :
+			Function(name, args, rt), fnImpl(impl), genSig(new_uptr<GenericSignature>(gSig)) {}
+
 		virtual ~BuiltinFn() = default;
 
 		sptr<FnImpl> getImpl(sptr<GenericArguments> gArgs) override;
@@ -163,19 +166,20 @@ namespace caliburn
 
 	struct FunctionGroup
 	{
-		std::vector<sptr<Function>> unresolvedFns;
-		std::vector<std::pair<std::vector<sptr<cllr::LowType>>, sptr<Function>>> fns;
-
+		std::vector<sptr<Function>> fns;
+		
 		FunctionGroup() = default;
+		FunctionGroup(sptr<Function> fn)
+		{
+			fns.push_back(fn);
+		}
 		virtual ~FunctionGroup() = default;
 
-		void resolve(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) {}
-
-		sptr<Function> find(in<std::vector<cllr::TypedSSA>> args, in<cllr::Assembler> codeAsm);
+		sptr<Function> find(in<std::vector<cllr::TypedSSA>> args, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm);
 
 		void add(sptr<Function> fn)
 		{
-			unresolvedFns.push_back(fn);
+			fns.push_back(fn);
 		}
 
 	};
@@ -187,10 +191,7 @@ namespace caliburn
 
 	struct Method : UserFn
 	{
-		Method(ref<ParsedFn> fnData) : UserFn(fnData)
-		{
-
-		}
+		Method(ref<ParsedFn> fnData) : UserFn(fnData) {}
 
 	};
 

@@ -39,7 +39,7 @@ cllr::TypedSSA UserFnImpl::emitFnDeclCLLR(sptr<const SymbolTable> table, out<cll
 	auto& code = parent->code;
 	auto& args = parent->args;
 	auto& genSig = parent->genSig;
-	auto& pRetType = parent->returnType;
+	auto& pRetType = parent->retType;
 
 	if (fnImplTable == nullptr)
 	{
@@ -62,8 +62,7 @@ cllr::TypedSSA UserFnImpl::emitFnDeclCLLR(sptr<const SymbolTable> table, out<cll
 
 	for (auto i = 0; i < args.size(); ++i)
 	{
-		auto const& arg = args[i];
-		auto fnArg = new_sptr<FnArgVariable>(*arg, i);
+		auto fnArg = new_sptr<FnArgVariable>(args[i], i);
 
 		fnImplTable->add(fnArg->nameTkn->str, fnArg);
 
@@ -97,24 +96,27 @@ cllr::TypedSSA UserFnImpl::call(sptr<const SymbolTable> table, out<cllr::Assembl
 	return cllr::TypedSSA(fnData.type, callID);
 }
 
-sptr<Function> FunctionGroup::find(in<std::vector<cllr::TypedSSA>> args, in<cllr::Assembler> codeAsm)
+sptr<Function> FunctionGroup::find(in<std::vector<cllr::TypedSSA>> args, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	//TODO score-based system; fewer conversions = higher score, highest-scording function gets returned
 
 	cllr::TypeChecker checker(codeAsm.settings);
 	
-	for (auto const& [types, fn] : fns)
+	for (auto const& fn : fns)
 	{
-		if (types.size() != args.size())
+		if (fn->args.size() != args.size())
 		{
 			continue;
 		}
-
+		
 		bool valid = true;
 
 		for (size_t i = 0; i < args.size(); ++i)
 		{
-			auto t = types[i];
+			auto const& fnArg = fn->args[i];
+
+			auto t = fnArg.typeHint->resolve(table, codeAsm);
+
 			auto& val = args[i];
 
 			if (checker.lookup(t, val, codeAsm) == cllr::TypeCheckResult::INCOMPATIBLE)
@@ -153,14 +155,21 @@ sptr<FnImpl> BuiltinFn::getImpl(sptr<GenericArguments> gArgs)
 
 cllr::TypedSSA BuiltinFnImpl::call(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, in<std::vector<cllr::TypedSSA>> args, sptr<Token> callTkn)
 {
+	auto retType = this->parent->retType->resolve(table, codeAsm);
+
+	if (retType == nullptr)
+	{
+		//TODO complain
+	}
+
 	if (!genArgs->empty())
 	{
 		auto genSyms = new_sptr<SymbolTable>(table);
 
 		genArgs->apply(*parent->genSig, genSyms, codeAsm);
 
-		return parent->fnImpl(genSyms, codeAsm, args);
+		return parent->fnImpl(genSyms, codeAsm, args, retType);
 	}
 
-	return parent->fnImpl(table, codeAsm, args);
+	return parent->fnImpl(table, codeAsm, args, retType);
 }
