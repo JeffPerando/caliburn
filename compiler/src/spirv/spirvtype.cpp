@@ -137,6 +137,23 @@ SSA TypeSection::typeStruct(in<std::vector<uint32_t>> members, in<std::vector<Bu
 	return id;
 }
 
+SSA TypeSection::typeGenericImg(SSA component, Dim d, ImageFormat fmt, uint32_t depth, uint32_t a, uint32_t ms)
+{
+	return findOrMake(OpTypeImage(0), {component, SCAST<uint32_t>(d), depth, a, ms, 0, SCAST<uint32_t>(fmt)});
+}
+
+SSA TypeSection::typeSampleImg(SSA component, Dim d, ImageFormat fmt, uint32_t depth, uint32_t a, uint32_t ms)
+{
+	auto inner = findOrMake(OpTypeImage(0), { component, SCAST<uint32_t>(d), depth, a, ms, 1, SCAST<uint32_t>(fmt) });
+
+	return findOrMake(OpTypeSampledImage(), { inner });
+}
+
+SSA TypeSection::typeRWImg(SSA component, Dim d, ImageFormat fmt, uint32_t depth, uint32_t a, uint32_t ms)
+{
+	return findOrMake(OpTypeImage(0), { component, SCAST<uint32_t>(d), depth, a, ms, 2, SCAST<uint32_t>(fmt) });
+}
+
 SSA TypeSection::typePtr(SSA inner, StorageClass sc)
 {
 	return findOrMake(OpTypePointer(), { (uint32_t)sc, inner });

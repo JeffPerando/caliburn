@@ -118,9 +118,7 @@ namespace caliburn
             void dump(out<CodeSection> sec) const;
 
             SSA typeInt(uint32_t width = 32);
-
             SSA typeUInt(uint32_t width = 32);
-
             SSA typeSizeT();
 
             SSA typeFP(uint32_t width = 32);
@@ -130,11 +128,14 @@ namespace caliburn
             SSA typeVec(uint32_t len, SSA inner = 0);
 
             SSA typeArray(uint32_t len, SSA inner);
-
             SSA typeRunArray(SSA inner);
 
             SSA typeStruct(in<std::vector<uint32_t>> members, in<std::vector<BuiltIn>> decs = {});
 
+            SSA typeGenericImg(SSA component, Dim d, ImageFormat fmt, uint32_t depth, uint32_t arrayed, uint32_t multisample);
+            SSA typeSampleImg(SSA component, Dim d, ImageFormat fmt, uint32_t depth, uint32_t arrayed, uint32_t multisample);
+            SSA typeRWImg(SSA component, Dim d, ImageFormat fmt, uint32_t depth, uint32_t arrayed, uint32_t multisample);
+            
             SSA typePtr(SSA inner, StorageClass sc);
 
             SSA typeInPtr(SSA inner)

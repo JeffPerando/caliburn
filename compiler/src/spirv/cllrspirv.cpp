@@ -603,18 +603,9 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeMatrix)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeTexture)
 {
-	auto elemColorType = outCode.types.typeFP(32);
-	auto tid = outCode.types.findOrMake(spirv::OpTypeImage(0), { elemColorType, i.operands[0],
-		//depth
-		0,
-		//arrayed
-		0,
-		//multisample
-		0,
-		//sampling status
-		0,
-		//image format (unknown)
-		0 });
+	auto elemType = outCode.types.typeFP(32);
+	//TODO expand on OpTypeTexture capabilities
+	auto tid = outCode.types.typeSampleImg(elemType, spirv::Dim::_2D, spirv::ImageFormat::Rgba32f, 0, 0, 0);
 
 	outCode.setSpvSSA(i.index, tid);
 
