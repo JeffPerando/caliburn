@@ -41,7 +41,7 @@ namespace caliburn
 				return std::vector<std::string>();
 			}
 
-			bool addMemberFn(sptr<Function> fn) override
+			bool addMemberFn(sptr<Method> fn) override
 			{
 				return false;
 			}
@@ -51,7 +51,7 @@ namespace caliburn
 				return false;
 			}
 
-			sptr<Function> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
+			sptr<Method> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
 			{
 				return nullptr;
 			}
@@ -132,7 +132,7 @@ namespace caliburn
 				return std::vector<std::string>();
 			}
 
-			bool addMemberFn(sptr<Function> fn) override
+			bool addMemberFn(sptr<Method> fn) override
 			{
 				return false;
 			}
@@ -142,7 +142,7 @@ namespace caliburn
 				return false;
 			}
 
-			sptr<Function> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
+			sptr<Method> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
 			{
 				return nullptr;
 			}
@@ -185,7 +185,7 @@ namespace caliburn
 				return {"x", "y", "z", "w"};
 			}
 
-			bool addMemberFn(sptr<Function> fn) override
+			bool addMemberFn(sptr<Method> fn) override
 			{
 				return false;
 			}
@@ -195,7 +195,7 @@ namespace caliburn
 				return false;
 			}
 
-			sptr<Function> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
+			sptr<Method> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
 			{
 				return nullptr;
 			}
@@ -242,7 +242,7 @@ namespace caliburn
 				return std::vector<std::string>();
 			}
 
-			bool addMemberFn(sptr<Function> fn) override
+			bool addMemberFn(sptr<Method> fn) override
 			{
 				return false;
 			}
@@ -252,7 +252,7 @@ namespace caliburn
 				return false;
 			}
 
-			sptr<Function> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
+			sptr<Method> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
 			{
 				return nullptr;
 			}
@@ -286,9 +286,9 @@ namespace caliburn
 			LowMember getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const override;
 			std::vector<std::string> getMembers() const override;
 
-			bool addMemberFn(sptr<Function> fn) override;
+			bool addMemberFn(sptr<Method> fn) override;
 			bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) override;
-			sptr<Function> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override;
+			sptr<Method> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override;
 
 		};
 
@@ -331,8 +331,20 @@ namespace caliburn
 				return std::vector<std::string>();
 			}
 
-			bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) override;
-			sptr<Function> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override;
+			bool addMemberFn(sptr<Method> fn) override
+			{
+				return false;
+			}
+
+			bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) override
+			{
+				return false;
+			}
+
+			sptr<Method> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
+			{
+				return nullptr;
+			}
 
 		};
 

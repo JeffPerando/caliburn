@@ -5,118 +5,112 @@
 
 using namespace caliburn;
 
-sptr<FnImpl> UserFn::getImpl(sptr<GenericArguments> gArgs)
+cllr::TypedSSA SrcFn::call(in<std::vector<cllr::TypedSSA>> argVals, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm)
 {
-	if (!genSig->canApply(*gArgs))
+	if (genSig != nullptr)
 	{
-		return nullptr;
-	}
+		if (gArgs == nullptr || gArgs->empty())
+		{
+			gArgs = genSig->makeDefaultArgs();
+		}
 
-	if (gArgs->empty())
-	{
-		gArgs = genSig->makeDefaultArgs();
+		if (!genSig->canApply(*gArgs))
+		{
+			//TODO complain
+			return cllr::TypedSSA();
+		}
+
 	}
+	
+	sptr<SrcFnImpl> impl = nullptr;
 
 	if (auto found = variants.find(gArgs); found != variants.end())
 	{
-		return found->second;
+		impl = found->second;
+	}
+	else
+	{
+		auto table = makeFnContext(argVals, gArgs, codeAsm);
+		
+		impl = new_sptr<SrcFnImpl>(table, args, retType, code);
+		variants.insert(std::pair(gArgs, impl));
 	}
 
-	auto impl = new_sptr<UserFnImpl>(this, gArgs);
-
-	variants.insert(std::pair(gArgs, impl));
-
-	return impl;
+	return impl->call(argVals, codeAsm);
 }
 
-cllr::TypedSSA UserFnImpl::emitFnDeclCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
+cllr::TypedSSA SrcFnImpl::emitFnDeclCLLR(out<cllr::Assembler> codeAsm)
 {
-	if (id != 0)
+	auto rt = (retType == nullptr ?
+		codeAsm.pushType(cllr::Opcode::TYPE_VOID)
+		: retType->resolve(syms, codeAsm));
+
+	if (rt == nullptr)
 	{
-		return cllr::TypedSSA(retType, id);
-	}
-
-	auto& code = parent->code;
-	auto& args = parent->args;
-	auto& genSig = parent->genSig;
-	auto& pRetType = parent->retType;
-
-	if (fnImplTable == nullptr)
-	{
-		fnImplTable = new_sptr<SymbolTable>();
-	}
-
-	genArgs->apply(*genSig, fnImplTable, codeAsm);
-	fnImplTable->reparent(table);
-
-	auto retType = pRetType->resolve(fnImplTable, codeAsm);
-
-	if (retType == nullptr)
-	{
-		auto e = codeAsm.errors->err({ "Could not resolve return type", pRetType->name }, *pRetType);
+		auto e = codeAsm.errors->err({ "Could not resolve return type", retType->name }, *retType);
 
 		return cllr::TypedSSA();
 	}
 
-	id = codeAsm.beginSect(cllr::Instruction(cllr::Opcode::FUNCTION, { (uint32_t)args.size() }, { retType->id }));
-
-	for (auto i = 0; i < args.size(); ++i)
+	if (id != 0)
 	{
-		auto fnArg = new_sptr<FnArgVariable>(args[i], i);
+		return cllr::TypedSSA(rt, id);
+	}
 
-		fnImplTable->add(fnArg->nameTkn->str, fnArg);
+	id = codeAsm.beginSect(cllr::Instruction(cllr::Opcode::FUNCTION, { (uint32_t)args->size() }, { rt->id }));
 
-		fnArg->emitVarCLLR(fnImplTable, codeAsm);
+	for (auto i = 0; i < args->size(); ++i)
+	{
+		auto fnArg = new_sptr<FnArgVariable>((*args)[i], i);
+
+		syms->add(fnArg->nameTkn->str, fnArg);
+
+		fnArg->emitVarCLLR(syms, codeAsm);
 
 	}
 
-	//TODO does this do anything?
-	//code->declareSymbols(fnImplTable);
-	code->emitCodeCLLR(fnImplTable, codeAsm);
+	code->emitCodeCLLR(syms, codeAsm);
 
 	codeAsm.endSect(cllr::Instruction(cllr::Opcode::FUNCTION_END, {}, { id }));
 
-	return cllr::TypedSSA(retType, id);
+	return cllr::TypedSSA(rt, id);
 }
 
-/*
-Making functions responsible for emitting call instructions means we can override this behavior and implement some free inlining
-*/
-cllr::TypedSSA UserFnImpl::call(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, in<std::vector<cllr::TypedSSA>> args, sptr<Token> callTkn)
+cllr::TypedSSA SrcFnImpl::call(in<std::vector<cllr::TypedSSA>> callArgs, out<cllr::Assembler> codeAsm)
 {
-	auto fnData = emitFnDeclCLLR(table, codeAsm);
+	auto fnData = emitFnDeclCLLR(codeAsm);
 
-	auto callID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::CALL, { (uint32_t)args.size() }, { fnData.value }, fnData.type->id).debug(callTkn));
+	auto call = codeAsm.pushValue(cllr::Instruction(cllr::Opcode::CALL, { (uint32_t)callArgs.size() }, { id }), fnData.type);
 
-	for (uint32_t i = 0; i < args.size(); ++i)
+	for (uint32_t i = 0; i < callArgs.size(); ++i)
 	{
-		codeAsm.push(cllr::Instruction(cllr::Opcode::CALL_ARG, { i }, { args[i].value }));
+		codeAsm.push(cllr::Instruction(cllr::Opcode::CALL_ARG, { i }, { callArgs[i].value }));
 	}
 
-	return cllr::TypedSSA(fnData.type, callID);
+	return call;
 }
 
-sptr<Function> FunctionGroup::find(in<std::vector<cllr::TypedSSA>> args, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
+cllr::TypedSSA FunctionGroup::call(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm)
 {
 	//TODO score-based system; fewer conversions = higher score, highest-scording function gets returned
 
 	cllr::TypeChecker checker(codeAsm.settings);
-	
-	for (auto const& fn : fns)
+
+	for (in<sptr<Function>> fn : fns)
 	{
-		if (fn->args.size() != args.size())
+		if (fn->args->size() != args.size())
 		{
 			continue;
 		}
-		
+
 		bool valid = true;
+
+		auto const& fnArgs = *fn->args;
 
 		for (size_t i = 0; i < args.size(); ++i)
 		{
-			auto const& fnArg = fn->args[i];
-
-			auto t = fnArg.typeHint->resolve(table, codeAsm);
-
+			auto const& fnArg = fnArgs[i];
+			auto t = fnArg.typeHint->resolve(nullptr, codeAsm);
 			auto& val = args[i];
 
 			if (checker.lookup(t, val, codeAsm) == cllr::TypeCheckResult::INCOMPATIBLE)
@@ -129,47 +123,79 @@ sptr<Function> FunctionGroup::find(in<std::vector<cllr::TypedSSA>> args, sptr<co
 
 		if (valid)
 		{
-			return fn;
+			return fn->call(args, gArgs, codeAsm);
 		}
 
 	}
-	
-	return nullptr;
+
+	//TODO complain
+	return cllr::TypedSSA();
 }
 
-sptr<FnImpl> BuiltinFn::getImpl(sptr<GenericArguments> gArgs)
+cllr::TypedSSA BuiltinFn::call(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm)
 {
-	auto found = genericImpls.find(gArgs);
+	auto table = makeFnContext(args, gArgs, codeAsm);
+	auto rt = retType->resolve(table, codeAsm);
 
-	if (found != genericImpls.end())
+	return fnImpl(table, codeAsm, args, rt);
+}
+
+sptr<SymbolTable> Function::makeFnContext(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm)
+{
+	auto table = new_sptr<SymbolTable>();
+
+	if (genSig != nullptr && gArgs != nullptr)
 	{
-		return found->second;
+		gArgs->apply(*genSig, table, codeAsm);
+
 	}
 
-	auto impl = new_sptr<BuiltinFnImpl>(gArgs, this);
-
-	genericImpls[gArgs] = impl;
-
-	return impl;
+	return table;
 }
 
-cllr::TypedSSA BuiltinFnImpl::call(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, in<std::vector<cllr::TypedSSA>> args, sptr<Token> callTkn)
+sptr<SymbolTable> Method::makeFnContext(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm)
 {
-	auto retType = this->parent->retType->resolve(table, codeAsm);
+	auto table = Function::makeFnContext(args, gArgs, codeAsm);
 
-	if (retType == nullptr)
+	//TODO add members to table
+
+	return table;
+}
+
+cllr::TypedSSA SrcMethod::call(in<std::vector<cllr::TypedSSA>> argVals, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm)
+{
+	if (gArgs == nullptr || gArgs->empty())
+	{
+		gArgs = genSig->makeDefaultArgs();
+	}
+
+	if (!genSig->canApply(*gArgs))
 	{
 		//TODO complain
+		return cllr::TypedSSA();
 	}
 
-	if (!genArgs->empty())
+	sptr<SrcFnImpl> impl = nullptr;
+
+	if (auto found = variants.find(gArgs); found != variants.end())
 	{
-		auto genSyms = new_sptr<SymbolTable>(table);
-
-		genArgs->apply(*parent->genSig, genSyms, codeAsm);
-
-		return parent->fnImpl(genSyms, codeAsm, args, retType);
+		impl = found->second;
+	}
+	else
+	{
+		auto table = makeFnContext(argVals, gArgs, codeAsm);
+		
+		impl = new_sptr<SrcFnImpl>(table, args, retType, code);
+		variants.insert(std::pair(gArgs, impl));
 	}
 
-	return parent->fnImpl(table, codeAsm, args, retType);
+	return impl->call(argVals, codeAsm);
+}
+
+cllr::TypedSSA BuiltinMethod::call(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm)
+{
+	auto table = makeFnContext(args, gArgs, codeAsm);
+	auto rt = retType->resolve(table, codeAsm);
+
+	return fnImpl(table, codeAsm, args, rt);
 }

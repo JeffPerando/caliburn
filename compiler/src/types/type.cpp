@@ -45,6 +45,11 @@ sptr<BaseType> ParsedType::resolveBase(sptr<const SymbolTable> table)
 
 sptr<cllr::LowType> ParsedType::resolve(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
+	if (this == nullptr)
+	{
+		return codeAsm.pushType(cllr::Opcode::TYPE_VOID);
+	}
+
 	if (resultType != nullptr)
 	{
 		return resultType;

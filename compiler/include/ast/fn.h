@@ -49,152 +49,133 @@ namespace caliburn
 		std::vector<FnArg> args;
 		sptr<ParsedType> returnType;
 		uptr<GenericSignature> genSig;
-		uptr<ScopeStmt> code;
-
-	};
-
-	struct FnImpl
-	{
-		FnImpl() = default;
-		virtual ~FnImpl() = default;
-
-		/*
-		Making functions responsible for emitting call instructions means we can override this behavior and implement some free inlining
-		*/
-		virtual cllr::TypedSSA call(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, in<std::vector<cllr::TypedSSA>> args, sptr<Token> callTkn = nullptr) = 0;
+		sptr<ScopeStmt> code;
 
 	};
 
 	struct Function
 	{
 		const std::string name;
-		const std::vector<FnArg> args;
+		const uptr<GenericSignature> genSig;
+		const sptr<std::vector<FnArg>> args;
 		const sptr<ParsedType> retType;
 
-		Function(in<std::string> n, in<std::vector<FnArg>> as, sptr<ParsedType> rt) : name(n), args(as), retType(rt) {}
+		Function(in<std::string> n, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> as, sptr<ParsedType> rt) :
+			name(n), genSig(std::move(gSig)), args(new_sptr<std::vector<FnArg>>(as)), retType(rt) {}
+
 		virtual ~Function() = default;
 
-		virtual sptr<FnImpl> getImpl(sptr<GenericArguments> gArgs) = 0;
+		virtual cllr::TypedSSA call(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm) = 0;
+
+	protected:
+		virtual sptr<SymbolTable> makeFnContext(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm);
 
 	};
 
-	struct UserFnImpl;
-
-	struct UserFn : Function
+	struct SrcFnImpl
 	{
-	private:
-		GenArgMap<UserFnImpl> variants;
-	public:
-		const FnType type;
-
-		sptr<Token> first;
-		sptr<Token> name;
-		std::vector<sptr<Token>> invokeDims;
-		uptr<GenericSignature> genSig;
-		uptr<ScopeStmt> code;
-
-		UserFn(ref<ParsedFn> fn) : Function(name->str, fn.args, fn.returnType), type(fn.type) {
-			first = fn.first;
-			name = fn.name;
-			invokeDims = fn.invokeDims;
-			genSig = std::move(fn.genSig);
-			code = std::move(fn.code);
-		}
-		virtual ~UserFn() = default;
-
-		sptr<FnImpl> getImpl(sptr<GenericArguments> gArgs) override;
-
-	};
-
-	struct UserFnImpl : FnImpl
-	{
-		const ptr<UserFn> parent;
-		const sptr<GenericArguments> genArgs;
-
-		UserFnImpl(ptr<UserFn> p, sptr<GenericArguments> gArgs) : parent(p), genArgs(gArgs) {}
-		virtual ~UserFnImpl() = default;
-
-		cllr::TypedSSA emitFnDeclCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm);
-
-		/*
-		Making functions responsible for emitting call instructions means we can override this behavior and implement some free inlining
-		*/
-		cllr::TypedSSA call(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, in<std::vector<cllr::TypedSSA>> args, sptr<Token> callTkn = nullptr) override;
-
-	private:
-		sptr<SymbolTable> fnImplTable = nullptr;
 		cllr::SSA id = 0;
-		sptr<cllr::LowType> retType = nullptr;
+		sptr<SymbolTable> syms;
+		sptr<std::vector<FnArg>> args;
+		sptr<ParsedType> retType;
+		sptr<ScopeStmt> code;
+
+		SrcFnImpl(sptr<SymbolTable> cxt, sptr<std::vector<FnArg>> as, sptr<ParsedType> rt, sptr<ScopeStmt> impl) :
+			syms(cxt), args(as), retType(rt), code(impl) {}
+		virtual ~SrcFnImpl() = default;
+
+		cllr::TypedSSA emitFnDeclCLLR(out<cllr::Assembler> codeAsm);
+
+		cllr::TypedSSA call(in<std::vector<cllr::TypedSSA>> args, out<cllr::Assembler> codeAsm);
+
+	};
+
+	struct SrcFn : Function
+	{
+	private:
+		GenArgMap<SrcFnImpl> variants;
+	public:
+		std::vector<sptr<Token>> invokeDims;
+		sptr<ScopeStmt> code;
+
+		SrcFn(out<ParsedFn> fn) :
+			Function(fn.name->str, fn.genSig, fn.args, fn.returnType),
+			invokeDims(fn.invokeDims), code(fn.code) {}
+
+		virtual ~SrcFn() = default;
+
+		cllr::TypedSSA call(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm) override;
 
 	};
 
 	using BnFnImplLambda = std::function<cllr::TypedSSA(sptr<const SymbolTable>, out<cllr::Assembler>, in<std::vector<cllr::TypedSSA>>, sptr<cllr::LowType> outType)>;
-	
-	struct BuiltinFn;
-
-	struct BuiltinFnImpl : FnImpl
-	{
-		const ptr<BuiltinFn> parent;
-		const sptr<GenericArguments> genArgs;
-
-		BuiltinFnImpl(sptr<GenericArguments> gArgs, ptr<BuiltinFn> p) : genArgs(gArgs), parent(p) {};
-		virtual ~BuiltinFnImpl() = default;
-
-		cllr::TypedSSA call(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, in<std::vector<cllr::TypedSSA>> args, sptr<Token> callTkn = nullptr) override;
-
-	};
 
 	struct BuiltinFn : Function
 	{
-	public:
+	private:
 		const BnFnImplLambda fnImpl;
-		const uptr<GenericSignature> genSig;
-		
-		GenArgMap<BuiltinFnImpl> genericImpls;
 
-		BuiltinFn(in<std::string> name, in<std::vector<FnArg>> args, sptr<ParsedType> rt, in<BnFnImplLambda> impl) :
-			Function(name, args, rt), fnImpl(impl), genSig(nullptr) {}
-
-		BuiltinFn(in<std::string> name, in<std::vector<FnArg>> args, sptr<ParsedType> rt, in<BnFnImplLambda> impl, in<GenericSignature> gSig) :
-			Function(name, args, rt), fnImpl(impl), genSig(new_uptr<GenericSignature>(gSig)) {}
+	public:
+		BuiltinFn(in<std::string> name, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> args, sptr<ParsedType> rt, in<BnFnImplLambda> impl) :
+			Function(name, gSig, args, rt), fnImpl(impl) {}
 
 		virtual ~BuiltinFn() = default;
 
-		sptr<FnImpl> getImpl(sptr<GenericArguments> gArgs) override;
+		cllr::TypedSSA call(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm) override;
 
 	};
 
-	struct FunctionGroup
+	struct Method : Function
 	{
-		std::vector<sptr<Function>> fns;
-		
-		FunctionGroup() = default;
-		FunctionGroup(sptr<Function> fn)
-		{
-			fns.push_back(fn);
-		}
-		virtual ~FunctionGroup() = default;
+		const sptr<ParsedType> self;
 
-		sptr<Function> find(in<std::vector<cllr::TypedSSA>> args, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm);
-
-		void add(sptr<Function> fn)
+		Method(sptr<ParsedType> me, in<std::string> n, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> as, sptr<ParsedType> rt) :
+			Function(n, gSig, as, rt),
+			self(me)
 		{
-			fns.push_back(fn);
+			args->insert(args->begin(), FnArg{ me, "this" });
 		}
 
+		virtual ~Method() = default;
+
+		sptr<SymbolTable> makeFnContext(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm) override;
+
 	};
 
-	struct MethodImpl : UserFnImpl
+	struct SrcMethod : Method
 	{
+	private:
+		GenArgMap<SrcFnImpl> variants;
+	public:
+		std::vector<sptr<Token>> invokeDims;
+		sptr<ScopeStmt> code;
+
+		SrcMethod(sptr<ParsedType> me, ref<ParsedFn> fn) :
+			Method(me, fn.name->str, fn.genSig, fn.args, fn.returnType),
+			invokeDims(fn.invokeDims), code(fn.code) {}
+
+		virtual ~SrcMethod() = default;
+
+		cllr::TypedSSA call(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm) override;
 
 	};
 
-	struct Method : UserFn
+	struct BuiltinMethod : Method
 	{
-		Method(ref<ParsedFn> fnData) : UserFn(fnData) {}
+	private:
+		const BnFnImplLambda fnImpl;
+
+	public:
+		BuiltinMethod(sptr<ParsedType> me, in<std::string> name, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> args, sptr<ParsedType> rt, in<BnFnImplLambda> impl) :
+			Method(me, name, gSig, args, rt), fnImpl(impl) {}
+
+		virtual ~BuiltinMethod() = default;
+
+		cllr::TypedSSA call(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm) override;
 
 	};
 
+	/*
 	struct Constructor : Method
 	{
 
@@ -202,6 +183,27 @@ namespace caliburn
 
 	struct Destructor : Method
 	{
+
+	};
+	*/
+
+	struct FunctionGroup
+	{
+		std::vector<sptr<Function>> fns;
+
+		FunctionGroup() = default;
+		FunctionGroup(sptr<Function> fn)
+		{
+			fns.push_back(fn);
+		}
+		virtual ~FunctionGroup() = default;
+
+		virtual cllr::TypedSSA call(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm);
+
+		virtual void add(sptr<Function> fn)
+		{
+			fns.push_back(fn);
+		}
 
 	};
 

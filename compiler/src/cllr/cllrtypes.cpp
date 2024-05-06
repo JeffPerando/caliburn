@@ -174,7 +174,7 @@ std::vector<std::string> LowStruct::getMembers() const
 	return std::vector<std::string>();
 }
 
-bool LowStruct::addMemberFn(sptr<Function> fn)
+bool LowStruct::addMemberFn(sptr<Method> fn)
 {
 	return false;
 }
@@ -184,7 +184,7 @@ bool LowStruct::setMemberFns(in<std::string> name, sptr<FunctionGroup> fn)
 	return false;
 }
 
-sptr<caliburn::Function> LowStruct::getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const
+sptr<caliburn::Method> LowStruct::getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const
 {
 	return nullptr;
 }

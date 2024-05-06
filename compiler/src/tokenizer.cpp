@@ -116,7 +116,7 @@ bool Tokenizer::findFloatFrac(out<std::stringstream> ss)
 			return isFloat;
 		}
 
-		size_t expStart = buf.index();
+		size_t expStart = buf.offset();
 		ss << exp;
 
 		if (auto sign = buf.next(); sign == '+' || sign == '-')
@@ -161,7 +161,7 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 		return 0;
 	}
 
-	size_t startIndex = buf.index();
+	size_t startIndex = buf.offset();
 	bool isPrefixed = true;
 	bool isFloat = false;
 
@@ -270,7 +270,7 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 	lit = ss.str();
 	type = isFloat ? TokenType::LITERAL_FLOAT : TokenType::LITERAL_INT;
 
-	size_t len = (buf.index() - startIndex);
+	size_t len = (buf.offset() - startIndex);
 
 	//The literal might not be selected
 	buf.revertTo(startIndex);
@@ -303,7 +303,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 	while (buf.hasCur())
 	{
-		const size_t start = buf.index();
+		const size_t start = buf.offset();
 		const TextPos startPos = pos;
 		const char current = buf.cur();
 
@@ -326,7 +326,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			if (current == '\n')
 			{
 				pos.newline();
-				doc->startLine(buf.index() + 1);
+				doc->startLine(buf.offset() + 1);
 			}
 			else if (current != '\r')
 			{
@@ -382,7 +382,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 			if (wordLen > intLen)
 			{
-				tknContent = doc->text.substr(buf.index(), wordLen);
+				tknContent = doc->text.substr(buf.offset(), wordLen);
 				tknLen = wordLen;
 				tknType = TokenType::IDENTIFIER;
 
@@ -437,7 +437,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 				{
 					//Newlines are *not* skipped, but trailing whitespace after is
 					ss << '\n';
-					doc->startLine(buf.index() + 1);
+					doc->startLine(buf.offset() + 1);
 					buf.consume();
 					pos.newline();
 					
@@ -509,8 +509,8 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			
 			while (opLen > 1)
 			{
-				const auto testOp = doc->text.substr(buf.index(), opLen);
-				
+				const auto testOp = doc->text.substr(buf.offset(), opLen);
+
 				if (LONG_OPS.count(testOp))
 				{
 					tknType = TokenType::OPERATOR;
@@ -548,7 +548,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 		buf.consume(tknLen);
 		pos.move(tknLen);
 
-		tokens.push_back(new_sptr<Token>(tknContent, tknType, startPos, start, buf.index()));
+		tokens.push_back(new_sptr<Token>(tknContent, tknType, startPos, start, buf.offset()));
 
 	}
 

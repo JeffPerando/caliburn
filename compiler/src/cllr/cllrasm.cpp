@@ -123,6 +123,11 @@ TypedSSA Assembler::pushValue(out<Instruction> ins, sptr<LowType> type)
 	return TypedSSA(type, pushNew(ins));
 }
 
+sptr<LowType> Assembler::pushType(Opcode op)
+{
+	return pushType(Instruction(op));
+}
+
 sptr<LowType> Assembler::pushType(out<Instruction> ins)
 {
 	//Structs can have identical operands, so ignore them

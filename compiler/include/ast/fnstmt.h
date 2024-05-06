@@ -10,7 +10,7 @@ namespace caliburn
 	{
 		sptr<Token> first = nullptr;
 		sptr<Token> name = nullptr;
-		sptr<UserFn> fn = nullptr;
+		sptr<SrcFn> fn = nullptr;
 
 		FnStmt() : Statement(StmtType::FUNCTION) {}
 
@@ -26,8 +26,24 @@ namespace caliburn
 
 		void declareHeader(sptr<SymbolTable> table) override
 		{
-			//table->add(name->str, fn);
+			sptr<FunctionGroup> group = nullptr;
+			auto sym = table->find(name->str);
 
+			MATCH_EMPTY(sym)
+			{
+				group = new_sptr<FunctionGroup>();
+			}
+			else MATCH(sym, sptr<FunctionGroup>, fnGroup)
+			{
+				group = *fnGroup;
+			}
+			else
+			{
+				//TODO complain
+			}
+
+			group->add(fn);
+			
 		}
 
 		void declareSymbols(sptr<SymbolTable> table) override {}

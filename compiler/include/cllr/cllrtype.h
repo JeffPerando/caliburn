@@ -36,9 +36,10 @@ namespace caliburn
 			const Opcode category;
 
 			FunctionGroup constructors;
-			SSA destructor = 0;
+			sptr<Method> destructor = nullptr;
 
 			LowType(SSA id, Opcode tc) : id(id), category(tc) {}
+			virtual ~LowType() = default;
 
 			virtual uint32_t getBitWidth() const = 0;
 			virtual uint32_t getBitAlign() const = 0;
@@ -49,9 +50,9 @@ namespace caliburn
 			virtual LowMember getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const = 0;
 			virtual std::vector<std::string> getMembers() const = 0;
 
-			virtual bool addMemberFn(sptr<Function> fn) = 0;
+			virtual bool addMemberFn(sptr<Method> fn) = 0;
 			virtual bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) = 0;
-			virtual sptr<Function> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const = 0;
+			virtual sptr<Method> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const = 0;
 
 		};
 
@@ -60,7 +61,7 @@ namespace caliburn
 			sptr<const CompilerSettings> settings;
 
 			TypeChecker(sptr<const CompilerSettings> cs) : settings(cs) {}
-			~TypeChecker() {}
+			virtual ~TypeChecker() = default;
 
 			TypeCheckResult lookup(sptr<LowType> targetType, in<TypedSSA> rhs, in<Assembler> codeAsm) const;
 

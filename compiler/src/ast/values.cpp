@@ -199,8 +199,8 @@ ValueResult VarReadValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr:
 
 	MATCH_EMPTY(sym)
 	{
-		codeAsm.errors->err({ "Symbol not found:", varTkn->str }, varTkn);
-		return ValueResult();
+		//codeAsm.errors->err({ "Symbol not found:", varTkn->str }, varTkn);
+		return varTkn;
 	}
 
 	MATCH(sym, sptr<Variable>, var)
@@ -370,11 +370,73 @@ ValueResult FnCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::
 		return cllr::TypedSSA();
 	});
 
-	if (target != nullptr)
+	sptr<Function> fn = nullptr;
+
+	if (target == nullptr)
 	{
-		MATCH(target->emitValueCLLR(table, codeAsm), cllr::TypedSSA, tgtVal)
+		/*
+		using ValueResult = std::variant<
+			std::monostate,
+			cllr::TypedSSA,
+			sptr<BaseType>,
+			sptr<cllr::LowType>,
+			sptr<Module>,
+			sptr<FunctionGroup>
+		>;
+		*/
+		ValueResult fnResult = name->emitValueCLLR(table, codeAsm);
+		
+		MATCH(fnResult, sptr<FunctionGroup>, fnGroup)
 		{
-			argIDs.emplace(argIDs.begin(), *tgtVal);
+			return (*fnGroup)->call(argIDs, genArgs, codeAsm);
+		}
+		else
+		{
+			sptr<cllr::LowType> lType = nullptr;
+
+			MATCH(fnResult, sptr<BaseType>, baseType)
+			{
+				lType = (*baseType)->resolve(genArgs, table, codeAsm);
+
+				if (lType == nullptr)
+				{
+					codeAsm.errors->err({ "Could not resolve type", (*baseType)->canonName }, *name);
+					return ValueResult();
+				}
+
+			}
+			else MATCH(fnResult, sptr<cllr::LowType>, typePtr)
+			{
+				lType = *typePtr;
+			}
+
+			/*
+			if (lType != nullptr)
+			{
+				auto ctor = lType->constructors.find(argIDs, table, codeAsm);
+
+				if (ctor == nullptr)
+				{
+					codeAsm.errors->err("Could not find constructor", *this);
+					return ValueResult();
+				}
+
+				fn = ctor;
+
+			}
+			*/
+		}
+
+	}
+	else
+	{
+		MATCH(name->emitValueCLLR(table, codeAsm), sptr<Token>, tkn)
+		{
+			MATCH(target->emitValueCLLR(table, codeAsm), cllr::TypedSSA, tgtVal)
+			{
+				fn = tgtVal->type->getMemberFn((**tkn).str, argIDs);
+
+			}
 
 		}
 		
@@ -387,73 +449,13 @@ ValueResult FnCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::
 
 	}
 
-	auto fnName = name->emitValueCLLR(table, codeAsm);
-
-	sptr<Function> fn = nullptr;
-
-	MATCH_EMPTY(fnName)
+	if (fn == nullptr)
 	{
 		codeAsm.errors->err("Function not found", *name);
 		return ValueResult();
 	}
 
-	MATCH(fnName, sptr<FunctionGroup>, fnGroup)
-	{
-		fn = (*fnGroup)->find(argIDs, table, codeAsm);
-
-		if (fn == nullptr)
-		{
-			//TODO complain
-			return ValueResult();
-		}
-
-	}
-	else
-	{
-		sptr<cllr::LowType> lType = nullptr;
-
-		MATCH(fnName, sptr<BaseType>, baseType)
-		{
-			lType = (*baseType)->resolve(genArgs, table, codeAsm);
-
-			if (lType == nullptr)
-			{
-				codeAsm.errors->err({ "Could not resolve type", (*baseType)->canonName }, *name);
-				return ValueResult();
-			}
-
-		}
-		else MATCH(fnName, sptr<cllr::LowType>, typePtr)
-		{
-			lType = *typePtr;
-		}
-		else
-		{
-			codeAsm.errors->err("Not a valid function name", *name);
-			return ValueResult();
-		}
-
-		auto ctor = lType->constructors.find(argIDs, table, codeAsm);
-
-		if (ctor == nullptr)
-		{
-			codeAsm.errors->err("Could not find constructor", *this);
-			return ValueResult();
-		}
-
-		fn = ctor;
-
-	}
-
-	auto fnImpl = fn->getImpl(genArgs);
-
-	if (fnImpl == nullptr)
-	{
-		//TODO complain
-		return ValueResult();
-	}
-
-	return fnImpl->call(table, codeAsm, argIDs, name->firstTkn());
+	return fn->call(argIDs, genArgs, codeAsm);
 }
 
 ValueResult SetterValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const

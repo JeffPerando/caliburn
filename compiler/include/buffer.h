@@ -15,7 +15,7 @@ namespace caliburn
 	{
 	private:
 		const std::vector<T> vec;
-		size_t offset = 0;
+		size_t index = 0;
 	public:
 		Buffer(in<std::vector<T>> backend) : vec(backend) {}
 
@@ -40,7 +40,7 @@ namespace caliburn
 		*/
 		bool hasCur() const
 		{
-			return offset < vec.size();
+			return index < vec.size();
 		}
 
 		/*
@@ -48,7 +48,7 @@ namespace caliburn
 		*/
 		const T& cur() const
 		{
-			return vec.at(offset);
+			return vec.at(index);
 		}
 
 		/*
@@ -56,8 +56,8 @@ namespace caliburn
 		*/
 		const T& next()
 		{
-			++offset;
-			return vec.at(offset);
+			++index;
+			return vec.at(index);
 		}
 
 		/*
@@ -65,15 +65,15 @@ namespace caliburn
 		*/
 		const T& peek(size_t off) const
 		{
-			return vec.at(offset + off);
+			return vec.at(index + off);
 		}
 
 		/*
-		Returns the element at (offset - offset).
+		Returns the element at (index - offset).
 		*/
 		const T& peekBack(size_t off)
 		{
-			return vec.at(offset - off);
+			return vec.at(index - off);
 		}
 
 		const T& first()
@@ -91,15 +91,15 @@ namespace caliburn
 		*/
 		void consume(size_t count = 1)
 		{
-			offset += count;
+			index += count;
 		}
 
 		/*
 		Returns current index/offset
 		*/
-		size_t index() const
+		size_t offset() const
 		{
-			return offset;
+			return index;
 		}
 
 		size_t length() const
@@ -109,7 +109,7 @@ namespace caliburn
 
 		size_t remaining() const
 		{
-			return length() - offset;
+			return length() - index;
 		}
 
 		/*
@@ -121,7 +121,7 @@ namespace caliburn
 		*/
 		void revertTo(size_t i)
 		{
-			offset = i;
+			index = i;
 		}
 
 		/*
@@ -131,9 +131,9 @@ namespace caliburn
 		*/
 		void rewind(size_t off = 1)
 		{
-			if (off <= offset)
+			if (off <= index)
 			{
-				offset -= off;
+				index -= off;
 			}
 		}
 

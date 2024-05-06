@@ -73,7 +73,7 @@ std::vector<uptr<Statement>> Parser::parse()
 template<typename T>
 T Parser::parseAny(in<std::vector<ParseMethod<T>>> fns)
 {
-	size_t current = tkns.index();
+	size_t current = tkns.offset();
 
 	for (auto& fn : fns)
 	{
@@ -156,7 +156,7 @@ std::vector<sptr<Token>> Parser::parseIdentifierList()
 uptr<GenericSignature> Parser::parseGenericSig()
 {
 	sptr<Token> first = tkns.cur();
-	auto start = tkns.index();
+	auto start = tkns.offset();
 	
 	if (first->str != GENERIC_START)
 	{
@@ -253,7 +253,7 @@ sptr<GenericArguments> Parser::parseGenericArgs()
 	}
 
 	sptr<Token> first = tkns.cur();
-	auto start = tkns.index();
+	auto start = tkns.offset();
 	
 	if (first->str != GENERIC_START)
 	{
@@ -898,6 +898,7 @@ uptr<Statement> Parser::parseStruct()
 		}
 		else if (auto fn = parseMethod())
 		{
+			/*
 			sptr<FunctionGroup> fnGroup = nullptr;
 
 			if (auto foundName = stmt->members.find(fn->name); foundName != stmt->members.end())
@@ -918,7 +919,7 @@ uptr<Statement> Parser::parseStruct()
 			}
 
 			fnGroup->add(fn);
-
+			*/
 		}
 		else
 		{
@@ -946,7 +947,7 @@ uptr<Statement> Parser::parseFnStmt()
 
 	stmt->first = fnLike->first;
 	stmt->name = fnLike->name;
-	stmt->fn = new_sptr<UserFn>(*fnLike);
+	stmt->fn = new_sptr<SrcFn>(*fnLike);
 
 	return stmt;
 }
@@ -1072,11 +1073,12 @@ uptr<ParsedFn> Parser::parseFnLike()
 
 sptr<Function> Parser::parseMethod()
 {
+	/*
 	if (auto fnData = parseFnLike())
 	{
 		switch (fnData->type)
 		{
-			case FnType::FUNCTION: return new_sptr<Method>(*fnData);
+			case FnType::FUNCTION: return new_sptr<Function>(*fnData);
 			case FnType::CONSTRUCTOR: break;
 			case FnType::DESTRUCTOR: break;
 			case FnType::CONVERTER: break;
@@ -1085,7 +1087,7 @@ sptr<Function> Parser::parseMethod()
 		}
 
 	}
-
+	*/
 	return nullptr;
 }
 
@@ -1101,7 +1103,7 @@ uptr<Statement> Parser::parseLogic()
 
 uptr<Statement> Parser::parseControl()
 {
-	auto start = tkns.index();
+	auto start = tkns.offset();
 
 	auto as = parseAllAnnotations();
 
@@ -1752,12 +1754,14 @@ sptr<Value> Parser::parseAnyFnCall()
 
 sptr<Value> Parser::parseFnCall(sptr<Value> start)
 {
+	auto tknStart = tkns.offset();
+
 	if (tkns.hasRem(3))
 	{
 		return nullptr;
 	}
 
-	sptr<Value> name = parseAnyAccess();
+	auto name = parseAnyAccess();
 
 	if (name == nullptr)
 	{
@@ -1766,29 +1770,27 @@ sptr<Value> Parser::parseFnCall(sptr<Value> start)
 
 	tkns.consume();
 
-	auto fnCall = new_sptr<FnCallValue>();
-
-	auto& args = fnCall->args;
-	auto& genArgs = fnCall->genArgs;
+	auto fnCall = new_sptr<FnCallValue>(start);
 
 	fnCall->name = name;
-	fnCall->target = start;
 
 	sptr<Token> genArgStart = tkns.cur();
 
-	genArgs = parseGenericArgs();
-
-	if (genArgs == nullptr)
+	if (genArgStart->str == GENERIC_START)
 	{
-		auto e = errors->err("Invalid generic arguments starting here", genArgStart);
+		if (!(fnCall->genArgs = parseGenericArgs()))
+		{
+			tkns.revertTo(tknStart);
+			return nullptr;
+		}
 
-		return nullptr;
 	}
 
 	if (!parseAnyBetween("(", LAMBDA() {
-		args = parseValueList(false);
+		fnCall->args = parseValueList(false);
 	}, ")"))
 	{
+		tkns.revertTo(tknStart);
 		return nullptr;
 	}
 

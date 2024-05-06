@@ -9,10 +9,11 @@ sptr<cllr::LowType> TypeTex2D::resolve(sptr<GenericArguments> gArgs, sptr<const 
 {
 	auto impl = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_TEXTURE, { SCAST<uint32_t>(TextureKind::_2D) }));
 	
-	//TODO replace with builtin *method*
-	auto s = new_sptr<BuiltinFn>("sample",
+	impl->addMemberFn(new_sptr<BuiltinMethod>(
+		new_sptr<ParsedType>(canonName),
+		"sample",
+		SCAST<uptr<GenericSignature>>(nullptr),
 		std::vector<FnArg>({
-			FnArg{new_sptr<ParsedType>("tex2D"), "this"},
 			FnArg{new_sptr<ParsedType>("vec2"), "uv"}
 		}),
 		new_sptr<ParsedType>("vec4"),
@@ -20,9 +21,7 @@ sptr<cllr::LowType> TypeTex2D::resolve(sptr<GenericArguments> gArgs, sptr<const 
 		{
 			return cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_SAMPLE, { args[0].value, args[1].value }, {}), outType);
 		}
-	);
-
-	impl->addMemberFn(s);
+	));
 	
 	return impl;
 }

@@ -399,14 +399,22 @@ namespace caliburn
 
 	struct FnCallValue : Value
 	{
-		sptr<Value> name = nullptr;
-		sptr<Value> target = nullptr;
-		sptr<GenericArguments> genArgs = nullptr;
-		sptr<Token> end = nullptr;
+		const sptr<Value> target;
+		
+		sptr<Value> name;
+		sptr<GenericArguments> genArgs;
+		sptr<Token> end;
 
 		std::vector<sptr<Value>> args;
 
-		FnCallValue() : Value(ValueType::FUNCTION_CALL) {}
+		FnCallValue(sptr<Value> tgt) : Value(ValueType::FUNCTION_CALL)
+		{
+			if (tgt != nullptr)
+			{
+				args.push_back(tgt);
+			}
+		}
+
 		virtual ~FnCallValue() {}
 
 		sptr<Token> firstTkn() const override

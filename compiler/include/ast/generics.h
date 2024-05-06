@@ -146,6 +146,7 @@ namespace caliburn
 			minArgs = min;
 
 		}
+
 		virtual ~GenericSignature() {}
 
 		sptr<Token> firstTkn() const override

@@ -71,7 +71,8 @@ namespace caliburn
 		sptr<BaseType>,
 		sptr<cllr::LowType>,
 		sptr<Module>,
-		sptr<FunctionGroup>
+		sptr<FunctionGroup>,
+		sptr<Token>
 	>;
 
 	struct Value : ParsedObject

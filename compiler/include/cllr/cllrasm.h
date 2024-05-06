@@ -44,6 +44,8 @@ namespace caliburn
 
 			sptr<const CompilerSettings> settings;
 
+			sptr<SymbolTable> globalTable = nullptr;
+
 		private:
 			std::vector<Instruction> allCode;
 			std::stack<uptr<Section>> codeSects;
@@ -89,6 +91,7 @@ namespace caliburn
 			void pushAll(in<std::vector<Instruction>> code);
 			SSA pushNew(out<Instruction> ins);
 			TypedSSA pushValue(out<Instruction> ins, sptr<LowType> type);
+			sptr<LowType> pushType(Opcode op);
 			sptr<LowType> pushType(out<Instruction> ins);
 
 			void beginLoop(SSA start, SSA end);
