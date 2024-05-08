@@ -16,6 +16,7 @@ namespace caliburn
 		const sptr<Token> lit;
 
 		IntLiteralValue(sptr<Token> l) : Value(ValueType::INT_LITERAL), lit(l) {}
+		virtual ~IntLiteralValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -48,6 +49,7 @@ namespace caliburn
 		const sptr<Token> lit;
 
 		FloatLiteralValue(sptr<Token> l) : Value(ValueType::FLOAT_LITERAL), lit(l) {}
+		virtual ~FloatLiteralValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -80,6 +82,7 @@ namespace caliburn
 		const sptr<Token> lit;
 
 		StringLitValue(sptr<Token> str) : Value(ValueType::STR_LITERAL), lit(str) {}
+		virtual ~StringLitValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -112,6 +115,7 @@ namespace caliburn
 		const sptr<Token> lit;
 		
 		BoolLitValue(sptr<Token> v) : Value(ValueType::BOOL_LITERAL), lit(v)  {}
+		virtual ~BoolLitValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -146,7 +150,7 @@ namespace caliburn
 		sptr<Token> end = nullptr;
 
 		ArrayLitValue() : Value(ValueType::ARRAY_LITERAL) {}
-		virtual ~ArrayLitValue() {}
+		virtual ~ArrayLitValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -191,6 +195,7 @@ namespace caliburn
 		Operator op = Operator::NONE;
 
 		ExpressionValue() : Value(ValueType::EXPRESSION) {}
+		virtual ~ExpressionValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -220,11 +225,14 @@ namespace caliburn
 
 	struct SubArrayValue : Value
 	{
-		sptr<Value> array = nullptr;
-		sptr<Value> index = nullptr;
-		sptr<Token> last = nullptr;
+		const sptr<Value> array;
+		const sptr<Value> index;
+		const sptr<Token> last;
 
-		SubArrayValue() : Value(ValueType::SUB_ARRAY) {}
+		SubArrayValue(sptr<Value> a, sptr<Value> i, sptr<Token> l) :
+			Value(ValueType::SUB_ARRAY), array(a), index(i), last(l) {}
+
+		virtual ~SubArrayValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -258,7 +266,7 @@ namespace caliburn
 		sptr<ParsedType> castTarget = nullptr;
 
 		CastValue() : Value(ValueType::CAST) {}
-		virtual ~CastValue() {}
+		virtual ~CastValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -289,9 +297,11 @@ namespace caliburn
 	struct VarReadValue : Value
 	{
 		const sptr<Token> varTkn;
+		const std::string varStr;
 
-		VarReadValue(sptr<Token> v) : Value(ValueType::VAR_READ), varTkn(v) {}
-		virtual ~VarReadValue() {}
+		VarReadValue(sptr<Token> v) : Value(ValueType::VAR_READ), varTkn(v), varStr(v->str) {}
+		VarReadValue(in<std::string> v) : Value(ValueType::VAR_READ), varTkn(nullptr), varStr(v) {}
+		virtual ~VarReadValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -319,27 +329,59 @@ namespace caliburn
 
 	};
 
-	struct VarChainValue : Value
+	struct MemberReadDirectValue : Value
 	{
-		sptr<Value> target = nullptr;
-		std::vector<sptr<Token>> chain;
+		const sptr<Value> target;
+		//take a string instead of a token so we can use members directly within methods
+		const std::string mem;
 
-		VarChainValue() : Value(ValueType::UNKNOWN) {}
-		virtual ~VarChainValue() {}
+		MemberReadDirectValue(sptr<Value> t, in<std::string> m) : Value(ValueType::MEMBER_READ), target(t), mem(m) {}
+		virtual ~MemberReadDirectValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
-			if (target != nullptr)
-			{
-				return target->firstTkn();
-			}
-
-			return chain.front();
+			return target->firstTkn();
 		}
 
 		sptr<Token> lastTkn() const override
 		{
-			return chain.back();
+			//FIXME this is technically incorrect
+			return target->lastTkn();
+		}
+
+		void prettyPrint(out<std::stringstream> ss) const override;
+
+		bool isLValue() const override
+		{
+			return true;
+		}
+
+		bool isCompileTimeConst() const override
+		{
+			return false;
+		}
+
+		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+
+	};
+	
+	struct MemberReadChainValue : Value
+	{
+		const sptr<Value> target;
+		
+		std::vector<sptr<Token>> mems;
+
+		MemberReadChainValue(sptr<Value> t) : Value(ValueType::MEMBER_READ), target(t) {}
+		virtual ~MemberReadChainValue() = default;
+
+		sptr<Token> firstTkn() const override
+		{
+			return target->firstTkn();
+		}
+
+		sptr<Token> lastTkn() const override
+		{
+			return mems.back();
 		}
 
 		void prettyPrint(out<std::stringstream> ss) const override;
@@ -367,7 +409,7 @@ namespace caliburn
 
 		UnaryValue() : Value(ValueType::UNKNOWN) {}
 		UnaryValue(sptr<Token> s, Operator o, sptr<Value> v) : start(s), op(o), val(v), Value(ValueType::UNKNOWN) {}
-		virtual ~UnaryValue() {}
+		virtual ~UnaryValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -399,32 +441,56 @@ namespace caliburn
 
 	struct FnCallValue : Value
 	{
-		const sptr<Value> target;
-		
-		sptr<Value> name;
+		const sptr<Value> name;
+
 		sptr<GenericArguments> genArgs;
+		std::vector<sptr<Value>> args;
 		sptr<Token> end;
 
-		std::vector<sptr<Value>> args;
-
-		FnCallValue(sptr<Value> tgt) : Value(ValueType::FUNCTION_CALL)
-		{
-			if (tgt != nullptr)
-			{
-				args.push_back(tgt);
-			}
-		}
-
-		virtual ~FnCallValue() {}
+		FnCallValue(sptr<Value> n) : Value(ValueType::FUNCTION_CALL), name(n) {}
+		virtual ~FnCallValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
-			if (target != nullptr)
-			{
-				return target->firstTkn();
-			}
-
 			return name->firstTkn();
+		}
+
+		sptr<Token> lastTkn() const override
+		{
+			return end;
+		}
+
+		void prettyPrint(out<std::stringstream> ss) const override;
+
+		bool isLValue() const override
+		{
+			return false;
+		}
+
+		bool isCompileTimeConst() const override
+		{
+			return false;
+		}
+
+		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+
+	};
+
+	struct MethodCallValue : Value
+	{
+		const sptr<Value> target;
+		const sptr<Token> name;
+
+		sptr<GenericArguments> genArgs;
+		std::vector<sptr<Value>> args;
+		sptr<Token> end;
+
+		MethodCallValue(sptr<Value> t, sptr<Token> n) : Value(ValueType::FUNCTION_CALL), target(t), name(n) {}
+		virtual ~MethodCallValue() = default;
+
+		sptr<Token> firstTkn() const override
+		{
+			return target->firstTkn();
 		}
 
 		sptr<Token> lastTkn() const override
@@ -455,7 +521,7 @@ namespace caliburn
 		Operator op = Operator::NONE;
 
 		SetterValue() : Value(ValueType::UNKNOWN) {}
-		virtual ~SetterValue() {}
+		virtual ~SetterValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -488,7 +554,7 @@ namespace caliburn
 		const sptr<Token> lit;//I don't even know what to do with this
 
 		NullValue(sptr<Token> v) : Value(ValueType::UNKNOWN), lit(v) {}
-		virtual ~NullValue() {}
+		virtual ~NullValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -519,7 +585,7 @@ namespace caliburn
 	struct ZeroValue : Value
 	{
 		ZeroValue() : Value(ValueType::UNKNOWN) {}
-		virtual ~ZeroValue() {}
+		virtual ~ZeroValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -553,6 +619,7 @@ namespace caliburn
 		const sptr<Value> target;
 
 		SignValue(sptr<Token> f, sptr<Value> v) : Value(ValueType::UNKNOWN), first(f), target(v) {}
+		virtual ~SignValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -586,6 +653,7 @@ namespace caliburn
 		const sptr<Value> target;
 
 		UnsignValue(sptr<Token> f, sptr<Value> v) : Value(ValueType::UNKNOWN), first(f), target(v) {}
+		virtual ~UnsignValue() = default;
 
 		sptr<Token> firstTkn() const override
 		{

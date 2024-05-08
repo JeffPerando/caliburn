@@ -36,7 +36,8 @@ namespace caliburn
 		sptr<Variable>,
 		sptr<BaseType>,
 		//This is only used when working with generics
-		sptr<cllr::LowType>>;
+		sptr<cllr::LowType>
+	>;
 
 	/*
 	A symbol table is just that: a way to maintain a directory between names and objects.

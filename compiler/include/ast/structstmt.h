@@ -22,7 +22,8 @@ namespace caliburn
 		
 		uptr<GenericSignature> genSig = nullptr;
 
-		std::map<std::string, Member> members;
+		std::map<std::string, sptr<ParsedVar>> members;
+		std::vector<uptr<ParsedFn>> memberFns;
 
 		StructStmt(StmtType type = StmtType::STRUCT) : Statement(type),
 			isConst(type == StmtType::RECORD) {}
@@ -43,8 +44,7 @@ namespace caliburn
 		{
 			if (innerType == nullptr)
 			{
-				innerType = new_sptr<TypeStruct>(name->str, genSig, members);
-
+				innerType = new_sptr<TypeStruct>(name->str, genSig, members, memberFns);
 			}
 
 			table->add(name->str, innerType);

@@ -1,11 +1,12 @@
 
 #include "ast/fn.h"
+#include "ast/values.h"
 
 #include "cllr/cllrtype.h"
 
 using namespace caliburn;
 
-cllr::TypedSSA SrcFn::call(in<std::vector<cllr::TypedSSA>> argVals, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm)
+cllr::TypedSSA SrcFn::call(in<std::vector<cllr::TypedSSA>> callIDs, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm)
 {
 	if (genSig != nullptr)
 	{
@@ -30,13 +31,13 @@ cllr::TypedSSA SrcFn::call(in<std::vector<cllr::TypedSSA>> argVals, sptr<Generic
 	}
 	else
 	{
-		auto table = makeFnContext(argVals, gArgs, codeAsm);
+		auto table = makeFnContext(callIDs, gArgs, codeAsm);
 		
 		impl = new_sptr<SrcFnImpl>(table, args, retType, code);
 		variants.insert(std::pair(gArgs, impl));
 	}
 
-	return impl->call(argVals, codeAsm);
+	return impl->call(callIDs, codeAsm);
 }
 
 cllr::TypedSSA SrcFnImpl::emitFnDeclCLLR(out<cllr::Assembler> codeAsm)
@@ -140,7 +141,7 @@ cllr::TypedSSA BuiltinFn::call(in<std::vector<cllr::TypedSSA>> args, sptr<Generi
 	return fnImpl(table, codeAsm, args, rt);
 }
 
-sptr<SymbolTable> Function::makeFnContext(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm)
+sptr<SymbolTable> Function::makeFnContext(in<std::vector<cllr::TypedSSA>> callIDs, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm)
 {
 	auto table = new_sptr<SymbolTable>();
 
@@ -153,11 +154,21 @@ sptr<SymbolTable> Function::makeFnContext(in<std::vector<cllr::TypedSSA>> args, 
 	return table;
 }
 
-sptr<SymbolTable> Method::makeFnContext(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm)
+sptr<SymbolTable> Method::makeFnContext(in<std::vector<cllr::TypedSSA>> callIDs, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm)
 {
-	auto table = Function::makeFnContext(args, gArgs, codeAsm);
+	auto table = Function::makeFnContext(callIDs, gArgs, codeAsm);
+	auto self = new_sptr<VarReadValue>("this");
+	auto mems = callIDs[0].type->getMembers();
 
-	//TODO add members to table
+	for (auto& mem : mems)
+	{
+		if (!table->add(mem, new_sptr<MemberReadDirectValue>(self, mem)))
+		{
+			codeAsm.errors->err({ "Duplicate name:", mem }, nullptr);
+
+		}
+
+	}
 
 	return table;
 }

@@ -142,6 +142,7 @@ ValueResult ExpressionValue::emitValueCLLR(sptr<const SymbolTable> table, out<cl
 	if (!tc.check(lhsVal.type, rhsVal, result, codeAsm, op))
 	{
 		//TODO complain
+		return ValueResult();
 	}
 
 	auto vID = codeAsm.pushNew(cllr::Instruction(cllrOp, { (uint32_t)op }, { lhsVal.value, result.value }, lhsVal.type->id));
@@ -195,13 +196,7 @@ ValueResult CastValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::As
 
 ValueResult VarReadValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
-	auto sym = table->find(varTkn->str);
-
-	MATCH_EMPTY(sym)
-	{
-		//codeAsm.errors->err({ "Symbol not found:", varTkn->str }, varTkn);
-		return varTkn;
-	}
+	auto sym = table->find(varStr);
 
 	MATCH(sym, sptr<Variable>, var)
 	{
@@ -233,11 +228,36 @@ ValueResult VarReadValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr:
 		return *lt;
 	}
 
-	//TODO complain
+	codeAsm.errors->err({ "Symbol not found:", varStr }, *this);
 	return ValueResult();
 }
 
-ValueResult VarChainValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
+ValueResult MemberReadDirectValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
+{
+	auto tgtRes = target->emitValueCLLR(table, codeAsm);
+
+	MATCH(tgtRes, cllr::TypedSSA, tgtVal)
+	{
+		auto memRes = tgtVal->type->getMember(tgtVal->value, mem, codeAsm);
+
+		MATCH(memRes, cllr::IndexedMember, iMem)
+		{
+			auto& [memIndex, memType] = *iMem;
+			return codeAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { memIndex }, { tgtVal->value }), memType);
+		}
+
+		MATCH(memRes, cllr::TypedSSA, memVal)
+		{
+			return *memVal;
+		}
+
+	}
+
+	codeAsm.errors->err({ "Member not found:", mem }, *target);
+	return ValueResult();
+}
+
+ValueResult MemberReadChainValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	ValueResult finalRes;
 	cllr::TypedSSA targetValue;
@@ -247,18 +267,17 @@ ValueResult VarChainValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr
 
 	MATCH_WHILE(tgtRes, sptr<Module>, mod)
 	{
-		if (start == chain.size())
+		if (start == mems.size())
 		{
 			return *mod;
 		}
 
-		sptr<Token> chainStart = chain[start];
+		sptr<Token> chainStart = mems[start];
 		Symbol targetSym = (*mod)->getTable()->find(chainStart->str);
 
 		MATCH(targetSym, sptr<Module>, mod)
 		{
 			++start;
-			//Modules within modules! what a crazy world!
 			tgtRes = *mod;
 			continue;
 		}
@@ -271,10 +290,10 @@ ValueResult VarChainValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr
 		}
 
 		size_t next = start + 1;
-		
-		if (chain.size() > next)
+
+		if (mems.size() > next)
 		{
-			codeAsm.errors->err("Will be unable to access this member", chain[next]);
+			codeAsm.errors->err("Will be unable to access this member", mems[next]);
 			return ValueResult();
 		}
 
@@ -282,12 +301,12 @@ ValueResult VarChainValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr
 		{
 			return *fn;
 		}
-		
+
 		MATCH(targetSym, sptr<BaseType>, t)
 		{
 			return *t;
 		}
-		
+
 		MATCH(targetSym, sptr<cllr::LowType>, lt)
 		{
 			return *lt;
@@ -296,7 +315,7 @@ ValueResult VarChainValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr
 		codeAsm.errors->err({ "Could not find symbol", chainStart->str, "in module" }, *target);
 		return ValueResult();
 	}
-	
+
 	MATCH(tgtRes, cllr::TypedSSA, val)
 	{
 		targetValue = *val;
@@ -307,25 +326,25 @@ ValueResult VarChainValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr
 		return ValueResult();
 	}
 
-	for (size_t i = start; i < chain.size(); ++i)
+	for (size_t i = start; i < mems.size(); ++i)
 	{
-		sptr<Token> nameTkn = chain[i];
-		cllr::LowMember mem = targetValue.type->getMember(targetValue.value, nameTkn->str, codeAsm);
+		auto& memTkn = mems[i];
 
-		MATCH(mem, cllr::TypedSSA, valPtr)
+		auto mem = targetValue.type->getMember(targetValue.value, memTkn->str, codeAsm);
+
+		MATCH(mem, cllr::IndexedMember, memPtr)
+		{
+			auto& [memIndex, memType] = *memPtr;
+			targetValue = codeAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { memIndex }, { targetValue.value }), memType);
+
+		}
+		else MATCH(mem, cllr::TypedSSA, valPtr)
 		{
 			targetValue = *valPtr;
 		}
-		else MATCH(mem, cllr::IndexedMember, memPtr)
-		{
-			auto& [memIndex, memType] = *memPtr;
-			auto val = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { memIndex }, { targetValue.type->id }, memType->id));
-			targetValue = cllr::TypedSSA(memType, val);
-
-		}
 		else
 		{
-			codeAsm.errors->err("Member not found:", nameTkn);
+			codeAsm.errors->err({ "Member not found:", memTkn->str }, *this);
 			return ValueResult();
 		}
 
@@ -370,92 +389,124 @@ ValueResult FnCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::
 		return cllr::TypedSSA();
 	});
 
-	sptr<Function> fn = nullptr;
+	ValueResult fnResult = name->emitValueCLLR(table, codeAsm);
+	sptr<cllr::LowType> lType = nullptr;
 
-	if (target == nullptr)
+	MATCH(fnResult, cllr::TypedSSA, val)
 	{
-		/*
-		using ValueResult = std::variant<
-			std::monostate,
-			cllr::TypedSSA,
-			sptr<BaseType>,
-			sptr<cllr::LowType>,
-			sptr<Module>,
-			sptr<FunctionGroup>
-		>;
-		*/
-		ValueResult fnResult = name->emitValueCLLR(table, codeAsm);
-		
-		MATCH(fnResult, sptr<FunctionGroup>, fnGroup)
+		//TODO check for a function pointer
+		if (args.size() != 1)
 		{
-			return (*fnGroup)->call(argIDs, genArgs, codeAsm);
-		}
-		else
-		{
-			sptr<cllr::LowType> lType = nullptr;
-
-			MATCH(fnResult, sptr<BaseType>, baseType)
-			{
-				lType = (*baseType)->resolve(genArgs, table, codeAsm);
-
-				if (lType == nullptr)
-				{
-					codeAsm.errors->err({ "Could not resolve type", (*baseType)->canonName }, *name);
-					return ValueResult();
-				}
-
-			}
-			else MATCH(fnResult, sptr<cllr::LowType>, typePtr)
-			{
-				lType = *typePtr;
-			}
-
-			/*
-			if (lType != nullptr)
-			{
-				auto ctor = lType->constructors.find(argIDs, table, codeAsm);
-
-				if (ctor == nullptr)
-				{
-					codeAsm.errors->err("Could not find constructor", *this);
-					return ValueResult();
-				}
-
-				fn = ctor;
-
-			}
-			*/
+			codeAsm.errors->err("Invalid function", *name);
+			return cllr::TypedSSA();
 		}
 
+		cllr::TypeChecker tc(codeAsm.settings);
+		cllr::TypedSSA rhs;
+
+		if (!tc.check(argIDs[0].type, *val, rhs, codeAsm, Operator::MUL))
+		{
+			//TODO complain
+			return ValueResult();
+		}
+
+		return codeAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_EXPR, { SCAST<uint32_t>(Operator::MUL) }, { argIDs[0].value, rhs.value }), argIDs[0].type);
 	}
-	else
+	MATCH(fnResult, sptr<FunctionGroup>, fnGroup)
 	{
-		MATCH(name->emitValueCLLR(table, codeAsm), sptr<Token>, tkn)
-		{
-			MATCH(target->emitValueCLLR(table, codeAsm), cllr::TypedSSA, tgtVal)
-			{
-				fn = tgtVal->type->getMemberFn((**tkn).str, argIDs);
-
-			}
-
-		}
-		
-		/*
-		TODO test and see if target is always a valid value
-
-		We don't care about invalid targets since they're probably the result of bad parsing anyway.
-		In theory, at least...
-		*/
-
+		return (*fnGroup)->call(argIDs, genArgs, codeAsm);
+	}
+	else MATCH(fnResult, sptr<BaseType>, baseType)
+	{
+		lType = (*baseType)->resolve(genArgs, table, codeAsm);
+	}
+	else MATCH(fnResult, sptr<cllr::LowType>, typePtr)
+	{
+		lType = *typePtr;
 	}
 
-	if (fn == nullptr)
+	/*
+	if (lType != nullptr)
 	{
-		codeAsm.errors->err("Function not found", *name);
+		auto ctor = lType->constructors.find(argIDs, table, codeAsm);
+
+		if (ctor == nullptr)
+		{
+			codeAsm.errors->err("Could not find constructor", *this);
+			return ValueResult();
+		}
+
+		fn = ctor;
+
+	}
+	*/
+
+	codeAsm.errors->err("Function not found", *name);
+	return ValueResult();
+}
+
+ValueResult MethodCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
+{
+	auto targetVal = target->emitValueCLLR(table, codeAsm);
+
+	MATCH_EMPTY(targetVal)
+	{
+		auto e = codeAsm.errors->err("Not a value", *target);
 		return ValueResult();
 	}
 
-	return fn->call(argIDs, genArgs, codeAsm);
+	//Emit the values now to typecheck later
+	std::vector<cllr::TypedSSA> argIDs(args.size());
+	//FIXME I need some CINQ in this
+	std::transform(args.begin(), args.end(), std::back_inserter(argIDs), LAMBDA(sptr<Value> v) {
+		auto arg = v->emitValueCLLR(table, codeAsm);
+
+		MATCH(arg, cllr::TypedSSA, argPtr)
+		{
+			return *argPtr;
+		}
+
+		codeAsm.errors->err("Invalid function argument", *v);
+		return cllr::TypedSSA();
+	});
+
+	MATCH(targetVal, cllr::TypedSSA, val)
+	{
+		argIDs.push_back(*val);
+		auto m = val->type->getMemberFns(name->str);
+
+		if (m == nullptr)
+		{
+			auto e = codeAsm.errors->err("Unable to find method " + name->str, *this);
+			return ValueResult();
+		}
+
+		return m->call(argIDs, genArgs, codeAsm);
+	}
+
+	MATCH(targetVal, sptr<Module>, mod)
+	{
+		auto sym = (*mod)->getTable()->find(name->str);
+
+		MATCH_EMPTY(sym)
+		{
+			auto e = codeAsm.errors->err("Unable to find function " + name->str + " in module", *target);
+			return ValueResult();
+		}
+
+		MATCH(sym, sptr<FunctionGroup>, fg)
+		{
+			return (**fg).call(argIDs, genArgs, codeAsm);
+		}
+
+		//TODO construct type if sptr<BaseType> or sptr<LowType> found
+
+		auto e = codeAsm.errors->err("Not a function:", name);
+		return ValueResult();
+	}
+
+	auto e = codeAsm.errors->err("Unable to find function or method: " + name->str, *this);
+	return ValueResult();
 }
 
 ValueResult SetterValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
@@ -510,7 +561,7 @@ ValueResult SetterValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::
 
 ValueResult NullValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
-	//TODO figure out typing
+	//TODO figure out expected type
 	return cllr::TypedSSA(0, codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_NULL)));
 }
 
@@ -631,23 +682,24 @@ void SubArrayValue::prettyPrint(out<std::stringstream> ss) const
 
 void VarReadValue::prettyPrint(out<std::stringstream> ss) const
 {
-	ss << varTkn->str;
+	ss << varStr;
 }
 
-void VarChainValue::prettyPrint(out<std::stringstream> ss) const
+void MemberReadDirectValue::prettyPrint(out<std::stringstream> ss) const
 {
-	if (target != nullptr)
-	{
-		target->prettyPrint(ss);
-		ss << '.';
-	}
+	target->prettyPrint(ss);
+	ss << '.' << mem;
 
-	for (size_t i = 0; i < (chain.size() - 1); ++i)
-	{
-		ss << chain[i]->str << '.';
-	}
+}
 
-	ss << chain.back()->str;
+void MemberReadChainValue::prettyPrint(out<std::stringstream> ss) const
+{
+	target->prettyPrint(ss);
+	
+	for (auto& mem : mems)
+	{
+		ss << '.' << mem->str;
+	}
 
 }
 
@@ -666,15 +718,33 @@ void UnaryValue::prettyPrint(out<std::stringstream> ss) const
 
 void FnCallValue::prettyPrint(out<std::stringstream> ss) const
 {
-	if (target != nullptr)
-	{
-		target->prettyPrint(ss);
+	name->prettyPrint(ss);
+	genArgs->prettyPrint(ss);
 
-		ss << '.';
+	ss << '(';
+
+	for (size_t i = 0; i < args.size(); ++i)
+	{
+		const auto& arg = args[i];
+
+		arg->prettyPrint(ss);
+
+		if (i + 1 < args.size())
+		{
+			ss << ", ";
+
+		}
 
 	}
 
-	name->prettyPrint(ss);
+	ss << ')';
+
+}
+
+void MethodCallValue::prettyPrint(out<std::stringstream> ss) const
+{
+	target->prettyPrint(ss);
+	ss << '.' << name->str;
 	genArgs->prettyPrint(ss);
 
 	ss << '(';

@@ -17,35 +17,36 @@ sptr<cllr::LowType> TypeStruct::resolve(sptr<GenericArguments> gArgs, sptr<const
 	//populate table with generics and members
 	gArgs->apply(*genSig, memberTable, codeAsm);
 
-	std::vector<sptr<Variable>> memberVars;
-	std::vector<std::pair<std::string, sptr<FunctionGroup>>> memberFns;
+	auto impl = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_STRUCT, { (uint32_t)members.size() }));
 
-	for (auto& [name, mem] : members)
+	for (auto& [name, type] : members)
 	{
-		if (auto v = std::get_if<sptr<Variable>>(&mem))
+		if (auto rt = type->typeHint->resolve(memberTable, codeAsm))
 		{
-			memberVars.push_back(*v);
-
+			impl->addMember(name, rt);
+			
 		}
-		else if (auto fn = std::get_if<sptr<FunctionGroup>>(&mem))
+		else
 		{
-			memberFns.push_back(std::pair(name, *fn));
+			//TODO complain
 		}
 
-	}
-
-	auto impl = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_STRUCT, { (uint32_t)memberVars.size() }));
-
-	for (auto const& v : memberVars)
-	{
-		v->emitVarCLLR(memberTable, codeAsm);
 	}
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::STRUCT_END, {}, { impl->id }));
 
-	for (auto& [name, fn] : memberFns)
+	//avoid allocating the parsed type
+	if (memberFns.empty())
 	{
-		impl->setMemberFns(name, fn);
+		return impl;
+	}
+
+	auto me = new_sptr<ParsedType>(canonName, gArgs);
+
+	for (auto& fn : memberFns)
+	{
+		impl->addMemberFn(new_sptr<SrcMethod>(me, *fn));
+
 	}
 
 	return impl;

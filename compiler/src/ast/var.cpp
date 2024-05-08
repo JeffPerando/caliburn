@@ -87,7 +87,7 @@ cllr::TypedSSA LocalVariable::emitVarCLLR(sptr<const SymbolTable> table, out<cll
 	return id;
 }
 
-cllr::TypedSSA LocalVariable::emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target)
+cllr::TypedSSA LocalVariable::emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	emitVarCLLR(table, codeAsm);
 
@@ -102,85 +102,10 @@ cllr::TypedSSA LocalVariable::emitLoadCLLR(sptr<const SymbolTable> table, out<cl
 	return cllr::TypedSSA();
 }
 
-void LocalVariable::emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target, cllr::TypedSSA rhs)
+void LocalVariable::emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA rhs)
 {
 	emitVarCLLR(table, codeAsm);
 	codeAsm.push(cllr::Instruction(cllr::Opcode::ASSIGN, {}, { id.type->id, rhs.value }));
-
-}
-
-//======================================
-//==========	MemberVariable	========
-//======================================
-
-void MemberVariable::prettyPrint(out<std::stringstream> ss) const
-{
-	typeHint->prettyPrint(ss);
-
-	ss << ' ';
-	ss << nameTkn->str;
-
-	if (initValue != nullptr)
-	{
-		ss << " = ";
-		initValue->prettyPrint(ss);
-
-	}
-
-	ss << ';';
-
-}
-
-cllr::TypedSSA MemberVariable::emitVarCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
-{
-	if (id.value != 0)
-	{
-		return id;
-	}
-
-	if (initValue == nullptr)
-	{
-		initValue = new_sptr<ZeroValue>();
-	}
-
-	auto init = initValue->emitValueCLLR(table, codeAsm);
-
-	//TODO type check
-	/*FIXME I broke everything
-	auto parentImpl = parent->emitTypeCLLR(table, codeAsm);
-
-	if (auto t = typeHint->resolve(table, codeAsm))
-	{
-		auto type = t->emitTypeCLLR(table, codeAsm);
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::STRUCT_MEMBER, { memberIndex }, { parent->id, type->id, init.value }));
-
-		id = cllr::TypedSSA(type, vID);
-
-		return id;
-	}
-	*/
-	//TODO complain
-	return cllr::TypedSSA();
-}
-
-cllr::TypedSSA MemberVariable::emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target)
-{
-	if (auto t = typeHint->resolve(table, codeAsm))
-	{
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { memberIndex }, { target.value }, t->id));
-
-		return cllr::TypedSSA(t, vID);
-	}
-
-	//TODO complain
-	return cllr::TypedSSA();
-}
-
-void MemberVariable::emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target, cllr::TypedSSA rhs)
-{
-	auto memberLoad = emitLoadCLLR(table, codeAsm, target);
-
-	codeAsm.push(cllr::Instruction(cllr::Opcode::ASSIGN, {}, { memberLoad.value, rhs.value }));
 
 }
 
@@ -234,7 +159,7 @@ cllr::TypedSSA GlobalVariable::emitVarCLLR(sptr<const SymbolTable> table, out<cl
 	return id;
 }
 
-cllr::TypedSSA GlobalVariable::emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target)
+cllr::TypedSSA GlobalVariable::emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	//TODO why do we even bother using global variables properly?
 
@@ -251,7 +176,7 @@ cllr::TypedSSA GlobalVariable::emitLoadCLLR(sptr<const SymbolTable> table, out<c
 	return cllr::TypedSSA();
 }
 
-void GlobalVariable::emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target, cllr::TypedSSA rhs)
+void GlobalVariable::emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA rhs)
 {
 	//TODO complain
 }
@@ -294,12 +219,12 @@ cllr::TypedSSA FnArgVariable::emitVarCLLR(sptr<const SymbolTable> table, out<cll
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA FnArgVariable::emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target)
+cllr::TypedSSA FnArgVariable::emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	return cllr::TypedSSA();
 }
 
-void FnArgVariable::emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target, cllr::TypedSSA rhs)
+void FnArgVariable::emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA rhs)
 {
 	//TODO complain (maybe)
 }
@@ -351,7 +276,7 @@ cllr::TypedSSA ShaderIOVariable::emitVarCLLR(sptr<const SymbolTable> table, out<
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA ShaderIOVariable::emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target)
+cllr::TypedSSA ShaderIOVariable::emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	if (ioType == ShaderIOVarType::OUTPUT)
 	{
@@ -371,7 +296,7 @@ cllr::TypedSSA ShaderIOVariable::emitLoadCLLR(sptr<const SymbolTable> table, out
 	return cllr::TypedSSA();
 }
 
-void ShaderIOVariable::emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target, cllr::TypedSSA rhs)
+void ShaderIOVariable::emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA rhs)
 {
 	if (ioType == ShaderIOVarType::INPUT)
 	{
@@ -399,12 +324,12 @@ cllr::TypedSSA DescriptorVariable::emitVarCLLR(sptr<const SymbolTable> table, ou
 	return cllr::TypedSSA();
 }
 
-cllr::TypedSSA DescriptorVariable::emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target)
+cllr::TypedSSA DescriptorVariable::emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
 	return cllr::TypedSSA();
 }
 
-void DescriptorVariable::emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target, cllr::TypedSSA rhs)
+void DescriptorVariable::emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA rhs)
 {
 
 }

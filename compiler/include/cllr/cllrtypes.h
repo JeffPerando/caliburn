@@ -26,36 +26,6 @@ namespace caliburn
 
 			TypeCheckResult typeCheck(sptr<const LowType> target, out<cllr::SSA> fnID, Operator op = Operator::NONE) const override = 0;
 
-			bool addMember(in<std::string> name, sptr<const LowType> type) override
-			{
-				return false;
-			}
-
-			LowMember getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const override
-			{
-				return LowMember();
-			}
-
-			std::vector<std::string> getMembers() const override
-			{
-				return std::vector<std::string>();
-			}
-
-			bool addMemberFn(sptr<Method> fn) override
-			{
-				return false;
-			}
-
-			bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) override
-			{
-				return false;
-			}
-
-			sptr<Method> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
-			{
-				return nullptr;
-			}
-
 		};
 
 		struct LowVoid : LowPrimitive
@@ -117,36 +87,6 @@ namespace caliburn
 				return TypeCheckResult::INCOMPATIBLE;
 			}
 
-			bool addMember(in<std::string> name, sptr<const LowType> type) override
-			{
-				return false;
-			}
-
-			LowMember getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const override
-			{
-				return LowMember();
-			}
-
-			std::vector<std::string> getMembers() const override
-			{
-				return std::vector<std::string>();
-			}
-
-			bool addMemberFn(sptr<Method> fn) override
-			{
-				return false;
-			}
-
-			bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) override
-			{
-				return false;
-			}
-
-			sptr<Method> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
-			{
-				return nullptr;
-			}
-
 		};
 
 		struct LowVector : LowType
@@ -173,31 +113,11 @@ namespace caliburn
 				return innerType->typeCheck(target, fnID, op);
 			}
 
-			bool addMember(in<std::string> name, sptr<const LowType> type) override
-			{
-				return false;
-			}
-
 			LowMember getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const override;
 
 			std::vector<std::string> getMembers() const override
 			{
-				return {"x", "y", "z", "w"};
-			}
-
-			bool addMemberFn(sptr<Method> fn) override
-			{
-				return false;
-			}
-
-			bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) override
-			{
-				return false;
-			}
-
-			sptr<Method> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
-			{
-				return nullptr;
+				return {"x", "y", "z", "w", "r", "g", "b", "a"};
 			}
 
 		};
@@ -227,36 +147,6 @@ namespace caliburn
 				return innerType->typeCheck(target, fnID, op);
 			}
 
-			bool addMember(in<std::string> name, sptr<const LowType> type) override
-			{
-				return false;
-			}
-
-			LowMember getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const override
-			{
-				return LowMember();
-			}
-
-			std::vector<std::string> getMembers() const override
-			{
-				return std::vector<std::string>();
-			}
-
-			bool addMemberFn(sptr<Method> fn) override
-			{
-				return false;
-			}
-
-			bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) override
-			{
-				return false;
-			}
-
-			sptr<Method> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
-			{
-				return nullptr;
-			}
-
 		};
 
 		struct LowStruct : LowType
@@ -266,7 +156,7 @@ namespace caliburn
 			std::map<SSA, SSA> conversions;
 
 			HashMap<std::string, std::pair<SSA, sptr<LowType>>> members;
-			HashMap<std::string, uptr<FunctionGroup>> memberFns;
+			HashMap<std::string, sptr<FunctionGroup>> memberFns;
 
 			LowStruct(SSA id) : LowType(id, Opcode::TYPE_STRUCT) {}
 
@@ -287,8 +177,7 @@ namespace caliburn
 			std::vector<std::string> getMembers() const override;
 
 			bool addMemberFn(sptr<Method> fn) override;
-			bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) override;
-			sptr<Method> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override;
+			sptr<FunctionGroup> getMemberFns(in<std::string> name) const override;
 
 		};
 
@@ -297,7 +186,7 @@ namespace caliburn
 			const TextureKind tex;
 
 			HashMap<std::string, std::pair<SSA, sptr<LowType>>> members;
-			HashMap<std::string, uptr<FunctionGroup>> memberFns;
+			HashMap<std::string, sptr<FunctionGroup>> memberFns;
 
 			LowTexture(SSA id, TextureKind tk) : LowType(id, Opcode::TYPE_TEXTURE), tex(tk) {}
 
@@ -333,16 +222,23 @@ namespace caliburn
 
 			bool addMemberFn(sptr<Method> fn) override
 			{
-				return false;
+				if (auto f = memberFns.find(fn->name); f != memberFns.end())
+				{
+					f->second->add(fn);
+				}
+
+				memberFns[fn->name] = new_sptr<FunctionGroup>(fn);
+
+				return true;
 			}
 
-			bool setMemberFns(in<std::string> name, sptr<FunctionGroup> fn) override
+			sptr<FunctionGroup> getMemberFns(in<std::string> name) const override
 			{
-				return false;
-			}
+				if (auto f = memberFns.find(name); f != memberFns.end())
+				{
+					return f->second;
+				}
 
-			sptr<Method> getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const override
-			{
 				return nullptr;
 			}
 

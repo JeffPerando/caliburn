@@ -71,8 +71,7 @@ namespace caliburn
 		sptr<BaseType>,
 		sptr<cllr::LowType>,
 		sptr<Module>,
-		sptr<FunctionGroup>,
-		sptr<Token>
+		sptr<FunctionGroup>
 	>;
 
 	struct Value : ParsedObject
@@ -99,14 +98,17 @@ namespace caliburn
 	public:
 		const std::string name;
 		const sptr<Token> nameTkn;
+		const sptr<GenericArguments> genericArgs;
 
 		sptr<Token> lastToken = nullptr;
 
-		sptr<GenericArguments> genericArgs = new_sptr<GenericArguments>();
 		std::vector<sptr<Value>> arrayDims;//TODO implement properly
 
-		ParsedType(in<std::string> n) : name(n), nameTkn(nullptr) {}
-		ParsedType(sptr<Token> n) : name(n->str), nameTkn(n) {}
+		ParsedType(in<std::string> n) : name(n), nameTkn(nullptr), genericArgs(new_sptr<GenericArguments>()) {}
+		ParsedType(sptr<Token> n) : name(n->str), nameTkn(n), genericArgs(new_sptr<GenericArguments>()) {}
+		ParsedType(in<std::string> n, sptr<GenericArguments> gArgs) : name(n), nameTkn(nullptr), genericArgs(gArgs) {}
+		ParsedType(sptr<Token> n, sptr<GenericArguments> gArgs) : name(n->str), nameTkn(n), genericArgs(gArgs) {}
+
 		virtual ~ParsedType() {}
 
 		sptr<Token> firstTkn() const override
@@ -193,13 +195,11 @@ namespace caliburn
 
 		virtual cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
 
-		virtual cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target = cllr::TypedSSA()) = 0;
+		virtual cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
 
-		virtual void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA target, cllr::TypedSSA rhs) = 0;
+		virtual void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA rhs) = 0;
 
 	};
-
-	using Member = std::variant<std::monostate, sptr<Variable>, sptr<FunctionGroup>>;
 
 	struct BaseType
 	{

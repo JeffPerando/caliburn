@@ -13,14 +13,14 @@ namespace caliburn
 	{
 		const uptr<GenericSignature> genSig;
 
-		std::map<std::string, Member> members;
+		std::map<std::string, sptr<ParsedVar>> members;
+		std::vector<uptr<ParsedFn>> memberFns;
 		GenArgMap<cllr::LowType> variants;
-		std::vector<sptr<Function>> constructors;
-		sptr<Function> destructor = nullptr;
 		
-		TypeStruct(in<std::string> name, out<uptr<GenericSignature>> sig, in<std::map<std::string, Member>> members)
-			: BaseType(TypeCategory::STRUCT, name), genSig(std::move(sig)), members(members) {}
-		virtual ~TypeStruct() {}
+		TypeStruct(in<std::string> name, out<uptr<GenericSignature>> sig, in<std::map<std::string, sptr<ParsedVar>>> members, out<std::vector<uptr<ParsedFn>>> fns)
+			: BaseType(TypeCategory::STRUCT, name), genSig(std::move(sig)), members(members), memberFns(std::move(fns)) {}
+
+		virtual ~TypeStruct() = default;
 
 		sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 		

@@ -192,12 +192,7 @@ namespace caliburn
 		* Operator overrides
 		* Implicit conversions
 		*/
-		uptr<ParsedFn> parseFnLike();
-
-		/*
-		Parses a method; This uses parseFnLike() to make a proper Function object
-		*/
-		sptr<Function> parseMethod();
+		uptr<ParsedFn> parseFn();
 
 		/*
 		Parses logical statements; These are generally control statements, setters, and function calls.
@@ -287,22 +282,27 @@ namespace caliburn
 		/*
 		Parses variable reads, as well as member access.
 		*/
-		sptr<Value> parseAnyAccess();
+		sptr<Value> parseAccess();
 
 		/*
-		Internal method for parsing member accesses. Also checks for function/method calls
+		Parses a member read based on the target value
 		*/
-		sptr<Value> parseAccess(sptr<Value> target);
+		sptr<Value> parseMemberAccess(sptr<Value> target);
 
 		/*
-		Parses function calls; includes generic arguments
+		Parses an identifier followed optional generics, then parentheses
 		*/
 		sptr<Value> parseAnyFnCall();
 
 		/*
-		Parses method calls
+		Parses a function call using the provided name
 		*/
-		sptr<Value> parseFnCall(sptr<Value> start);
+		sptr<Value> parseFnCall(sptr<Value> name);
+
+		/*
+		Parses a method call based on the provided target
+		*/
+		sptr<Value> parseMethodCall(sptr<Value> target);
 
 		/*
 		Parses local variables; Used by parseLocalVarStmt mainly
@@ -317,7 +317,7 @@ namespace caliburn
 		/*
 		Parses member variables; Used by parseStruct
 		*/
-		sptr<Variable> parseMemberVar();
+		sptr<ParsedVar> parseMemberVar();
 
 		/*
 		Parses local var-likes; these use the rough form of:

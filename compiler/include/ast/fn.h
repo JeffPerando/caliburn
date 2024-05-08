@@ -35,8 +35,8 @@ namespace caliburn
 
 	static const std::map<std::string, FnType> FN_TYPES = {
 		{"def", FnType::FUNCTION},
-		{"construct", FnType::CONSTRUCTOR},
-		{"destruct", FnType::DESTRUCTOR},
+		{"new", FnType::CONSTRUCTOR},
+		{"delete", FnType::DESTRUCTOR},
 		{"op", FnType::OP_OVERLOAD}
 	};
 
@@ -68,7 +68,7 @@ namespace caliburn
 		virtual cllr::TypedSSA call(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm) = 0;
 
 	protected:
-		virtual sptr<SymbolTable> makeFnContext(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm);
+		virtual sptr<SymbolTable> makeFnContext(in<std::vector<cllr::TypedSSA>> callIDs, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm);
 
 	};
 
@@ -138,7 +138,7 @@ namespace caliburn
 
 		virtual ~Method() = default;
 
-		sptr<SymbolTable> makeFnContext(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm) override;
+		sptr<SymbolTable> makeFnContext(in<std::vector<cllr::TypedSSA>> callIDs, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm) override;
 
 	};
 
@@ -150,7 +150,7 @@ namespace caliburn
 		std::vector<sptr<Token>> invokeDims;
 		sptr<ScopeStmt> code;
 
-		SrcMethod(sptr<ParsedType> me, ref<ParsedFn> fn) :
+		SrcMethod(sptr<ParsedType> me, out<ParsedFn> fn) :
 			Method(me, fn.name->str, fn.genSig, fn.args, fn.returnType),
 			invokeDims(fn.invokeDims), code(fn.code) {}
 

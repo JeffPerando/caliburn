@@ -179,12 +179,7 @@ bool LowStruct::addMemberFn(sptr<Method> fn)
 	return false;
 }
 
-bool LowStruct::setMemberFns(in<std::string> name, sptr<FunctionGroup> fn)
-{
-	return false;
-}
-
-sptr<caliburn::Method> LowStruct::getMemberFn(in<std::string> name, in<std::vector<TypedSSA>> argTypes) const
+sptr<caliburn::FunctionGroup> LowStruct::getMemberFns(in<std::string> name) const
 {
 	return nullptr;
 }

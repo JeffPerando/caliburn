@@ -38,7 +38,7 @@ void GenericArguments::apply(in<GenericSignature> sig, sptr<SymbolTable> table, 
 
 void GenericArguments::prettyPrint(out<std::stringstream> ss) const
 {
-	if (args.size() == 0)
+	if (empty())
 	{
 		return;
 	}

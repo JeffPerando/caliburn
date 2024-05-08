@@ -446,9 +446,7 @@ sptr<ParsedType> Parser::parseTypeName()
 
 	tkns.consume();
 
-	sptr<ParsedType> type = new_sptr<ParsedType>(first);
-
-	type->genericArgs = parseGenericArgs();
+	auto type = new_sptr<ParsedType>(first, parseGenericArgs());
 
 	while (tkns.hasRem(2) && tkns.cur()->type == TokenType::START_BRACKET)
 	{
@@ -776,7 +774,7 @@ uptr<Statement> Parser::parseShader()
 			break;
 		}
 
-		if (auto stageFn = parseFnLike())
+		if (auto stageFn = parseFn())
 		{
 			shader->stages.push_back(new_uptr<ShaderStage>(stageFn, shader->name));
 
@@ -875,7 +873,7 @@ uptr<Statement> Parser::parseStruct()
 		return stmt;
 	}
 
-	while (true)
+	while (tkns.hasCur())
 	{
 		sptr<Token> end = tkns.cur();
 
@@ -893,33 +891,12 @@ uptr<Statement> Parser::parseStruct()
 				v->isConst = true;
 			}
 
-			stmt->members.emplace(v->nameTkn->str, v);
+			stmt->members.emplace(v->name->str, v);
 
 		}
-		else if (auto fn = parseMethod())
+		else if (auto fn = parseFn())
 		{
-			/*
-			sptr<FunctionGroup> fnGroup = nullptr;
-
-			if (auto foundName = stmt->members.find(fn->name); foundName != stmt->members.end())
-			{
-				MATCH(foundName->second, sptr<FunctionGroup>, fnNamePtr)
-				{
-					fnGroup = *fnNamePtr;
-				}
-				else
-				{
-					//TODO complain
-				}
-			}
-			else
-			{
-				fnGroup = new_sptr<FunctionGroup>();
-				stmt->members.emplace(fn->name, fnGroup);
-			}
-
-			fnGroup->add(fn);
-			*/
+			stmt->memberFns.push_back(std::move(fn));
 		}
 		else
 		{
@@ -936,23 +913,23 @@ uptr<Statement> Parser::parseStruct()
 
 uptr<Statement> Parser::parseFnStmt()
 {
-	auto fnLike = parseFnLike();
+	auto fn = parseFn();
 
-	if (fnLike == nullptr)
+	if (fn == nullptr)
 	{
 		return nullptr;
 	}
 
 	auto stmt = new_uptr<FnStmt>();
 
-	stmt->first = fnLike->first;
-	stmt->name = fnLike->name;
-	stmt->fn = new_sptr<SrcFn>(*fnLike);
+	stmt->first = fn->first;
+	stmt->name = fn->name;
+	stmt->fn = new_sptr<SrcFn>(*fn);
 
 	return stmt;
 }
 
-uptr<ParsedFn> Parser::parseFnLike()
+uptr<ParsedFn> Parser::parseFn()
 {
 	sptr<Token> first = tkns.cur();
 
@@ -1069,26 +1046,6 @@ uptr<ParsedFn> Parser::parseFnLike()
 	}
 
 	return fn;
-}
-
-sptr<Function> Parser::parseMethod()
-{
-	/*
-	if (auto fnData = parseFnLike())
-	{
-		switch (fnData->type)
-		{
-			case FnType::FUNCTION: return new_sptr<Function>(*fnData);
-			case FnType::CONSTRUCTOR: break;
-			case FnType::DESTRUCTOR: break;
-			case FnType::CONVERTER: break;
-			case FnType::OP_OVERLOAD: break;
-			default: break;//TODO complain
-		}
-
-	}
-	*/
-	return nullptr;
 }
 
 uptr<Statement> Parser::parseLogic()
@@ -1297,7 +1254,7 @@ uptr<Statement> Parser::parseValueStmt()
 {
 	std::vector<ParseMethod<sptr<Value>>> methods = {
 		&Parser::parseAnyFnCall,
-		&Parser::parseExpr
+		&Parser::parseExpr //TODO what is this doing here
 	};
 
 	if (auto val = parseAny(methods))
@@ -1402,8 +1359,12 @@ sptr<Value> Parser::parseExpr()
 		}
 		else if (opTkn->type == TokenType::START_PAREN)
 		{
-			op = Operator::MUL;
-			term = parseParenValue();
+			if (auto v = parseParenValue())
+			{
+				op = Operator::MUL;
+				term = v;
+			}
+			else break;
 		}
 		else break;
 
@@ -1434,7 +1395,7 @@ sptr<Value> Parser::parseExpr()
 sptr<Value> Parser::parseTerm()
 {
 	std::vector<ParseMethod<sptr<Value>>> initParsers =
-		{ &Parser::parseParenValue, &Parser::parseUnaryValue, &Parser::parseLiteral, &Parser::parseAnyAccess };
+		{ &Parser::parseParenValue, &Parser::parseUnaryValue, &Parser::parseLiteral, &Parser::parseAccess };
 
 	sptr<Value> v = parseAny(initParsers);
 
@@ -1454,48 +1415,32 @@ sptr<Value> Parser::parseTerm()
 
 		if (tkn->type == TokenType::START_PAREN || tkn->str == GENERIC_START)
 		{
-			//so we don't confuse a multiply with a function call
-			//TODO consider if this is a good idea.
-			if (tkns.peekBack(1)->type == TokenType::IDENTIFIER)
-			{
-				auto fnCall = parseFnCall(v);
-
-				if (fnCall == nullptr)
-				{
-					//10:1 the generic start was actually a comparison. whoopsie...
-					break;
-				}
-
-				v = fnCall;
-			}
-
+			v = parseFnCall(v);
 		}
-		else if (tkn->type == TokenType::PERIOD && tkns.peek(1)->type == TokenType::IDENTIFIER)
+		else if (tkn->type == TokenType::PERIOD)
 		{
-			tkns.consume();
-			v = parseAccess(v);
+			v = parseMemberAccess(v);
 		}
 		else if (tkn->type == TokenType::START_BRACKET)
 		{
-			auto subA = new_sptr<SubArrayValue>();
-
-			subA->array = v;
-
-			parseAnyBetween("[", LAMBDA() {
+			sptr<Value> index = nullptr;
+			
+			if (!parseAnyBetween("[", LAMBDA() {
 				if (auto i = parseExpr())
 				{
-					subA->index = i;
+					index = i;
 				}
 				else
 				{
 					auto e = errors->err("Invalid array index", tkns.cur());
 				}
-			}, "]");
+			}, "]"))
+			{
+				return nullptr;
+			}
 			
 			//parseAnyBetween() ends on the first invalid token, so we go back one to get the last token
-			subA->last = tkns.peekBack(1);
-
-			v = subA;
+			v = new_sptr<SubArrayValue>(v, index, tkns.peekBack(1));
 
 		}
 		else
@@ -1505,7 +1450,7 @@ sptr<Value> Parser::parseTerm()
 
 		if (v == nullptr)
 		{
-			auto e = errors->err("Parsing value failed here; see other errors", tkn);
+			auto e = errors->err("Parsing a value failed here; see other errors", tkn);
 			break;
 		}
 		
@@ -1662,6 +1607,8 @@ sptr<Value> Parser::parseUnaryValue()
 
 sptr<Value> Parser::parseParenValue()
 {
+	auto start = tkns.offset();
+
 	sptr<Token> first = tkns.cur();
 
 	if (first->type != TokenType::START_PAREN)
@@ -1673,57 +1620,47 @@ sptr<Value> Parser::parseParenValue()
 
 	auto v = parseExpr();
 
+	if (v == nullptr)
+	{
+		tkns.revertTo(start);
+		return nullptr;
+	}
+
 	//TODO tuple literals go here
 
 	sptr<Token> last = tkns.cur();
 
-	if (last->type != TokenType::END_PAREN)
+	if (last->type == TokenType::END_PAREN)
 	{
-		auto e = errors->err("Expected a closing parentheses", last);
+		tkns.consume();
 	}
-
-	tkns.consume();
+	else
+	{
+		tkns.revertTo(start);
+		return nullptr;
+	}
 
 	return v;
 }
 
-sptr<Value> Parser::parseAnyAccess()
+sptr<Value> Parser::parseAccess()
 {
-	sptr<Value> target = nullptr;
-
-	if (tkns.cur()->type == TokenType::IDENTIFIER)
+	if (tkns.cur()->type != TokenType::IDENTIFIER)
 	{
-		target = new_sptr<VarReadValue>(tkns.cur());
-		tkns.consume();
+		return nullptr;
 	}
 
-	return parseAccess(target);
-}
-
-sptr<Value> Parser::parseAccess(sptr<Value> target)
-{
-	if (!tkns.hasRem(2))
-	{
-		return target;
-	}
-
-	if (tkns.cur()->type != TokenType::PERIOD)
-	{
-		return target;
-	}
-
-	if (tkns.peek(1)->type != TokenType::IDENTIFIER)
-	{
-		//TODO complain
-		return target;
-	}
+	sptr<Value> target = new_sptr<VarReadValue>(tkns.cur());
 
 	tkns.consume();
 
-	auto access = new_sptr<VarChainValue>();
+	return target;
+}
 
-	access->target = target;
-	
+sptr<Value> Parser::parseMemberAccess(sptr<Value> target)
+{
+	auto chain = new_sptr<MemberReadChainValue>(target);
+
 	while (tkns.hasRem(2))
 	{
 		if (tkns.cur()->type != TokenType::PERIOD)
@@ -1738,45 +1675,62 @@ sptr<Value> Parser::parseAccess(sptr<Value> target)
 			break;
 		}
 
-		access->chain.push_back(name);
-		
-		tkns.consume(2);
+		//consume the period
+		tkns.consume();
+
+		//the order is: identifier, (, )
+		//OR: identifier, <, >
+		if (tkns.hasRem(3))
+		{
+			auto& fnStart = tkns.peek(1);
+
+			if (fnStart->type == TokenType::START_PAREN || fnStart->str == GENERIC_START)
+			{
+				if (auto mCall = parseMethodCall(chain))
+				{
+					return mCall;
+				}
+
+			}
+
+		}
+
+		chain->mems.push_back(tkns.cur());
+
+		tkns.consume();
 
 	}
 
-	return access;
+	if (chain->mems.empty())
+	{
+		return target;
+	}
+
+	return chain;
 }
 
 sptr<Value> Parser::parseAnyFnCall()
 {
-	return parseFnCall(nullptr);
+	return parseFnCall(parseAccess());
 }
 
-sptr<Value> Parser::parseFnCall(sptr<Value> start)
+sptr<Value> Parser::parseFnCall(sptr<Value> name)
 {
-	auto tknStart = tkns.offset();
-
-	if (tkns.hasRem(3))
-	{
-		return nullptr;
-	}
-
-	auto name = parseAnyAccess();
-
 	if (name == nullptr)
 	{
 		return nullptr;
 	}
 
-	tkns.consume();
+	if (!tkns.hasRem(2))
+	{
+		return nullptr;
+	}
 
-	auto fnCall = new_sptr<FnCallValue>(start);
+	auto tknStart = tkns.offset();
 
-	fnCall->name = name;
+	auto fnCall = new_sptr<FnCallValue>(name);
 
-	sptr<Token> genArgStart = tkns.cur();
-
-	if (genArgStart->str == GENERIC_START)
+	if (tkns.cur()->str == GENERIC_START)
 	{
 		if (!(fnCall->genArgs = parseGenericArgs()))
 		{
@@ -1794,9 +1748,59 @@ sptr<Value> Parser::parseFnCall(sptr<Value> start)
 		return nullptr;
 	}
 
+	//catch that ending parentheses
 	fnCall->end = tkns.peekBack(1);
 
 	return fnCall;
+}
+
+sptr<Value> Parser::parseMethodCall(sptr<Value> target)
+{
+	if (target == nullptr)
+	{
+		return nullptr;
+	}
+
+	size_t tknStart = tkns.offset();
+
+	if (!tkns.hasRem(3))
+	{
+		return nullptr;
+	}
+
+	auto& name = tkns.cur();
+
+	if (name->type != TokenType::IDENTIFIER)
+	{
+		return nullptr;
+	}
+
+	tkns.consume();
+
+	auto mCall = new_sptr<MethodCallValue>(target, name);
+
+	if (tkns.cur()->str == GENERIC_START)
+	{
+		if (!(mCall->genArgs = parseGenericArgs()))
+		{
+			tkns.revertTo(tknStart);
+			return nullptr;
+		}
+
+	}
+
+	if (!parseAnyBetween("(", LAMBDA() {
+		mCall->args = parseValueList(false);
+	}, ")"))
+	{
+		tkns.revertTo(tknStart);
+		return nullptr;
+	}
+
+	//catch that ending parentheses
+	mCall->end = tkns.peekBack(1);
+
+	return mCall;
 }
 
 std::vector<sptr<Variable>> Parser::parseLocalVars()
@@ -1880,7 +1884,7 @@ sptr<Variable> Parser::parseGlobalVar()
 	return v;
 }
 
-sptr<Variable> Parser::parseMemberVar()
+sptr<ParsedVar> Parser::parseMemberVar()
 {
 	auto mods = parseStmtMods();
 
@@ -1914,22 +1918,32 @@ sptr<Variable> Parser::parseMemberVar()
 
 	tkns.consume();
 
-	auto v = new_sptr<MemberVariable>(name->str);
-
-	v->mods = mods;
-	v->first = start;
-	v->nameTkn = name;
-	v->typeHint = type;
-	v->isConst = isConst;
+	sptr<Value> initValue = nullptr;
 
 	if (tkns.cur()->type == TokenType::SETTER)
 	{
 		tkns.consume();
 
-		v->initValue = parseExpr();
+		initValue = parseExpr();
 	}
 
-	return v;
+	/*
+
+	struct ParsedVar
+	{
+		StmtModifiers mods{};
+		sptr<Token> first;
+		bool isConst = false;
+		sptr<ParsedType> typeHint;
+		sptr<Token> name;
+		sptr<Value> initValue;
+
+	};
+
+	*/
+	return new_sptr<ParsedVar>(ParsedVar{
+		mods, start, isConst, type, name, initValue
+	});
 }
 
 std::vector<sptr<ParsedVar>> Parser::parseLocalVarLike()
