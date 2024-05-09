@@ -19,7 +19,7 @@ sptr<cllr::LowType> TypeTex2D::resolve(sptr<GenericArguments> gArgs, sptr<const 
 		new_sptr<ParsedType>("vec4"),
 		LAMBDA(sptr<const SymbolTable> tbl, out<cllr::Assembler> cllrAsm, in<std::vector<cllr::TypedSSA>> args, sptr<cllr::LowType> outType)
 		{
-			return cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_SAMPLE, { args[0].value, args[1].value }, {}), outType);
+			return cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_SAMPLE, {}, { args[0].value, args[1].value }), outType);
 		}
 	));
 	
