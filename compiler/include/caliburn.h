@@ -87,7 +87,25 @@ namespace caliburn
 	{
 		GPUTarget gpuTarget = GPUTarget::SPIRV;
 		OptimizeLevel o = OptimizeLevel::DEBUG;
+
+		/*
+		Sets the degree of validation for the compiler.
+
+		NONE disables validation entirely.
+		BASIC catches routine errors that can be created by a programmer.
+		FULL catches any and all problems in the output code.
+		*/
 		ValidationLevel vLvl = ValidationLevel::BASIC;
+
+		/*
+		In Caliburn, a type can be defined as "dynamic", which means the actual
+		type is determined externally. This is where they're defined. This allows
+		devs to write one shader that can use both, say, FP16 and FP32.
+
+		- inner must correlate to a dynamic type within a shader being compiled.
+		- concrete must correlate to an existing type within a compiled shader,
+		  and ideally be a built-in type.
+		*/
 		std::map<std::string, std::string> dynTypes;
 		bool coloredErrors = true;
 
@@ -158,32 +176,7 @@ namespace caliburn
 	public:
 		Compiler() : settings(std::make_shared<CompilerSettings>()) {}
 		Compiler(const CompilerSettings& cs) : settings(std::make_shared<CompilerSettings>(cs)) {}
-		virtual ~Compiler() {}
-
-		/*
-		Sets the optimization level for the compiler. See OptimizeLevel enum.
-		*/
-		void o(OptimizeLevel lvl);
-
-		/*
-		Sets the degree of validation for the compiler.
-
-		NONE disables validation entirely.
-		BASIC catches routine errors that can be created by a programmer.
-		FULL catches any and all problems in the output code.
-		*/
-		void setValidationLvl(ValidationLevel lvl);
-
-		/*
-		In Caliburn, a type can be defined as "dynamic", which means the actual
-		type is determined externally. This is where they're defined. This allows
-		devs to write one shader that can use both, say, FP16 and FP32.
-
-		- inner must correlate to a dynamic type within a shader being compiled.
-		- concrete must correlate to an existing type within a compiled shader,
-		  and ideally be a built-in type.
-		*/
-		void setDynamicType(std::string inner, std::string concrete);
+		virtual ~Compiler() = default;
 
 		/*
 		Compiles raw source code into a set of shaders.
