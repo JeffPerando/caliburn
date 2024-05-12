@@ -8,7 +8,7 @@ using namespace caliburn;
 //TODO does not seem to work
 void SymbolTable::reparent(sptr<const SymbolTable> p)
 {
-	//parent = p;
+	parent = p;
 }
 
 bool SymbolTable::add(in<std::string> symName, in<Symbol> sym)

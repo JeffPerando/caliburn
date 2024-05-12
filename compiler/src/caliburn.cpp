@@ -13,21 +13,6 @@
 
 using namespace caliburn;
 
-void Compiler::o(OptimizeLevel lvl)
-{
-	settings->o = lvl;
-}
-
-void Compiler::setValidationLvl(ValidationLevel lvl)
-{
-	settings->vLvl = lvl;
-}
-
-void Compiler::setDynamicType(std::string inner, std::string concrete)
-{
-	settings->dynTypes.emplace(inner, concrete);
-}
-
 ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName)
 {
 	ShaderResult result;

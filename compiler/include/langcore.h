@@ -68,7 +68,6 @@ namespace caliburn
 	{
 		uint32_t
 			PUBLIC : 1,
-			PROTECTED : 1,
 			PRIVATE : 1,
 			SHARED : 1,
 			STATIC : 1;

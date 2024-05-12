@@ -369,8 +369,6 @@ StmtModifiers Parser::parseStmtMods()
 			mods.PUBLIC = 1;
 		else if (mod->str == "private")
 			mods.PRIVATE = 1;
-		else if (mod->str == "protected")
-			mods.PROTECTED = 1;
 		else if (mod->str == "shared")
 			mods.SHARED = 1;
 		else if (mod->str == "static")
