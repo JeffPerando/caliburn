@@ -603,9 +603,182 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeMatrix)
 
 CLLR_SPIRV_IMPL(cllr::spirv_impl::OpTypeTexture)
 {
-	auto elemType = outCode.types.typeFP(32);
-	//TODO expand on OpTypeTexture capabilities
-	auto tid = outCode.types.typeSampleImg(elemType, spirv::Dim::_2D, spirv::ImageFormat::Rgba32f, 0, 0, 0);
+	spirv::SSA elemID = 0;
+	uint32_t imgLen = 0;
+	
+	auto pixelID = outCode.toSpvID(i.refs[0]);
+
+	spirv::Type pixelData, elemData;
+
+	if (!outCode.types.findData(pixelID, pixelData))
+	{
+		//TODO complain
+		return;
+	}
+
+	if (pixelData.opcode == spirv::OpTypeVector())
+	{
+		elemID = pixelData.operands[0];
+		imgLen = pixelData.operands[1];
+
+		if (!outCode.types.findData(elemID, elemData))
+		{
+			//TODO complain
+			return;
+		}
+
+	}
+	else
+	{
+		elemID = pixelID;
+		imgLen = 1;
+
+		elemData = pixelData;
+
+	}
+
+	spirv::Dim dim;
+
+	static const HashMap<TextureKind, spirv::Dim> TEXTURE_DIM = {
+		{TextureKind::_1D, spirv::Dim::_1D},
+		{TextureKind::_2D, spirv::Dim::_2D},
+		{TextureKind::_3D, spirv::Dim::_3D},
+		{TextureKind::CUBEMAP, spirv::Dim::Cube}
+	};
+
+	if (auto d = TEXTURE_DIM.find(SCAST<TextureKind>(i.operands[0])); d != TEXTURE_DIM.end())
+	{
+		dim = d->second;
+	}
+	else
+	{
+		//TODO complain
+		return;
+	}
+
+	auto fmt = spirv::ImageFormat::Unknown;
+
+	if (elemData.opcode == spirv::OpTypeFloat())
+	{
+		auto const width = elemData.operands[0];
+
+		if (width > 32)
+		{
+			//TODO complain
+			return;
+		}
+
+		switch (width)
+		{
+		case 16: {
+			switch (imgLen)
+			{
+			case 1: fmt = spirv::ImageFormat::R16f; break;
+			case 2: fmt = spirv::ImageFormat::Rg16f; break;
+			case 3: PASS;
+			case 4: fmt = spirv::ImageFormat::Rgba16f; break;
+			}
+		}; break;
+		case 32: {
+			switch (imgLen)
+			{
+			case 1: fmt = spirv::ImageFormat::R32f; break;
+			case 2: fmt = spirv::ImageFormat::Rg32f; break;
+			case 3: PASS;
+			case 4: fmt = spirv::ImageFormat::Rgba32f; break;
+			}
+		}; break;
+		}
+
+	}
+	else if (elemData.opcode == spirv::OpTypeInt())
+	{
+		auto const width = elemData.operands[0];
+		bool const sign = elemData.operands[1] != 0;
+
+		if (width > 32)
+		{
+			//TODO complain
+			return;
+		}
+
+		if (sign)
+		{
+			switch (width)
+			{
+			case 8: {
+				switch (imgLen)
+				{
+				case 1: fmt = spirv::ImageFormat::R8i; break;
+				case 2: fmt = spirv::ImageFormat::Rg8i; break;
+				case 3: PASS;
+				case 4: fmt = spirv::ImageFormat::Rgba8i; break;
+				}
+			}; break;
+			case 16: {
+				switch (imgLen)
+				{
+				case 1: fmt = spirv::ImageFormat::R16i; break;
+				case 2: fmt = spirv::ImageFormat::Rg16i; break;
+				case 3: PASS;
+				case 4: fmt = spirv::ImageFormat::Rgba16i; break;
+				}
+			}; break;
+			case 32: {
+				switch (imgLen)
+				{
+				case 1: fmt = spirv::ImageFormat::R32i; break;
+				case 2: fmt = spirv::ImageFormat::Rg32i; break;
+				case 3: PASS;
+				case 4: fmt = spirv::ImageFormat::Rgba32i; break;
+				}
+			}; break;
+			}
+
+		}
+		else
+		{
+			switch (width)
+			{
+			case 8: {
+				switch (imgLen)
+				{
+				case 1: fmt = spirv::ImageFormat::R8ui; break;
+				case 2: fmt = spirv::ImageFormat::Rg8ui; break;
+				case 3: PASS;
+				case 4: fmt = spirv::ImageFormat::Rgba8ui; break;
+				}
+			}; break;
+			case 16: {
+				switch (imgLen)
+				{
+				case 1: fmt = spirv::ImageFormat::R16ui; break;
+				case 2: fmt = spirv::ImageFormat::Rg16ui; break;
+				case 3: PASS;
+				case 4: fmt = spirv::ImageFormat::Rgba16ui; break;
+				}
+			}; break;
+			case 32: {
+				switch (imgLen)
+				{
+				case 1: fmt = spirv::ImageFormat::R32ui; break;
+				case 2: fmt = spirv::ImageFormat::Rg32ui; break;
+				case 3: PASS;
+				case 4: fmt = spirv::ImageFormat::Rgba32ui; break;
+				}
+			}; break;
+			}
+
+		}
+
+	}
+	else
+	{
+		//TODO complain
+		return;
+	}
+
+	auto tid = outCode.types.typeSampleImg(elemID, dim, fmt, 0, 0, 0);
 
 	outCode.setSpvSSA(i.index, tid);
 
