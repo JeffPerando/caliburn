@@ -29,7 +29,21 @@ namespace caliburn
 	//TODO audit these texture variants
 	enum class TextureKind
 	{
-		_1D, _2D, _3D, CUBEMAP, _1D_BUF
+		_1D, _2D, _3D, CUBEMAP//, _1D_BUF
+	};
+
+	static const HashMap<TextureKind, std::string_view> TEX_TYPES = {
+		{ TextureKind::_1D, "1D" },
+		{ TextureKind::_2D, "2D" },
+		{ TextureKind::_3D, "3D" },
+		{ TextureKind::CUBEMAP, "Cube" },
+	};
+
+	static const HashMap<TextureKind, std::string_view> TEX_SAMPLE_VECS = {
+		{ TextureKind::_1D, "fp32" },
+		{ TextureKind::_2D, "vec2" },
+		{ TextureKind::_3D, "vec3" },
+		{ TextureKind::CUBEMAP, "vec3" },
 	};
 
 	static const HashMap<std::string_view, ShaderType> SHADER_TYPES = {

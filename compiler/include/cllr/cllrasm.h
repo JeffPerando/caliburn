@@ -44,8 +44,6 @@ namespace caliburn
 
 			sptr<const CompilerSettings> settings;
 
-			sptr<SymbolTable> globalTable = nullptr;
-
 		private:
 			std::vector<Instruction> allCode;
 			std::stack<uptr<Section>> codeSects;

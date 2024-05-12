@@ -128,10 +128,11 @@ namespace caliburn
 	struct Method : Function
 	{
 		const sptr<ParsedType> self;
+		const sptr<SymbolTable> genTable;
 
-		Method(sptr<ParsedType> me, in<std::string> n, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> as, sptr<ParsedType> rt) :
+		Method(sptr<ParsedType> me, sptr<SymbolTable> gt, in<std::string> n, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> as, sptr<ParsedType> rt) :
 			Function(n, gSig, as, rt),
-			self(me)
+			self(me), genTable(gt)
 		{
 			args->insert(args->begin(), FnArg{ me, "this" });
 		}
@@ -150,8 +151,8 @@ namespace caliburn
 		std::vector<sptr<Token>> invokeDims;
 		sptr<ScopeStmt> code;
 
-		SrcMethod(sptr<ParsedType> me, out<ParsedFn> fn) :
-			Method(me, fn.name->str, fn.genSig, fn.args, fn.returnType),
+		SrcMethod(sptr<ParsedType> me, sptr<SymbolTable> gt, out<ParsedFn> fn) :
+			Method(me, gt, fn.name->str, fn.genSig, fn.args, fn.returnType),
 			invokeDims(fn.invokeDims), code(fn.code) {}
 
 		virtual ~SrcMethod() = default;
@@ -166,8 +167,8 @@ namespace caliburn
 		const BnFnImplLambda fnImpl;
 
 	public:
-		BuiltinMethod(sptr<ParsedType> me, in<std::string> name, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> args, sptr<ParsedType> rt, in<BnFnImplLambda> impl) :
-			Method(me, name, gSig, args, rt), fnImpl(impl) {}
+		BuiltinMethod(sptr<ParsedType> me, sptr<SymbolTable> gt, in<std::string> name, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> args, sptr<ParsedType> rt, in<BnFnImplLambda> impl) :
+			Method(me, gt, name, gSig, args, rt), fnImpl(impl) {}
 
 		virtual ~BuiltinMethod() = default;
 

@@ -38,7 +38,10 @@ namespace caliburn
 			root->addType(new_sptr<TypeVector>(len));
 		}
 
-		root->addType(new_sptr<TypeTex2D>());
+		for (auto& [tt, _] : TEX_TYPES)
+		{
+			root->addType(new_sptr<TypeTexture>(tt));
+		}
 
 		return root;
 	}

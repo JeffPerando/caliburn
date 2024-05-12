@@ -157,6 +157,9 @@ sptr<SymbolTable> Function::makeFnContext(in<std::vector<cllr::TypedSSA>> callID
 sptr<SymbolTable> Method::makeFnContext(in<std::vector<cllr::TypedSSA>> callIDs, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm)
 {
 	auto table = Function::makeFnContext(callIDs, gArgs, codeAsm);
+
+	table->reparent(genTable);
+
 	auto self = new_sptr<VarReadValue>("this");
 	auto mems = callIDs[0].type->getMembers();
 
