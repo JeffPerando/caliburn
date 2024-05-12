@@ -85,7 +85,7 @@ namespace caliburn
 			return last;
 		}
 
-		void prettyPrint(ref<std::stringstream> ss) const override {}
+		void prettyPrint(out<std::stringstream> ss) const override {}
 
 		void declareHeader(sptr<SymbolTable> table) override {} //We don't add shaders to the symbol table
 

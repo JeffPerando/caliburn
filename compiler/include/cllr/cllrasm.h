@@ -69,7 +69,7 @@ namespace caliburn
 				type(t), settings(cs), errors(new_uptr<ErrorHandler>(CompileStage::CLLR_EMIT, cs)) {}
 			virtual ~Assembler() {}
 
-			ref<const std::vector<Instruction>> getCode() const
+			const std::vector<Instruction>& getCode() const
 			{
 				return allCode;
 			}
@@ -103,12 +103,12 @@ namespace caliburn
 			std::pair<uint32_t, SSA> pushInput(in<std::string>, SSA type);
 			std::pair<uint32_t, SSA> pushOutput(in<std::string> name, SSA type);
 
-			ref<const IOList> getInputs() const
+			const IOList& getInputs() const
 			{
 				return inputNames;
 			}
 
-			ref<const IOList> getOutputs() const
+			const IOList& getOutputs() const
 			{
 				return outputNames;
 			}

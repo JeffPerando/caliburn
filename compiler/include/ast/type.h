@@ -20,11 +20,6 @@
 
 namespace caliburn
 {
-	struct BaseType;
-	struct FunctionGroup;
-	struct Method;
-	struct Variable;
-
 	struct ParsedType : ParsedObject
 	{
 	private:

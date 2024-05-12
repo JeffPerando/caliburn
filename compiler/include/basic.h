@@ -24,9 +24,6 @@ template<typename T>
 using ptr = T*;
 
 template<typename T>
-using ref = T&;
-
-template<typename T>
 using in = const T&;
 
 template<typename T>

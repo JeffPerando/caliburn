@@ -48,7 +48,7 @@ namespace caliburn
 			return canonName == rhs.canonName;
 		}
 
-		virtual sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) = 0;
+		virtual sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
 
 	};
 
