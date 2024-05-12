@@ -1,16 +1,10 @@
 
 #pragma once
 
+#include "basetypes.h"
+
 #include "caliburn.h"
 #include "symbols.h"
-
-#include "types/typearray.h"
-#include "types/typebool.h"
-#include "types/typefloat.h"
-#include "types/typeint.h"
-#include "types/typetex.h"
-#include "types/typevector.h"
-#include "types/typevoid.h"
 
 namespace caliburn
 {

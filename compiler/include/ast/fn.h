@@ -7,15 +7,14 @@
 #include "basic.h"
 #include "langcore.h"
 
-#include "ast.h"
-#include "generics.h"
-#include "scopestmt.h"
-#include "symbols.h"
-#include "var.h"
+#include "ast/ast.h"
+#include "ast/generics.h"
+#include "ast/scopestmt.h"
+#include "ast/symbols.h"
+#include "ast/type.h"
+#include "ast/var.h"
 
 #include "cllr/cllrasm.h"
-
-#include "types/type.h"
 
 namespace caliburn
 {

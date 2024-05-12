@@ -1,13 +1,12 @@
 
-
 #pragma once
 
 #include "basic.h"
-#include "var.h"
+
+#include "ast/ast.h"
+#include "ast/type.h"
 
 #include "cllr/cllr.h"
-
-#include "types/type.h"
 
 namespace caliburn
 {

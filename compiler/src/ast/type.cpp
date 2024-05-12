@@ -1,7 +1,8 @@
 
-#include "types/type.h"
+#include "ast/type.h"
 
 #include "ast/ast.h"
+#include "ast/basetypes.h"
 
 #include "parser.h"
 #include "tokenizer.h"
@@ -31,7 +32,7 @@ void ParsedType::prettyPrint(out<std::stringstream> ss) const
 
 }
 
-sptr<BaseType> ParsedType::resolveBase(sptr<const SymbolTable> table)
+sptr<BaseType> ParsedType::resolveBase(sptr<const SymbolTable> table) const
 {
 	auto typeSym = table->find(name);
 

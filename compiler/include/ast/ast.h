@@ -13,10 +13,9 @@
 
 #include "ast/module.h"
 #include "ast/symbols.h"
+#include "ast/type.h"
 
 #include "cllr/cllrasm.h"
-
-#include "types/type.h"
 
 namespace caliburn
 {
@@ -62,6 +61,30 @@ namespace caliburn
 		SCOPE,
 		SETTER,
 		FUNC_CALL,
+
+	};
+
+	enum class ValueType
+	{
+		UNKNOWN,
+
+		INT_LITERAL,
+		FLOAT_LITERAL,
+		STR_LITERAL,
+		BOOL_LITERAL,
+		ARRAY_LITERAL,
+		EXPRESSION,
+		CAST,
+		SUB_ARRAY,
+		VAR_READ,
+		MEMBER_READ,
+		UNARY_EXPR,
+		FUNCTION_CALL,
+		SETTER,
+		NULL_LITERAL,
+		DEFAULT_INIT,
+		SIGN,
+		UNSIGN
 
 	};
 
@@ -181,6 +204,30 @@ namespace caliburn
 		virtual void declareSymbols(sptr<SymbolTable> table) = 0;
 
 		virtual void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
+
+	};
+
+	using ValueResult = std::variant<
+		std::monostate,
+		cllr::TypedSSA,
+		sptr<BaseType>,
+		sptr<cllr::LowType>,
+		sptr<Module>,
+		sptr<FunctionGroup>
+	>;
+
+	struct Value : ParsedObject
+	{
+		const ValueType vType;
+
+		Value(ValueType vt) : vType(vt) {}
+		virtual ~Value() {}
+
+		virtual bool isLValue() const = 0;
+
+		virtual bool isCompileTimeConst() const = 0;
+
+		virtual ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const = 0;
 
 	};
 

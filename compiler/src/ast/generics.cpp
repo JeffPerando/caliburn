@@ -1,9 +1,9 @@
 
+#include "ast/ast.h"
 #include "ast/generics.h"
+#include "ast/type.h"
 
 #include "cllr/cllrasm.h"
-
-#include "types/type.h"
 
 using namespace caliburn;
 

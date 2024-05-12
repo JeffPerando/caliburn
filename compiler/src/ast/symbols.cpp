@@ -1,7 +1,7 @@
 
 #include "ast/symbols.h"
 
-#include "types/type.h"
+#include "ast/basetypes.h"
 
 using namespace caliburn;
 

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "types/type.h"
+#include "ast/type.h"
 
 namespace caliburn
 {

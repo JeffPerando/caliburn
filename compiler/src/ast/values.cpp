@@ -3,6 +3,7 @@
 
 #include <algorithm>
 
+#include "ast/basetypes.h"
 #include "ast/fn.h"
 
 #include "cllr/cllrtype.h"

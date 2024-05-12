@@ -3,11 +3,9 @@
 
 #include <map>
 
-#include "ast.h"
-#include "var.h"
-
-#include "types/type.h"
-#include "types/typestruct.h"
+#include "ast/ast.h"
+#include "ast/basetypes.h"
+#include "ast/var.h"
 
 namespace caliburn
 {
@@ -25,10 +23,10 @@ namespace caliburn
 		std::map<std::string, sptr<ParsedVar>> members;
 		std::vector<uptr<ParsedFn>> memberFns;
 
-		StructStmt(StmtType type = StmtType::STRUCT) : Statement(type),
-			isConst(type == StmtType::RECORD) {}
+		StructStmt(StmtType type = StmtType::STRUCT) :
+			Statement(type), isConst(type == StmtType::RECORD) {}
 
-		virtual ~StructStmt() {}
+		virtual ~StructStmt() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -42,12 +40,10 @@ namespace caliburn
 
 		void declareHeader(sptr<SymbolTable> table) override
 		{
-			if (innerType == nullptr)
+			if (!table->add(name->str, new_sptr<TypeStruct>(name->str, genSig, members, memberFns)))
 			{
-				innerType = new_sptr<TypeStruct>(name->str, genSig, members, memberFns);
+				//TODO complain
 			}
-
-			table->add(name->str, innerType);
 
 		}
 

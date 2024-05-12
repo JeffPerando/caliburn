@@ -20,74 +20,10 @@
 
 namespace caliburn
 {
-	struct Variable;
-	struct FunctionGroup;
 	struct BaseType;
-
-	enum class TypeCategory : uint32_t
-	{
-		VOID,
-		FLOAT,
-		INT,
-		VECTOR,
-		MATRIX,
-		ARRAY,
-		STRUCT,
-		BOOLEAN,
-		POINTER,
-		TEXTURE
-		//TUPLE
-		//STRING
-
-	};
-
-	enum class ValueType
-	{
-		UNKNOWN,
-
-		INT_LITERAL,
-		FLOAT_LITERAL,
-		STR_LITERAL,
-		BOOL_LITERAL,
-		ARRAY_LITERAL,
-		EXPRESSION,
-		CAST,
-		SUB_ARRAY,
-		VAR_READ,
-		MEMBER_READ,
-		UNARY_EXPR,
-		FUNCTION_CALL,
-		SETTER,
-		NULL_LITERAL,
-		DEFAULT_INIT,
-		SIGN,
-		UNSIGN
-
-	};
-
-	using ValueResult = std::variant<
-		std::monostate,
-		cllr::TypedSSA,
-		sptr<BaseType>,
-		sptr<cllr::LowType>,
-		sptr<Module>,
-		sptr<FunctionGroup>
-	>;
-
-	struct Value : ParsedObject
-	{
-		const ValueType vType;
-		
-		Value(ValueType vt) : vType(vt) {}
-		virtual ~Value() {}
-
-		virtual bool isLValue() const = 0;
-
-		virtual bool isCompileTimeConst() const = 0;
-
-		virtual ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const = 0;
-
-	};
+	struct FunctionGroup;
+	struct Method;
+	struct Variable;
 
 	struct ParsedType : ParsedObject
 	{
@@ -133,7 +69,7 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 
-		sptr<BaseType> resolveBase(sptr<const SymbolTable> table);
+		sptr<BaseType> resolveBase(sptr<const SymbolTable> table) const;
 
 		sptr<cllr::LowType> resolve(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm);
 
@@ -181,7 +117,7 @@ namespace caliburn
 
 		}
 
-		virtual ~Variable() {}
+		virtual ~Variable() = default;
 
 		sptr<Token> firstTkn() const override
 		{
@@ -199,31 +135,6 @@ namespace caliburn
 
 		virtual void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA rhs) = 0;
 
-	};
-
-	struct BaseType
-	{
-	public:
-		const TypeCategory category;
-		const std::string canonName;
-		
-	public:
-		BaseType(TypeCategory c, in<std::string> n) :
-			category(c), canonName(n) {}
-		virtual ~BaseType() {}
-
-		bool operator!=(in<BaseType> rhs) const
-		{
-			return !(*this == rhs);
-		}
-
-		bool operator==(in<BaseType> rhs) const
-		{
-			return canonName == rhs.canonName;
-		}
-
-		virtual sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, ref<cllr::Assembler> codeAsm) = 0;
-		
 	};
 
 }

@@ -1,9 +1,9 @@
 
 #pragma once
 
-#include "ast.h"
-#include "scopestmt.h"
-#include "var.h"
+#include "ast/ast.h"
+#include "ast/scopestmt.h"
+#include "ast/var.h"
 
 namespace caliburn
 {
