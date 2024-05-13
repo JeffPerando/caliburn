@@ -261,7 +261,7 @@ namespace caliburn
 			SPIRVOutAssembler(sptr<const CompilerSettings> cs);
 			virtual ~SPIRVOutAssembler() {}
 
-			std::vector<uint8_t> translateCLLR(in<cllr::Assembler> cllrAsm);
+			std::vector<uint32_t> translateCLLR(in<cllr::Assembler> cllrAsm) override;
 
 			spirv::SSA createSSA();
 

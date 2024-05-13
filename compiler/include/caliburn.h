@@ -147,12 +147,12 @@ namespace caliburn
 	struct CBRN_API Shader
 	{
 		const ShaderType type;
-		const std::vector<uint8_t> code;
+		const std::vector<uint32_t> code;
 
 		std::vector<VertexInputAttribute> inputs;
 		std::vector<DescriptorSet> sets;
 
-		Shader(ShaderType t, const std::vector<uint8_t>& c) : type(t), code(c) {}
+		Shader(ShaderType t, const std::vector<uint32_t>& c) : type(t), code(c) {}
 
 	};
 

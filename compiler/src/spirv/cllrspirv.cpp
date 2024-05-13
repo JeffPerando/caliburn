@@ -95,7 +95,7 @@ cllr::SPIRVOutAssembler::SPIRVOutAssembler(sptr<const CompilerSettings> cs) : Ou
 
 }
 
-std::vector<uint8_t> cllr::SPIRVOutAssembler::translateCLLR(in<cllr::Assembler> cllrAsm)
+std::vector<uint32_t> cllr::SPIRVOutAssembler::translateCLLR(in<cllr::Assembler> cllrAsm)
 {
 	auto const& code = cllrAsm.getCode();
 
@@ -169,9 +169,7 @@ std::vector<uint8_t> cllr::SPIRVOutAssembler::translateCLLR(in<cllr::Assembler> 
 		(*sec)->dump(shader);
 	}
 
-	auto shadBytes = shader.data();
-
-	return std::vector<uint8_t>(shadBytes, shadBytes + (shader.size() * 4));
+	return shader;
 }
 
 spirv::SSA cllr::SPIRVOutAssembler::createSSA()

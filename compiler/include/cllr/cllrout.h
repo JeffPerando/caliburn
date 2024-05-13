@@ -33,7 +33,7 @@ namespace caliburn
 				settings(cs), target(t), errors(new_uptr<ErrorHandler>(CompileStage::OUT_EMIT, cs)) {}
 			virtual ~OutAssembler() {}
 
-			virtual std::vector<uint8_t> translateCLLR(in<cllr::Assembler> cllrAsm) = 0;
+			virtual std::vector<uint32_t> translateCLLR(in<cllr::Assembler> cllrAsm) = 0;
 
 		};
 
