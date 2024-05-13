@@ -5,7 +5,7 @@ using namespace caliburn;
 
 sptr<cllr::LowType> TypeArray::resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
-	if (!sig->canApply(*gArgs))
+	if (!sig.canApply(*gArgs))
 	{
 		//TODO complain
 	}
@@ -85,7 +85,10 @@ sptr<cllr::LowType> TypeTexture::resolve(sptr<GenericArguments> gArgs, sptr<cons
 
 	gArgs->apply(genSig, genTable, codeAsm);
 
-	auto impl = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_TEXTURE, { SCAST<uint32_t>(kind) }));
+	auto pixel = gArgs->getType(0);
+	auto pixImpl = pixel->resolve(genTable, codeAsm);
+
+	auto impl = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_TEXTURE, { SCAST<uint32_t>(kind) }, { pixImpl->id }));
 
 	impl->addMemberFn(new_sptr<BuiltinMethod>(
 		new_sptr<ParsedType>(canonName, gArgs), genTable,
@@ -93,12 +96,12 @@ sptr<cllr::LowType> TypeTexture::resolve(sptr<GenericArguments> gArgs, sptr<cons
 		SCAST<uptr<GenericSignature>>(nullptr),
 		std::vector<FnArg>({
 			FnArg{new_sptr<ParsedType>(TEX_SAMPLE_VECS.at(kind).data()), "uv"}
-			}),
-		new_sptr<ParsedType>("Pixel"),
+		}),
+		pixel,
 		LAMBDA(sptr<const SymbolTable> tbl, out<cllr::Assembler> cllrAsm, in<std::vector<cllr::TypedSSA>> args, sptr<cllr::LowType> outType)
-	{
-		return cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_SAMPLE, {}, { args[0].value, args[1].value }), outType);
-	}
+		{
+			return cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_SAMPLE, {}, { args[0].value, args[1].value }), outType);
+		}
 	));
 
 	return impl;

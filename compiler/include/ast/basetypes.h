@@ -54,7 +54,7 @@ namespace caliburn
 
 	struct TypeArray : BaseType
 	{
-		const uptr<GenericSignature> sig = new_uptr<GenericSignature>(std::vector{
+		const GenericSignature sig = GenericSignature(std::vector{
 				GenericName(GenericSymType::TYPE, "T"),
 				GenericName(GenericSymType::CONST, "N")
 			});
