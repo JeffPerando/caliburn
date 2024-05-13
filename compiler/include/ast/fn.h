@@ -101,6 +101,10 @@ namespace caliburn
 			Function(fn.name->str, fn.genSig, fn.args, fn.returnType),
 			invokeDims(fn.invokeDims), code(fn.code) {}
 
+		SrcFn(in<std::string> n, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> as, sptr<ParsedType> rt, sptr<ScopeStmt> impl) :
+			Function(n, gSig, as, rt),
+			code(impl) {}
+
 		virtual ~SrcFn() = default;
 
 		cllr::TypedSSA call(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm) override;
@@ -154,6 +158,10 @@ namespace caliburn
 			Method(me, gt, fn.name->str, fn.genSig, fn.args, fn.returnType),
 			invokeDims(fn.invokeDims), code(fn.code) {}
 
+		SrcMethod(sptr<ParsedType> me, sptr<SymbolTable> gt, in<std::string> n, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> as, sptr<ParsedType> rt, sptr<ScopeStmt> impl) :
+			Method(me, gt, n, gSig, as, rt),
+			code(impl) {}
+
 		virtual ~SrcMethod() = default;
 
 		cllr::TypedSSA call(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm) override;
@@ -175,17 +183,41 @@ namespace caliburn
 
 	};
 
-	/*
-	struct Constructor : Method
+	struct SrcCtor : SrcFn
 	{
+		SrcCtor(sptr<ParsedType> me, sptr<SymbolTable> gt, out<ParsedFn> fn)
+			: SrcFn(me->prettyStr().append("_new"), SCAST<uptr<GenericSignature>>(nullptr), fn.args, me, fn.code) {}
+
+		virtual ~SrcCtor() = default;
 
 	};
 
-	struct Destructor : Method
+	struct BuiltinCtor : BuiltinFn
 	{
+		BuiltinCtor(sptr<ParsedType> me, sptr<SymbolTable> gt, in<std::vector<FnArg>> args, in<BnFnImplLambda> impl) :
+			BuiltinFn(me->prettyStr().append("_new"), SCAST<uptr<GenericSignature>>(nullptr), args, me, impl) {}
+
+		virtual ~BuiltinCtor() = default;
 
 	};
-	*/
+
+	struct SrcDtor : SrcMethod
+	{
+		SrcDtor(sptr<ParsedType> me, sptr<SymbolTable> gt, out<ParsedFn> fn) :
+			SrcMethod(me, gt, me->prettyStr().append("_delete"), SCAST<uptr<GenericSignature>>(nullptr), {}, new_sptr<ParsedType>("void"), fn.code) {}
+
+		virtual ~SrcDtor() = default;
+
+	};
+
+	struct BuiltinDtor : BuiltinMethod
+	{
+		BuiltinDtor(sptr<ParsedType> me, sptr<SymbolTable> gt, in<BnFnImplLambda> impl) :
+			BuiltinMethod(me, gt, me->prettyStr().append("_delete"), SCAST<uptr<GenericSignature>>(nullptr), {}, new_sptr<ParsedType>("void"), impl) {}
+
+		virtual ~BuiltinDtor() = default;
+
+	};
 
 	struct FunctionGroup
 	{
