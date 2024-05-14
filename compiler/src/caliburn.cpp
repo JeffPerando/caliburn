@@ -13,7 +13,7 @@
 
 using namespace caliburn;
 
-ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName)
+ShaderResult Compiler::compileSrcShaders(const std::string& src, const std::string& shaderName)
 {
 	ShaderResult result;
 

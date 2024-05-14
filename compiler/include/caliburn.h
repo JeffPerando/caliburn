@@ -109,6 +109,8 @@ namespace caliburn
 		std::map<std::string, std::string> dynTypes;
 		bool coloredErrors = true;
 
+		char _padding[980];
+
 	};
 
 	struct CBRN_API DescriptorSet
@@ -186,7 +188,7 @@ namespace caliburn
 		
 		Returns a ShaderResult, which contains a vector of shaders and error messages.
 		*/
-		ShaderResult compileSrcShaders(std::string src, std::string shaderName);
+		ShaderResult compileSrcShaders(const std::string& src, const std::string& shaderName);
 
 	};
 
