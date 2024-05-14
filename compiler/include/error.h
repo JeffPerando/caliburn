@@ -21,6 +21,7 @@ namespace caliburn
 		PARSER,
 		AST_VALIDATION,
 		CONDITIONAL_COMPILATION,
+		SYMBOL_GENERATION,
 		CLLR_EMIT,
 		CLLR_VALIDATION,
 		OUT_EMIT
@@ -31,7 +32,7 @@ namespace caliburn
 	*/
 	static const std::vector<std::string> COMPILE_STAGES = {
 		"Unknown", "Tokenizing", "Parsing", "AST Validation",
-		"Cond. Compilation", "CLLR Generation", "CLLR Validation",
+		"Cond. Compilation", "Symbol Generation", "CLLR Generation", "CLLR Validation",
 		"Target Compilation"
 	};
 
@@ -49,7 +50,7 @@ namespace caliburn
 		//Notes are used to give the user potentially helpful information, such as context or common solutions
 		std::vector<std::string> notes;
 
-		void note(std::string idea)
+		void note(in<std::string> idea)
 		{
 			notes.push_back(idea);
 		}
@@ -116,7 +117,7 @@ namespace caliburn
 
 		//Error-generation methods beyond this point
 
-		sptr<Error> err(in<std::vector<std::string>> msgs, in<ParsedObject> keyObj)
+		sptr<Error> err(in<std::vector<std::string_view>> msgs, in<ParsedObject> keyObj)
 		{
 			std::stringstream ss;
 
@@ -131,7 +132,7 @@ namespace caliburn
 			return err(msg, keyObj.firstTkn(), keyObj.lastTkn());
 		}
 
-		sptr<Error> err(in<std::vector<std::string>> msgs, sptr<Token> keyTkn)
+		sptr<Error> err(in<std::vector<std::string_view>> msgs, sptr<Token> keyTkn)
 		{
 			std::stringstream ss;
 
@@ -146,7 +147,7 @@ namespace caliburn
 			return err(msg, keyTkn, keyTkn);
 		}
 
-		sptr<Error> err(in<std::vector<std::string>> msgs, sptr<Token> startTkn, sptr<Token> endTkn)
+		sptr<Error> err(in<std::vector<std::string_view>> msgs, sptr<Token> startTkn, sptr<Token> endTkn)
 		{
 			std::stringstream ss;
 
@@ -154,6 +155,21 @@ namespace caliburn
 				ss << msg << ' ';
 
 			return err(ss.str(), startTkn, endTkn);
+		}
+
+		sptr<Error> err(in<std::vector<std::string>> msgs)
+		{
+			return err(msgs, nullptr);
+		}
+
+		sptr<Error> err(in<std::vector<std::string>> msgs, sptr<Token> tkn)
+		{
+			std::stringstream ss;
+
+			for (auto const& msg : msgs)
+				ss << msg << ' ';
+
+			return err(ss.str(), tkn, tkn);
 		}
 
 		sptr<Error> err(in<std::string> msg, sptr<Token> tknStart, sptr<Token> tknEnd);

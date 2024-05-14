@@ -24,7 +24,7 @@ namespace caliburn
 			return fn->code->lastTkn();
 		}
 
-		void declareHeader(sptr<SymbolTable> table) override
+		void declareHeader(sptr<SymbolTable> table, out<ErrorHandler> err) override
 		{
 			sptr<FunctionGroup> group = nullptr;
 			auto sym = table->find(name->str);
@@ -46,7 +46,7 @@ namespace caliburn
 			
 		}
 
-		void declareSymbols(sptr<SymbolTable> table) override {}
+		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
 
 		/*
 		ValidationData validate(ref<const std::set<StmtType>> types, ref<const std::set<ReturnMode>> retModes) const override

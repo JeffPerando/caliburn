@@ -1,4 +1,9 @@
 ﻿
+/*
+Pro-tip, future me: For whatever reason, not marking functions as inline in this particular file
+results in linking errors. So... yeah. Fun.
+*/
+
 #pragma once
 
 #include <stdint.h>
@@ -6,11 +11,6 @@
 
 #define SPIRV_Op(Name, ID, Count) constexpr SpvOp inline Name() {return SpvOp(Count, ID);}
 #define SPIRV_OpVar(Name, ID, Base) constexpr SpvOp inline Name(uint32_t v) {return SpvOp(Base + v, ID);}
-
-/*
-Pro-tip, future me: For whatever reason, not marking functions as inline in this particular file
-results in linking errors. So... yeah. Fun.
-*/
 
 namespace caliburn
 {

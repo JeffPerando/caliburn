@@ -199,9 +199,9 @@ namespace caliburn
 		void prettyPrint(out<std::stringstream> ss) const override {}
 
 		//Only used by top-level statements which declare symbols. The rest, like variables, should use declareSymbols() instead
-		virtual void declareHeader(sptr<SymbolTable> table) {}
+		virtual void declareHeader(sptr<SymbolTable> table, out<ErrorHandler> err) {}
 
-		virtual void declareSymbols(sptr<SymbolTable> table) = 0;
+		virtual void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) = 0;
 
 		virtual void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
 

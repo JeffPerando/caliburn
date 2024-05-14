@@ -26,7 +26,7 @@ namespace caliburn
 		/*
 		Used to maintain a list of current inputs and outputs. Mainly used to make VertexInputAttribute structs for the front-end API
 		*/
-		using IOList = std::vector<std::pair<std::string, uint32_t>>;
+		using IOList = std::vector<std::pair<std::string_view, uint32_t>>;
 
 		struct Section;
 
@@ -59,7 +59,7 @@ namespace caliburn
 
 			std::vector<std::string> strs;
 
-			std::map<std::string, std::pair<uint32_t, SSA>> inputs, outputs;
+			std::map<std::string_view, std::pair<uint32_t, SSA>> inputs, outputs;
 
 			//Makes outputting a shader's 'API' easy.
 			IOList inputNames, outputNames;
@@ -97,11 +97,11 @@ namespace caliburn
 			SSA getLoopEnd() const;
 			void endLoop();
 
-			uint32_t addString(in<std::string> str);
-			std::string getString(uint32_t index) const;
+			size_t addString(in<std::string> str);
+			std::string getString(size_t index) const;
 
-			std::pair<uint32_t, SSA> pushInput(in<std::string>, SSA type);
-			std::pair<uint32_t, SSA> pushOutput(in<std::string> name, SSA type);
+			std::pair<uint32_t, SSA> pushInput(std::string_view, SSA type);
+			std::pair<uint32_t, SSA> pushOutput(std::string_view name, SSA type);
 
 			const IOList& getInputs() const
 			{

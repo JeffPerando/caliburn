@@ -72,80 +72,53 @@ CharType Tokenizer::getType(char chr) const
 	return asciiTypes[chr];
 }
 
-bool Tokenizer::findFloatFrac(out<std::stringstream> ss)
+bool Tokenizer::findFloatFrac()
 {
-	bool isFloat = false;
+	size_t start = buf.offset();
 
-	auto const isInt = LAMBDA(char chr)
+	auto const isInt = LAMBDA_FN(char chr)
 	{
 		return std::binary_search(DEC_INTS.begin(), DEC_INTS.end(), chr);
 	};
 
-	//Find the fractional component
+	//Find a decimal component
 	if (buf.hasRem(2) && buf.cur() == '.' && isInt(buf.peek(1)))
 	{
-		isFloat = true;
-
-		ss << '.' << buf.peek(1);
 		buf.consume(2);
 
-		while (buf.hasCur())
+		while (buf.hasCur() && isInt(buf.cur()))
 		{
-			auto decimal = buf.cur();
-
-			if (isInt(decimal))
-			{
-				ss << decimal;
-				buf.consume();
-			}
-			else break;
-
+			buf.consume();
 		}
 
 	}
 
-	/*
-	Look for an exponent
-	*/
-	if (buf.hasRem(2))
+	//Find an exponent
+	if (buf.hasRem(2) && std::tolower(buf.cur()) == 'e')
 	{
-		auto exp = std::tolower(buf.cur());
+		buf.consume();
 
-		if (exp != 'e')
+		if (auto sign = buf.cur(); sign == '+' || sign == '-')
 		{
-			return isFloat;
-		}
-
-		size_t expStart = buf.offset();
-		ss << exp;
-
-		if (auto sign = buf.next(); sign == '+' || sign == '-')
-		{
-			ss << sign;
 			buf.consume();
 		}
 
-		if (!isInt(buf.cur()))
+		if (!buf.hasCur() || !isInt(buf.cur()))
 		{
-			buf.revertTo(expStart);
-			return isFloat;
+			return false;
 		}
 
-		isFloat = true;
-
-		do
+		while (buf.hasCur() && isInt(buf.cur()))
 		{
-			ss << buf.cur();
 			buf.consume();
 		}
-		while (buf.hasCur() && isInt(buf.cur()));
 
 	}
 
-	return isFloat;
+	return buf.offset() > start;
 }
 
-size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
+size_t Tokenizer::findIntLiteral(out<TokenType> type)
 {
 	auto validIntChars = &DEC_INTS;
 
@@ -154,7 +127,7 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 		return std::binary_search(validIntChars->begin(), validIntChars->end(), chr);
 	};
 
-	auto first = buf.cur();
+	auto const first = buf.cur();
 
 	if (!isInt(first))
 	{
@@ -164,8 +137,6 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 	size_t startIndex = buf.offset();
 	bool isPrefixed = true;
 	bool isFloat = false;
-
-	std::stringstream ss;
 
 	//find either a hex, binary, or octal integer
 	if (first == '0' && buf.hasRem(3))
@@ -182,11 +153,7 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 
 		if (isPrefixed)
 		{
-			ss << first;
-			ss << litPrefix;
-
 			buf.consume(2);
-
 		}
 
 	}
@@ -197,77 +164,49 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type, out<std::string> lit)
 	{
 		auto digit = buf.cur();
 		
-		if (isInt(digit))
+		if (isInt(digit) || digit == '_')
 		{
-			//Make all lowercase hex digits uppercase, for everyone's sanity's sake
-			ss << std::toupper(digit);
+			buf.consume();
 		}
-		else if (digit != '_')
-		{
-			break;
-		}
-
-		buf.consume();
+		else break;
 
 	}
 
 	//find a decimal/float
 	if (!isPrefixed)
 	{
-		isFloat = findFloatFrac(ss);
+		isFloat = findFloatFrac();
 	}
 
-	auto typeName = isFloat ? "fp32" : "int32";
-	
-	/*
-	Caliburn outer-facing int literals have C-like suffixes. This bit of code finds one.
-
-	Internally, we convert this to a more Rust-like suffix prefaced with an underscore.
-	So 1f gets coverted to 1_fp32, 2.5f becomes 2.5_fp32, etc. This maintains outward-facing
-	code aesthetics while giving the compiler itself the tools to very quickly parse a float
-	*/
 	if (buf.hasCur())
 	{
 		auto suffix = std::tolower(buf.cur());
-		buf.consume();
-
+		
 		if (suffix == 'f')
 		{
-			typeName = "fp32";
+			buf.consume();
 		}
 		else if (suffix == 'd')
 		{
-			typeName = "fp64";
+			buf.consume();
 		}
 		else if (suffix == 'u')
 		{
 			if (buf.hasRem(2) && std::tolower(buf.peek(1)) == 'l')
 			{
 				buf.consume();
-				typeName = "uint64";
 			}
-			else
-			{
-				typeName = "uint32";
-			}
+
+			buf.consume();
 
 		}
 		else if (suffix == 'l')
 		{
-			typeName = "int64";
-		}
-		else
-		{
-			buf.rewind();
+			buf.consume();
 		}
 		
 	}
 
-	//Attach type information to the end of the literal
-	//No, I don't want to expose this syntactically. Those literals look so ugly.
-	ss << '_' << typeName;
-
-	lit = ss.str();
 	type = isFloat ? TokenType::LITERAL_FLOAT : TokenType::LITERAL_INT;
 
 	size_t len = (buf.offset() - startIndex);
@@ -284,7 +223,7 @@ size_t Tokenizer::findIdentifierLen()
 
 	for (size_t i = 0; i < buf.remaining(); ++i)
 	{
-		auto type = getType(buf.peek(i));
+		auto const type = getType(buf.peek(i));
 
 		if (type == CharType::IDENTIFIER || type == CharType::INT)
 		{
@@ -305,13 +244,11 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 	{
 		const size_t start = buf.offset();
 		const TextPos startPos = pos;
-		const char current = buf.cur();
-
-		const CharType type = getType(current);
-
 		auto tknType = TokenType::UNKNOWN;
-		std::string tknContent = "";
 		size_t tknLen = 0;
+
+		const char current = buf.cur();
+		const CharType type = getType(current);
 
 		if (type == CharType::WHITESPACE)
 		{
@@ -323,24 +260,25 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			Result: We don't care about \r. We just don't. We see it, we skip it. That way line counts are kept sane.
 			*/
 
+			buf.consume();
+
 			if (current == '\n')
 			{
 				pos.newline();
-				doc->startLine(buf.offset() + 1);
+				doc->startLine(buf.offset());
 			}
 			else if (current != '\r')
 			{
 				pos.move();
 			}
 
-			buf.consume();
 			continue;
 		}
 		else if (type == CharType::COMMENT)
 		{
 			buf.consume();
 
-			//skip to the end of the line, which will later invoke the whitespace code above
+			//skip to the end of the line, which will later invoke the whitespace code
 			while (buf.hasCur())
 			{
 				if (buf.cur() == '\n')
@@ -370,10 +308,8 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			should be a valid integer literal, which isn't a valid identifier.
 			*/
 
-			std::string intLit = "";
-			
 			const size_t wordLen = findIdentifierLen();
-			const size_t intLen = findIntLiteral(tknType, intLit);
+			const size_t intLen = findIntLiteral(tknType);
 
 			if (intLen == 0 && wordLen == 0)
 			{
@@ -382,11 +318,10 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 			if (wordLen > intLen)
 			{
-				tknContent = doc->text.substr(buf.offset(), wordLen);
 				tknLen = wordLen;
 				tknType = TokenType::IDENTIFIER;
 
-				if (KEYWORDS.count(tknContent))
+				if (KEYWORDS.count(doc->text.substr(start, tknLen)))
 				{
 					tknType = TokenType::KEYWORD;
 				}
@@ -394,18 +329,20 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			}
 			else
 			{
-				tknContent = intLit;
 				tknLen = intLen;
-
 			}
 
 		}
 		else if (type == CharType::STRING_DELIM)
 		{
+			if (!buf.hasRem(2))
+			{
+				throw std::exception("Not enough chars for a string literal");
+			}
+
 			//only used for error messaging
 			sptr<Token> delimTkn = makeCharTkn(TokenType::UNKNOWN);
 
-			std::stringstream ss;
 			char delim = current;
 			bool foundDelim = false;
 
@@ -432,38 +369,15 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 					pos.move(2);
 					continue;
 				}
-				
+
 				if (strChar == '\n')
 				{
-					//Newlines are *not* skipped, but trailing whitespace after is
-					ss << '\n';
-					doc->startLine(buf.offset() + 1);
 					buf.consume();
 					pos.newline();
-					
-					while (buf.hasCur())
-					{
-						char ws = buf.cur();
-
-						if (getType(ws) != CharType::WHITESPACE)
-							break;
-
-						if (ws == '\n')
-						{
-							break;
-						}
-						else if (ws != '\r')
-						{
-							buf.consume();
-							pos.move();
-						}
-
-					}
-
+					doc->startLine(buf.offset() + 1);
 					continue;
 				}
-
-				ss << strChar;
+				
 				buf.consume();
 				pos.move();
 
@@ -475,8 +389,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			}
 
 			tknType = TokenType::LITERAL_STR;
-			tknContent = ss.str();
-			//DO NOT SET TOKEN LENGTH
+			tknLen = buf.offset() - start;
 
 		}
 		else if (type == CharType::SPECIAL)
@@ -484,8 +397,8 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			/*
 			Special tokens are always 1-char tokens and typically have an override (see TOKEN_TYPE_OVERRIDES)
 			*/
-			tknContent = std::string(1, current);
 			tknLen = 1;
+
 		}
 		else if (type == CharType::OPERATOR)
 		{
@@ -509,12 +422,9 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			
 			while (opLen > 1)
 			{
-				const auto testOp = doc->text.substr(buf.offset(), opLen);
-
-				if (LONG_OPS.count(testOp))
+				if (LONG_OPS.count(doc->text.substr(buf.offset(), opLen)))
 				{
 					tknType = TokenType::OPERATOR;
-					tknContent = testOp;
 					tknLen = opLen;
 					break;
 				}
@@ -527,7 +437,6 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			if (opLen == 1)
 			{
 				tknType = TokenType::OPERATOR;
-				tknContent = std::string(1, current);
 				tknLen = 1;
 			}
 
@@ -540,15 +449,17 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			continue;
 		}
 
-		if (auto typeOverride = TOKEN_TYPE_OVERRIDES.find(tknContent); typeOverride != TOKEN_TYPE_OVERRIDES.end())
+		auto const content = doc->text.substr(start, tknLen);
+
+		if (auto typeOverride = TOKEN_TYPE_OVERRIDES.find(content); typeOverride != TOKEN_TYPE_OVERRIDES.end())
 		{
 			tknType = typeOverride->second;
 		}
 
 		buf.consume(tknLen);
-		pos.move(tknLen);
+		pos.move(SCAST<uint32_t>(tknLen));
 
-		tokens.push_back(new_sptr<Token>(tknContent, tknType, startPos, start, buf.offset()));
+		tokens.push_back(new_sptr<Token>(Token{ content, tknType, startPos }));
 
 	}
 

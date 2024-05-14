@@ -98,29 +98,12 @@ namespace caliburn
 	*/
 	struct Token
 	{
-		const std::string str;
+		const std::string_view str;
 		const TokenType type;
 		const TextPos pos;
 
-		/*
-		These represent the start and end of this token within the file itself.
-		Since a file is just a string, we can index directly into it.
-		ALSO: textEnd would be redundant, EXCEPT some tokens can be shortened, e.g. int literals
-		So, since it's not a 1:1 text to token translation, we need to include the start AND end.
-		*/
-		const uint64_t textStart, textEnd;
-
-		Token(std::string t,
-			TokenType id = TokenType::IDENTIFIER, TextPos p = TextPos(),
-			uint64_t txtOff = 0, uint64_t txtEnd = 0) :
-			str(t), type(id), pos(p), textStart(txtOff), textEnd(txtEnd) {}
-
-		Token(char c, TokenType id = TokenType::IDENTIFIER,
-			TextPos p = TextPos(), uint64_t off = 0) :
-			str(std::string(1, c)), type(id), pos(p), textStart(off), textEnd(off + 1) {}
-
 		//TODO decide what looks good for a token
-		void prettyPrint(std::stringstream ss)
+		void prettyPrint(std::stringstream ss) const
 		{
 			ss << str;
 		}
@@ -216,14 +199,14 @@ namespace caliburn
 	/*
 	Unary ops have a higher precedent than infix ops, hence this separate map
 	*/
-	static const HashMap<std::string, Operator> UNARY_OPS = {
+	static const HashMap<std::string_view, Operator> UNARY_OPS = {
 		{"|",	Operator::ABS},
 		{"-",	Operator::NEG},
 		{"~",	Operator::BIT_NEG},
 		{"!",	Operator::BOOL_NOT}
 	};
 
-	static const HashMap<std::string, Operator> INFIX_OPS = {
+	static const HashMap<std::string_view, Operator> INFIX_OPS = {
 		{"+",	Operator::ADD},
 		{"-",	Operator::SUB},
 		{"*",	Operator::MUL},
@@ -253,7 +236,7 @@ namespace caliburn
 	/*
 	A map which goes in reverse of INFIX_OPS. Used for debugging, mainly.
 	*/
-	static const std::map<Operator, std::string> INFIX_OPS_STR = {
+	static const std::map<Operator, std::string_view> INFIX_OPS_STR = {
 		{Operator::ADD,			"+"},
 		{Operator::SUB,			"-"},
 		{Operator::MUL,			"*"},

@@ -21,7 +21,7 @@ namespace caliburn
 			return val->lastTkn();
 		}
 
-		void declareSymbols(sptr<SymbolTable> table) override {}
+		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
 
 		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override
 		{

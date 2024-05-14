@@ -27,7 +27,7 @@ namespace caliburn
 	protected:
 		sptr<cllr::LowType> resultType = nullptr;
 	public:
-		const std::string name;
+		const std::string_view name;
 		const sptr<Token> nameTkn;
 		const sptr<GenericArguments> genericArgs;
 
@@ -35,9 +35,9 @@ namespace caliburn
 
 		std::vector<sptr<Value>> arrayDims;//TODO implement properly
 
-		ParsedType(in<std::string> n) : name(n), nameTkn(nullptr), genericArgs(new_sptr<GenericArguments>()) {}
+		ParsedType(std::string_view n) : name(n), nameTkn(nullptr), genericArgs(new_sptr<GenericArguments>()) {}
 		ParsedType(sptr<Token> n) : name(n->str), nameTkn(n), genericArgs(new_sptr<GenericArguments>()) {}
-		ParsedType(in<std::string> n, sptr<GenericArguments> gArgs) : name(n), nameTkn(nullptr), genericArgs(gArgs) {}
+		ParsedType(std::string_view n, sptr<GenericArguments> gArgs) : name(n), nameTkn(nullptr), genericArgs(gArgs) {}
 		ParsedType(sptr<Token> n, sptr<GenericArguments> gArgs) : name(n->str), nameTkn(n), genericArgs(gArgs) {}
 
 		virtual ~ParsedType() {}
@@ -89,7 +89,7 @@ namespace caliburn
 		cllr::TypedSSA id;
 
 	public:
-		const std::string name;
+		const std::string_view name;
 
 		StmtModifiers mods = {};
 		sptr<Token> first = nullptr;
@@ -99,7 +99,7 @@ namespace caliburn
 		sptr<Value> initValue = nullptr;
 		bool isConst = false;
 
-		Variable(in<std::string> n) : name(n) {}
+		Variable(std::string_view n) : name(n) {}
 
 		Variable(in<ParsedVar> v) : name(v.name->str)
 		{

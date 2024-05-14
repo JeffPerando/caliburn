@@ -1,14 +1,14 @@
 
 #pragma once
 
-#include "basetypes.h"
+#include "ast/basetypes.h"
 
 #include "caliburn.h"
 #include "symbols.h"
 
 namespace caliburn
 {
-	static sptr<SymbolTable> makeStdLib(sptr<CompilerSettings> options)
+	static sptr<SymbolTable> makeStdLib(sptr<const CompilerSettings> options)
 	{
 		auto root = new_sptr<SymbolTable>();
 

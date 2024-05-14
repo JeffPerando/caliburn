@@ -48,7 +48,7 @@ namespace caliburn
 	struct SymbolTable
 	{
 	private:
-		HashMap<std::string, Symbol> symbols;
+		HashMap<std::string_view, Symbol> symbols;
 		sptr<const SymbolTable> parent;
 
 	public:
@@ -58,11 +58,11 @@ namespace caliburn
 
 		void reparent(sptr<const SymbolTable> p);
 
-		bool add(in<std::string> symName, in<Symbol> sym);
+		bool add(std::string_view symName, in<Symbol> sym);
 		bool addType(sptr<BaseType> t);
 
-		Symbol find(in<std::string> symName) const;
-		bool has(in<std::string> symName) const;
+		Symbol find(std::string_view symName) const;
+		bool has(std::string_view symName) const;
 		bool isChildOf(sptr<SymbolTable> table) const;
 
 	};

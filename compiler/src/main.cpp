@@ -61,14 +61,14 @@ int testShaderCompile()
 
 	auto const timeTaken = (time.count() * 0.000001);
 
-	std::cout << "Successfully compiled " << result.shaders.size() << " shaders!\n";
-	std::cout << "Time taken: " << timeTaken << " ms\n";
+	//std::cout << "Successfully compiled " << result.shaders.size() << " shaders!\n";
+	//std::cout << "Time taken: " << timeTaken << " ms\n";
 
 	bestTime = std::min(timeTaken, bestTime);
 	worstTime = std::max(timeTaken, worstTime);
 
 	totalTime += time.count();
-
+	/*
 	for (auto const& s : result.shaders)
 	{
 		auto name = (std::stringstream() << "./../../../../shader" << ((uint32_t)s->type) << ".spv").str();
@@ -84,7 +84,7 @@ int testShaderCompile()
 		out.close();
 
 	}
-
+	*/
 	return 0;
 }
 
@@ -130,9 +130,9 @@ int testExprParsing()
 	return 0;
 }
 
-void printTokens()
+void printTokens(const std::string& textfile)
 {
-	std::string src = read("expr.txt");
+	std::string src = read(textfile);
 	auto settings = new_sptr<caliburn::CompilerSettings>();
 	auto doc = new_sptr<caliburn::TextDoc>(src);
 	auto t = caliburn::Tokenizer(doc);
@@ -150,18 +150,21 @@ void printTokens()
 	
 	for (size_t line = 0; line < doc->getLineCount(); ++line)
 	{
-		std::cout << (line + 1) << '|' << doc->getLine(line) << '\n';
+		std::cout << (line + 1) << '|' << doc->getLineDirect(line) << '\n';
 	}
 
 }
 
 void benchmarkShaderCompile()
 {
-	auto const takes = 20;
+	auto const takes = 2000;
 
 	for (int i = 0; i < takes; ++i)
 	{
-		testShaderCompile();
+		if (testShaderCompile() != 0)
+		{
+			break;
+		}
 	}
 
 	std::cout << "Average time: " << ((totalTime / static_cast<double>(takes)) * 0.000001) << " ms\n";
@@ -183,6 +186,8 @@ int main()
 	//return testExprParsing();
 	
 	benchmarkShaderCompile();
+	//printTokens("expr.txt");
+	//printTokens("shader.cbrn");
 
 	return 0;
 }

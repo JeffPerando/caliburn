@@ -1,9 +1,7 @@
 
 #pragma once
 
-#include <iostream>
-
-#include "ast.h"
+#include "ast/ast.h"
 
 namespace caliburn
 {
@@ -35,9 +33,9 @@ namespace caliburn
 			return alias->lastTkn();
 		}
 
-		void declareHeader(sptr<SymbolTable> table) override {}
+		void declareHeader(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
 
-		void declareSymbols(sptr<SymbolTable> table) override
+		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override
 		{
 			//TODO implement strong typing (needs wrapper)
 			//TODO implement error handling for header declaration and QUIT USING STD::COUT
@@ -51,7 +49,7 @@ namespace caliburn
 
 			if (alias->name == "dynamic")
 			{
-				auto outTypeName = settings->dynTypes.find(name->str);
+				auto outTypeName = settings->dynTypes.find(std::string(name->str));
 
 				if (outTypeName != settings->dynTypes.end())
 				{
@@ -61,7 +59,7 @@ namespace caliburn
 				{
 					if (alias->genericArgs->empty())
 					{
-						std::cout << "dynamic type generic is empty\n";
+						err.err("Dynamic type generic is empty or not present", *alias);
 						return;
 					}
 
@@ -71,7 +69,7 @@ namespace caliburn
 					}
 					else //Generic at index 0 is not a type
 					{
-						std::cout << "dynamic type default not found\n";
+						err.err("Dynamic type default not found", *alias);
 						return;
 					}
 
@@ -85,11 +83,15 @@ namespace caliburn
 			*/
 			if (auto t = alias->resolveBase(table))
 			{
-				table->add(name->str, t);
+				if (!table->add(name->str, t))
+				{
+					err.err({ "Duplicate type:", name->str }, name);
+				}
+
 			}
 			else
 			{
-				std::cout << "was unable to resolve " << alias->name << '\n';
+				err.err({ "Unable to resolve type", alias->name }, *alias);
 			}
 
 		}

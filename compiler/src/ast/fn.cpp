@@ -167,7 +167,7 @@ sptr<SymbolTable> Method::makeFnContext(in<std::vector<cllr::TypedSSA>> callIDs,
 	{
 		if (!table->add(mem, new_sptr<MemberReadDirectValue>(self, mem)))
 		{
-			codeAsm.errors->err({ "Duplicate name:", mem }, nullptr);
+			codeAsm.errors->err({ "Duplicate name:", mem });
 
 		}
 

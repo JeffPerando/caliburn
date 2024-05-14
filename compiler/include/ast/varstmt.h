@@ -25,7 +25,7 @@ namespace caliburn
 			return vars.back()->lastTkn();
 		}
 
-		void declareSymbols(sptr<SymbolTable> table) override
+		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override
 		{
 			for (auto const& v : vars)
 			{

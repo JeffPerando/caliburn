@@ -12,6 +12,7 @@ using namespace caliburn;
 
 ValueResult IntLiteralValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
+	/*
 	auto& [intLit, intType] = splitStr(lit->str, "_");
 
 	auto pType = ParsedType(intType);
@@ -29,13 +30,15 @@ ValueResult IntLiteralValue::emitValueCLLR(sptr<const SymbolTable> table, out<cl
 
 		return cllr::TypedSSA(t, vID);
 	}
-
+	*/
 	//TODO complain
 	return ValueResult();
+	
 }
 
 ValueResult FloatLiteralValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
+	/*
 	//We defer parsing further! Great success!
 	auto sID = codeAsm.addString(lit->str.substr(0, lit->str.find_first_of('_')));
 	auto pType = ParsedType(lit->str.substr(lit->str.find_first_of('_') + 1));
@@ -46,6 +49,7 @@ ValueResult FloatLiteralValue::emitValueCLLR(sptr<const SymbolTable> table, out<
 
 		return cllr::TypedSSA(t, vID);
 	}
+	*/
 
 	//TODO complain
 	return ValueResult();
@@ -55,10 +59,12 @@ ValueResult StringLitValue::emitValueCLLR(sptr<const SymbolTable> table, out<cll
 {
 	if (auto t = ParsedType("string").resolve(table, codeAsm))
 	{
+		/* FIXME
 		auto sID = codeAsm.addString(lit->str);
 		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_STR, { sID }, {}, t->id));
 
 		return cllr::TypedSSA(t, vID);
+		*/
 	}
 
 	//TODO complain
@@ -478,7 +484,7 @@ ValueResult MethodCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cl
 
 		if (m == nullptr)
 		{
-			auto e = codeAsm.errors->err("Unable to find method " + name->str, *this);
+			auto e = codeAsm.errors->err({ "Unable to find method", name->str }, *this);
 			return ValueResult();
 		}
 
@@ -491,7 +497,7 @@ ValueResult MethodCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cl
 
 		MATCH_EMPTY(sym)
 		{
-			auto e = codeAsm.errors->err("Unable to find function " + name->str + " in module", *target);
+			auto e = codeAsm.errors->err({ "Unable to find function", name->str, "in module" }, *target);
 			return ValueResult();
 		}
 
@@ -506,7 +512,7 @@ ValueResult MethodCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cl
 		return ValueResult();
 	}
 
-	auto e = codeAsm.errors->err("Unable to find function or method: " + name->str, *this);
+	auto e = codeAsm.errors->err({ "Unable to find function or method: ", name->str }, *this);
 	return ValueResult();
 }
 

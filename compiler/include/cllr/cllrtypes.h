@@ -113,7 +113,7 @@ namespace caliburn
 				return innerType->typeCheck(target, fnID, op);
 			}
 
-			LowMember getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const override;
+			LowMember getMember(SSA objID, std::string_view name, out<cllr::Assembler> codeAsm) const override;
 
 			std::vector<std::string> getMembers() const override
 			{
@@ -172,12 +172,12 @@ namespace caliburn
 
 			TypeCheckResult typeCheck(sptr<const LowType> target, out<cllr::SSA> fnID, Operator op = Operator::NONE) const override;
 
-			bool addMember(in<std::string> name, sptr<const LowType> type) override;
-			LowMember getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const override;
+			bool addMember(std::string_view name, sptr<const LowType> type) override;
+			LowMember getMember(SSA objID, std::string_view name, out<cllr::Assembler> codeAsm) const override;
 			std::vector<std::string> getMembers() const override;
 
 			bool addMemberFn(sptr<Method> fn) override;
-			sptr<FunctionGroup> getMemberFns(in<std::string> name) const override;
+			sptr<FunctionGroup> getMemberFns(std::string_view name) const override;
 
 		};
 
@@ -185,8 +185,8 @@ namespace caliburn
 		{
 			const TextureKind tex;
 
-			HashMap<std::string, std::pair<SSA, sptr<LowType>>> members;
-			HashMap<std::string, sptr<FunctionGroup>> memberFns;
+			HashMap<std::string_view, std::pair<SSA, sptr<LowType>>> members;
+			HashMap<std::string_view, sptr<FunctionGroup>> memberFns;
 
 			LowTexture(SSA id, TextureKind tk) : LowType(id, Opcode::TYPE_TEXTURE), tex(tk) {}
 
@@ -205,12 +205,12 @@ namespace caliburn
 				return TypeCheckResult::INCOMPATIBLE;
 			}
 
-			bool addMember(in<std::string> name, sptr<const LowType> type) override
+			bool addMember(std::string_view name, sptr<const LowType> type) override
 			{
 				return false;
 			}
 
-			LowMember getMember(SSA objID, in<std::string> name, out<cllr::Assembler> codeAsm) const override
+			LowMember getMember(SSA objID, std::string_view name, out<cllr::Assembler> codeAsm) const override
 			{
 				return LowMember();
 			}
@@ -232,7 +232,7 @@ namespace caliburn
 				return true;
 			}
 
-			sptr<FunctionGroup> getMemberFns(in<std::string> name) const override
+			sptr<FunctionGroup> getMemberFns(std::string_view name) const override
 			{
 				if (auto f = memberFns.find(name); f != memberFns.end())
 				{

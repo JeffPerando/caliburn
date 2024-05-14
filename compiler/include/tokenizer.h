@@ -42,7 +42,7 @@ namespace caliburn
 
 		sptr<Token> makeCharTkn(TokenType t)
 		{
-			return new_sptr<Token>(buf.cur(), t, pos, buf.offset());
+			return new_sptr<Token>(Token{ doc->text.substr(buf.offset(), 1), t, pos});
 		}
 
 	public:
@@ -52,7 +52,7 @@ namespace caliburn
 		//or, y'know, find a UTF-8 library (NOT BOOST)
 		Tokenizer(sptr<TextDoc> doc);
 
-		virtual ~Tokenizer() {}
+		virtual ~Tokenizer() = default;
 
 		/*
 		Main function for creating tokens.
@@ -74,14 +74,14 @@ namespace caliburn
 
 		Return true if it finds one, meaning the literal is a float.
 		*/
-		bool findFloatFrac(out<std::stringstream> ss);
+		bool findFloatFrac();
 
 		/*
 		Looks for an int literal.
 
 		Returns the length of the int literal
 		*/
-		size_t findIntLiteral(out<TokenType> type, out<std::string> lit);
+		size_t findIntLiteral(out<TokenType> type);
 
 		/*
 		Looks for an identifier.

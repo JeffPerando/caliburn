@@ -19,7 +19,7 @@ void ScopeStmt::prettyPrint(out<std::stringstream> ss) const
 
 }
 
-void ScopeStmt::declareSymbols(sptr<SymbolTable> table)
+void ScopeStmt::declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err)
 {
 	if (scopeTable != nullptr)
 	{
@@ -30,7 +30,7 @@ void ScopeStmt::declareSymbols(sptr<SymbolTable> table)
 
 	for (auto const& stmt : stmts)
 	{
-		stmt->declareSymbols(scopeTable);
+		stmt->declareSymbols(scopeTable, err);
 
 	}
 

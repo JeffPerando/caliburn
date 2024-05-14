@@ -136,7 +136,7 @@ std::vector<uint32_t> cllr::SPIRVOutAssembler::translateCLLR(in<cllr::Assembler>
 	{
 		if (entry.name.empty())
 		{
-			entry.name = (std::string("CBRN_") + SHADER_TYPE_NAMES.at(cllrAsm.type));
+			entry.name = (std::string("CBRN_").append(SHADER_TYPE_NAMES.at(cllrAsm.type)));
 		}
 
 		spvMisc->push(spirv::OpEntryPoint((uint32_t)entry.io.size() + spirv::SpvStrLen(entry.name)), 0, { SCAST<uint32_t>(entry.type), entry.func });

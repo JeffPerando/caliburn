@@ -62,7 +62,7 @@ namespace caliburn
 		//{"mesh",		ShaderType::MESH}
 	};
 
-	static const HashMap<ShaderType, std::string> SHADER_TYPE_NAMES = {
+	static const HashMap<ShaderType, std::string_view> SHADER_TYPE_NAMES = {
 		//{ShaderType::COMPUTE, "main"},
 		{ShaderType::VERTEX,		"vertex"},
 		{ShaderType::FRAGMENT,		"frag"},

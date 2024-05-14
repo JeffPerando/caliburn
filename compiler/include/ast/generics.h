@@ -30,7 +30,7 @@ namespace caliburn
 		CONST
 	};
 
-	static const std::map<std::string, GenericSymType> GENERIC_SYMBOL_TYPES = {
+	static const std::map<std::string_view, GenericSymType> GENERIC_SYMBOL_TYPES = {
 		{ "type", GenericSymType::TYPE },
 		{ "const", GenericSymType::CONST }
 	};

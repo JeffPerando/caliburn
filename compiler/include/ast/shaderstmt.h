@@ -87,9 +87,9 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override {}
 
-		void declareHeader(sptr<SymbolTable> table) override {} //We don't add shaders to the symbol table
+		void declareHeader(sptr<SymbolTable> table, out<ErrorHandler> err) override {} //We don't add shaders to the symbol table
 
-		void declareSymbols(sptr<SymbolTable> table) override {}
+		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
 
 		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override {}
 

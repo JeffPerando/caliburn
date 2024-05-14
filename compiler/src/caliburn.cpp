@@ -172,16 +172,24 @@ ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName
 	auto root = makeStdLib(settings);
 	auto table = new_sptr<SymbolTable>(root);
 
+	auto symErr = ErrorHandler(CompileStage::SYMBOL_GENERATION, settings);
+
 	//Declare headers
 	for (auto const& stmt : ast)
 	{
-		stmt->declareHeader(table);
+		stmt->declareHeader(table, symErr);
 	}
 
 	//Declare everything else
 	for (auto const& stmt : ast)
 	{
-		stmt->declareSymbols(table);
+		stmt->declareSymbols(table, symErr);
+	}
+
+	if (!symErr.empty())
+	{
+		symErr.printout(result.errors, *doc);
+		return result;
 	}
 
 	std::vector<sptr<Error>> compileErrs;
@@ -195,6 +203,7 @@ ShaderResult Compiler::compileSrcShaders(std::string src, std::string shaderName
 
 		}
 
+		return result;
 	}
 	/* checking data usage to see if tokens actually need to be shared
 	for (const auto& t : tokens)

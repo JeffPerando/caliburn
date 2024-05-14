@@ -101,7 +101,7 @@ bool Parser::parseAnyBetween(in<std::string> start, in<std::function<void()>> fn
 
 	if (startTkn->str != start)
 	{
-		auto e = errors->err({ "Unexpected token found; Expected", start }, startTkn);
+		auto e = errors->err(std::vector<std::string>{ "Unexpected token found; Expected", start }, startTkn);
 
 		return false;
 	}

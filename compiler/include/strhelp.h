@@ -32,9 +32,6 @@ namespace caliburn
 		uint32_t line = 0;
 		uint32_t column = 0;
 
-		TextPos() = default;
-		TextPos(uint32_t l, uint32_t c = 0) : line(l), column(c) {}
-		
 		std::string toStr() const
 		{
 			std::stringstream ss;
@@ -69,9 +66,14 @@ namespace caliburn
 		Would be named "next", but then it shares 2 letters with newline(),
 		and I can't be bothered to type "new" every time I want to call it
 		*/
-		void move(size_t off = 1)
+		void move(uint32_t off = 1)
 		{
-			column += (uint32_t)off;
+			column += off;
+		}
+
+		constexpr uint32_t getLine() const
+		{
+			return line + 1;
 		}
 
 	};
@@ -81,10 +83,10 @@ namespace caliburn
 	*/
 	struct TextDoc
 	{
-		const std::string text;
+		const std::string_view text;
 
-		//note: all text files have at least one line; adding a 0 to the start enables getLine() to always work.
-		std::vector<size_t> lineOffsets{0};
+		std::vector<std::string_view> lines;
+		size_t lastOffset = 0;
 
 		TextDoc(in<std::string> str) : text(str) {}
 
@@ -96,12 +98,14 @@ namespace caliburn
 		*/
 		void startLine(size_t off)
 		{
-			if (lineOffsets.size() > 1 && off <= lineOffsets.back())
+			if (off < lastOffset)
 			{
 				throw std::exception("You somehow tried to push an impossible line offset.");
 			}
 
-			lineOffsets.push_back(off);
+			lines.push_back(text.substr(lastOffset, off - 1));
+			lastOffset = off;
+
 		}
 
 		/*
@@ -109,43 +113,29 @@ namespace caliburn
 
 		The resulting line substring *shouldn't* contain a newline character.
 		*/
-		std::string getLine(size_t line) const
+		std::string_view getLine(in<TextPos> pos) const
 		{
-			if (line >= lineOffsets.size())
+			return getLineDirect(pos.line);
+		}
+
+		std::string_view getLineDirect(size_t index) const
+		{
+			if (lines.empty())
 			{
-				throw std::exception((std::stringstream() << "Invalid line: " << line).str().c_str());
+				return text;
 			}
 
-			size_t off = lineOffsets.at(line);
-			
-			if ((line + 1) == lineOffsets.size())
+			if (index >= lines.size())
 			{
-				return text.substr(off);
+				throw std::exception((std::stringstream() << "Invalid line: " << index).str().c_str());
 			}
 
-			size_t nextOff = lineOffsets.at(line + 1);
-
-			return text.substr(off, nextOff - off - 1);
+			return lines.at(index);
 		}
 
 		size_t getLineCount() const
 		{
-			return lineOffsets.size();
-		}
-
-		size_t getLineSize(size_t line)
-		{
-			if (line >= lineOffsets.size())
-			{
-				return 0;
-			}
-
-			if ((line + 1) >= lineOffsets.size())
-			{
-				return text.length() - lineOffsets[line];
-			}
-
-			return lineOffsets[line + 1] - lineOffsets[line];
+			return lines.size();
 		}
 
 	};

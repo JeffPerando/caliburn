@@ -32,7 +32,7 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 
-		void declareSymbols(sptr<SymbolTable> table) override;
+		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override;
 
 		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
@@ -60,7 +60,7 @@ namespace caliburn
 			ss << "break";
 		}
 
-		void declareSymbols(sptr<SymbolTable> table) override {}
+		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
 
 		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
@@ -88,7 +88,7 @@ namespace caliburn
 			ss << "continue";
 		}
 
-		void declareSymbols(sptr<SymbolTable> table) override {}
+		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
 
 		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
@@ -116,7 +116,7 @@ namespace caliburn
 			ss << "discard";
 		}
 
-		void declareSymbols(sptr<SymbolTable> table) override {}
+		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
 
 		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
@@ -158,7 +158,7 @@ namespace caliburn
 
 		}
 
-		void declareSymbols(sptr<SymbolTable> table) override {}
+		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
 
 		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
@@ -186,7 +186,7 @@ namespace caliburn
 			ss << "pass";
 		}
 
-		void declareSymbols(sptr<SymbolTable> table) override {}
+		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
 
 		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
@@ -214,7 +214,7 @@ namespace caliburn
 			ss << "unreachable";
 		}
 
-		void declareSymbols(sptr<SymbolTable> table) override {}
+		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
 
 		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 

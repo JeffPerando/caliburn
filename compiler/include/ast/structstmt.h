@@ -20,7 +20,7 @@ namespace caliburn
 		
 		uptr<GenericSignature> genSig = nullptr;
 
-		std::map<std::string, sptr<ParsedVar>> members;
+		std::map<std::string_view, sptr<ParsedVar>> members;
 		std::vector<uptr<ParsedFn>> memberFns;
 
 		StructStmt(StmtType type = StmtType::STRUCT) :
@@ -38,7 +38,7 @@ namespace caliburn
 			return last;
 		}
 
-		void declareHeader(sptr<SymbolTable> table) override
+		void declareHeader(sptr<SymbolTable> table, out<ErrorHandler> err) override
 		{
 			if (!table->add(name->str, new_sptr<TypeStruct>(name->str, genSig, members, memberFns)))
 			{
@@ -50,7 +50,7 @@ namespace caliburn
 		//Do not implement. We let the innermost type declare itself
 		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override {}
 
-		void declareSymbols(sptr<SymbolTable> table) override {}
+		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
 
 	};
 

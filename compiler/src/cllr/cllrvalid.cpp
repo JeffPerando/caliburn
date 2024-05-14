@@ -117,7 +117,7 @@ bool Validator::validate(in<Assembler> codeAsm)
 				{
 					if (i.refs[r] == i.index)
 					{
-						auto e = errors->err({ "CLLR instruction", std::to_string(i.index), "cannot reference itself" }, i.debugTkn);
+						auto e = errors->err(std::vector<std::string>{ "CLLR instruction", std::to_string(i.index), "cannot reference itself" }, i.debugTkn);
 						e->note(i.toStr());
 
 					}
@@ -141,7 +141,7 @@ bool Validator::validate(in<Assembler> codeAsm)
 
 				if (reason != ValidReason::VALID)
 				{
-					auto e = errors->err({ VALIDATION_REASONS[(int)reason] }, i.debugTkn);
+					auto e = errors->err(VALIDATION_REASONS[(int)reason], i.debugTkn);
 
 					if (reason == ValidReason::INVALID_NO_ID)
 					{
@@ -194,7 +194,7 @@ bool Validator::validate(in<Assembler> codeAsm)
 
 			msg.push_back("does not have a debug token");
 
-			auto e = errors->err(msg, nullptr);
+			auto e = errors->err(msg);
 
 			e->note(codeGenErr);
 			e->note(i.toStr());

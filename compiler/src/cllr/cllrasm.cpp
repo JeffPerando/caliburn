@@ -30,7 +30,7 @@ void Assembler::endSect(in<Instruction> i)
 {
 	if (codeSects.empty())
 	{
-		errors->err({ "Code section ended but no code section found. Footer:", i.toStr() }, nullptr);
+		errors->err(std::vector<std::string>{ "Code section ended but no code section found. Footer:", i.toStr() }, nullptr);
 		return;
 	}
 
@@ -216,16 +216,16 @@ void Assembler::endLoop()
 	codeSects.top()->endLoop();
 }
 
-uint32_t Assembler::addString(in<std::string> str)
+size_t Assembler::addString(in<std::string> str)
 {
 	auto index = strs.size();
 
 	strs.push_back(str);
 
-	return (uint32_t)index;
+	return index;
 }
 
-std::string Assembler::getString(uint32_t index) const
+std::string Assembler::getString(size_t index) const
 {
 	if (strs.empty() || index >= strs.size())
 	{
@@ -235,7 +235,7 @@ std::string Assembler::getString(uint32_t index) const
 	return strs.at(index);
 }
 
-std::pair<uint32_t, SSA> Assembler::pushInput(in<std::string> name, SSA type)
+std::pair<uint32_t, SSA> Assembler::pushInput(std::string_view name, SSA type)
 {
 	if (outputs.find(name) != outputs.end())
 	{
@@ -261,7 +261,7 @@ std::pair<uint32_t, SSA> Assembler::pushInput(in<std::string> name, SSA type)
 	return inData;
 }
 
-std::pair<uint32_t, SSA> Assembler::pushOutput(in<std::string> name, SSA type)
+std::pair<uint32_t, SSA> Assembler::pushOutput(std::string_view name, SSA type)
 {
 	if (inputs.find(name) != inputs.end())
 	{

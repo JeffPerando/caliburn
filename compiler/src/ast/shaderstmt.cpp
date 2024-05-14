@@ -27,15 +27,29 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 
 	auto codeAsm = cllr::Assembler(type, settings);
 
-	auto fullName = parentName->str + "_" + SHADER_TYPE_NAMES.at(type);
-	auto nameID = codeAsm.addString(fullName);
+	auto fullName = (std::stringstream() << parentName->str << "_" << SHADER_TYPE_NAMES.at(type)).str();
+	auto nameID = SCAST<uint32_t>(codeAsm.addString(fullName));
 
 	auto stageID = codeAsm.beginSect(cllr::Instruction(cllr::Opcode::SHADER_STAGE, { (uint32_t)type, nameID }, {}));
 
-	base->code->declareSymbols(stageTable);
+	auto symErr = ErrorHandler(CompileStage::SYMBOL_GENERATION);
+
+	base->code->declareSymbols(stageTable, symErr);
 	base->code->emitCodeCLLR(stageTable, codeAsm);
 
 	codeAsm.endSect(cllr::Instruction(cllr::Opcode::SHADER_STAGE_END, {}, { stageID }));
+
+	if (!symErr.empty())
+	{
+		symErr.dump(allErrs);
+		return nullptr;
+	}
+
+	if (codeAsm.errors->empty())
+	{
+		codeAsm.errors->dump(allErrs);
+		return nullptr;
+	}
 
 	auto validator = cllr::Validator(settings);
 	//std::chrono::high_resolution_clock clock{};
@@ -77,7 +91,7 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 		for (auto const& [name, index] : codeAsm.getInputs())
 		{
 			//TODO assign input format
-			outShader->inputs.push_back(VertexInputAttribute{ name, index, 0 });
+			outShader->inputs.push_back(VertexInputAttribute{ std::string(name), index, 0});
 
 		}
 
@@ -108,7 +122,7 @@ void ShaderStmt::compile(sptr<SymbolTable> table, sptr<CompilerSettings> setting
 
 		for (auto const& desc : descriptors)
 		{
-			shader->sets.push_back(DescriptorSet{ desc.second->str, d++ });
+			shader->sets.push_back(DescriptorSet{ std::string(desc.second->str), d++ });
 
 		}
 

@@ -11,7 +11,7 @@ void SymbolTable::reparent(sptr<const SymbolTable> p)
 	parent = p;
 }
 
-bool SymbolTable::add(in<std::string> symName, in<Symbol> sym)
+bool SymbolTable::add(std::string_view symName, in<Symbol> sym)
 {
 	if (symbols.find(symName) != symbols.end())
 	{
@@ -28,7 +28,7 @@ bool SymbolTable::addType(sptr<BaseType> t)
 	return add(t->canonName, t);
 }
 
-Symbol SymbolTable::find(in<std::string> symName) const
+Symbol SymbolTable::find(std::string_view symName) const
 {
 	auto result = symbols.find(symName);
 
@@ -45,7 +45,7 @@ Symbol SymbolTable::find(in<std::string> symName) const
 	return Symbol();
 }
 
-bool SymbolTable::has(in<std::string> symName) const
+bool SymbolTable::has(std::string_view symName) const
 {
 	return !std::holds_alternative<std::monostate>(find(symName));
 }

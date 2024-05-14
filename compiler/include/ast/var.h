@@ -8,13 +8,13 @@ namespace caliburn
 	struct FnArg
 	{
 		sptr<ParsedType> typeHint;
-		std::string name;
+		std::string_view name;
 
 	};
 
 	struct LocalVariable : Variable
 	{
-		LocalVariable(in<std::string> name) : Variable(name) {}
+		LocalVariable(std::string_view name) : Variable(name) {}
 		LocalVariable(in<ParsedVar> v) : Variable(v) {}
 		virtual ~LocalVariable() {}
 
@@ -30,7 +30,7 @@ namespace caliburn
 
 	struct GlobalVariable : Variable
 	{
-		GlobalVariable(in<std::string> name) : Variable(name)
+		GlobalVariable(std::string_view name) : Variable(name)
 		{
 			isConst = true;
 		}
@@ -79,7 +79,7 @@ namespace caliburn
 		ShaderIOVarType ioType = ShaderIOVarType::UNKNOWN;
 		uint32_t ioIndex = 0;
 
-		ShaderIOVariable(std::string n) : Variable(n) {}
+		ShaderIOVariable(std::string_view n) : Variable(n) {}
 		ShaderIOVariable(in<ParsedVar> v) : Variable(v) {}
 		ShaderIOVariable(ShaderIOVarType t, in<FnArg> v) : Variable(v.name), ioType(t)
 		{
@@ -111,7 +111,7 @@ namespace caliburn
 
 	struct DescriptorVariable : Variable
 	{
-		DescriptorVariable(std::string n) : Variable(n) {}
+		DescriptorVariable(std::string_view n) : Variable(n) {}
 		DescriptorVariable(sptr<Token> n) : Variable(n->str)
 		{
 			nameTkn = n;
