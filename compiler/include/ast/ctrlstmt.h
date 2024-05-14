@@ -9,7 +9,7 @@ namespace caliburn
 {
 	struct IfStatement : Statement
 	{
-		sptr<Token> first = nullptr;
+		Token first;
 
 		sptr<Value> condition = nullptr;
 		uptr<ScopeStmt> innerIf = nullptr;
@@ -17,12 +17,12 @@ namespace caliburn
 		
 		IfStatement() : Statement(StmtType::IF) {}
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			if (innerElse != nullptr)
 			{
@@ -73,8 +73,8 @@ namespace caliburn
 
 	struct ForRangeStatement : Statement
 	{
-		sptr<Token> first = nullptr;
-		sptr<Token> index = nullptr;
+		Token first;
+		Token index;
 		uptr<LocalVariable> indexVar = nullptr;
 		sptr<Value> from = nullptr;
 		sptr<Value> to = nullptr;
@@ -103,7 +103,7 @@ namespace caliburn
 
 	struct WhileStatement : Statement
 	{
-		sptr<Token> first = nullptr;
+		Token first;
 
 		sptr<Value> condition = nullptr;
 		uptr<ScopeStmt> loop = nullptr;
@@ -111,12 +111,12 @@ namespace caliburn
 
 		WhileStatement() : Statement(StmtType::WHILE) {}
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 		
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return loop->lastTkn();
 		}

@@ -13,17 +13,15 @@ namespace caliburn
 {
 	struct ShaderStage : ParsedObject
 	{
-		ShaderType type = ShaderType::VERTEX;
-
 		const uptr<ParsedFn> base;
 
-		sptr<Token> parentName;
-
+		ShaderType type = ShaderType::VERTEX;
+		Token parentName;
 		std::vector<sptr<ShaderIOVariable>> vtxInputs;
 
-		ShaderStage(out<uptr<ParsedFn>> fn, sptr<Token> pname) : base(std::move(fn)), parentName(pname)
+		ShaderStage(out<uptr<ParsedFn>> fn, in<Token> pname) : base(std::move(fn)), parentName(pname)
 		{
-			type = SHADER_TYPES.find(base->name->str)->second;
+			type = SHADER_TYPES.find(base->name.str)->second;
 
 			for (auto const& a : base->args)
 			{
@@ -32,19 +30,19 @@ namespace caliburn
 			}
 
 		}
-		virtual ~ShaderStage() {}
+		virtual ~ShaderStage() = default;
 
 		bool operator<(in<ShaderStage> other) const
 		{
 			return type < other.type;
 		}
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
-			return base->first;
+			return base->code->firstTkn();
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			if (base->code == nullptr)
 			{
@@ -62,25 +60,23 @@ namespace caliburn
 
 	struct ShaderStmt : Statement
 	{
-		sptr<Token> first = nullptr;
-		sptr<Token> name = nullptr;
-		sptr<Token> last = nullptr;
+		Token first;
+		Token name;
+		Token last;
 
 		std::vector<uptr<ShaderStage>> stages;
-
-		std::vector<std::pair<sptr<ParsedType>, sptr<Token>>> descriptors;
-
+		std::vector<std::pair<sptr<ParsedType>, Token>> descriptors;
 		std::vector<sptr<ShaderIOVariable>> ioVars;
 
 		ShaderStmt() : Statement(StmtType::SHADER) {}
-		virtual ~ShaderStmt() {}
+		virtual ~ShaderStmt() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return last;
 		}

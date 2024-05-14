@@ -12,35 +12,34 @@ namespace caliburn
 	struct StructStmt : Statement
 	{
 		const bool isConst;
+		const Token first;
+		const Token name;
 
-		sptr<Token> first = nullptr;
-		sptr<Token> name = nullptr;
-		sptr<Token> last = nullptr;
+		Token last;
+
 		sptr<TypeStruct> innerType = nullptr;
-		
 		uptr<GenericSignature> genSig = nullptr;
-
 		std::map<std::string_view, sptr<ParsedVar>> members;
 		std::vector<uptr<ParsedFn>> memberFns;
 
-		StructStmt(StmtType type = StmtType::STRUCT) :
-			Statement(type), isConst(type == StmtType::RECORD) {}
+		StructStmt(StmtType type, in<Token> f, in<Token> n) :
+			Statement(type), isConst(type == StmtType::RECORD), first(f), name(n) {}
 
 		virtual ~StructStmt() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return last;
 		}
 
 		void declareHeader(sptr<SymbolTable> table, out<ErrorHandler> err) override
 		{
-			if (!table->add(name->str, new_sptr<TypeStruct>(name->str, genSig, members, memberFns)))
+			if (!table->add(name.str, new_sptr<TypeStruct>(name.str, genSig, members, memberFns)))
 			{
 				//TODO complain
 			}

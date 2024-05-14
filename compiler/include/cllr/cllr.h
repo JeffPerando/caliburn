@@ -236,7 +236,7 @@ namespace caliburn
 			RefArray refs = {};
 
 			SSA outType = 0;
-			sptr<Token> debugTkn = nullptr;
+			Token debugTkn;
 
 			Instruction() {}
 
@@ -256,7 +256,7 @@ namespace caliburn
 				debugTkn = old.debugTkn;
 			}
 
-			Instruction& debug(sptr<Token> tkn)
+			Instruction& debug(in<Token> tkn)
 			{
 				debugTkn = tkn;
 				return *this;
@@ -266,9 +266,9 @@ namespace caliburn
 			{
 				std::stringstream ss;
 
-				if (debugTkn != nullptr)
+				if (debugTkn.exists())
 				{
-					ss << '@' << debugTkn->pos.toStr() << ": ";
+					ss << '@' << debugTkn.pos.toStr() << ": ";
 				}
 
 				if (index != 0)

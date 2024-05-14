@@ -27,7 +27,7 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 
 	auto codeAsm = cllr::Assembler(type, settings);
 
-	auto fullName = (std::stringstream() << parentName->str << "_" << SHADER_TYPE_NAMES.at(type)).str();
+	auto fullName = (std::stringstream() << parentName.str << "_" << SHADER_TYPE_NAMES.at(type)).str();
 	auto nameID = SCAST<uint32_t>(codeAsm.addString(fullName));
 
 	auto stageID = codeAsm.beginSect(cllr::Instruction(cllr::Opcode::SHADER_STAGE, { (uint32_t)type, nameID }, {}));
@@ -122,7 +122,7 @@ void ShaderStmt::compile(sptr<SymbolTable> table, sptr<CompilerSettings> setting
 
 		for (auto const& desc : descriptors)
 		{
-			shader->sets.push_back(DescriptorSet{ std::string(desc.second->str), d++ });
+			shader->sets.push_back(DescriptorSet{ std::string(desc.second.str), d++ });
 
 		}
 

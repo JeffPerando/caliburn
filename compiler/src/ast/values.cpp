@@ -74,7 +74,7 @@ ValueResult StringLitValue::emitValueCLLR(sptr<const SymbolTable> table, out<cll
 ValueResult BoolLitValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto t = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_BOOL));
-	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_BOOL, { lit->str == "true" }, {}, t->id));
+	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_BOOL, { lit.str == "true" }, {}, t->id));
 
 	return cllr::TypedSSA(t, vID);
 }
@@ -279,8 +279,8 @@ ValueResult MemberReadChainValue::emitValueCLLR(sptr<const SymbolTable> table, o
 			return *mod;
 		}
 
-		sptr<Token> chainStart = mems[start];
-		Symbol targetSym = (*mod)->getTable()->find(chainStart->str);
+		const Token chainStart = mems[start];
+		const Symbol targetSym = (*mod)->getTable()->find(chainStart.str);
 
 		MATCH(targetSym, sptr<Module>, mod)
 		{
@@ -319,7 +319,7 @@ ValueResult MemberReadChainValue::emitValueCLLR(sptr<const SymbolTable> table, o
 			return *lt;
 		}
 
-		codeAsm.errors->err({ "Could not find symbol", chainStart->str, "in module" }, *target);
+		codeAsm.errors->err({ "Could not find symbol", chainStart.str, "in module" }, *target);
 		return ValueResult();
 	}
 
@@ -337,7 +337,7 @@ ValueResult MemberReadChainValue::emitValueCLLR(sptr<const SymbolTable> table, o
 	{
 		auto& memTkn = mems[i];
 
-		auto mem = targetValue.type->getMember(targetValue.value, memTkn->str, codeAsm);
+		auto mem = targetValue.type->getMember(targetValue.value, memTkn.str, codeAsm);
 
 		MATCH(mem, cllr::IndexedMember, memPtr)
 		{
@@ -351,7 +351,7 @@ ValueResult MemberReadChainValue::emitValueCLLR(sptr<const SymbolTable> table, o
 		}
 		else
 		{
-			codeAsm.errors->err({ "Member not found:", memTkn->str }, *this);
+			codeAsm.errors->err({ "Member not found:", memTkn.str }, *this);
 			return ValueResult();
 		}
 
@@ -480,11 +480,11 @@ ValueResult MethodCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cl
 	MATCH(targetVal, cllr::TypedSSA, val)
 	{
 		argIDs.push_back(*val);
-		auto m = val->type->getMemberFns(name->str);
+		auto m = val->type->getMemberFns(name.str);
 
 		if (m == nullptr)
 		{
-			auto e = codeAsm.errors->err({ "Unable to find method", name->str }, *this);
+			auto e = codeAsm.errors->err({ "Unable to find method", name.str }, *this);
 			return ValueResult();
 		}
 
@@ -493,11 +493,11 @@ ValueResult MethodCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cl
 
 	MATCH(targetVal, sptr<Module>, mod)
 	{
-		auto sym = (*mod)->getTable()->find(name->str);
+		auto sym = (*mod)->getTable()->find(name.str);
 
 		MATCH_EMPTY(sym)
 		{
-			auto e = codeAsm.errors->err({ "Unable to find function", name->str, "in module" }, *target);
+			auto e = codeAsm.errors->err({ "Unable to find function", name.str, "in module" }, *target);
 			return ValueResult();
 		}
 
@@ -512,7 +512,7 @@ ValueResult MethodCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cl
 		return ValueResult();
 	}
 
-	auto e = codeAsm.errors->err({ "Unable to find function or method: ", name->str }, *this);
+	auto e = codeAsm.errors->err({ "Unable to find function or method: ", name.str }, *this);
 	return ValueResult();
 }
 
@@ -589,22 +589,22 @@ ValueResult UnsignValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::
 
 void IntLiteralValue::prettyPrint(out<std::stringstream> ss) const
 {
-	ss << lit->str.substr(0, lit->str.find('_'));
+	ss << lit.str.substr(0, lit.str.find('_'));
 }
 
 void FloatLiteralValue::prettyPrint(out<std::stringstream> ss) const
 {
-	ss << lit->str;
+	ss << lit.str;
 }
 
 void StringLitValue::prettyPrint(out<std::stringstream> ss) const
 {
-	ss << lit->str;
+	ss << lit.str;
 }
 
 void BoolLitValue::prettyPrint(out<std::stringstream> ss) const
 {
-	ss << lit->str;
+	ss << lit.str;
 }
 
 void ArrayLitValue::prettyPrint(out<std::stringstream> ss) const
@@ -703,22 +703,22 @@ void MemberReadChainValue::prettyPrint(out<std::stringstream> ss) const
 {
 	target->prettyPrint(ss);
 	
-	for (auto& mem : mems)
+	for (auto const& mem : mems)
 	{
-		ss << '.' << mem->str;
+		ss << '.' << mem.str;
 	}
 
 }
 
 void UnaryValue::prettyPrint(out<std::stringstream> ss) const
 {
-	ss << start->str;
+	ss << start.str;
 
 	val->prettyPrint(ss);
 
-	if (end != nullptr)
+	if (end.exists())
 	{
-		ss << end->str;
+		ss << end.str;
 	}
 	
 }
@@ -751,7 +751,7 @@ void FnCallValue::prettyPrint(out<std::stringstream> ss) const
 void MethodCallValue::prettyPrint(out<std::stringstream> ss) const
 {
 	target->prettyPrint(ss);
-	ss << '.' << name->str;
+	ss << '.' << name.str;
 	genArgs->prettyPrint(ss);
 
 	ss << '(';
@@ -801,14 +801,14 @@ void ZeroValue::prettyPrint(out<std::stringstream> ss) const {}
 
 void SignValue::prettyPrint(out<std::stringstream> ss) const
 {
-	ss << first->str << ' ';
+	ss << first.str << ' ';
 	target->prettyPrint(ss);
 
 }
 
 void UnsignValue::prettyPrint(out<std::stringstream> ss) const
 {
-	ss << first->str << ' ';
+	ss << first.str << ' ';
 	target->prettyPrint(ss);
 
 }

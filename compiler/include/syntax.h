@@ -98,9 +98,29 @@ namespace caliburn
 	*/
 	struct Token
 	{
-		const std::string_view str;
-		const TokenType type;
-		const TextPos pos;
+		std::string_view str;
+		TokenType type = TokenType::UNKNOWN;
+		TextPos pos;
+
+		Token() = default;
+		Token(in<Token> tkn) :
+			str(tkn.str), type(tkn.type), pos(tkn.pos) {}
+		Token(std::string_view s, TokenType t, TextPos p) :
+			str(s), type(t), pos(p) {}
+
+		Token operator=(in<Token> rhs)
+		{
+			str = rhs.str;
+			type = rhs.type;
+			pos = rhs.pos;
+
+			return *this;
+		}
+
+		constexpr bool exists() const noexcept
+		{
+			return type != TokenType::UNKNOWN;
+		}
 
 		//TODO decide what looks good for a token
 		void prettyPrint(std::stringstream ss) const
@@ -118,9 +138,9 @@ namespace caliburn
 	*/
 	struct ParsedObject
 	{
-		virtual sptr<Token> firstTkn() const = 0;
+		virtual Token firstTkn() const noexcept = 0;
 
-		virtual sptr<Token> lastTkn() const = 0;
+		virtual Token lastTkn() const noexcept = 0;
 
 		virtual void prettyPrint(out<std::stringstream> ss) const = 0;
 

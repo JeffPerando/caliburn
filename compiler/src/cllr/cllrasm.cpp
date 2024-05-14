@@ -30,7 +30,7 @@ void Assembler::endSect(in<Instruction> i)
 {
 	if (codeSects.empty())
 	{
-		errors->err(std::vector<std::string>{ "Code section ended but no code section found. Footer:", i.toStr() }, nullptr);
+		errors->err(std::vector<std::string>{ "Code section ended but no code section found. Footer:", i.toStr() });
 		return;
 	}
 

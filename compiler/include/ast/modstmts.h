@@ -7,26 +7,31 @@ namespace caliburn
 {
 	struct ImportStmt : Statement
 	{
-		const sptr<Token> first;
-		sptr<Token> name = nullptr;
-		sptr<Token> alias = nullptr;
+		const Token first;
+		const Token name;
+		Token alias;
 
-		ImportStmt(sptr<Token> f) : Statement(StmtType::IMPORT), first(f) {}
-		virtual ~ImportStmt() {}
+		ImportStmt(in<Token> f, in<Token> n) :
+			Statement(StmtType::IMPORT), first(f), name(n) {}
 
-		sptr<Token> firstTkn() const override
+		ImportStmt(in<Token> f, in<Token> n, in<Token> a) :
+			Statement(StmtType::IMPORT), first(f), name(n), alias(a) {}
+
+		virtual ~ImportStmt() = default;
+
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
-			if (alias == nullptr)
+			if (alias.exists())
 			{
-				return name;
+				return alias;
 			}
 
-			return alias;
+			return name;
 		}
 
 		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
@@ -37,17 +42,18 @@ namespace caliburn
 
 	struct ModuleStmt : Statement
 	{
-		const sptr<Token> first, name;
+		const Token first, name;
 
-		ModuleStmt(sptr<Token> s, sptr<Token> n) : Statement(StmtType::MODULE), first(s), name(n) {}
-		virtual ~ModuleStmt() {}
+		ModuleStmt(in<Token> s, in<Token> n) : Statement(StmtType::MODULE), first(s), name(n) {}
+		
+		virtual ~ModuleStmt() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return name;
 		}

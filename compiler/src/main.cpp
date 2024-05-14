@@ -108,7 +108,7 @@ int testExprParsing()
 
 	for (auto const& t : tkns)
 	{
-		std::cout << t->str << ' ';
+		std::cout << t.str << ' ';
 	}
 
 	std::cout << '\n';
@@ -143,7 +143,7 @@ void printTokens(const std::string& textfile)
 
 	for (auto const& t : tkns)
 	{
-		std::cout << '\"' << t->str << '\"' << ' ' << t->pos.toStr() << '\n';
+		std::cout << '\"' << t.str << '\"' << ' ' << t.pos.toStr() << '\n';
 	}
 
 	std::cout << "Original text:\n";

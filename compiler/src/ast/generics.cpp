@@ -76,7 +76,7 @@ void GenericSignature::prettyPrint(out<std::stringstream> ss) const
 	{
 		auto const& name = names[i];
 
-		ss << name.typeTkn->str << ' ' << name.name;
+		ss << GENERIC_TYPE_NAMES.at(name.type) << ' ' << name.name;
 
 		if (!std::holds_alternative<std::monostate>(name.defaultResult))
 		{

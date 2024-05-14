@@ -42,9 +42,9 @@ namespace caliburn
 	struct ParsedFn
 	{
 		FnType type = FnType::FUNCTION;
-		sptr<Token> first;
-		sptr<Token> name;
-		std::vector<sptr<Token>> invokeDims;
+		Token first;
+		Token name;
+		std::vector<Token> invokeDims;
 		std::vector<FnArg> args;
 		sptr<ParsedType> returnType;
 		uptr<GenericSignature> genSig;
@@ -94,11 +94,11 @@ namespace caliburn
 	private:
 		GenArgMap<SrcFnImpl> variants;
 	public:
-		std::vector<sptr<Token>> invokeDims;
+		std::vector<Token> invokeDims;
 		sptr<ScopeStmt> code;
 
 		SrcFn(out<ParsedFn> fn) :
-			Function(fn.name->str, fn.genSig, fn.args, fn.returnType),
+			Function(fn.name.str, fn.genSig, fn.args, fn.returnType),
 			invokeDims(fn.invokeDims), code(fn.code) {}
 
 		SrcFn(std::string_view n, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> as, sptr<ParsedType> rt, sptr<ScopeStmt> impl) :
@@ -151,11 +151,11 @@ namespace caliburn
 	private:
 		GenArgMap<SrcFnImpl> variants;
 	public:
-		std::vector<sptr<Token>> invokeDims;
+		std::vector<Token> invokeDims;
 		sptr<ScopeStmt> code;
 
 		SrcMethod(sptr<ParsedType> me, sptr<SymbolTable> gt, out<ParsedFn> fn) :
-			Method(me, gt, fn.name->str, fn.genSig, fn.args, fn.returnType),
+			Method(me, gt, fn.name.str, fn.genSig, fn.args, fn.returnType),
 			invokeDims(fn.invokeDims), code(fn.code) {}
 
 		SrcMethod(sptr<ParsedType> me, sptr<SymbolTable> gt, std::string_view n, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> as, sptr<ParsedType> rt, sptr<ScopeStmt> impl) :

@@ -34,14 +34,14 @@ namespace caliburn
 	{
 	private:
 		sptr<const CompilerSettings> settings;
-		Buffer<sptr<Token>> tkns;
+		Buffer<Token> tkns;
 	public:
 		const uptr<ErrorHandler> errors;
 
-		Parser(sptr<const CompilerSettings> cs, in<std::vector<sptr<Token>>> tokenVec) :
+		Parser(sptr<const CompilerSettings> cs, in<std::vector<Token>> tokenVec) :
 			settings(cs), tkns(tokenVec), errors(new_uptr<ErrorHandler>(CompileStage::PARSER, cs)) {}
 
-		Parser(in<std::vector<sptr<Token>>> tokenVec) :
+		Parser(in<std::vector<Token>> tokenVec) :
 			settings(nullptr), tkns(tokenVec), errors(new_uptr<ErrorHandler>(CompileStage::PARSER)) {}
 
 		virtual ~Parser() {}
@@ -86,7 +86,7 @@ namespace caliburn
 		/*
 		Finds a list of comma-separated identifiers.
 		*/
-		std::vector<sptr<Token>> parseIdentifierList();
+		std::vector<Token> parseIdentifierList();
 
 		/*
 		Parses a generic signature.

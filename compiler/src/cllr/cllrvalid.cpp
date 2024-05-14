@@ -177,7 +177,7 @@ bool Validator::validate(in<Assembler> codeAsm)
 			continue;
 		}
 
-		if (i.debugTkn == nullptr)
+		if (i.debugTkn.exists())
 		{
 			std::vector<std::string> msg;
 

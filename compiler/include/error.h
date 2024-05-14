@@ -40,13 +40,13 @@ namespace caliburn
 	{
 		CompileStage stage = CompileStage::UNKNOWN;
 		std::string message;
-		sptr<Token> problemTknStart = nullptr;
-		sptr<Token> problemTknEnd = nullptr;
+		Token problemTknStart;
+		Token problemTknEnd;
 		/*
 		This token is only used to give the user a line of code with more context in it.
 		Such context may be a statement containing the problematic code
 		*/
-		sptr<Token> contextStart = nullptr;
+		Token contextStart;
 		//Notes are used to give the user potentially helpful information, such as context or common solutions
 		std::vector<std::string> notes;
 
@@ -132,7 +132,7 @@ namespace caliburn
 			return err(msg, keyObj.firstTkn(), keyObj.lastTkn());
 		}
 
-		sptr<Error> err(in<std::vector<std::string_view>> msgs, sptr<Token> keyTkn)
+		sptr<Error> err(in<std::vector<std::string_view>> msgs, in<Token> keyTkn)
 		{
 			std::stringstream ss;
 
@@ -142,12 +142,12 @@ namespace caliburn
 			return err(ss.str(), keyTkn);
 		}
 
-		sptr<Error> err(in<std::string> msg, sptr<Token> keyTkn)
+		sptr<Error> err(in<std::string> msg, in<Token> keyTkn)
 		{
 			return err(msg, keyTkn, keyTkn);
 		}
 
-		sptr<Error> err(in<std::vector<std::string_view>> msgs, sptr<Token> startTkn, sptr<Token> endTkn)
+		sptr<Error> err(in<std::vector<std::string_view>> msgs, in<Token> startTkn, in<Token> endTkn)
 		{
 			std::stringstream ss;
 
@@ -159,10 +159,10 @@ namespace caliburn
 
 		sptr<Error> err(in<std::vector<std::string>> msgs)
 		{
-			return err(msgs, nullptr);
+			return err(msgs, Token());
 		}
 
-		sptr<Error> err(in<std::vector<std::string>> msgs, sptr<Token> tkn)
+		sptr<Error> err(in<std::vector<std::string>> msgs, in<Token> tkn)
 		{
 			std::stringstream ss;
 
@@ -172,7 +172,7 @@ namespace caliburn
 			return err(ss.str(), tkn, tkn);
 		}
 
-		sptr<Error> err(in<std::string> msg, sptr<Token> tknStart, sptr<Token> tknEnd);
+		sptr<Error> err(in<std::string> msg, in<Token> tknStart, in<Token> tknEnd);
 
 	};
 	

@@ -64,7 +64,7 @@ cllr::TypedSSA SrcFnImpl::emitFnDeclCLLR(out<cllr::Assembler> codeAsm)
 	{
 		auto fnArg = new_sptr<FnArgVariable>((*args)[i], i);
 
-		syms->add(fnArg->nameTkn->str, fnArg);
+		syms->add(fnArg->name, fnArg);
 
 		fnArg->emitVarCLLR(syms, codeAsm);
 

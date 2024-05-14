@@ -7,28 +7,28 @@ namespace caliburn
 {
 	struct TypedefStmt : Statement
 	{
-		sptr<const CompilerSettings> settings;
+		const sptr<const CompilerSettings> settings;
 
-		sptr<Token> first;
-		sptr<Token> name;
+		const Token first;
+		const Token name;
+		const bool isStrong;
+
 		sptr<ParsedType> alias;
-
-		bool isStrong = false;
 		
-		TypedefStmt(sptr<const CompilerSettings> cs, sptr<Token> f, sptr<Token> n, sptr<ParsedType> t) :
-			Statement(StmtType::TYPEDEF), settings(cs), first(f), name(n), alias(t)
+		TypedefStmt(sptr<const CompilerSettings> cs, in<Token> f, in<Token> n, sptr<ParsedType> t) :
+			Statement(StmtType::TYPEDEF), settings(cs), first(f), name(n), alias(t), isStrong(first.str == "strong")
 		{
-			isStrong = (first->str == "strong");
+			
 		}
 
 		virtual ~TypedefStmt() {}
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return alias->lastTkn();
 		}
@@ -41,7 +41,7 @@ namespace caliburn
 			//TODO implement error handling for header declaration and QUIT USING STD::COUT
 
 			//We don't want to override an existing symbol
-			if (table->has(name->str))
+			if (table->has(name.str))
 			{
 				//TODO complain
 				return;
@@ -49,7 +49,7 @@ namespace caliburn
 
 			if (alias->name == "dynamic")
 			{
-				auto outTypeName = settings->dynTypes.find(std::string(name->str));
+				auto outTypeName = settings->dynTypes.find(std::string(name.str));
 
 				if (outTypeName != settings->dynTypes.end())
 				{
@@ -83,9 +83,9 @@ namespace caliburn
 			*/
 			if (auto t = alias->resolveBase(table))
 			{
-				if (!table->add(name->str, t))
+				if (!table->add(name.str, t))
 				{
-					err.err({ "Duplicate type:", name->str }, name);
+					err.err({ "Duplicate type:", name.str }, name);
 				}
 
 			}

@@ -30,6 +30,9 @@ template<typename T>
 using out = T&;
 
 template<typename T>
+using mov = T&&;
+
+template<typename T>
 using sptr = std::shared_ptr<T>;
 
 template<typename T>

@@ -10,22 +10,23 @@ namespace caliburn
 	*/
 	struct ScopeStmt : Statement
 	{
-		sptr<Token> first = nullptr;
-		sptr<Token> last = nullptr;
+		Token first;
+		Token last;
 
 		std::vector<uptr<Statement>> stmts;
 
 		sptr<SymbolTable> scopeTable = nullptr;
 
 		ScopeStmt(StmtType stmtType = StmtType::SCOPE) : Statement(stmtType) {}
-		virtual ~ScopeStmt() {}
 
-		sptr<Token> firstTkn() const override
+		virtual ~ScopeStmt() = default;
+
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return last;
 		}
@@ -40,17 +41,18 @@ namespace caliburn
 
 	struct BreakStmt : Statement
 	{
-		const sptr<Token> tkn;
+		const Token tkn;
 
-		BreakStmt(sptr<Token> t) : Statement(StmtType::UNKNOWN), tkn(t) {}
-		virtual ~BreakStmt() {}
+		BreakStmt(in<Token> t) : Statement(StmtType::UNKNOWN), tkn(t) {}
 
-		sptr<Token> firstTkn() const override
+		virtual ~BreakStmt() = default;
+
+		Token firstTkn() const noexcept override
 		{
 			return tkn;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return tkn;
 		}
@@ -68,17 +70,18 @@ namespace caliburn
 
 	struct ContinueStmt : Statement
 	{
-		const sptr<Token> tkn;
+		const Token tkn;
 
-		ContinueStmt(sptr<Token> t) : Statement(StmtType::UNKNOWN), tkn(t) {}
-		virtual ~ContinueStmt() {}
+		ContinueStmt(in<Token> t) : Statement(StmtType::UNKNOWN), tkn(t) {}
 
-		sptr<Token> firstTkn() const override
+		virtual ~ContinueStmt() = default;
+
+		Token firstTkn() const noexcept override
 		{
 			return tkn;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return tkn;
 		}
@@ -96,17 +99,18 @@ namespace caliburn
 
 	struct DiscardStmt : Statement
 	{
-		const sptr<Token> tkn;
+		const Token tkn;
 
-		DiscardStmt(sptr<Token> t) : Statement(StmtType::UNKNOWN), tkn(t) {}
-		virtual ~DiscardStmt() {}
+		DiscardStmt(in<Token> t) : Statement(StmtType::UNKNOWN), tkn(t) {}
 
-		sptr<Token> firstTkn() const override
+		virtual ~DiscardStmt() = default;
+
+		Token firstTkn() const noexcept override
 		{
 			return tkn;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return tkn;
 		}
@@ -124,19 +128,20 @@ namespace caliburn
 
 	struct ReturnStmt : Statement
 	{
-		const sptr<Token> first;
+		const Token first;
 
 		sptr<Value> retValue = nullptr;
 
-		ReturnStmt(sptr<Token> t) : Statement(StmtType::UNKNOWN), first(t) {}
-		virtual ~ReturnStmt() {}
+		ReturnStmt(in<Token> t) : Statement(StmtType::UNKNOWN), first(t) {}
 
-		sptr<Token> firstTkn() const override
+		virtual ~ReturnStmt() = default;
+
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			if (retValue != nullptr)
 			{
@@ -166,17 +171,18 @@ namespace caliburn
 
 	struct PassStmt : Statement
 	{
-		const sptr<Token> tkn;
+		const Token tkn;
 
-		PassStmt(sptr<Token> t) : Statement(StmtType::UNKNOWN), tkn(t) {}
-		virtual ~PassStmt() {}
+		PassStmt(in<Token> t) : Statement(StmtType::UNKNOWN), tkn(t) {}
 
-		sptr<Token> firstTkn() const override
+		virtual ~PassStmt() = default;
+
+		Token firstTkn() const noexcept override
 		{
 			return tkn;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return tkn;
 		}
@@ -194,17 +200,18 @@ namespace caliburn
 
 	struct UnreachableStmt : Statement
 	{
-		const sptr<Token> tkn;
+		const Token tkn;
 
-		UnreachableStmt(sptr<Token> t) : Statement(StmtType::UNKNOWN), tkn(t) {}
-		virtual ~UnreachableStmt() {}
+		UnreachableStmt(in<Token> t) : Statement(StmtType::UNKNOWN), tkn(t) {}
 
-		sptr<Token> firstTkn() const override
+		virtual ~UnreachableStmt() = default;
+
+		Token firstTkn() const noexcept override
 		{
 			return tkn;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return tkn;
 		}

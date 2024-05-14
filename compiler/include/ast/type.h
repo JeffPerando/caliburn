@@ -28,28 +28,28 @@ namespace caliburn
 		sptr<cllr::LowType> resultType = nullptr;
 	public:
 		const std::string_view name;
-		const sptr<Token> nameTkn;
+		const Token nameTkn;
 		const sptr<GenericArguments> genericArgs;
 
-		sptr<Token> lastToken = nullptr;
+		Token lastToken;
 
 		std::vector<sptr<Value>> arrayDims;//TODO implement properly
 
-		ParsedType(std::string_view n) : name(n), nameTkn(nullptr), genericArgs(new_sptr<GenericArguments>()) {}
-		ParsedType(sptr<Token> n) : name(n->str), nameTkn(n), genericArgs(new_sptr<GenericArguments>()) {}
-		ParsedType(std::string_view n, sptr<GenericArguments> gArgs) : name(n), nameTkn(nullptr), genericArgs(gArgs) {}
-		ParsedType(sptr<Token> n, sptr<GenericArguments> gArgs) : name(n->str), nameTkn(n), genericArgs(gArgs) {}
+		ParsedType(std::string_view n) : name(n), genericArgs(new_sptr<GenericArguments>()) {}
+		ParsedType(in<Token> n) : name(n.str), nameTkn(n), genericArgs(new_sptr<GenericArguments>()) {}
+		ParsedType(std::string_view n, sptr<GenericArguments> gArgs) : name(n), genericArgs(gArgs) {}
+		ParsedType(in<Token> n, sptr<GenericArguments> gArgs) : name(n.str), nameTkn(n), genericArgs(gArgs) {}
 
-		virtual ~ParsedType() {}
+		virtual ~ParsedType() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return nameTkn;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
-			if (lastToken != nullptr)
+			if (lastToken.type != TokenType::UNKNOWN)
 			{
 				return lastToken;
 			}
@@ -75,10 +75,10 @@ namespace caliburn
 	struct ParsedVar
 	{
 		StmtModifiers mods{};
-		sptr<Token> first;
+		Token first;
 		bool isConst = false;
 		sptr<ParsedType> typeHint;
-		sptr<Token> name;
+		Token name;
 		sptr<Value> initValue;
 
 	};
@@ -92,8 +92,8 @@ namespace caliburn
 		const std::string_view name;
 
 		StmtModifiers mods = {};
-		sptr<Token> first = nullptr;
-		sptr<Token> nameTkn = nullptr;
+		Token first;
+		Token nameTkn;
 		sptr<ParsedType> typeHint = nullptr;
 
 		sptr<Value> initValue = nullptr;
@@ -101,7 +101,7 @@ namespace caliburn
 
 		Variable(std::string_view n) : name(n) {}
 
-		Variable(in<ParsedVar> v) : name(v.name->str)
+		Variable(in<ParsedVar> v) : name(v.name.str)
 		{
 			mods = v.mods;
 			isConst = v.isConst;
@@ -114,12 +114,12 @@ namespace caliburn
 
 		virtual ~Variable() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return nameTkn;
 		}

@@ -18,35 +18,26 @@ void Error::prettyPrint(in<TextDoc> doc, out<std::stringstream> ss, bool color) 
 	ss << '[' << COMPILE_STAGES[(int)stage] << "] ";
 	
 	TextPos startPos, endPos;
-	bool hasLine = true;
-
-	if (problemTknStart != nullptr)
-	{
-		startPos = problemTknStart->pos;
-		endPos = problemTknEnd->pos;
-	}
-	else
-	{
-		hasLine = false;
-	}
-
+	
 	ss << "Error";
 
-	if (hasLine)
+	if (problemTknStart.exists())
 	{
+		startPos = problemTknStart.pos;
+		endPos = problemTknEnd.pos;
 		ss << " on line " << startPos.getLine();
 	}
 	
 	ss << ": " << message;
 
-	if (contextStart != nullptr)
+	if (contextStart.exists())
 	{
 		ss << "\nContext:\n";
-		ss << contextStart->pos.getLine() << ' ' << doc.getLine(contextStart->pos);
+		ss << contextStart.pos.getLine() << ' ' << doc.getLine(contextStart.pos);
 
 	}
 	
-	if (problemTknStart != nullptr && problemTknEnd != nullptr)
+	if (problemTknStart.exists() && problemTknEnd.exists())
 	{
 		ss << '\n';
 
@@ -62,10 +53,7 @@ void Error::prettyPrint(in<TextDoc> doc, out<std::stringstream> ss, bool color) 
 
 		}
 
-		auto startLine = problemTknStart->pos.line;
-		auto endLine = problemTknEnd->pos.line;
-
-		if (startLine == endLine)
+		if (startPos.line == endPos.line)
 		{
 			if (color)
 			{
@@ -79,12 +67,12 @@ void Error::prettyPrint(in<TextDoc> doc, out<std::stringstream> ss, bool color) 
 				}
 
 				ss << "\033[1;31m";
-				ss << problemTknStart->str;
+				ss << problemTknStart.str;
 				ss << "\033[0m";
 
-				if (lineStr.length() > (startPos.column + problemTknEnd->str.length()))
+				if (lineStr.length() > (startPos.column + problemTknEnd.str.length()))
 				{
-					ss << lineStr.substr(startPos.column + problemTknEnd->str.length());
+					ss << lineStr.substr(startPos.column + problemTknEnd.str.length());
 				}
 
 			}
@@ -93,32 +81,32 @@ void Error::prettyPrint(in<TextDoc> doc, out<std::stringstream> ss, bool color) 
 				ss << startPos.line << '\t' << doc.getLine(startPos);
 				ss << "\t";
 				ss << std::string(startPos.column, ' ');
-				ss << std::string(problemTknEnd->str.length(), '^');
+				ss << std::string(problemTknEnd.str.length(), '^');
 			}
 			
 		}
 		else
 		{
-			auto startLineStr = doc.getLine(startPos);
-			auto endLineStr = doc.getLine(endPos);
+			auto startPosStr = doc.getLine(startPos);
+			auto endPosStr = doc.getLine(endPos);
 
 			if (startPos.column > 0)
 			{
-				ss << startLineStr.substr(0, startPos.column);
+				ss << startPosStr.substr(0, startPos.column);
 			}
 
 			ss << "\033[1;31m";
-			ss << startPos.line << '\t' << startLineStr.substr(startPos.column - 1) << '\n';
+			ss << startPos.line << '\t' << endPosStr.substr(startPos.column - 1) << '\n';
 			for (uint32_t line = startPos.line + 1; line < endPos.line; ++line)
 			{
 				ss << line << '\t' << doc.getLineDirect(line);
 			}
-			ss << endPos.line << '\t' << endLineStr.substr(0, problemTknEnd->str.length() + endPos.column - 1);
+			ss << endPos.line << '\t' << endPosStr.substr(0, problemTknEnd.str.length() + endPos.column - 1);
 			ss << "\033[0m";
 
-			if (endLineStr.length() >= (endPos.column + problemTknEnd->str.length()))
+			if (endPosStr.length() >= (endPos.column + problemTknEnd.str.length()))
 			{
-				ss << endLineStr.substr((endPos.column - 1) + problemTknEnd->str.length());
+				ss << endPosStr.substr((endPos.column - 1) + problemTknEnd.str.length());
 			}
 
 		}
@@ -162,7 +150,7 @@ void Error::prettyPrint(in<TextDoc> doc, out<std::stringstream> ss, bool color) 
 
 }
 
-sptr<Error> ErrorHandler::err(in<std::string> msg, sptr<Token> tknStart, sptr<Token> tknEnd)
+sptr<Error> ErrorHandler::err(in<std::string> msg, in<Token> tknStart, in<Token> tknEnd)
 {
 	auto e = new_sptr<Error>();
 

@@ -144,7 +144,7 @@ ShaderResult Compiler::compileSrcShaders(const std::string& src, const std::stri
 		{
 			auto shadDecl = RCAST<ptr<ShaderStmt>>(stmt.get());
 
-			if (shadDecl->name->str != shaderName)
+			if (shadDecl->name.str != shaderName)
 			{
 				continue;
 			}

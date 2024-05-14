@@ -11,12 +11,12 @@ namespace caliburn
 
 		ValueStmt(sptr<Value> v) : Statement(StmtType::UNKNOWN), val(v) {}
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return val->firstTkn();
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return val->lastTkn();
 		}

@@ -8,19 +8,19 @@ namespace caliburn
 {
 	struct VarStmt : Statement
 	{
-		sptr<Token> first = nullptr;
+		Token first;
 		std::vector<sptr<Variable>> vars;
 
 	public:
 		VarStmt() : Statement(StmtType::VARIABLE) {}
-		virtual ~VarStmt() {}
+		virtual ~VarStmt() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return vars.back()->lastTkn();
 		}
@@ -30,7 +30,7 @@ namespace caliburn
 			for (auto const& v : vars)
 			{
 				v->mods = mods;
-				table->add(v->nameTkn->str, v);
+				table->add(v->name, v);
 			}
 
 		}

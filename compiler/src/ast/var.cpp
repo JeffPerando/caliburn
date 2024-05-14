@@ -26,7 +26,7 @@ void LocalVariable::prettyPrint(out<std::stringstream> ss) const
 
 	}
 
-	ss << ' ' << nameTkn->str;
+	ss << ' ' << name;
 
 	if (initValue != nullptr)
 	{
@@ -189,7 +189,7 @@ void FnArgVariable::prettyPrint(out<std::stringstream> ss) const
 {
 	typeHint->prettyPrint(ss);
 
-	ss << ' ' << nameTkn->str;
+	ss << ' ' << name;
 
 }
 

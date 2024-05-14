@@ -22,13 +22,13 @@ void Parser::skipStmt()
 
 	while (tkns.hasCur())
 	{
-		sptr<Token> tkn = tkns.cur();
+		auto const& tkn = tkns.cur();
 
-		if (tkn->type == TokenType::START_SCOPE)
+		if (tkn.type == TokenType::START_SCOPE)
 		{
 			++scopes;
 		}
-		else if (tkn->type == TokenType::END_SCOPE)
+		else if (tkn.type == TokenType::END_SCOPE)
 		{
 			if (scopes > 0)
 			{
@@ -38,7 +38,7 @@ void Parser::skipStmt()
 		
 		tkns.consume();
 
-		if (scopes == 0 && tkn->type == TokenType::END)
+		if (scopes == 0 && tkn.type == TokenType::END)
 		{
 			break;
 		}
@@ -53,7 +53,7 @@ std::vector<uptr<Statement>> Parser::parse()
 
 	while (tkns.hasCur())
 	{
-		sptr<Token> start = tkns.cur();
+		auto const start = tkns.cur();
 
 		if (auto finished = parseDecl())
 		{
@@ -73,7 +73,7 @@ std::vector<uptr<Statement>> Parser::parse()
 template<typename T>
 T Parser::parseAny(in<std::vector<ParseMethod<T>>> fns)
 {
-	size_t current = tkns.offset();
+	size_t const current = tkns.offset();
 
 	for (auto& fn : fns)
 	{
@@ -97,9 +97,9 @@ T Parser::parseAny(in<std::vector<ParseMethod<T>>> fns)
 
 bool Parser::parseAnyBetween(in<std::string> start, in<std::function<void()>> fn, in<std::string> end)
 {
-	sptr<Token> startTkn = tkns.cur();
+	auto const startTkn = tkns.cur();
 
-	if (startTkn->str != start)
+	if (startTkn.str != start)
 	{
 		auto e = errors->err(std::vector<std::string>{ "Unexpected token found; Expected", start }, startTkn);
 
@@ -110,11 +110,11 @@ bool Parser::parseAnyBetween(in<std::string> start, in<std::function<void()>> fn
 
 	fn();
 
-	sptr<Token> endTkn = tkns.cur();
+	auto const endTkn = tkns.cur();
 
-	if (endTkn->str != end)
+	if (endTkn.str != end)
 	{
-		auto e = errors->err({ "Unexpected token found; Expected", end}, startTkn, endTkn);
+		auto e = errors->err({ "Unexpected token found; Expected", end }, startTkn, endTkn);
 		return false;
 	}
 
@@ -123,13 +123,13 @@ bool Parser::parseAnyBetween(in<std::string> start, in<std::function<void()>> fn
 	return true;
 }
 
-std::vector<sptr<Token>> Parser::parseIdentifierList()
+std::vector<Token> Parser::parseIdentifierList()
 {
-	std::vector<sptr<Token>> ids;
+	std::vector<Token> ids;
 
 	while (true)
 	{
-		if (tkns.cur()->type != TokenType::IDENTIFIER)
+		if (tkns.cur().type != TokenType::IDENTIFIER)
 		{
 			break;
 		}
@@ -141,7 +141,7 @@ std::vector<sptr<Token>> Parser::parseIdentifierList()
 			break;
 		}
 
-		if (tkns.next()->type != TokenType::COMMA)
+		if (tkns.next().type != TokenType::COMMA)
 		{
 			break;
 		}
@@ -155,10 +155,10 @@ std::vector<sptr<Token>> Parser::parseIdentifierList()
 
 uptr<GenericSignature> Parser::parseGenericSig()
 {
-	sptr<Token> first = tkns.cur();
-	auto start = tkns.offset();
+	auto const first = tkns.cur();
+	size_t const start = tkns.offset();
 	
-	if (first->str != GENERIC_START)
+	if (first.str != GENERIC_START)
 	{
 		//We return an empty signature since every generic needs one, even a blank one.
 		return new_uptr<GenericSignature>();
@@ -170,16 +170,16 @@ uptr<GenericSignature> Parser::parseGenericSig()
 
 	while (tkns.hasRem(2))
 	{
-		sptr<Token> t = tkns.cur();
+		auto const t = tkns.cur();
 		
-		if (t->type != TokenType::KEYWORD)
+		if (t.type != TokenType::KEYWORD)
 		{
 			break;
 		}
 
-		sptr<Token> n = tkns.next();
+		auto const n = tkns.next();
 
-		if (n->type != TokenType::IDENTIFIER)
+		if (n.type != TokenType::IDENTIFIER)
 		{
 			auto e = errors->err("Names within generic signatures must be a valid identifier", n);
 			break;
@@ -189,7 +189,7 @@ uptr<GenericSignature> Parser::parseGenericSig()
 
 		GenericResult defRes;
 
-		if (tkns.cur()->type == TokenType::SETTER)
+		if (tkns.cur().type == TokenType::SETTER)
 		{
 			tkns.consume();
 
@@ -218,7 +218,7 @@ uptr<GenericSignature> Parser::parseGenericSig()
 
 		names.push_back(genName);
 
-		if (tkns.cur()->str != ",")
+		if (tkns.cur().type != TokenType::COMMA)
 		{
 			break;
 		}
@@ -227,9 +227,9 @@ uptr<GenericSignature> Parser::parseGenericSig()
 
 	}
 
-	sptr<Token> last = tkns.cur();
+	auto const& last = tkns.cur();
 
-	if (last->str != GENERIC_END)
+	if (last.str != GENERIC_END)
 	{
 		tkns.revertTo(start);
 		return nullptr;
@@ -252,10 +252,10 @@ sptr<GenericArguments> Parser::parseGenericArgs()
 		return nullptr;
 	}
 
-	sptr<Token> first = tkns.cur();
-	auto start = tkns.offset();
+	auto const first = tkns.cur();
+	size_t const start = tkns.offset();
 	
-	if (first->str != GENERIC_START)
+	if (first.str != GENERIC_START)
 	{
 		return new_sptr<GenericArguments>();
 	}
@@ -280,7 +280,7 @@ sptr<GenericArguments> Parser::parseGenericArgs()
 
 		results.push_back(result);
 
-		if (tkns.cur()->str != ",")
+		if (tkns.cur().type != TokenType::COMMA)
 		{
 			break;
 		}
@@ -289,9 +289,9 @@ sptr<GenericArguments> Parser::parseGenericArgs()
 
 	}
 
-	auto& last = tkns.cur();
+	auto const& last = tkns.cur();
 
-	if (last->str != GENERIC_END)
+	if (last.str != GENERIC_END)
 	{
 		tkns.revertTo(start);
 		return nullptr;
@@ -322,7 +322,7 @@ std::vector<sptr<Value>> Parser::parseValueList(bool commaOptional)
 
 		values.push_back(v);
 
-		if (tkns.cur()->str == ",")
+		if (tkns.cur().type == TokenType::COMMA)
 		{
 			tkns.consume();
 			continue;
@@ -341,13 +341,13 @@ void Parser::parseSemicolon()
 {
 	auto& end = tkns.cur();
 
-	if (end->type == TokenType::END)
+	if (end.type == TokenType::END)
 	{
 		tkns.consume();
 	}
 	else
 	{
-		auto e = errors->err({ "Expected a semicolon, got", end->str }, end);
+		auto e = errors->err({ "Expected a semicolon, got", end.str }, end);
 	}
 
 }
@@ -358,20 +358,20 @@ StmtModifiers Parser::parseStmtMods()
 
 	while (tkns.hasCur())
 	{
-		auto& mod = tkns.cur();
+		auto const& mod = tkns.cur();
 
-		if (mod->type != TokenType::KEYWORD)
+		if (mod.type != TokenType::KEYWORD)
 		{
 			break;
 		}
 
-		if (mod->str == "public")
+		if (mod.str == "public")
 			mods.PUBLIC = 1;
-		else if (mod->str == "private")
+		else if (mod.str == "private")
 			mods.PRIVATE = 1;
-		else if (mod->str == "shared")
+		else if (mod.str == "shared")
 			mods.SHARED = 1;
-		else if (mod->str == "static")
+		else if (mod.str == "static")
 			mods.STATIC = 1;
 		else break;
 
@@ -384,11 +384,11 @@ StmtModifiers Parser::parseStmtMods()
 
 uptr<ScopeStmt> Parser::parseScope(in<std::vector<ParseMethod<uptr<Statement>>>> pms, bool err)
 {
-	auto mods = parseStmtMods();
+	auto const mods = parseStmtMods();
 
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
-	if (first->type != TokenType::START_SCOPE)
+	if (first.type != TokenType::START_SCOPE)
 	{
 		if (err)
 		{
@@ -409,7 +409,7 @@ uptr<ScopeStmt> Parser::parseScope(in<std::vector<ParseMethod<uptr<Statement>>>>
 
 	while (tkns.hasCur())
 	{
-		if (tkns.cur()->type == TokenType::END_SCOPE)
+		if (tkns.cur().type == TokenType::END_SCOPE)
 		{
 			tkns.consume();
 			break;
@@ -420,6 +420,8 @@ uptr<ScopeStmt> Parser::parseScope(in<std::vector<ParseMethod<uptr<Statement>>>>
 			if (auto stmt = pm(*this))
 			{
 				parseSemicolon();
+
+				stmt->mods = mods;
 
 				scope->stmts.push_back(std::move(stmt));
 
@@ -435,9 +437,9 @@ uptr<ScopeStmt> Parser::parseScope(in<std::vector<ParseMethod<uptr<Statement>>>>
 
 sptr<ParsedType> Parser::parseTypeName()
 {
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
-	if (first->type != TokenType::IDENTIFIER && first->str != "dynamic")
+	if (first.type != TokenType::IDENTIFIER && first.str != "dynamic")
 	{
 		return nullptr;
 	}
@@ -446,7 +448,7 @@ sptr<ParsedType> Parser::parseTypeName()
 
 	auto type = new_sptr<ParsedType>(first, parseGenericArgs());
 
-	while (tkns.hasRem(2) && tkns.cur()->type == TokenType::START_BRACKET)
+	while (tkns.hasRem(2) && tkns.cur().type == TokenType::START_BRACKET)
 	{
 		tkns.consume();
 
@@ -455,7 +457,7 @@ sptr<ParsedType> Parser::parseTypeName()
 		auto gArgs = new_sptr<GenericArguments>();
 		gArgs->args.push_back(type);
 
-		if (tkns.cur()->type != TokenType::END_BRACKET)
+		if (tkns.cur().type != TokenType::END_BRACKET)
 		{
 			if (auto len = parseExpr())
 			{
@@ -473,7 +475,7 @@ sptr<ParsedType> Parser::parseTypeName()
 
 		}
 
-		if (tkns.cur()->type != TokenType::END_BRACKET)
+		if (tkns.cur().type != TokenType::END_BRACKET)
 		{
 			auto e = errors->err("Array types must end with a ]", tkns.cur());
 
@@ -492,11 +494,11 @@ sptr<ParsedType> Parser::parseTypeName()
 uptr<Statement> Parser::parseDecl()
 {
 	auto annotations = parseAllAnnotations();
-	auto mods = parseStmtMods();
+	auto const mods = parseStmtMods();
 
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
-	if (first->type != TokenType::KEYWORD)
+	if (first.type != TokenType::KEYWORD)
 	{
 		auto e = errors->err("Invalid start to declaration", first);
 		return nullptr;
@@ -513,7 +515,7 @@ uptr<Statement> Parser::parseDecl()
 		&Parser::parseIf
 	};
 
-	uptr<Statement> stmt = parseAny(methods);
+	auto stmt = parseAny(methods);
 
 	if (stmt == nullptr)
 	{
@@ -523,7 +525,7 @@ uptr<Statement> Parser::parseDecl()
 
 	for (auto& a : annotations)
 	{
-		stmt->annotations.emplace(a->name->str, std::move(a));
+		stmt->annotations.emplace(a->name.str, std::move(a));
 	}
 
 	stmt->mods = mods;
@@ -535,25 +537,25 @@ uptr<Statement> Parser::parseDecl()
 
 uptr<Statement> Parser::parseImport()
 {
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
-	if (first->type != TokenType::KEYWORD || first->str != "import")
+	if (first.type != TokenType::KEYWORD || first.str != "import")
 	{
 		return nullptr;
 	}
 
-	auto& modName = tkns.next();
+	auto const modName = tkns.next();
 
-	if (modName->type != TokenType::IDENTIFIER)
+	if (modName.type != TokenType::IDENTIFIER)
 	{
 		auto e = errors->err("Not a valid module name", modName);
 
-		if (modName->type == TokenType::KEYWORD)
+		if (modName.type == TokenType::KEYWORD)
 		{
 			e->note("Can't import reserved keywords; try renaming your module");
 		}
 
-		if (modName->str == "*")
+		if (modName.str == "*")
 		{
 			e->note("Can't import everything; try an actual module name");
 		}
@@ -563,49 +565,42 @@ uptr<Statement> Parser::parseImport()
 
 	tkns.consume();
 
-	auto ret = new_uptr<ImportStmt>(first);
-
-	ret->name = modName;
-
-	if (tkns.cur()->str == "as")
+	if (tkns.cur().str != "as")
 	{
-		sptr<Token> alias = tkns.next();
-
-		if (alias->type == TokenType::IDENTIFIER)
-		{
-			ret->alias = tkns.next();
-
-			tkns.consume();
-
-		}
-		else
-		{
-			auto e = errors->err("Invalid import alias", alias);
-
-			if (alias->str == "*")
-			{
-				e->note("Wildcard imports are currently not supported");
-			}
-
-		}
-
+		return new_uptr<ImportStmt>(first, modName);
 	}
 
-	return ret;
+	auto const alias = tkns.next();
+
+	if (alias.type == TokenType::IDENTIFIER)
+	{
+		tkns.consume();
+
+		return new_uptr<ImportStmt>(first, modName, alias);
+	}
+	
+	auto e = errors->err("Invalid import alias", alias);
+
+	if (alias.str == "*")
+	{
+		e->note("Wildcard imports are currently not supported");
+	}
+
+	return nullptr;
 }
 
 uptr<Statement> Parser::parseModuleDef()
 {
-	auto& start = tkns.cur();
+	auto const start = tkns.cur();
 
-	if (start->type != TokenType::KEYWORD || start->str != "module")
+	if (start.type != TokenType::KEYWORD || start.str != "module")
 	{
 		return nullptr;
 	}
 
-	auto& name = tkns.next();
+	auto const name = tkns.next();
 
-	if (name->type != TokenType::IDENTIFIER)
+	if (name.type != TokenType::IDENTIFIER)
 	{
 		auto e = errors->err("Invalid module name", name);
 		return nullptr;
@@ -622,40 +617,40 @@ uptr<Statement> Parser::parseTypedef()
 		return nullptr;
 	}
 
-	auto& start = tkns.cur();
+	auto const start = tkns.cur();
 
-	if (start->type != TokenType::KEYWORD)
+	if (start.type != TokenType::KEYWORD)
 	{
 		return nullptr;
 	}
 
-	if (start->str == "strong")
+	if (start.str == "strong")
 	{
 		tkns.consume();
 	}
 
-	if (tkns.cur()->str != "type")
+	if (tkns.cur().str != "type")
 	{
 		return nullptr;
 	}
 
-	auto& name = tkns.next();
+	auto const name = tkns.next();
 
-	if (name->type != TokenType::IDENTIFIER)
+	if (name.type != TokenType::IDENTIFIER)
 	{
 		auto e = errors->err("Invalid type alias name", name);
 
 		return nullptr;
 	}
 
-	if (tkns.next()->type != TokenType::SETTER)
+	if (tkns.next().type != TokenType::SETTER)
 	{
 		auto e = errors->err("Type definitions must have an equal sign to denote the aliased type", tkns.cur());
 
 		return nullptr;
 	}
 
-	sptr<Token> typeStart = tkns.next();
+	auto const typeStart = tkns.next();
 
 	if (sptr<ParsedType> aliasedType = parseTypeName())
 	{
@@ -665,34 +660,34 @@ uptr<Statement> Parser::parseTypedef()
 	{
 		auto e = errors->err("Invalid start of type name", typeStart);
 
-		if (typeStart->str == "[")
+		if (typeStart.str == "[")
 		{
 			e->note("Array types are in the C-style format of x[], where x is the element type.");
 		}
 
-		if (typeStart->type == TokenType::KEYWORD)
+		if (typeStart.type == TokenType::KEYWORD)
 		{
 			e->note("Only keyword that's a valid type is the dynamic keyword");
 		}
 
-		return nullptr;
 	}
 
+	return nullptr;
 }
 
 uptr<Statement> Parser::parseShader()
 {
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
-	if (first->type != TokenType::KEYWORD && first->str != "shader")
+	if (first.type != TokenType::KEYWORD && first.str != "shader")
 	{
 		auto e = errors->err("Bruh.", first);
 		return nullptr;
 	}
 
-	sptr<Token> name = tkns.next();
+	auto const name = tkns.next();
 
-	if (name->type == TokenType::IDENTIFIER)
+	if (name.type == TokenType::IDENTIFIER)
 	{
 		tkns.consume();
 	}
@@ -700,7 +695,7 @@ uptr<Statement> Parser::parseShader()
 	{
 		auto e = errors->err("Invalid shader object name", name);
 
-		if (name->type == TokenType::START_SCOPE)
+		if (name.type == TokenType::START_SCOPE)
 		{
 			e->note("Name your shader so it can be found and compiled. Caliburn does not support 'anonymous' shaders");
 		}
@@ -712,19 +707,19 @@ uptr<Statement> Parser::parseShader()
 	shader->first = first;
 	shader->name = name;
 
-	if (tkns.cur()->type == TokenType::START_PAREN)
+	if (tkns.cur().type == TokenType::START_PAREN)
 	{
 		tkns.consume();
 
 		while (tkns.hasCur())
 		{
-			if (tkns.cur()->type == TokenType::END_PAREN)
+			if (tkns.cur().type == TokenType::END_PAREN)
 			{
 				tkns.consume();
 				break;
 			}
 
-			auto type = parseTypeName();
+			auto const type = parseTypeName();
 			
 			if (type == nullptr)
 			{
@@ -732,9 +727,9 @@ uptr<Statement> Parser::parseShader()
 				break;
 			}
 
-			sptr<Token> name = tkns.cur();
+			auto const name = tkns.cur();
 
-			if (name->type != TokenType::IDENTIFIER)
+			if (name.type != TokenType::IDENTIFIER)
 			{
 				auto e = errors->err("Invalid descriptor name", tkns.cur());
 				break;
@@ -744,7 +739,7 @@ uptr<Statement> Parser::parseShader()
 
 			shader->descriptors.push_back(std::pair(type, name));
 
-			if (tkns.cur()->type == TokenType::COMMA)
+			if (tkns.cur().type == TokenType::COMMA)
 			{
 				tkns.consume();
 				continue;
@@ -754,7 +749,7 @@ uptr<Statement> Parser::parseShader()
 
 	}
 
-	if (tkns.cur()->type != TokenType::START_SCOPE)
+	if (tkns.cur().type != TokenType::START_SCOPE)
 	{
 		auto e = errors->err("Shaders must start with a scope", tkns.cur());
 		skipStmt();
@@ -765,9 +760,9 @@ uptr<Statement> Parser::parseShader()
 
 	while (tkns.hasCur())
 	{
-		sptr<Token> memStart = tkns.cur();
+		auto const memStart = tkns.cur();
 
-		if (memStart->type != TokenType::KEYWORD)
+		if (memStart.type != TokenType::KEYWORD)
 		{
 			break;
 		}
@@ -790,7 +785,7 @@ uptr<Statement> Parser::parseShader()
 				continue;
 			}
 
-			for (auto const& ioData : ios)
+			for (auto const ioData : ios)
 			{
 				shader->ioVars.push_back(new_sptr<ShaderIOVariable>(*ioData));
 
@@ -802,7 +797,7 @@ uptr<Statement> Parser::parseShader()
 
 	}
 
-	while (tkns.cur()->type != TokenType::END_SCOPE)
+	while (tkns.cur().type != TokenType::END_SCOPE)
 	{
 		auto e = errors->err("Stray token; skipping", tkns.cur());
 		tkns.consume();
@@ -815,35 +810,31 @@ uptr<Statement> Parser::parseShader()
 
 uptr<Statement> Parser::parseStruct()
 {
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
-	if (first->type != TokenType::KEYWORD)
+	if (first.type != TokenType::KEYWORD)
 	{
 		return nullptr;
 	}
 
 	auto stmtType = StmtType::STRUCT;
 
-	if (first->str == "record")
+	if (first.str == "record")
 	{
 		stmtType = StmtType::RECORD;
 	}
-	else if (first->str == "class")
+	else if (first.str == "class")
 	{
 		stmtType = StmtType::CLASS;
 	}
-	else if (first->str != "struct")
+	else if (first.str != "struct")
 	{
 		return nullptr;
 	}
 
-	auto stmt = new_uptr<StructStmt>(stmtType);
+	auto const& name = tkns.next();
 
-	stmt->first = first;
-	
-	auto name = tkns.next();
-
-	if (name->type == TokenType::IDENTIFIER)
+	if (name.type == TokenType::IDENTIFIER)
 	{
 		tkns.consume();
 	}
@@ -851,16 +842,18 @@ uptr<Statement> Parser::parseStruct()
 	{
 		auto e = errors->err("Invalid type name", name);
 
-		if (name->type == TokenType::START_SCOPE)
+		if (name.type == TokenType::START_SCOPE)
 		{
 			e->note("Name your data structure");
 		}
 
 	}
 
-	stmt->name = name;
+	auto stmt = new_uptr<StructStmt>(stmtType, first, name);
 
-	if (tkns.cur()->type == TokenType::START_SCOPE)
+	tkns.consume();
+
+	if (tkns.cur().type == TokenType::START_SCOPE)
 	{
 		tkns.consume();
 	}
@@ -871,39 +864,42 @@ uptr<Statement> Parser::parseStruct()
 		return stmt;
 	}
 
-	while (tkns.hasCur())
-	{
-		sptr<Token> end = tkns.cur();
-
-		if (end->type == TokenType::END_SCOPE)
+	if (!parseAnyBetween("{", LAMBDA() {
+		while (tkns.hasCur())
 		{
-			stmt->last = end;
-			tkns.consume();
-			break;
-		}
+			auto const end = tkns.cur();
 
-		if (auto v = parseMemberVar())
-		{
-			if (stmtType == StmtType::RECORD)
+			if (end.type == TokenType::END_SCOPE)
 			{
-				v->isConst = true;
+				stmt->last = end;
+				break;
 			}
 
-			stmt->members.emplace(v->name->str, v);
+			if (auto v = parseMemberVar())
+			{
+				if (stmtType == StmtType::RECORD)
+				{
+					v->isConst = true;
+				}
+
+				stmt->members.emplace(v->name.str, v);
+
+			}
+			else if (auto fn = parseFn())
+			{
+				stmt->memberFns.push_back(std::move(fn));
+			}
+			else
+			{
+				auto e = errors->err("Invalid start to type member", end);
+			}
+
+			parseSemicolon();
 
 		}
-		else if (auto fn = parseFn())
-		{
-			stmt->memberFns.push_back(std::move(fn));
-		}
-		else
-		{
-			auto e = errors->err("Invalid start to type member", end);
-
-		}
-		
-		parseSemicolon();
-
+	}, "}"))
+	{
+		auto e = errors->err("Failed to properly parse struct contents", first);
 	}
 
 	return stmt;
@@ -911,32 +907,24 @@ uptr<Statement> Parser::parseStruct()
 
 uptr<Statement> Parser::parseFnStmt()
 {
-	auto fn = parseFn();
-
-	if (fn == nullptr)
+	if (auto const fn = parseFn())
 	{
-		return nullptr;
+		return new_uptr<FnStmt>(*fn);
 	}
 
-	auto stmt = new_uptr<FnStmt>();
-
-	stmt->first = fn->first;
-	stmt->name = fn->name;
-	stmt->fn = new_sptr<SrcFn>(*fn);
-
-	return stmt;
+	return nullptr;
 }
 
 uptr<ParsedFn> Parser::parseFn()
 {
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
-	if (first->type != TokenType::KEYWORD)
+	if (first.type != TokenType::KEYWORD)
 	{
 		return nullptr;
 	}
 
-	if (!FN_STARTS.count(first->str))
+	if (!FN_STARTS.count(first.str))
 	{
 		return nullptr;
 	}
@@ -946,13 +934,13 @@ uptr<ParsedFn> Parser::parseFn()
 	auto fn = new_uptr<ParsedFn>();
 
 	fn->first = first;
-	fn->type = FN_TYPES.at(first->str);
+	fn->type = FN_TYPES.at(first.str);
 
 	if (fn->type == FnType::FUNCTION)
 	{
-		sptr<Token> gpuDim = tkns.cur();
+		auto const& gpuDim = tkns.cur();
 
-		if (gpuDim->str == "[")
+		if (gpuDim.str == "[")
 		{
 			parseAnyBetween("[", LAMBDA(){
 				fn->invokeDims = parseIdentifierList();
@@ -984,7 +972,7 @@ uptr<ParsedFn> Parser::parseFn()
 
 	if (fn->type == FnType::FUNCTION)
 	{
-		sptr<Token> genSigStart = tkns.cur();
+		auto const genSigStart = tkns.cur();
 
 		fn->genSig = parseGenericSig();
 
@@ -1000,11 +988,11 @@ uptr<ParsedFn> Parser::parseFn()
 		fn->args = parseFnArgs();
 	}, ")");
 
-	sptr<Token> hintStart = tkns.cur();
+	auto const hintStart = tkns.cur();
 
-	if (hintStart->type == TokenType::COLON)
+	if (hintStart.type == TokenType::COLON)
 	{
-		sptr<Token> typeNameStart = tkns.next();
+		auto const typeNameStart = tkns.next();
 
 		if (auto type = parseTypeName())
 		{
@@ -1014,12 +1002,12 @@ uptr<ParsedFn> Parser::parseFn()
 		{
 			auto e = errors->err("Invalid return type after", hintStart);
 
-			if (typeNameStart->str == "void")
+			if (typeNameStart.str == "void")
 			{
 				e->note("Void is not a proper type name; leave out the return type altogether");
 			}
 
-			if (typeNameStart->str == "dynamic")
+			if (typeNameStart.str == "dynamic")
 			{
 				e->note("Make a typedef statement; you can't make a dynamic type a return type directly since it has no name to look up");
 			}
@@ -1032,9 +1020,9 @@ uptr<ParsedFn> Parser::parseFn()
 		fn->returnType = new_sptr<ParsedType>("void");
 	}
 
-	sptr<Token> scopeStart = tkns.cur();
+	auto const& scopeStart = tkns.cur();
 	
-	if (scopeStart->type == TokenType::START_SCOPE)
+	if (scopeStart.type == TokenType::START_SCOPE)
 	{
 		fn->code = parseScope({ &Parser::parseLogic });
 	}
@@ -1058,11 +1046,11 @@ uptr<Statement> Parser::parseLogic()
 
 uptr<Statement> Parser::parseControl()
 {
-	auto start = tkns.offset();
+	size_t const start = tkns.offset();
 
 	auto as = parseAllAnnotations();
 
-	if (tkns.cur()->type != TokenType::KEYWORD)
+	if (tkns.cur().type != TokenType::KEYWORD)
 	{
 		tkns.revertTo(start);
 		return nullptr;
@@ -1089,7 +1077,7 @@ uptr<Statement> Parser::parseControl()
 	{
 		for (auto& a : as)
 		{
-			ctrl->annotations.emplace(a->name->str, std::move(a));
+			ctrl->annotations.emplace(a->name.str, std::move(a));
 		}
 
 	}
@@ -1099,16 +1087,16 @@ uptr<Statement> Parser::parseControl()
 
 uptr<Statement> Parser::parseScopeEnd()
 {
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
-	if (first->type != TokenType::KEYWORD)
+	if (first.type != TokenType::KEYWORD)
 	{
 		return nullptr;
 	}
 
 	tkns.consume();
 
-	if (first->str == "return")
+	if (first.str == "return")
 	{
 		auto retStmt = new_uptr<ReturnStmt>(first);
 
@@ -1120,27 +1108,27 @@ uptr<Statement> Parser::parseScopeEnd()
 		return retStmt;
 	}
 
-	if (first->str == "break")
+	if (first.str == "break")
 	{
 		return new_uptr<BreakStmt>(first);
 	}
 
-	if (first->str == "continue")
+	if (first.str == "continue")
 	{
 		return new_uptr<ContinueStmt>(first);
 	}
 
-	if (first->str == "discard")
+	if (first.str == "discard")
 	{
 		return new_uptr<DiscardStmt>(first);
 	}
 
-	if (first->str == "pass")
+	if (first.str == "pass")
 	{
 		return new_uptr<PassStmt>(first);
 	}
 
-	if (first->str == "unreachable")
+	if (first.str == "unreachable")
 	{
 		return new_uptr<UnreachableStmt>(first);
 	}
@@ -1152,9 +1140,9 @@ uptr<Statement> Parser::parseScopeEnd()
 
 uptr<Statement> Parser::parseIf()
 {
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
-	if (first->type != TokenType::KEYWORD || first->str != "if")
+	if (first.type != TokenType::KEYWORD || first.str != "if")
 	{
 		return nullptr;
 	}
@@ -1171,15 +1159,15 @@ uptr<Statement> Parser::parseIf()
 
 	stmt->innerIf = parseScope({&Parser::parseDecl});
 
-	if (tkns.cur()->str == "else")
+	if (tkns.cur().str == "else")
 	{
-		sptr<Token> scopeStart = tkns.cur();
+		auto const& scopeStart = tkns.cur();
 
 		stmt->innerElse = parseScope({ &Parser::parseDecl });
 
 		if (stmt->innerElse == nullptr)
 		{
-
+			//TODO complain
 		}
 
 	}
@@ -1194,9 +1182,9 @@ uptr<Statement> Parser::parseFor() //FIXME
 
 uptr<Statement> Parser::parseWhile()
 {
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
-	if (first->type != TokenType::KEYWORD || first->str != "while")
+	if (first.type != TokenType::KEYWORD || first.str != "while")
 	{
 		return nullptr;
 	}
@@ -1216,9 +1204,9 @@ uptr<Statement> Parser::parseWhile()
 
 uptr<Statement> Parser::parseDoWhile()
 {
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
-	if (first->type != TokenType::KEYWORD || first->str != "do")
+	if (first.type != TokenType::KEYWORD || first.str != "do")
 	{
 		return nullptr;
 	}
@@ -1231,9 +1219,9 @@ uptr<Statement> Parser::parseDoWhile()
 	ret->doWhile = true;
 	ret->loop = parseScope({&Parser::parseLogic});
 
-	sptr<Token> whileKwd = tkns.cur();
+	auto const& whileKwd = tkns.cur();
 
-	if (whileKwd->type != TokenType::KEYWORD || whileKwd->str != "while")
+	if (whileKwd.type != TokenType::KEYWORD || whileKwd.str != "while")
 	{
 		auto e = errors->err("This is a do/while loop, where is your while keyword?", whileKwd);
 		return nullptr;
@@ -1265,7 +1253,7 @@ uptr<Statement> Parser::parseValueStmt()
 
 uptr<Statement> Parser::parseGlobalVarStmt()
 {
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
 	if (auto v = parseGlobalVar())
 	{
@@ -1282,14 +1270,14 @@ uptr<Statement> Parser::parseGlobalVarStmt()
 
 uptr<Statement> Parser::parseLocalVarStmt()
 {
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
-	if (first->type != TokenType::KEYWORD)
+	if (first.type != TokenType::KEYWORD)
 	{
 		return nullptr;
 	}
 
-	if (first->str != "const" && first->str != "var")
+	if (first.str != "const" && first.str != "var")
 	{
 		return nullptr;
 	}
@@ -1341,13 +1329,13 @@ sptr<Value> Parser::parseExpr()
 	{
 		//size_t last = tkns.currentIndex();
 
-		sptr<Token> opTkn = tkns.cur();
+		auto const opTkn = tkns.cur();
 		sptr<Value> term = nullptr;
 		auto op = Operator::NONE;
 
-		if (opTkn->type == TokenType::OPERATOR)
+		if (opTkn.type == TokenType::OPERATOR)
 		{
-			if (auto found = INFIX_OPS.find(opTkn->str); found != INFIX_OPS.end())
+			if (auto found = INFIX_OPS.find(opTkn.str); found != INFIX_OPS.end())
 			{
 				tkns.consume();
 				op = found->second;
@@ -1355,7 +1343,7 @@ sptr<Value> Parser::parseExpr()
 			}
 			else break;
 		}
-		else if (opTkn->type == TokenType::START_PAREN)
+		else if (opTkn.type == TokenType::START_PAREN)
 		{
 			if (auto v = parseParenValue())
 			{
@@ -1404,22 +1392,22 @@ sptr<Value> Parser::parseTerm()
 
 	while (tkns.hasRem(2)) //all of the below uses at least 2 tokens
 	{
-		sptr<Token> tkn = tkns.cur();
+		auto const tkn = tkns.cur();
 
-		if (tkn->type == TokenType::END)
+		if (tkn.type == TokenType::END)
 		{
 			return v;
 		}
 
-		if (tkn->type == TokenType::START_PAREN || tkn->str == GENERIC_START)
+		if (tkn.type == TokenType::START_PAREN || tkn.str == GENERIC_START)
 		{
 			v = parseFnCall(v);
 		}
-		else if (tkn->type == TokenType::PERIOD)
+		else if (tkn.type == TokenType::PERIOD)
 		{
 			v = parseMemberAccess(v);
 		}
-		else if (tkn->type == TokenType::START_BRACKET)
+		else if (tkn.type == TokenType::START_BRACKET)
 		{
 			sptr<Value> index = nullptr;
 			
@@ -1458,12 +1446,12 @@ sptr<Value> Parser::parseTerm()
 	{
 		auto& keywd = tkns.cur();
 
-		if (keywd->type != TokenType::KEYWORD)
+		if (keywd.type != TokenType::KEYWORD)
 		{
 			break;
 		}
 
-		if (keywd->str == "as")
+		if (keywd.str == "as")
 		{
 			tkns.consume();
 
@@ -1483,11 +1471,11 @@ sptr<Value> Parser::parseTerm()
 
 sptr<Value> Parser::parseLiteral()
 {
-	sptr<Token> first = tkns.cur();
+	auto const& first = tkns.cur();
 
 	tkns.consume();
 
-	switch (first->type)
+	switch (first.type)
 	{
 		case TokenType::LITERAL_INT: return new_sptr<IntLiteralValue>(first);
 		case TokenType::LITERAL_FLOAT: return new_sptr<FloatLiteralValue>(first);
@@ -1495,13 +1483,13 @@ sptr<Value> Parser::parseLiteral()
 		case TokenType::LITERAL_STR: return new_sptr<StringLitValue>(first);
 	}
 
-	if (first->type == TokenType::KEYWORD)
+	if (first.type == TokenType::KEYWORD)
 	{
-		if (first->str == "this")
+		if (first.str == "this")
 		{
 			return new_sptr<VarReadValue>(first);
 		}
-		else if (first->str == "null")
+		else if (first.str == "null")
 		{
 			return new_sptr<NullValue>(first);
 		}
@@ -1510,7 +1498,7 @@ sptr<Value> Parser::parseLiteral()
 		return nullptr;
 	}
 
-	if (first->type == TokenType::START_BRACKET)
+	if (first.type == TokenType::START_BRACKET)
 	{
 		auto arrLit = new_sptr<ArrayLitValue>();
 
@@ -1538,17 +1526,17 @@ sptr<Value> Parser::parseLiteral()
 
 sptr<Value> Parser::parseUnaryValue()
 {
-	sptr<Token> first = tkns.cur();
+	auto const& first = tkns.cur();
 
-	if (first->type == TokenType::KEYWORD)
+	if (first.type == TokenType::KEYWORD)
 	{
 		tkns.consume();
 
-		if (first->str == "sign")
+		if (first.str == "sign")
 		{
 			return new_sptr<SignValue>(first, parseTerm());
 		}
-		else if (first->str == "unsign")
+		else if (first.str == "unsign")
 		{
 			return new_sptr<UnsignValue>(first, parseTerm());
 		}
@@ -1556,9 +1544,9 @@ sptr<Value> Parser::parseUnaryValue()
 		tkns.rewind();
 		return nullptr;
 	}
-	else if (first->type == TokenType::OPERATOR)
+	else if (first.type == TokenType::OPERATOR)
 	{
-		if (auto foundOp = UNARY_OPS.find(first->str); foundOp != UNARY_OPS.end())
+		if (auto foundOp = UNARY_OPS.find(first.str); foundOp != UNARY_OPS.end())
 		{
 			tkns.consume();
 
@@ -1577,9 +1565,9 @@ sptr<Value> Parser::parseUnaryValue()
 					return nullptr;
 				}
 
-				sptr<Token> absEnd = tkns.cur();
+				auto const& absEnd = tkns.cur();
 
-				if (absEnd->str != "|")
+				if (absEnd.str != "|")
 				{
 					auto e = errors->err("Absolute operator values must end with |", absEnd);
 
@@ -1605,11 +1593,11 @@ sptr<Value> Parser::parseUnaryValue()
 
 sptr<Value> Parser::parseParenValue()
 {
-	auto start = tkns.offset();
+	size_t const start = tkns.offset();
 
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
-	if (first->type != TokenType::START_PAREN)
+	if (first.type != TokenType::START_PAREN)
 	{
 		return nullptr;
 	}
@@ -1626,9 +1614,9 @@ sptr<Value> Parser::parseParenValue()
 
 	//TODO tuple literals go here
 
-	sptr<Token> last = tkns.cur();
+	auto const& last = tkns.cur();
 
-	if (last->type == TokenType::END_PAREN)
+	if (last.type == TokenType::END_PAREN)
 	{
 		tkns.consume();
 	}
@@ -1643,7 +1631,7 @@ sptr<Value> Parser::parseParenValue()
 
 sptr<Value> Parser::parseAccess()
 {
-	if (tkns.cur()->type != TokenType::IDENTIFIER)
+	if (tkns.cur().type != TokenType::IDENTIFIER)
 	{
 		return nullptr;
 	}
@@ -1661,14 +1649,14 @@ sptr<Value> Parser::parseMemberAccess(sptr<Value> target)
 
 	while (tkns.hasRem(2))
 	{
-		if (tkns.cur()->type != TokenType::PERIOD)
+		if (tkns.cur().type != TokenType::PERIOD)
 		{
 			break;
 		}
 
-		sptr<Token> name = tkns.peek(1);
+		auto const name = tkns.peek(1);
 
-		if (name->type != TokenType::IDENTIFIER)
+		if (name.type != TokenType::IDENTIFIER)
 		{
 			break;
 		}
@@ -1682,7 +1670,7 @@ sptr<Value> Parser::parseMemberAccess(sptr<Value> target)
 		{
 			auto& fnStart = tkns.peek(1);
 
-			if (fnStart->type == TokenType::START_PAREN || fnStart->str == GENERIC_START)
+			if (fnStart.type == TokenType::START_PAREN || fnStart.str == GENERIC_START)
 			{
 				if (auto mCall = parseMethodCall(chain))
 				{
@@ -1693,7 +1681,7 @@ sptr<Value> Parser::parseMemberAccess(sptr<Value> target)
 
 		}
 
-		chain->mems.push_back(tkns.cur());
+		chain->mems.push_back(name);
 
 		tkns.consume();
 
@@ -1724,11 +1712,11 @@ sptr<Value> Parser::parseFnCall(sptr<Value> name)
 		return nullptr;
 	}
 
-	auto tknStart = tkns.offset();
+	size_t const tknStart = tkns.offset();
 
 	auto fnCall = new_sptr<FnCallValue>(name);
 
-	if (tkns.cur()->str == GENERIC_START)
+	if (tkns.cur().str == GENERIC_START)
 	{
 		if (!(fnCall->genArgs = parseGenericArgs()))
 		{
@@ -1759,16 +1747,16 @@ sptr<Value> Parser::parseMethodCall(sptr<Value> target)
 		return nullptr;
 	}
 
-	size_t tknStart = tkns.offset();
+	size_t const tknStart = tkns.offset();
 
 	if (!tkns.hasRem(3))
 	{
 		return nullptr;
 	}
 
-	auto& name = tkns.cur();
+	auto const name = tkns.cur();
 
-	if (name->type != TokenType::IDENTIFIER)
+	if (name.type != TokenType::IDENTIFIER)
 	{
 		return nullptr;
 	}
@@ -1777,7 +1765,7 @@ sptr<Value> Parser::parseMethodCall(sptr<Value> target)
 
 	auto mCall = new_sptr<MethodCallValue>(target, name);
 
-	if (tkns.cur()->str == GENERIC_START)
+	if (tkns.cur().str == GENERIC_START)
 	{
 		if (!(mCall->genArgs = parseGenericArgs()))
 		{
@@ -1816,41 +1804,41 @@ std::vector<sptr<Variable>> Parser::parseLocalVars()
 
 sptr<Variable> Parser::parseGlobalVar()
 {
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 	sptr<ParsedType> typeHint = nullptr;
 
-	if (first->type != TokenType::KEYWORD)
+	if (first.type != TokenType::KEYWORD)
 	{
 		return nullptr;
 	}
 
-	if (first->str != "const")
+	if (first.str != "const")
 	{
 		return nullptr;
 	}
 
-	if (tkns.cur()->str == ":")
+	if (tkns.cur().str == ":")
 	{
 		typeHint = parseTypeName();
 	}
 
-	sptr<Token> name = tkns.cur();
+	auto const& name = tkns.cur();
 	
-	if (name->type != TokenType::IDENTIFIER)
+	if (name.type != TokenType::IDENTIFIER)
 	{
 		auto e = errors->err("Invalid global variable name", name);
 		return nullptr;
 	}
 
-	auto v = new_sptr<GlobalVariable>(name->str);
+	auto v = new_sptr<GlobalVariable>(name.str);
 
 	v->first = first;
 	v->nameTkn = name;
 	v->typeHint = typeHint;
 
-	sptr<Token> eqSign = tkns.next();
+	auto const& eqSign = tkns.next();
 
-	if (eqSign->type != TokenType::SETTER)
+	if (eqSign.type != TokenType::SETTER)
 	{
 		auto e = errors->err("Global variables must be initialized", eqSign);
 
@@ -1886,17 +1874,17 @@ sptr<ParsedVar> Parser::parseMemberVar()
 {
 	auto mods = parseStmtMods();
 
-	sptr<Token> start = tkns.cur();
+	auto const start = tkns.cur();
 	bool isConst = false;
 	
-	if (start->type == TokenType::KEYWORD && start->str == "const")
+	if (start.type == TokenType::KEYWORD && start.str == "const")
 	{
 		isConst = true;
 		tkns.consume();
 	}
 
-	sptr<Token> typeStart = tkns.cur();
-	auto type = parseTypeName();
+	auto const typeStart = tkns.cur();
+	auto const type = parseTypeName();
 
 	if (type == nullptr)
 	{
@@ -1905,9 +1893,9 @@ sptr<ParsedVar> Parser::parseMemberVar()
 		return nullptr;
 	}
 
-	sptr<Token> name = tkns.cur();
+	auto const name = tkns.cur();
 	
-	if (name->type != TokenType::IDENTIFIER)
+	if (name.type != TokenType::IDENTIFIER)
 	{
 		auto e = errors->err("Invalid member variable name", name);
 
@@ -1918,27 +1906,13 @@ sptr<ParsedVar> Parser::parseMemberVar()
 
 	sptr<Value> initValue = nullptr;
 
-	if (tkns.cur()->type == TokenType::SETTER)
+	if (tkns.cur().type == TokenType::SETTER)
 	{
 		tkns.consume();
 
 		initValue = parseExpr();
 	}
 
-	/*
-
-	struct ParsedVar
-	{
-		StmtModifiers mods{};
-		sptr<Token> first;
-		bool isConst = false;
-		sptr<ParsedType> typeHint;
-		sptr<Token> name;
-		sptr<Value> initValue;
-
-	};
-
-	*/
 	return new_sptr<ParsedVar>(ParsedVar{
 		mods, start, isConst, type, name, initValue
 	});
@@ -1947,20 +1921,20 @@ sptr<ParsedVar> Parser::parseMemberVar()
 std::vector<sptr<ParsedVar>> Parser::parseLocalVarLike()
 {
 	std::vector<sptr<ParsedVar>> vars;
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
-	if (first->type != TokenType::KEYWORD)
+	if (first.type != TokenType::KEYWORD)
 	{
 		return vars;
 	}
 
 	bool isConst = false;
 
-	if (first->str == "const")
+	if (first.str == "const")
 	{
 		isConst = true;
 	}
-	else if (first->str != "var")
+	else if (first.str != "var")
 	{
 		return vars;
 	}
@@ -1969,33 +1943,34 @@ std::vector<sptr<ParsedVar>> Parser::parseLocalVarLike()
 
 	sptr<ParsedType> typeHint = nullptr;
 
-	if (tkns.cur()->str == ":")
+	if (tkns.cur().str == ":")
 	{
-		tkns.consume();
+		auto const typeStart = tkns.next();
 
-		if (auto t = parseTypeName())
+		if (auto const t = parseTypeName())
 		{
 			typeHint = t;
 		}
 		else
 		{
-			sptr<Token> typeName = tkns.cur();
-			auto e = errors->err("Invalid type name", typeName);
+			auto e = errors->err("Invalid type name", typeStart);
+			return vars;
 		}
 
 	}
 
-	auto varNames = parseIdentifierList();
+	auto const varNames = parseIdentifierList();
 
 	if (varNames.empty())
 	{
-		sptr<Token> varName = tkns.cur();
-		auto e = errors->err("Invalid local variable name", varName);
+		auto e = errors->err("Invalid local variable name", tkns.cur());
+		
+		return vars;
 	}
 
 	tkns.consume();
 
-	if (tkns.cur()->str == ":")
+	if (tkns.cur().str == ":")
 	{
 		auto e = errors->err("That's not how type hints work in Caliburn. Type hints go before the variable name, not after. So var: int x is valid. var x: int isn't.", tkns.cur());
 
@@ -2004,9 +1979,9 @@ std::vector<sptr<ParsedVar>> Parser::parseLocalVarLike()
 
 	sptr<Value> initValue = nullptr;
 
-	if (tkns.cur()->type == TokenType::SETTER)
+	if (tkns.cur().type == TokenType::SETTER)
 	{
-		sptr<Token> valStart = tkns.next();
+		auto const valStart = tkns.next();
 
 		if (auto v = parseExpr())
 		{
@@ -2015,6 +1990,8 @@ std::vector<sptr<ParsedVar>> Parser::parseLocalVarLike()
 		else
 		{
 			auto e = errors->err("Invalid initializer value", valStart);
+			
+			return vars;
 		}
 
 	}
@@ -2045,15 +2022,15 @@ std::vector<sptr<ParsedVar>> Parser::parseMemberVarLike()
 {
 	std::vector<sptr<ParsedVar>> vars;
 	bool isConst = false;
-	sptr<Token> first = tkns.cur();
+	auto const first = tkns.cur();
 
-	if (first->type == TokenType::KEYWORD && first->str == "const")
+	if (first.type == TokenType::KEYWORD && first.str == "const")
 	{
 		isConst = true;
 		tkns.consume();
 	}
 
-	auto typeHint = parseTypeName();
+	auto const typeHint = parseTypeName();
 
 	if (typeHint == nullptr)
 	{
@@ -2070,8 +2047,10 @@ std::vector<sptr<ParsedVar>> Parser::parseMemberVarLike()
 
 	sptr<Value> initValue = nullptr;
 
-	if (tkns.cur()->type == TokenType::SETTER)
+	if (tkns.cur().type == TokenType::SETTER)
 	{
+		auto const valStart = tkns.next();
+
 		if (auto v = parseExpr())
 		{
 			initValue = v;
@@ -2079,7 +2058,8 @@ std::vector<sptr<ParsedVar>> Parser::parseMemberVarLike()
 		}
 		else
 		{
-			auto e = errors->err("Invalid member variable initial value", tkns.cur());
+			auto e = errors->err("Invalid member variable initial value", valStart);
+			return vars;
 		}
 		
 	}
@@ -2115,28 +2095,21 @@ std::vector<FnArg> Parser::parseFnArgs()
 			break;
 		}
 
-		if (name->type != TokenType::IDENTIFIER)
+		if (name.type != TokenType::IDENTIFIER)
 		{
 			errors->err("Not a valid argument name", name);
 			break;
 		}
 
-		tkns.consume();
+		fnArgs.push_back(FnArg{ argType, name.str });
 
-		auto arg = FnArg();
-
-		arg.typeHint = argType;
-		arg.name = name->str;
-
-		fnArgs.push_back(arg);
-
-		if (tkns.cur()->type == TokenType::COMMA)
+		if (tkns.next().type != TokenType::COMMA)
 		{
-			tkns.consume();
-			continue;
+			break;
 		}
 
-		break;
+		tkns.consume();
+
 	}
 
 	return fnArgs;
@@ -2165,15 +2138,15 @@ uptr<Annotation> Parser::parseAnnotation()
 		return nullptr;
 	}
 
-	sptr<Token> first = tkns.cur();
-	sptr<Token> name = tkns.peek(1);
+	auto const first = tkns.cur();
+	auto const name = tkns.peek(1);
 
-	if (first->str != "@")
+	if (first.str != "@")
 	{
 		return nullptr;
 	}
 
-	if (name->type != TokenType::IDENTIFIER)
+	if (name.type != TokenType::IDENTIFIER)
 	{
 		auto e = errors->err("Annotations must be named with an identifier", first, name);
 		return nullptr;
@@ -2181,43 +2154,41 @@ uptr<Annotation> Parser::parseAnnotation()
 
 	tkns.consume(2);
 
-	auto a = new_uptr<Annotation>();
+	auto const startParen = tkns.cur();
 
-	a->first = first;
-	a->name = name;
+	Token last;
 
-	sptr<Token> startParen = tkns.cur();
-
-	if (startParen->type != TokenType::START_PAREN)
+	if (startParen.type != TokenType::START_PAREN)
 	{
-		a->last = a->name;
-		return a;
+		last = name;
+		return new_uptr<Annotation>(first, name, last);
 	}
 
 	tkns.consume();
 	int closingParenNeeded = 1;
 
+	std::vector<Token> contents;
+
 	while (tkns.hasCur())
 	{
-		auto& tkn = tkns.cur();
+		auto const& tkn = tkns.cur();
 
-		if (tkn->type == TokenType::END_PAREN)
+		if (tkn.type == TokenType::END_PAREN)
 		{
 			--closingParenNeeded;
 
 			if (closingParenNeeded == 0)
 			{
-				tkns.consume();
 				break;
 			}
 
 		}
-		else if (tkn->type == TokenType::START_PAREN)
+		else if (tkn.type == TokenType::START_PAREN)
 		{
 			++closingParenNeeded;
 		}
 
-		a->contents.push_back(tkn);
+		contents.push_back(tkn);
 		tkns.consume();
 
 	}
@@ -2227,9 +2198,9 @@ uptr<Annotation> Parser::parseAnnotation()
 		auto e = errors->err("Ran out of symbols and could not close annotation", startParen);
 	}
 
-	a->last = tkns.cur();
+	last = tkns.cur();
 
 	tkns.consume();
 
-	return a;
+	return new_uptr<Annotation>(first, name, contents, last);
 }

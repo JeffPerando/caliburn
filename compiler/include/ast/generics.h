@@ -35,25 +35,32 @@ namespace caliburn
 		{ "const", GenericSymType::CONST }
 	};
 
+	static const std::map<GenericSymType, std::string_view> GENERIC_TYPE_NAMES = {
+		{ GenericSymType::TYPE, "type" },
+		{ GenericSymType::CONST, "const" }
+	};
+
 	using GenericResult = std::variant<std::monostate, sptr<ParsedType>, sptr<Value>>;
 
 	std::string parseGeneric(in<GenericResult> result);
 
 	struct GenericArguments : ParsedObject
 	{
-		sptr<Token> first = nullptr;
-		sptr<Token> last = nullptr;
+		Token first;
+		Token last;
 		std::vector<GenericResult> args;
 
-		GenericArguments() {}
+		GenericArguments() = default;
 		GenericArguments(in<std::vector<GenericResult>> gArgs) : args(gArgs) {}
 
-		sptr<Token> firstTkn() const override
+		virtual ~GenericArguments() = default;
+
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return last;
 		}
@@ -67,7 +74,7 @@ namespace caliburn
 
 		sptr<ParsedType> getType(size_t index)
 		{
-			if (auto t = std::get_if<sptr<ParsedType>>(&args.at(index)))
+			MATCH(args.at(index), sptr<ParsedType>, t)
 			{
 				return *t;
 			}
@@ -77,7 +84,7 @@ namespace caliburn
 
 		sptr<Value> getConst(size_t index)
 		{
-			if (auto v = std::get_if<sptr<Value>>(&args.at(index)))
+			MATCH(args.at(index), sptr<Value>, v)
 			{
 				return *v;
 			}
@@ -99,24 +106,24 @@ namespace caliburn
 		const GenericSymType type;
 		const std::string name;
 
-		const sptr<Token> typeTkn;
-		const sptr<Token> nameTkn;
 		const GenericResult defaultResult;
 
-		GenericName(sptr<Token> t, sptr<Token> n, in<GenericResult> res = GenericResult()) :
-			typeTkn(t), nameTkn(n), type(GENERIC_SYMBOL_TYPES.find(t->str)->second), name(n->str), defaultResult(res)
+		GenericName(in<Token> t, in<Token> n, in<GenericResult> res = GenericResult()) :
+			type(GENERIC_SYMBOL_TYPES.find(t.str)->second), name(n.str), defaultResult(res)
 		{}
+
 		GenericName(GenericSymType t, std::string n, in<GenericResult> res = GenericResult()) :
-			type(t), name(n), typeTkn(nullptr), nameTkn(nullptr), defaultResult(res)
+			type(t), name(n), defaultResult(res)
 		{}
-		~GenericName() {}
+
+		virtual ~GenericName() = default;
 
 	};
 
 	struct GenericSignature : ParsedObject
 	{
-		sptr<Token> first = nullptr;
-		sptr<Token> last = nullptr;
+		Token first;
+		Token last;
 		std::vector<GenericName> names;
 		
 	private:
@@ -147,14 +154,14 @@ namespace caliburn
 
 		}
 
-		virtual ~GenericSignature() {}
+		virtual ~GenericSignature() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return last;
 		}

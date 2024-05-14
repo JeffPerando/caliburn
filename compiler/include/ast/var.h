@@ -112,7 +112,7 @@ namespace caliburn
 	struct DescriptorVariable : Variable
 	{
 		DescriptorVariable(std::string_view n) : Variable(n) {}
-		DescriptorVariable(sptr<Token> n) : Variable(n->str)
+		DescriptorVariable(in<Token> n) : Variable(n.str)
 		{
 			nameTkn = n;
 		}

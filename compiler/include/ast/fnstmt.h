@@ -8,18 +8,22 @@ namespace caliburn
 {
 	struct FnStmt : Statement
 	{
-		sptr<Token> first = nullptr;
-		sptr<Token> name = nullptr;
-		sptr<SrcFn> fn = nullptr;
+		const Token first;
+		const Token name;
+		const sptr<SrcFn> fn;
 
-		FnStmt() : Statement(StmtType::FUNCTION) {}
+		FnStmt(out<ParsedFn> pfn) : Statement(StmtType::FUNCTION),
+			first(pfn.first), name(pfn.name), fn(new_sptr<SrcFn>(pfn))
+		{}
 
-		sptr<Token> firstTkn() const override
+		virtual ~FnStmt() = default;
+
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return fn->code->lastTkn();
 		}
@@ -27,7 +31,7 @@ namespace caliburn
 		void declareHeader(sptr<SymbolTable> table, out<ErrorHandler> err) override
 		{
 			sptr<FunctionGroup> group = nullptr;
-			auto sym = table->find(name->str);
+			auto sym = table->find(name.str);
 
 			MATCH_EMPTY(sym)
 			{

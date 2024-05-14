@@ -40,9 +40,9 @@ namespace caliburn
 
 		std::array<CharType, 128> asciiTypes;
 
-		sptr<Token> makeCharTkn(TokenType t)
+		Token makeCharTkn(TokenType t) const
 		{
-			return new_sptr<Token>(Token{ doc->text.substr(buf.offset(), 1), t, pos});
+			return Token(doc->text.substr(buf.offset(), 1), t, pos);
 		}
 
 	public:
@@ -59,7 +59,7 @@ namespace caliburn
 
 		Running this multiple times in a row invokes UB. And by that I mean you'll probably get bupkis the second time.
 		*/
-		std::vector<sptr<Token>> tokenize();
+		std::vector<Token> tokenize();
 
 	private:
 		/*
@@ -88,7 +88,7 @@ namespace caliburn
 
 		Returns the length of the identifier
 		*/
-		size_t findIdentifierLen();
+		size_t findIdentifierLen() const;
 
 	};
 

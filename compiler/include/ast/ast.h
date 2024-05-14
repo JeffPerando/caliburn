@@ -121,33 +121,38 @@ namespace caliburn
 	*/
 	struct Annotation : ParsedObject
 	{
-		sptr<Token> first = nullptr;
-		sptr<Token> name = nullptr;
-		sptr<Token> last = nullptr;
-		std::vector<sptr<Token>> contents;
+		const Token first;
+		const Token name;
+		const std::vector<Token> contents;
+		const Token last;
 
-		Annotation() = default;
-		~Annotation() {}
+		Annotation(in<Token> f, in<Token> n, in<std::vector<Token>> con, in<Token> l) :
+			first(f), name(n), contents(con), last(l) {}
+		
+		Annotation(in<Token> f, in<Token> n, in<Token> l) :
+			first(f), name(n), last(l) {}
 
-		sptr<Token> firstTkn() const override
+		virtual ~Annotation() = default;
+
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return last;
 		}
 
 		void prettyPrint(out<std::stringstream> ss) const override
 		{
-			ss << '@' << name->str << '(';
+			ss << '@' << name.str << '(';
 
 			for (auto const& tkn : contents)
 			{
-				ss << tkn->str;
+				ss << tkn.str;
 
-				if (tkn != contents.back())
+				if (&tkn != &contents.back())
 				{
 					ss << ' ';
 				}
@@ -173,28 +178,16 @@ namespace caliburn
 		std::map<std::string, uptr<Annotation>> annotations;
 
 		Statement(StmtType stmtType) : type(stmtType) {}
-		virtual ~Statement() {}
-		
-		ptr<Annotation> getAnnotation(in<std::string> name) const
-		{
-			auto found = annotations.find(name);
-
-			if (found == annotations.end())
-			{
-				return nullptr;
-			}
-
-			return found->second.get();
-		}
+		virtual ~Statement() = default;
 		
 		virtual bool validate(sptr<ErrorHandler> errors) const
 		{
 			return false;
 		}
 
-		sptr<Token> firstTkn() const override = 0;
+		Token firstTkn() const noexcept override = 0;
 
-		sptr<Token> lastTkn() const override = 0;
+		Token lastTkn() const noexcept override = 0;
 
 		void prettyPrint(out<std::stringstream> ss) const override {}
 
@@ -221,7 +214,7 @@ namespace caliburn
 		const ValueType vType;
 
 		Value(ValueType vt) : vType(vt) {}
-		virtual ~Value() {}
+		virtual ~Value() = default;
 
 		virtual bool isLValue() const = 0;
 

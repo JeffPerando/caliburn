@@ -12,17 +12,17 @@ namespace caliburn
 {
 	struct IntLiteralValue : Value
 	{
-		const sptr<Token> lit;
+		const Token lit;
 
-		IntLiteralValue(sptr<Token> l) : Value(ValueType::INT_LITERAL), lit(l) {}
+		IntLiteralValue(in<Token> l) : Value(ValueType::INT_LITERAL), lit(l) {}
 		virtual ~IntLiteralValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return lit;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return lit;
 		}
@@ -45,17 +45,17 @@ namespace caliburn
 
 	struct FloatLiteralValue : Value
 	{
-		const sptr<Token> lit;
+		const Token lit;
 
-		FloatLiteralValue(sptr<Token> l) : Value(ValueType::FLOAT_LITERAL), lit(l) {}
+		FloatLiteralValue(in<Token> l) : Value(ValueType::FLOAT_LITERAL), lit(l) {}
 		virtual ~FloatLiteralValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return lit;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return lit;
 		}
@@ -78,17 +78,17 @@ namespace caliburn
 
 	struct StringLitValue : Value
 	{
-		const sptr<Token> lit;
+		const Token lit;
 
-		StringLitValue(sptr<Token> str) : Value(ValueType::STR_LITERAL), lit(str) {}
+		StringLitValue(in<Token> str) : Value(ValueType::STR_LITERAL), lit(str) {}
 		virtual ~StringLitValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return lit;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return lit;
 		}
@@ -111,17 +111,17 @@ namespace caliburn
 
 	struct BoolLitValue : Value
 	{
-		const sptr<Token> lit;
+		const Token lit;
 		
-		BoolLitValue(sptr<Token> v) : Value(ValueType::BOOL_LITERAL), lit(v)  {}
+		BoolLitValue(in<Token> v) : Value(ValueType::BOOL_LITERAL), lit(v)  {}
 		virtual ~BoolLitValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return lit;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return lit;
 		}
@@ -144,19 +144,19 @@ namespace caliburn
 
 	struct ArrayLitValue : Value
 	{
-		sptr<Token> start = nullptr;
+		Token start;
 		std::vector<sptr<Value>> values;
-		sptr<Token> end = nullptr;
+		Token end;
 
 		ArrayLitValue() : Value(ValueType::ARRAY_LITERAL) {}
 		virtual ~ArrayLitValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return start;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return end;
 		}
@@ -196,12 +196,12 @@ namespace caliburn
 		ExpressionValue() : Value(ValueType::EXPRESSION) {}
 		virtual ~ExpressionValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return lValue->firstTkn();
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return rValue->lastTkn();
 		}
@@ -226,19 +226,19 @@ namespace caliburn
 	{
 		const sptr<Value> array;
 		const sptr<Value> index;
-		const sptr<Token> last;
+		const Token last;
 
-		SubArrayValue(sptr<Value> a, sptr<Value> i, sptr<Token> l) :
+		SubArrayValue(sptr<Value> a, sptr<Value> i, in<Token> l) :
 			Value(ValueType::SUB_ARRAY), array(a), index(i), last(l) {}
 
 		virtual ~SubArrayValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return array->firstTkn();
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return last;
 		}
@@ -267,12 +267,12 @@ namespace caliburn
 		CastValue() : Value(ValueType::CAST) {}
 		virtual ~CastValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return lhs->firstTkn();
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return castTarget->lastTkn();
 		}
@@ -295,19 +295,19 @@ namespace caliburn
 
 	struct VarReadValue : Value
 	{
-		const sptr<Token> varTkn;
+		const Token varTkn;
 		const std::string varStr;
 
-		VarReadValue(sptr<Token> v) : Value(ValueType::VAR_READ), varTkn(v), varStr(v->str) {}
-		VarReadValue(in<std::string> v) : Value(ValueType::VAR_READ), varTkn(nullptr), varStr(v) {}
+		VarReadValue(in<Token> v) : Value(ValueType::VAR_READ), varTkn(v), varStr(v.str) {}
+		VarReadValue(in<std::string> v) : Value(ValueType::VAR_READ), varStr(v) {}
 		virtual ~VarReadValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return varTkn;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return varTkn;
 		}
@@ -337,12 +337,12 @@ namespace caliburn
 		MemberReadDirectValue(sptr<Value> t, in<std::string> m) : Value(ValueType::MEMBER_READ), target(t), mem(m) {}
 		virtual ~MemberReadDirectValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return target->firstTkn();
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			//FIXME this is technically incorrect
 			return target->lastTkn();
@@ -368,17 +368,17 @@ namespace caliburn
 	{
 		const sptr<Value> target;
 		
-		std::vector<sptr<Token>> mems;
+		std::vector<Token> mems;
 
 		MemberReadChainValue(sptr<Value> t) : Value(ValueType::MEMBER_READ), target(t) {}
 		virtual ~MemberReadChainValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return target->firstTkn();
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return mems.back();
 		}
@@ -402,22 +402,22 @@ namespace caliburn
 	struct UnaryValue : Value
 	{
 		Operator op = Operator::NONE;
-		sptr<Token> start = nullptr;
+		Token start;
 		sptr<Value> val = nullptr;
-		sptr<Token> end = nullptr;
+		Token end;
 
 		UnaryValue() : Value(ValueType::UNKNOWN) {}
-		UnaryValue(sptr<Token> s, Operator o, sptr<Value> v) : start(s), op(o), val(v), Value(ValueType::UNKNOWN) {}
+		UnaryValue(in<Token> s, Operator o, sptr<Value> v) : start(s), op(o), val(v), Value(ValueType::UNKNOWN) {}
 		virtual ~UnaryValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return start;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
-			if (end == nullptr)
+			if (end.type == TokenType::UNKNOWN)
 				return val->lastTkn();
 			return end;
 		}
@@ -444,17 +444,17 @@ namespace caliburn
 
 		sptr<GenericArguments> genArgs;
 		std::vector<sptr<Value>> args;
-		sptr<Token> end;
+		Token end;
 
 		FnCallValue(sptr<Value> n) : Value(ValueType::FUNCTION_CALL), name(n) {}
 		virtual ~FnCallValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return name->firstTkn();
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return end;
 		}
@@ -478,21 +478,21 @@ namespace caliburn
 	struct MethodCallValue : Value
 	{
 		const sptr<Value> target;
-		const sptr<Token> name;
+		const Token name;
 
 		sptr<GenericArguments> genArgs;
 		std::vector<sptr<Value>> args;
-		sptr<Token> end;
+		Token end;
 
-		MethodCallValue(sptr<Value> t, sptr<Token> n) : Value(ValueType::FUNCTION_CALL), target(t), name(n) {}
+		MethodCallValue(sptr<Value> t, in<Token> n) : Value(ValueType::FUNCTION_CALL), target(t), name(n) {}
 		virtual ~MethodCallValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return target->firstTkn();
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return end;
 		}
@@ -522,12 +522,12 @@ namespace caliburn
 		SetterValue() : Value(ValueType::UNKNOWN) {}
 		virtual ~SetterValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return lhs->firstTkn();
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return rhs->firstTkn();
 		}
@@ -550,17 +550,17 @@ namespace caliburn
 
 	struct NullValue : Value
 	{
-		const sptr<Token> lit;//I don't even know what to do with this
+		const Token lit;//I don't even know what to do with this
 
-		NullValue(sptr<Token> v) : Value(ValueType::UNKNOWN), lit(v) {}
+		NullValue(in<Token> v) : Value(ValueType::UNKNOWN), lit(v) {}
 		virtual ~NullValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return lit;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return lit;
 		}
@@ -586,14 +586,14 @@ namespace caliburn
 		ZeroValue() : Value(ValueType::UNKNOWN) {}
 		virtual ~ZeroValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
-			return nullptr;
+			return Token();
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
-			return nullptr;
+			return Token();
 		}
 
 		void prettyPrint(out<std::stringstream> ss) const override;
@@ -614,18 +614,18 @@ namespace caliburn
 
 	struct SignValue : Value
 	{
-		const sptr<Token> first;
+		const Token first;
 		const sptr<Value> target;
 
-		SignValue(sptr<Token> f, sptr<Value> v) : Value(ValueType::UNKNOWN), first(f), target(v) {}
+		SignValue(in<Token> f, sptr<Value> v) : Value(ValueType::UNKNOWN), first(f), target(v) {}
 		virtual ~SignValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return target->lastTkn();
 		}
@@ -648,18 +648,18 @@ namespace caliburn
 
 	struct UnsignValue : Value
 	{
-		const sptr<Token> first;
+		const Token first;
 		const sptr<Value> target;
 
-		UnsignValue(sptr<Token> f, sptr<Value> v) : Value(ValueType::UNKNOWN), first(f), target(v) {}
+		UnsignValue(in<Token> f, sptr<Value> v) : Value(ValueType::UNKNOWN), first(f), target(v) {}
 		virtual ~UnsignValue() = default;
 
-		sptr<Token> firstTkn() const override
+		Token firstTkn() const noexcept override
 		{
 			return first;
 		}
 
-		sptr<Token> lastTkn() const override
+		Token lastTkn() const noexcept override
 		{
 			return target->lastTkn();
 		}

@@ -217,7 +217,7 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type)
 	return len;
 }
 
-size_t Tokenizer::findIdentifierLen()
+size_t Tokenizer::findIdentifierLen() const
 {
 	size_t len = 0;
 
@@ -236,9 +236,9 @@ size_t Tokenizer::findIdentifierLen()
 	return len;
 }
 
-std::vector<sptr<Token>> Tokenizer::tokenize()
+std::vector<Token> Tokenizer::tokenize()
 {
-	std::vector<sptr<Token>> tokens;
+	std::vector<Token> tokens;
 
 	while (buf.hasCur())
 	{
@@ -341,7 +341,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 			}
 
 			//only used for error messaging
-			sptr<Token> delimTkn = makeCharTkn(TokenType::UNKNOWN);
+			Token delimTkn = makeCharTkn(TokenType::UNKNOWN);
 
 			char delim = current;
 			bool foundDelim = false;
@@ -385,7 +385,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 
 			if (!foundDelim)
 			{
-				throw std::runtime_error((std::stringstream() << "Unescaped string starts at " << delimTkn->pos.toStr()).str());
+				throw std::runtime_error((std::stringstream() << "Unescaped string starts at " << delimTkn.pos.toStr()).str());
 			}
 
 			tknType = TokenType::LITERAL_STR;
@@ -459,7 +459,7 @@ std::vector<sptr<Token>> Tokenizer::tokenize()
 		buf.consume(tknLen);
 		pos.move(SCAST<uint32_t>(tknLen));
 
-		tokens.push_back(new_sptr<Token>(Token{ content, tknType, startPos }));
+		tokens.push_back(Token{ content, tknType, startPos });
 
 	}
 
