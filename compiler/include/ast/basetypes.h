@@ -34,8 +34,9 @@ namespace caliburn
 		FunctionGroup ctors;
 		sptr<Method> dtor = nullptr;
 
-		BaseType(TypeCategory c, std::string n) :
+		BaseType(TypeCategory c, in<std::string> n) :
 			category(c), canonName(n) {}
+
 		virtual ~BaseType() = default;
 
 		bool operator!=(in<BaseType> rhs) const
