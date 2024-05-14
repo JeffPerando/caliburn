@@ -12,6 +12,9 @@
 
 static uint64_t totalTime = 0;
 
+static double bestTime = DBL_MAX;
+static double worstTime = DBL_MIN;
+
 std::string read(std::string name)
 {
 	std::ifstream file((std::stringstream() << "./../../../../" << name).str());
@@ -56,8 +59,13 @@ int testShaderCompile()
 		return -1;
 	}
 
+	auto const timeTaken = (time.count() * 0.000001);
+
 	std::cout << "Successfully compiled " << result.shaders.size() << " shaders!\n";
-	std::cout << "Time taken: " << (time.count() * 0.000001f) << " ms\n";
+	std::cout << "Time taken: " << timeTaken << " ms\n";
+
+	bestTime = std::min(timeTaken, bestTime);
+	worstTime = std::max(timeTaken, worstTime);
 
 	totalTime += time.count();
 
@@ -147,6 +155,23 @@ void printTokens()
 
 }
 
+void benchmarkShaderCompile()
+{
+	auto const takes = 20;
+
+	for (int i = 0; i < takes; ++i)
+	{
+		testShaderCompile();
+	}
+
+	std::cout << "Average time: " << ((totalTime / static_cast<double>(takes)) * 0.000001) << " ms\n";
+
+	std::cout << "Best time: " << bestTime << " ms\n";
+	std::cout << "Worst time: " << worstTime << " ms\n";
+	std::cout << "Delta: " << (worstTime - bestTime) << " ms\n";
+
+}
+
 int main()
 {
 	/*
@@ -157,14 +182,7 @@ int main()
 	//return testShaderCompile();
 	//return testExprParsing();
 	
-	auto const takes = 20;
+	benchmarkShaderCompile();
 
-	for (int i = 0; i < takes; ++i)
-	{
-		testShaderCompile();
-	}
-
-	std::cout << "Average time: " << ((totalTime / static_cast<double>(takes)) * 0.000001) << " ms\n";
-	
 	return 0;
 }
