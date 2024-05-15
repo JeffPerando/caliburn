@@ -58,7 +58,13 @@ sptr<cllr::LowType> ParsedType::resolve(sptr<const SymbolTable> table, out<cllr:
 
 	auto typeSym = table->find(name);
 
-	if (auto lType = std::get_if<sptr<cllr::LowType>>(&typeSym))
+	MATCH_EMPTY(typeSym)
+	{
+		codeAsm.errors->err({ "Type not found:", name }, *this);
+		return nullptr;
+	}
+
+	MATCH(typeSym, sptr<cllr::LowType>, lType)
 	{
 		if (!genericArgs->empty())
 		{
@@ -67,14 +73,18 @@ sptr<cllr::LowType> ParsedType::resolve(sptr<const SymbolTable> table, out<cllr:
 
 		resultType = *lType;
 	}
-	else if (auto bType = std::get_if<sptr<BaseType>>(&typeSym))
+	else MATCH(typeSym, sptr<BaseType>, bType)
 	{
 		resultType = (**bType).resolve(genericArgs, table, codeAsm);
 	}
-
+	else
+	{
+		codeAsm.errors->err({ "Not a type:", name }, *this);
+	}
+	
 	if (resultType == nullptr)
 	{
-		//TODO complain
+		codeAsm.errors->err({ "Type resolution failed:", name }, *this);
 	}
 
 	return resultType;

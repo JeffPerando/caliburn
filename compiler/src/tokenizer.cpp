@@ -265,7 +265,6 @@ std::vector<Token> Tokenizer::tokenize()
 			if (current == '\n')
 			{
 				pos.newline();
-				doc->startLine(buf.offset());
 			}
 			else if (current != '\r')
 			{
@@ -374,7 +373,6 @@ std::vector<Token> Tokenizer::tokenize()
 				{
 					buf.consume();
 					pos.newline();
-					doc->startLine(buf.offset() + 1);
 					continue;
 				}
 				

@@ -40,8 +40,8 @@ namespace caliburn
 	{
 		CompileStage stage = CompileStage::UNKNOWN;
 		std::string message;
-		Token problemTknStart;
-		Token problemTknEnd;
+		Token startTkn;
+		Token endTkn;
 		/*
 		This token is only used to give the user a line of code with more context in it.
 		Such context may be a statement containing the problematic code
@@ -66,14 +66,7 @@ namespace caliburn
 
 		}
 
-		void prettyPrint(in<TextDoc> txt, out<std::stringstream> ss, bool color) const;
-
-		std::string toStr(in<TextDoc> txt, bool color)
-		{
-			std::stringstream ss;
-			prettyPrint(txt, ss, color);
-			return ss.str();
-		}
+		std::string print(in<TextDoc> txt, sptr<const CompilerSettings> settings) const;
 
 	};
 
@@ -110,7 +103,7 @@ namespace caliburn
 		{
 			for (auto const& e : errors)
 			{
-				out.push_back(e->toStr(doc, settings->coloredErrors));
+				out.push_back(e->print(doc, settings));
 			}
 
 		}

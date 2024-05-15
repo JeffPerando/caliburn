@@ -86,57 +86,15 @@ namespace caliburn
 		const std::string_view text;
 
 		std::vector<std::string_view> lines;
-		size_t lastOffset = 0;
-
-		TextDoc(in<std::string> str) : text(str) {}
-
-		/*
-		Adds a new line at the given offset.
-
-		This function assumes linear traversal of the text the document holds. As such,
-		offsets must grow in size
-		*/
-		void startLine(size_t off)
-		{
-			if (off < lastOffset)
-			{
-				throw std::exception("You somehow tried to push an impossible line offset.");
-			}
-
-			lines.push_back(text.substr(lastOffset, off - 1));
-			lastOffset = off;
-
-		}
+		
+		TextDoc(in<std::string> str);
 
 		/*
-		Creates a substring of the given line, using the stored line offsets.
+		Retrieves a line using the line found in the passed text position.
 
 		The resulting line substring *shouldn't* contain a newline character.
 		*/
-		std::string_view getLine(in<TextPos> pos) const
-		{
-			return getLineDirect(pos.line);
-		}
-
-		std::string_view getLineDirect(size_t index) const
-		{
-			if (lines.empty())
-			{
-				return text;
-			}
-
-			if (index >= lines.size())
-			{
-				throw std::exception((std::stringstream() << "Invalid line: " << index).str().c_str());
-			}
-
-			return lines.at(index);
-		}
-
-		size_t getLineCount() const
-		{
-			return lines.size();
-		}
+		std::string_view getLine(TextPos pos) const;
 
 	};
 

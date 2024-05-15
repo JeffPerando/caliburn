@@ -411,6 +411,8 @@ uptr<ScopeStmt> Parser::parseScope(in<std::vector<ParseMethod<uptr<Statement>>>>
 	{
 		if (tkns.cur().type == TokenType::END_SCOPE)
 		{
+			scope->last = tkns.cur();
+
 			tkns.consume();
 			break;
 		}
@@ -769,7 +771,7 @@ uptr<Statement> Parser::parseShader()
 
 		if (auto stageFn = parseFn())
 		{
-			shader->stages.push_back(new_uptr<ShaderStage>(stageFn, shader->name));
+			shader->stages.push_back(new_uptr<ShaderStage>(stageFn, memStart, shader->name));
 
 		}
 		else

@@ -67,7 +67,8 @@ namespace caliburn
 		public:
 			Assembler(ShaderType t, sptr<const CompilerSettings> cs) :
 				type(t), settings(cs), errors(new_uptr<ErrorHandler>(CompileStage::CLLR_EMIT, cs)) {}
-			virtual ~Assembler() {}
+
+			virtual ~Assembler() = default;
 
 			const std::vector<Instruction>& getCode() const
 			{

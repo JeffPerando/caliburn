@@ -329,17 +329,16 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpShaderStage)
 	auto type = (ShaderType)i.operands[0];
 	auto ex = SHADER_EXECUTION_MODELS.find(type)->second;
 
-	//TODO get output type for shader
-	auto fp = outCode.types.findOrMake(spirv::OpTypeFloat(), { 32 });
-	auto v4 = outCode.types.findOrMake(spirv::OpTypeVector(), { fp, 4 });
+	//TODO don't trust output type
+	auto outType = outCode.toSpvID(i.refs[0]);
 
-	auto fn_v4 = outCode.types.findOrMake(spirv::OpTypeFunction(0), { v4 });
+	auto fn_type = outCode.types.findOrMake(spirv::OpTypeFunction(0), { outType });
 
 	spirv::FuncControl fnctrl;
 
 	fnctrl.Inline = 1;
 
-	outCode.main->pushTyped(spirv::OpFunction(), v4, id, { fnctrl, fn_v4 });
+	outCode.main->pushTyped(spirv::OpFunction(), outType, id, { fnctrl, fn_type });
 
 	outCode.shaderEntries.push_back(spirv::EntryPoint
 		{

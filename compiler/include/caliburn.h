@@ -107,9 +107,9 @@ namespace caliburn
 		  and ideally be a built-in type.
 		*/
 		std::map<std::string, std::string> dynTypes;
-		bool coloredErrors = true;
+		uint32_t errorContextLines = 3;
 
-		char _padding[980];
+		char _padding[980]{};
 
 	};
 

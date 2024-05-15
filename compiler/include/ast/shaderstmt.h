@@ -14,15 +14,14 @@ namespace caliburn
 	struct ShaderStage : ParsedObject
 	{
 		const uptr<ParsedFn> base;
+		const ShaderType type;
+		const Token first, parentName;
 
-		ShaderType type = ShaderType::VERTEX;
-		Token parentName;
 		std::vector<sptr<ShaderIOVariable>> vtxInputs;
 
-		ShaderStage(out<uptr<ParsedFn>> fn, in<Token> pname) : base(std::move(fn)), parentName(pname)
+		ShaderStage(out<uptr<ParsedFn>> fn, in<Token> f, in<Token> pname) :
+			base(std::move(fn)), first(f), parentName(pname), type(SHADER_TYPES.find(base->name.str)->second)
 		{
-			type = SHADER_TYPES.find(base->name.str)->second;
-
 			for (auto const& a : base->args)
 			{
 				vtxInputs.push_back(new_sptr<ShaderIOVariable>(ShaderIOVarType::INPUT, a));
@@ -30,6 +29,7 @@ namespace caliburn
 			}
 
 		}
+
 		virtual ~ShaderStage() = default;
 
 		bool operator<(in<ShaderStage> other) const
@@ -39,17 +39,12 @@ namespace caliburn
 
 		Token firstTkn() const noexcept override
 		{
-			return base->code->firstTkn();
+			return first;
 		}
 
 		Token lastTkn() const noexcept override
 		{
-			if (base->code == nullptr)
-			{
-				return base->returnType->lastTkn();
-			}
-
-			return base->code->lastTkn();//idk
+			return base->code->lastTkn();
 		}
 
 		void prettyPrint(out<std::stringstream> ss) const override {}
@@ -69,6 +64,7 @@ namespace caliburn
 		std::vector<sptr<ShaderIOVariable>> ioVars;
 
 		ShaderStmt() : Statement(StmtType::SHADER) {}
+
 		virtual ~ShaderStmt() = default;
 
 		Token firstTkn() const noexcept override

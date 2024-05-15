@@ -155,7 +155,7 @@ namespace caliburn
 			});
 
 		TypeVector(uint32_t vecElements) :
-			BaseType(TypeCategory::VECTOR, "vec" + vecElements),
+			BaseType(TypeCategory::VECTOR, "vec" + std::to_string(vecElements)),
 			elements(vecElements)
 		{}
 

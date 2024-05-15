@@ -3,133 +3,112 @@
 
 using namespace caliburn;
 
-void Error::prettyPrint(in<TextDoc> doc, out<std::stringstream> ss, bool color) const
+std::string Error::print(in<TextDoc> doc, sptr<const CompilerSettings> settings) const
 {
-	/*
-	TODO:
+	const uint32_t errLineCount = settings->errorContextLines;
 
-	Consider using ParsedObj.prettyPrint()
-	Maybe add more lines of code to give the user even more context
-	Make lines configurable so users aren't bombarded with more context than needed
-	*/
+	constexpr std::string_view ERR_TXT_START = "\033[41m";
+	constexpr std::string_view ERR_TXT_END = "\033[0m";
 
-	constexpr auto ERR_LINE_COUNT = 3;
+	std::stringstream ss;
 
-	ss << '[' << COMPILE_STAGES[(int)stage] << "] ";
-	
-	TextPos startPos, endPos;
+	ss << '[' << COMPILE_STAGES[SCAST<uint32_t>(stage)] << "] ";
 	
 	ss << "Error";
 
-	if (problemTknStart.exists())
+	if (startTkn.exists())
 	{
-		startPos = problemTknStart.pos;
-		endPos = problemTknEnd.pos;
-		ss << " on line " << startPos.getLine();
-	}
-	
-	ss << ": " << message;
-
-	if (contextStart.exists())
-	{
-		ss << "\nContext:\n";
-		ss << contextStart.pos.getLine() << ' ' << doc.getLine(contextStart.pos);
-
-	}
-	
-	if (problemTknStart.exists() && problemTknEnd.exists())
-	{
-		ss << '\n';
-
-		for (auto i = ERR_LINE_COUNT; i > 0; --i)
+		if (endTkn.pos.getLine() == startTkn.pos.getLine())
 		{
-			auto line = startPos.line - i;
-
-			if (line > 0 && line < startPos.line)
-			{
-				ss << line << '\t' << doc.getLineDirect(line) << '\n';
-
-			}
-
-		}
-
-		if (startPos.line == endPos.line)
-		{
-			if (color)
-			{
-				auto lineStr = doc.getLine(startPos);
-				
-				ss << (startPos.line + 1) << '\t';
-
-				if (startPos.column > 0)
-				{
-					ss << lineStr.substr(0, startPos.column);
-				}
-
-				ss << "\033[1;31m";
-				ss << problemTknStart.str;
-				ss << "\033[0m";
-
-				if (lineStr.length() > (startPos.column + problemTknEnd.str.length()))
-				{
-					ss << lineStr.substr(startPos.column + problemTknEnd.str.length());
-				}
-
-			}
-			else
-			{
-				ss << startPos.line << '\t' << doc.getLine(startPos);
-				ss << "\t";
-				ss << std::string(startPos.column, ' ');
-				ss << std::string(problemTknEnd.str.length(), '^');
-			}
-			
+			ss << " on line " << startTkn.pos.getLine();
 		}
 		else
 		{
-			auto startPosStr = doc.getLine(startPos);
-			auto endPosStr = doc.getLine(endPos);
-
-			if (startPos.column > 0)
-			{
-				ss << startPosStr.substr(0, startPos.column);
-			}
-
-			ss << "\033[1;31m";
-			ss << startPos.line << '\t' << endPosStr.substr(startPos.column - 1) << '\n';
-			for (uint32_t line = startPos.line + 1; line < endPos.line; ++line)
-			{
-				ss << line << '\t' << doc.getLineDirect(line);
-			}
-			ss << endPos.line << '\t' << endPosStr.substr(0, problemTknEnd.str.length() + endPos.column - 1);
-			ss << "\033[0m";
-
-			if (endPosStr.length() >= (endPos.column + problemTknEnd.str.length()))
-			{
-				ss << endPosStr.substr((endPos.column - 1) + problemTknEnd.str.length());
-			}
-
+			ss << " on lines " << startTkn.pos.getLine() << '-' << endTkn.pos.getLine();
 		}
 
-		for (auto i = 0; i < ERR_LINE_COUNT; ++i)
-		{
-			auto line = endPos.line + i;
+	}
+	
+	ss << ": " << message << '\n';
 
-			if (line >= doc.getLineCount())
+	if (contextStart.exists())
+	{
+		auto const& cxtLine = doc.getLine(contextStart.pos);
+
+		ss << "Context: \n";
+		ss << contextStart.pos.getLine() << '\t' << cxtLine << '\n';
+		ss << std::string(cxtLine.length(), '-');
+		ss << '\n';
+	}
+	else
+	{
+		for (auto line = startTkn.pos.line - std::min(errLineCount, startTkn.pos.line); line < startTkn.pos.line; ++line)
+		{
+			ss << (line + 1) << '\t' << doc.lines[line] << '\n';
+		}
+	}
+	
+	if (startTkn.exists() && endTkn.exists())
+	{
+		if (startTkn.pos.line == endTkn.pos.line)
+		{
+			auto const lineStr = doc.getLine(startTkn.pos);
+
+			ss << ERR_TXT_START;
+			ss << startTkn.pos.getLine();
+			ss << ERR_TXT_END;
+			ss << '\t';
+			ss << lineStr.substr(0, startTkn.pos.column);
+			ss << ERR_TXT_START;
+			ss << lineStr.substr(startTkn.pos.column, endTkn.pos.column + endTkn.str.length() - startTkn.pos.column);
+			ss << ERR_TXT_END;
+			ss << lineStr.substr(endTkn.pos.column + endTkn.str.length());
+
+		}
+		else
+		{
+			auto startLine = doc.getLine(startTkn.pos);
+			auto endLine = doc.getLine(endTkn.pos);
+
+			ss << ERR_TXT_START;
+			ss << startTkn.pos.getLine();
+			ss << ERR_TXT_END;
+			ss << '\t';
+			ss << startLine.substr(0, startTkn.pos.column);
+			ss << ERR_TXT_START;
+			ss << startTkn.str;
+			ss << '\n';
+			
+			for (uint32_t line = startTkn.pos.line + 1; line < endTkn.pos.line; ++line)
+			{
+				ss << (line + 1) << '\t' << doc.lines[line] << '\n';
+			}
+
+			ss << endTkn.pos.getLine() << '\t' << endLine.substr(0, endTkn.pos.column + endTkn.str.length());
+			ss << ERR_TXT_END;
+			ss << endLine.substr(endTkn.pos.column + endTkn.str.length());
+			
+		}
+
+		ss << '\n';
+
+		for (uint32_t i = 1; i <= errLineCount; ++i)
+		{
+			auto line = endTkn.pos.line + i;
+
+			if (line >= doc.lines.size())
 			{
 				break;
 			}
 
-			ss << line << '\t' << doc.getLineDirect(line);
+			ss << (line + 1) << '\t' << doc.lines[line] << '\n';
 
 		}
-
+		
 	}
 
 	if (!notes.empty())
 	{
-		ss << '\n';
-
 		if (notes.size() == 1)
 		{
 			ss << "Note: " << notes.front();
@@ -148,6 +127,7 @@ void Error::prettyPrint(in<TextDoc> doc, out<std::stringstream> ss, bool color) 
 
 	}
 
+	return ss.str();
 }
 
 sptr<Error> ErrorHandler::err(in<std::string> msg, in<Token> tknStart, in<Token> tknEnd)
@@ -156,8 +136,8 @@ sptr<Error> ErrorHandler::err(in<std::string> msg, in<Token> tknStart, in<Token>
 
 	e->stage = stage;
 	e->message = msg;
-	e->problemTknStart = tknStart;
-	e->problemTknEnd = tknEnd;
+	e->startTkn = tknStart;
+	e->endTkn = tknEnd;
 
 	errors.push_back(e);
 

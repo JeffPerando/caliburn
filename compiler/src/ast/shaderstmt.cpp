@@ -3,6 +3,7 @@
 
 #include "cllr/cllrasm.h"
 #include "cllr/cllropt.h"
+#include "cllr/cllrtype.h"
 #include "cllr/cllrvalid.h"
 
 #include "spirv/cllrspirv.h"
@@ -11,6 +12,16 @@ using namespace caliburn;
 
 uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSettings> settings, out<std::vector<sptr<Error>>> allErrs)
 {
+	/* here for debugging multi-line errors
+	auto e = new_sptr<Error>();
+
+	e->stage = CompileStage::CLLR_EMIT;
+	e->message = "Multi-line error";
+	e->startTkn = base->code->firstTkn();
+	e->endTkn = base->code->lastTkn();
+
+	allErrs.push_back(e);
+	*/
 	sptr<SymbolTable> stageTable = table;
 
 	if (!vtxInputs.empty())
@@ -20,17 +31,28 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 		for (auto const& in : vtxInputs)
 		{
 			stageTable->add(in->name, in);
-			
+
 		}
 
 	}
 
 	auto codeAsm = cllr::Assembler(type, settings);
 
-	auto fullName = (std::stringstream() << parentName.str << "_" << SHADER_TYPE_NAMES.at(type)).str();
-	auto nameID = SCAST<uint32_t>(codeAsm.addString(fullName));
+	auto const fullName = (std::stringstream() << parentName.str << "_" << SHADER_TYPE_NAMES.at(type)).str();
+	auto const nameID = SCAST<uint32_t>(codeAsm.addString(fullName));
 
-	auto stageID = codeAsm.beginSect(cllr::Instruction(cllr::Opcode::SHADER_STAGE, { (uint32_t)type, nameID }, {}));
+	auto const typeOut = base->returnType->resolve(stageTable, codeAsm);
+
+	if (typeOut == nullptr)
+	{
+		codeAsm.errors->err("Could not resolve type", *base->returnType);
+
+		codeAsm.errors->dump(allErrs);
+
+		return nullptr;
+	}
+
+	auto stageID = codeAsm.beginSect(cllr::Instruction(cllr::Opcode::SHADER_STAGE, { (uint32_t)type, nameID }, { typeOut->id }).debug(first));
 
 	auto symErr = ErrorHandler(CompileStage::SYMBOL_GENERATION);
 
@@ -45,7 +67,7 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 		return nullptr;
 	}
 
-	if (codeAsm.errors->empty())
+	if (!codeAsm.errors->empty())
 	{
 		codeAsm.errors->dump(allErrs);
 		return nullptr;
@@ -91,7 +113,7 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 		for (auto const& [name, index] : codeAsm.getInputs())
 		{
 			//TODO assign input format
-			outShader->inputs.push_back(VertexInputAttribute{ std::string(name), index, 0});
+			outShader->inputs.push_back(VertexInputAttribute{ std::string(name), index, 0 });
 
 		}
 

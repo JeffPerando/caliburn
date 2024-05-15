@@ -170,6 +170,12 @@ ShaderResult Compiler::compileSrcShaders(const std::string& src, const std::stri
 	//Populate the built-in symbols table
 
 	auto root = makeStdLib(settings);
+	/*
+	for (auto &[name, sym] : root->symbols)
+	{
+		std::cout << name << '\n';
+	}
+	*/
 	auto table = new_sptr<SymbolTable>(root);
 
 	auto symErr = ErrorHandler(CompileStage::SYMBOL_GENERATION, settings);
@@ -199,17 +205,12 @@ ShaderResult Compiler::compileSrcShaders(const std::string& src, const std::stri
 	{
 		for (auto const& e : compileErrs)
 		{
-			result.errors.push_back(e->toStr(*doc, settings->coloredErrors));
+			result.errors.push_back(e->print(*doc, settings));
 
 		}
 
 		return result;
 	}
-	/* checking data usage to see if tokens actually need to be shared
-	for (const auto& t : tokens)
-	{
-		std::cout << t->str << ' ' << t.use_count() << '\n';
-	}
-	*/
+
 	return result;
 }

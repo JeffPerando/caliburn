@@ -90,6 +90,9 @@ void DiscardStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> cod
 
 void ReturnStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
+	//here for debugging error message formatting
+	//codeAsm.errors->err("Single-line error", *this);
+
 	auto h = codeAsm.getSectHeader();
 
 	if (h.op != cllr::Opcode::FUNCTION && h.op != cllr::Opcode::SHADER_STAGE)
@@ -104,7 +107,10 @@ void ReturnStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> code
 	{
 		if (retID == 0)
 		{
-			codeAsm.errors->err("Cannot return a value in a void function", *this);
+			auto e = codeAsm.errors->err("Cannot return a value in a void function", *this);
+
+			e->contextStart = h.debugTkn;
+
 			//emit *something*
 			codeAsm.push(cllr::Instruction(cllr::Opcode::RETURN));
 			return;
@@ -139,7 +145,7 @@ void ReturnStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> code
 		codeAsm.push(cllr::Instruction(cllr::Opcode::RETURN));
 
 	}
-
+	
 }
 
 void PassStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)

@@ -31,7 +31,7 @@ std::string read(std::string name)
 	return buf.str();
 }
 
-int testShaderCompile()
+int testShaderCompile(bool printTime)
 {
 	std::string src = read("shader.cbrn");
 	
@@ -39,7 +39,6 @@ int testShaderCompile()
 
 	cs.o = caliburn::OptimizeLevel::DEBUG;
 	cs.vLvl = caliburn::ValidationLevel::FULL;
-	cs.coloredErrors = true;
 	cs.dynTypes.emplace("FP", "fp16");
 
 	caliburn::Compiler cc(cs);
@@ -61,14 +60,18 @@ int testShaderCompile()
 
 	auto const timeTaken = (time.count() * 0.000001);
 
-	//std::cout << "Successfully compiled " << result.shaders.size() << " shaders!\n";
-	//std::cout << "Time taken: " << timeTaken << " ms\n";
+	if (printTime)
+	{
+		std::cout << "Successfully compiled " << result.shaders.size() << " shaders!\n";
+		std::cout << "Time taken: " << timeTaken << " ms\n";
 
+	}
+	
 	bestTime = std::min(timeTaken, bestTime);
 	worstTime = std::max(timeTaken, worstTime);
 
 	totalTime += time.count();
-	/*
+	
 	for (auto const& s : result.shaders)
 	{
 		auto name = (std::stringstream() << "./../../../../shader" << ((uint32_t)s->type) << ".spv").str();
@@ -84,13 +87,13 @@ int testShaderCompile()
 		out.close();
 
 	}
-	*/
+	
 	return 0;
 }
 
-int testExprParsing()
+int testExprParsing(const std::string& textfile)
 {
-	std::string src = read("expr.txt");
+	std::string src = read(textfile);
 
 	auto doc = new_sptr<caliburn::TextDoc>(src);
 	auto cs = new_sptr<caliburn::CompilerSettings>();
@@ -139,7 +142,7 @@ void printTokens(const std::string& textfile)
 	auto tkns = t.tokenize();
 
 	std::cout << "Token count: " << tkns.size() << '\n';
-	std::cout << "Line count: " << doc->getLineCount() << '\n';
+	std::cout << "Line count: " << doc->lines.size() << '\n';
 
 	for (auto const& t : tkns)
 	{
@@ -148,9 +151,21 @@ void printTokens(const std::string& textfile)
 
 	std::cout << "Original text:\n";
 	
-	for (size_t line = 0; line < doc->getLineCount(); ++line)
+	for (size_t line = 0; line < doc->lines.size(); ++line)
 	{
-		std::cout << (line + 1) << '|' << doc->getLineDirect(line) << '\n';
+		std::cout << (line + 1) << '|' << doc->lines[line] << '\n';
+	}
+
+}
+
+void printLines(const std::string& textfile)
+{
+	auto txt = read(textfile);
+	caliburn::TextDoc doc(txt);
+
+	for (size_t i = 0; i < doc.lines.size(); ++i)
+	{
+		std::cout << "#" << (i + 1) << ": \"" << doc.lines[i] << "\"\n";
 	}
 
 }
@@ -161,7 +176,7 @@ void benchmarkShaderCompile()
 
 	for (int i = 0; i < takes; ++i)
 	{
-		if (testShaderCompile() != 0)
+		if (testShaderCompile(false) != 0)
 		{
 			break;
 		}
@@ -182,10 +197,10 @@ int main()
 	std::cout << sizeof(sptr<caliburn::Token>);
 	std::cout << "\033[0m\n";
 	*/
-	//return testShaderCompile();
-	//return testExprParsing();
-	
-	benchmarkShaderCompile();
+	return testShaderCompile(true);
+	//return testExprParsing("expr.txt");
+	//printLines("test.txt");
+	//benchmarkShaderCompile();
 	//printTokens("expr.txt");
 	//printTokens("shader.cbrn");
 
