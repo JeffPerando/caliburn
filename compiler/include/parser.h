@@ -134,7 +134,7 @@ namespace caliburn
 		uptr<ScopeStmt> parseScope(in<std::vector<ParseMethod<uptr<Statement>>>> pms, bool err = true);
 
 		/*
-		Parses a top-level declaration according to the Caliburn standard.
+		Parses a top-level declaration
 		*/
 		uptr<Statement> parseDecl();
 		
@@ -184,6 +184,11 @@ namespace caliburn
 		uptr<Statement> parseFnStmt();
 
 		/*
+		Parses a compile-time conditional if statement
+		*/
+		uptr<Statement> parseTopLevelIf();
+
+		/*
 		Parses a function-like statement; These include:
 		* Functions
 		* Methods
@@ -210,9 +215,9 @@ namespace caliburn
 		uptr<Statement> parseScopeEnd();
 
 		/*
-		Parses an if statement.
+		Parses a logical if statement.
 		*/
-		uptr<Statement> parseIf();
+		uptr<Statement> parseLogicalIf();
 
 		/*
 		Parses a for statement.

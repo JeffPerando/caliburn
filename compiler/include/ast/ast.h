@@ -49,11 +49,7 @@ namespace caliburn
 		
 		STRUCT,
 		RECORD,
-
 		CLASS,
-		METHOD,
-		CONSTRUCTOR,
-		DESTRUCTOR,
 		
 		ENUM,
 		ENUM_WRAPPED,

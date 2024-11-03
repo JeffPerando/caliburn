@@ -514,7 +514,7 @@ uptr<Statement> Parser::parseDecl()
 		&Parser::parseFnStmt,
 		&Parser::parseShader,
 		&Parser::parseStruct,
-		&Parser::parseIf
+		&Parser::parseTopLevelIf
 	};
 
 	auto stmt = parseAny(methods);
@@ -683,7 +683,6 @@ uptr<Statement> Parser::parseShader()
 
 	if (first.type != TokenType::KEYWORD && first.str != "shader")
 	{
-		auto e = errors->err("Bruh.", first);
 		return nullptr;
 	}
 
@@ -917,6 +916,39 @@ uptr<Statement> Parser::parseFnStmt()
 	return nullptr;
 }
 
+uptr<Statement> Parser::parseTopLevelIf()
+{
+	auto const first = tkns.cur();
+
+	if (first.type != TokenType::KEYWORD || first.str != "if")
+	{
+		return nullptr;
+	}
+
+	tkns.consume();
+
+	auto stmt = new_uptr<IfStatement>();
+
+	stmt->first = first;
+	stmt->condition = parseExpr();
+	stmt->innerIf = parseScope({ &Parser::parseDecl });
+
+	if (tkns.cur().str == "else")
+	{
+		auto const& scopeStart = tkns.cur();
+
+		stmt->innerElse = parseScope({ &Parser::parseDecl });
+
+		if (stmt->innerElse == nullptr)
+		{
+			//TODO complain
+		}
+
+	}
+
+	return stmt;
+}
+
 uptr<ParsedFn> Parser::parseFn()
 {
 	auto const first = tkns.cur();
@@ -1059,7 +1091,7 @@ uptr<Statement> Parser::parseControl()
 	}
 	
 	std::vector<ParseMethod<uptr<Statement>>> methods = {
-		&Parser::parseIf,
+		&Parser::parseLogicalIf,
 		//&Parser::parseFor,
 		&Parser::parseWhile,
 		&Parser::parseDoWhile,
@@ -1140,7 +1172,7 @@ uptr<Statement> Parser::parseScopeEnd()
 	return nullptr;
 }
 
-uptr<Statement> Parser::parseIf()
+uptr<Statement> Parser::parseLogicalIf()
 {
 	auto const first = tkns.cur();
 
@@ -1154,18 +1186,14 @@ uptr<Statement> Parser::parseIf()
 	auto stmt = new_uptr<IfStatement>();
 
 	stmt->first = first;
-
-	parseAnyBetween("(", LAMBDA() {
-		stmt->condition = parseExpr();
-	}, ")");
-
-	stmt->innerIf = parseScope({&Parser::parseDecl});
+	stmt->condition = parseExpr();
+	stmt->innerIf = parseScope({ &Parser::parseLogic });
 
 	if (tkns.cur().str == "else")
 	{
 		auto const& scopeStart = tkns.cur();
 
-		stmt->innerElse = parseScope({ &Parser::parseDecl });
+		stmt->innerElse = parseScope({ &Parser::parseLogic });
 
 		if (stmt->innerElse == nullptr)
 		{
@@ -1194,11 +1222,7 @@ uptr<Statement> Parser::parseWhile()
 	auto stmt = new_uptr<WhileStatement>();
 	
 	stmt->first = first;
-
-	parseAnyBetween("(", LAMBDA() {
-		stmt->condition = parseExpr();
-	}, ")");
-
+	stmt->condition = parseExpr();
 	stmt->loop = parseScope({ &Parser::parseLogic });
 
 	return stmt;
@@ -1231,9 +1255,7 @@ uptr<Statement> Parser::parseDoWhile()
 
 	tkns.consume();
 
-	parseAnyBetween("(", LAMBDA() {
-		ret->condition = parseExpr();
-	}, ")");
+	ret->condition = parseExpr();
 
 	return ret;
 }
