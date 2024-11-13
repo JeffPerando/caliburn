@@ -197,10 +197,10 @@ int main()
 	std::cout << sizeof(sptr<caliburn::Token>);
 	std::cout << "\033[0m\n";
 	*/
-	return testShaderCompile(true);
+	//return testShaderCompile(true);
 	//return testExprParsing("expr.txt");
 	//printLines("test.txt");
-	//benchmarkShaderCompile();
+	benchmarkShaderCompile();
 	//printTokens("expr.txt");
 	//printTokens("shader.cbrn");
 

@@ -131,9 +131,9 @@ namespace caliburn
 	struct Method : Function
 	{
 		const sptr<ParsedType> self;
-		const sptr<SymbolTable> genTable;
+		const sptr<const SymbolTable> genTable;
 
-		Method(sptr<ParsedType> me, sptr<SymbolTable> gt, std::string_view n, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> as, sptr<ParsedType> rt) :
+		Method(sptr<ParsedType> me, sptr<const SymbolTable> gt, std::string_view n, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> as, sptr<ParsedType> rt) :
 			Function(n, gSig, as, rt),
 			self(me), genTable(gt)
 		{
@@ -154,11 +154,11 @@ namespace caliburn
 		std::vector<Token> invokeDims;
 		sptr<ScopeStmt> code;
 
-		SrcMethod(sptr<ParsedType> me, sptr<SymbolTable> gt, out<ParsedFn> fn) :
+		SrcMethod(sptr<ParsedType> me, sptr<const SymbolTable> gt, out<ParsedFn> fn) :
 			Method(me, gt, fn.name.str, fn.genSig, fn.args, fn.returnType),
 			invokeDims(fn.invokeDims), code(fn.code) {}
 
-		SrcMethod(sptr<ParsedType> me, sptr<SymbolTable> gt, std::string_view n, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> as, sptr<ParsedType> rt, sptr<ScopeStmt> impl) :
+		SrcMethod(sptr<ParsedType> me, sptr<const SymbolTable> gt, std::string_view n, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> as, sptr<ParsedType> rt, sptr<ScopeStmt> impl) :
 			Method(me, gt, n, gSig, as, rt),
 			code(impl) {}
 
@@ -174,7 +174,7 @@ namespace caliburn
 		const BnFnImplLambda fnImpl;
 
 	public:
-		BuiltinMethod(sptr<ParsedType> me, sptr<SymbolTable> gt, std::string_view name, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> args, sptr<ParsedType> rt, in<BnFnImplLambda> impl) :
+		BuiltinMethod(sptr<ParsedType> me, sptr<const SymbolTable> gt, std::string_view name, out<uptr<GenericSignature>> gSig, in<std::vector<FnArg>> args, sptr<ParsedType> rt, in<BnFnImplLambda> impl) :
 			Method(me, gt, name, gSig, args, rt), fnImpl(impl) {}
 
 		virtual ~BuiltinMethod() = default;
@@ -185,7 +185,7 @@ namespace caliburn
 
 	struct SrcCtor : SrcFn
 	{
-		SrcCtor(sptr<ParsedType> me, sptr<SymbolTable> gt, out<ParsedFn> fn)
+		SrcCtor(sptr<ParsedType> me, out<ParsedFn> fn)
 			: SrcFn(me->prettyStr().append("_new"), SCAST<uptr<GenericSignature>>(nullptr), fn.args, me, fn.code) {}
 
 		virtual ~SrcCtor() = default;
@@ -194,13 +194,13 @@ namespace caliburn
 
 	struct BuiltinCtor : BuiltinFn
 	{
-		BuiltinCtor(sptr<ParsedType> me, sptr<SymbolTable> gt, in<std::vector<FnArg>> args, in<BnFnImplLambda> impl) :
+		BuiltinCtor(sptr<ParsedType> me, in<std::vector<FnArg>> args, in<BnFnImplLambda> impl) :
 			BuiltinFn(me->prettyStr().append("_new"), SCAST<uptr<GenericSignature>>(nullptr), args, me, impl) {}
 
 		virtual ~BuiltinCtor() = default;
 
 	};
-
+	/*
 	struct SrcDtor : SrcMethod
 	{
 		SrcDtor(sptr<ParsedType> me, sptr<SymbolTable> gt, out<ParsedFn> fn) :
@@ -218,7 +218,7 @@ namespace caliburn
 		virtual ~BuiltinDtor() = default;
 
 	};
-
+	*/
 	struct FunctionGroup
 	{
 		std::vector<sptr<Function>> fns;

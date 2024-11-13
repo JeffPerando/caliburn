@@ -51,6 +51,9 @@ namespace caliburn
 
 		virtual sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
 
+	protected:
+		virtual void initLowImpl(sptr<cllr::LowType> impl, sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const {}
+
 	};
 
 	struct TypeArray : BaseType
@@ -88,8 +91,14 @@ namespace caliburn
 
 		sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override
 		{
-			return codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_FLOAT, { width }));
+			auto impl = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_FLOAT, { width }));
+
+			initLowImpl(impl, gArgs, table, codeAsm);
+
+			return impl;
 		}
+
+		void initLowImpl(sptr<cllr::LowType> impl, sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -107,6 +116,8 @@ namespace caliburn
 
 			return codeAsm.pushType(cllr::Instruction(typeOp, { width }));
 		}
+		
+		void initLowImpl(sptr<cllr::LowType> impl, sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
@@ -142,6 +153,8 @@ namespace caliburn
 
 		sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
+		void initLowImpl(sptr<cllr::LowType> impl, sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+
 	};
 
 	struct TypeVector : BaseType
@@ -162,6 +175,8 @@ namespace caliburn
 		virtual ~TypeVector() = default;
 
 		virtual sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+
+		void initLowImpl(sptr<cllr::LowType> impl, sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
