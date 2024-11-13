@@ -138,6 +138,8 @@ cllr::TypedSSA BuiltinFn::call(in<std::vector<cllr::TypedSSA>> args, sptr<Generi
 	auto table = makeFnContext(args, gArgs, codeAsm);
 	auto rt = retType->resolve(table, codeAsm);
 
+	//TODO typecheck args
+
 	return fnImpl(table, codeAsm, args, rt);
 }
 

@@ -127,9 +127,6 @@ namespace caliburn
 		std::vector<GenericName> names;
 		
 	private:
-		//generated for getDefaultArgs()
-		sptr<GenericArguments> defaultArgs = nullptr;
-
 		uint32_t minArgs = 0;
 
 	public:
@@ -181,13 +178,8 @@ namespace caliburn
 			return (uint32_t)names.size();
 		}
 
-		sptr<GenericArguments> makeDefaultArgs()
+		sptr<GenericArguments> makeDefaultArgs() const
 		{
-			if (defaultArgs != nullptr)
-			{
-				return defaultArgs;
-			}
-
 			std::vector<GenericResult> defArgs;
 
 			defArgs.reserve(names.size());
@@ -205,9 +197,7 @@ namespace caliburn
 
 			}
 
-			defaultArgs = new_sptr<GenericArguments>(defArgs);
-
-			return defaultArgs;
+			return new_sptr<GenericArguments>(defArgs);
 		}
 
 		//void set(uint32_t index, )

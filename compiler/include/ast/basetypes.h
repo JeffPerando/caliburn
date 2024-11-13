@@ -150,7 +150,7 @@ namespace caliburn
 		GenArgMap<cllr::LowType> variants;
 	public:
 		const uint32_t elements;
-		const uptr<GenericSignature> genSig = new_uptr<GenericSignature>(std::initializer_list{
+		const GenericSignature genSig = GenericSignature({
 			GenericName(GenericSymType::TYPE, "T", GenericResult(new_sptr<ParsedType>("fp32")))
 			});
 

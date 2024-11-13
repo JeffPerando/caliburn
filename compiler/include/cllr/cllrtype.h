@@ -35,8 +35,8 @@ namespace caliburn
 			const SSA id;
 			const Opcode category;
 
-			FunctionGroup constructors;
-			sptr<Method> destructor = nullptr;
+			FunctionGroup ctors;
+			sptr<Method> dtor = nullptr;
 
 			LowType(SSA id, Opcode tc) : id(id), category(tc) {}
 			virtual ~LowType() = default;

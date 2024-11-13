@@ -419,6 +419,7 @@ ValueResult FnCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::
 
 		return codeAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_EXPR, { SCAST<uint32_t>(Operator::MUL) }, { argIDs[0].value, rhs.value }), argIDs[0].type);
 	}
+
 	MATCH(fnResult, sptr<FunctionGroup>, fnGroup)
 	{
 		return (*fnGroup)->call(argIDs, genArgs, codeAsm);
@@ -432,21 +433,18 @@ ValueResult FnCallValue::emitValueCLLR(sptr<const SymbolTable> table, out<cllr::
 		lType = *typePtr;
 	}
 
-	/*
 	if (lType != nullptr)
 	{
-		auto ctor = lType->constructors.find(argIDs, table, codeAsm);
+		auto ctorVal = lType->ctors.call(argIDs, genArgs, codeAsm);
 
-		if (ctor == nullptr)
+		if (ctorVal.value == 0)
 		{
-			codeAsm.errors->err("Could not find constructor", *this);
+			codeAsm.errors->err("Could not find constructor appropriate for these arguments", firstTkn(), lastTkn());
 			return ValueResult();
 		}
 
-		fn = ctor;
-
+		return ctorVal;
 	}
-	*/
 
 	codeAsm.errors->err("Function not found", *name);
 	return ValueResult();

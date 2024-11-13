@@ -109,7 +109,7 @@ sptr<cllr::LowType> TypeTexture::resolve(sptr<GenericArguments> gArgs, sptr<cons
 
 sptr<cllr::LowType> TypeVector::resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
-	if (!genSig->canApply(*gArgs))
+	if (!genSig.canApply(*gArgs))
 	{
 		//TODO complain
 		return nullptr;
@@ -117,7 +117,7 @@ sptr<cllr::LowType> TypeVector::resolve(sptr<GenericArguments> gArgs, sptr<const
 
 	if (gArgs->empty())
 	{
-		gArgs = genSig->makeDefaultArgs();
+		gArgs = genSig.makeDefaultArgs();
 	}
 
 	if (auto found = variants.find(gArgs); found != variants.end())
@@ -125,10 +125,150 @@ sptr<cllr::LowType> TypeVector::resolve(sptr<GenericArguments> gArgs, sptr<const
 		return found->second;
 	}
 
-	auto inner = gArgs->getType(0)->resolve(table, codeAsm);
+	auto genTable = new_sptr<SymbolTable>(table);
+
+	gArgs->apply(genSig, genTable, codeAsm);
+
+	auto selfType = new_sptr<ParsedType>(canonName, gArgs);
+	auto unit = gArgs->getType(0);
+	auto inner = unit->resolve(table, codeAsm);
 	auto impl = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_VECTOR, { elements }, { inner->id }));
 
 	variants.insert(std::pair(gArgs, impl));
 
+	std::vector<FnArg> defCtorArgs = {
+		{unit, "x"},
+		{unit, "y"},
+		{unit, "z"},
+		{unit, "w"}
+	};
+	
+	impl->ctors.add(new_sptr<BuiltinCtor>(
+		selfType,
+		genTable,
+		std::vector(defCtorArgs.begin(), defCtorArgs.begin() + elements),
+		LAMBDA(sptr<const SymbolTable> tbl, out<cllr::Assembler> cllrAsm, in<std::vector<cllr::TypedSSA>> args, sptr<cllr::LowType> outType)
+		{
+			cllr::OpArray cArgs = {};
+			for (auto i = 0; i < elements; ++i)
+			{
+				cArgs[i] = args[i].value;
+			}
+
+			return cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_CONSTRUCT, {}, cArgs), outType);
+		}
+	));
+
+	//TODO copy constructor
+
+	if (elements == 3)
+	{
+		impl->ctors.add(new_sptr<BuiltinCtor>(
+			selfType,
+			genTable,
+			std::vector{
+				FnArg{new_sptr<ParsedType>("vec2", gArgs), "v1"},
+				FnArg{unit, "zIn"}
+			},
+			LAMBDA(sptr<const SymbolTable> tbl, out<cllr::Assembler> cllrAsm, in<std::vector<cllr::TypedSSA>> args, sptr<cllr::LowType> outType)
+			{
+				auto v1_x = cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { 0 }, { args[0].value }), inner).value;
+				auto v1_y = cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { 1 }, { args[0].value }), inner).value;
+
+				return cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_CONSTRUCT, {}, { v1_x, v1_y, args[1].value }), outType);
+			}
+		));
+
+		impl->ctors.add(new_sptr<BuiltinCtor>(
+			selfType,
+			genTable,
+			std::vector{
+				FnArg{unit, "xIn"},
+				FnArg{new_sptr<ParsedType>("vec2", gArgs), "v1"}
+			},
+			LAMBDA(sptr<const SymbolTable> tbl, out<cllr::Assembler> cllrAsm, in<std::vector<cllr::TypedSSA>> args, sptr<cllr::LowType> outType)
+			{
+				auto v1_x = cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { 0 }, { args[1].value }), inner).value;
+				auto v1_y = cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { 1 }, { args[1].value }), inner).value;
+
+				return cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_CONSTRUCT, {}, { args[0].value, v1_x, v1_y }), outType);
+			}
+		));
+
+	}
+
+	if (elements == 4)
+	{
+		impl->ctors.add(new_sptr<BuiltinCtor>(
+			selfType,
+			genTable,
+			std::vector{
+				FnArg{new_sptr<ParsedType>("vec2", gArgs), "v1"},
+				FnArg{new_sptr<ParsedType>("vec2", gArgs), "v2"},
+			},
+			LAMBDA(sptr<const SymbolTable> tbl, out<cllr::Assembler> cllrAsm, in<std::vector<cllr::TypedSSA>> args, sptr<cllr::LowType> outType)
+			{
+				auto v1_x = cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { 0 }, { args[0].value }), inner).value;
+				auto v1_y = cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { 1 }, { args[0].value }), inner).value;
+				auto v2_x = cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { 0 }, { args[1].value }), inner).value;
+				auto v2_y = cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { 1 }, { args[1].value }), inner).value;
+				
+				return cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_CONSTRUCT, {}, { v1_x, v1_y, v2_x, v2_y }), outType);
+			}
+		));
+
+		impl->ctors.add(new_sptr<BuiltinCtor>(
+			selfType,
+			genTable,
+			std::vector{
+				FnArg{new_sptr<ParsedType>("vec2", gArgs), "v1"},
+				FnArg{unit, "inZ"},
+				FnArg{unit, "inW"},
+			},
+			LAMBDA(sptr<const SymbolTable> tbl, out<cllr::Assembler> cllrAsm, in<std::vector<cllr::TypedSSA>> args, sptr<cllr::LowType> outType)
+			{
+				auto v1_x = cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { 0 }, { args[0].value }), inner).value;
+				auto v1_y = cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { 1 }, { args[0].value }), inner).value;
+
+				return cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_CONSTRUCT, {}, { v1_x, v1_y, args[1].value, args[2].value }), outType);
+			}
+		));
+
+		impl->ctors.add(new_sptr<BuiltinCtor>(
+			selfType,
+			genTable,
+			std::vector{
+				FnArg{unit, "inX"},
+				FnArg{unit, "inY"},
+				FnArg{new_sptr<ParsedType>("vec2", gArgs), "v1"}
+			},
+			LAMBDA(sptr<const SymbolTable> tbl, out<cllr::Assembler> cllrAsm, in<std::vector<cllr::TypedSSA>> args, sptr<cllr::LowType> outType)
+			{
+				auto v1_x = cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { 0 }, { args[2].value }), inner).value;
+				auto v1_y = cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { 1 }, { args[2].value }), inner).value;
+
+				return cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_CONSTRUCT, {}, { args[0].value, args[1].value, v1_x, v1_y }), outType);
+			}
+		));
+
+		impl->ctors.add(new_sptr<BuiltinCtor>(
+			selfType,
+			genTable,
+			std::vector{
+				FnArg{new_sptr<ParsedType>("vec3", gArgs), "v1"},
+				FnArg{unit, "inW"},
+			},
+			LAMBDA(sptr<const SymbolTable> tbl, out<cllr::Assembler> cllrAsm, in<std::vector<cllr::TypedSSA>> args, sptr<cllr::LowType> outType)
+			{
+				auto v1_x = cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { 0 }, { args[0].value }), inner).value;
+				auto v1_y = cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { 1 }, { args[0].value }), inner).value;
+				auto v1_z = cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_MEMBER, { 2 }, { args[0].value }), inner).value;
+
+				return cllrAsm.pushValue(cllr::Instruction(cllr::Opcode::VALUE_CONSTRUCT, {}, { v1_x, v1_y, v1_z, args[1].value }), outType);
+			}
+		));
+
+	}
+	
 	return impl;
 }
