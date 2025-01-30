@@ -52,12 +52,22 @@ namespace caliburn
 		}
 
 		/*
-		Increments offset, then returns the element at the current offset.
+		Increments offset, then returns the element at the new offset.
 		*/
 		const T& next()
 		{
 			++index;
 			return vec.at(index);
+		}
+
+		/*
+		Saves element at current index, increments index, then returns.
+		*/
+		const T& take()
+		{
+			auto const& x = vec.at(index);
+			++index;
+			return x;
 		}
 
 		/*
