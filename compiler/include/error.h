@@ -155,6 +155,16 @@ namespace caliburn
 			return err(msgs, Token());
 		}
 
+		sptr<Error> err(in<std::initializer_list<std::string>> msgs, in<Token> tkn)
+		{
+			std::stringstream ss;
+
+			for (auto const& msg : msgs)
+				ss << msg << ' ';
+
+			return err(ss.str(), tkn, tkn);
+		}
+
 		sptr<Error> err(in<std::vector<std::string>> msgs, in<Token> tkn)
 		{
 			std::stringstream ss;
