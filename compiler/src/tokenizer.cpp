@@ -32,6 +32,8 @@ Tokenizer::Tokenizer(sptr<TextDoc> t) : doc(t), buf(std::vector<char>(t->text.be
 		asciiTypes[cap] = CharType::IDENTIFIER;
 	}
 
+	asciiTypes['_'] = CharType::IDENTIFIER;
+
 	for (auto ch : OPERATOR_CHARS)
 	{
 		asciiTypes[ch] = CharType::OPERATOR;
@@ -39,7 +41,7 @@ Tokenizer::Tokenizer(sptr<TextDoc> t) : doc(t), buf(std::vector<char>(t->text.be
 
 	asciiTypes['\''] = CharType::STRING_DELIM;
 	asciiTypes['\"'] = CharType::STRING_DELIM;
-	
+
 	asciiTypes['#'] = CharType::COMMENT;
 
 	asciiTypes['('] = CharType::SPECIAL;

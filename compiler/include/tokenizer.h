@@ -27,6 +27,8 @@ namespace caliburn
 		SPECIAL
 	};
 
+	static constexpr const char* CHAR_TYPES[] = {"UNKNOWN", "IDENTIFIER", "COMMENT", "WHITESPACE", "OPERATOR", "STRING_DELIM", "INT", "SPECIAL"};
+
 	/*
 	Tokenizer converts a string into a set of Tokens. See Token in syntax.h
 
