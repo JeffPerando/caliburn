@@ -3,9 +3,17 @@ type FP = dynamic<fp32>;
 
 shader TestShader
 {
-	def vertex(vec4<FP> v): vec4<FP>
+	vec4 frag_color;
+
+	def vertex(vec4<FP> v, vec4 c): vec4<FP>
 	{
+		frag_color = c;
 		return v;
 	};
+
+	def frag(): vec4
+	{
+		return frag_color;
+	}
 	
 };
