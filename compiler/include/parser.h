@@ -110,7 +110,7 @@ namespace caliburn
 		/*
 		Looks for an ending semicolon. If it's not found, an error is produced.
 		*/
-		void parseSemicolon();
+		bool parseSemicolon();
 
 		/*
 		Parses a type name.

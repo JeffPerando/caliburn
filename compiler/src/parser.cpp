@@ -97,12 +97,15 @@ T Parser::parseAny(in<std::vector<ParseMethod<T>>> fns)
 
 bool Parser::parseAnyBetween(in<std::string> start, in<std::function<void()>> fn, in<std::string> end)
 {
+	if (!tkns.hasCur())
+	{
+		return false;
+	}
+
 	auto const startTkn = tkns.cur();
 
 	if (startTkn.str != start)
 	{
-		auto e = errors->err(std::vector<std::string>{ "Unexpected token found; Expected", start }, startTkn);
-
 		return false;
 	}
 
@@ -337,19 +340,19 @@ std::vector<sptr<Value>> Parser::parseValueList(bool commaOptional)
 	return values;
 }
 
-void Parser::parseSemicolon()
+bool Parser::parseSemicolon()
 {
-	auto& end = tkns.cur();
-
-	if (end.type == TokenType::END)
+	if (tkns.hasCur())
 	{
-		tkns.consume();
-	}
-	else
-	{
-		auto e = errors->err({ "Expected a semicolon, got", end.str }, end);
+		if (tkns.cur().type == TokenType::END)
+		{
+			tkns.consume();
+			return true;
+		}
+
 	}
 
+	return false;
 }
 
 StmtModifiers Parser::parseStmtMods()
@@ -411,29 +414,60 @@ uptr<ScopeStmt> Parser::parseScope(in<std::vector<ParseMethod<uptr<Statement>>>>
 	{
 		if (tkns.cur().type == TokenType::END_SCOPE)
 		{
-			scope->last = tkns.cur();
-
-			tkns.consume();
 			break;
 		}
 
+		bool parsed = false;
+
 		for (auto const& pm : pms)
 		{
+			auto const off = tkns.offset();
+
 			if (auto stmt = pm(*this))
 			{
-				parseSemicolon();
+				parsed = true;
 
 				stmt->mods = mods;
+
+				if (!parseSemicolon())
+				{
+					auto e = errors->err("Expected a semicolon here", tkns.hasCur() ? tkns.cur() : tkns.last());
+					skipStmt();
+				}
 
 				scope->stmts.push_back(std::move(stmt));
 
 				break;
 			}
+			else
+			{
+				tkns.revertTo(off);
+			}
 
+		}
+
+		if (!parsed)
+		{
+			break;
 		}
 
 	}
 
+	if (!tkns.hasCur())
+	{
+		auto e = errors->err("Unexpected end of scope", tkns.last());
+		return nullptr;
+	}
+
+	if (tkns.cur().type != TokenType::END_SCOPE)
+	{
+		auto e = errors->err("Expected end of scope here", tkns.cur());
+		return scope;
+	}
+
+	scope->last = tkns.cur();
+
+	tkns.consume();
 	return scope;
 }
 
@@ -532,7 +566,10 @@ uptr<Statement> Parser::parseDecl()
 
 	stmt->mods = mods;
 	
-	parseSemicolon();
+	if (!parseSemicolon())
+	{
+		auto e = errors->err("Expected a semicolon after end of declaration", tkns.last());
+	}
 
 	return stmt;
 }
@@ -763,7 +800,7 @@ uptr<Statement> Parser::parseShader()
 	{
 		auto const memStart = tkns.cur();
 
-		if (memStart.type != TokenType::KEYWORD)
+		if (memStart.type == TokenType::END_SCOPE)
 		{
 			break;
 		}
@@ -794,14 +831,17 @@ uptr<Statement> Parser::parseShader()
 
 		}
 
-		parseSemicolon();
+		if (!parseSemicolon())
+		{
+			auto e = errors->err("Expected semicolon after shader member", tkns.last());
+		}
 
 	}
 
-	while (tkns.cur().type != TokenType::END_SCOPE)
+	if (tkns.cur().type != TokenType::END_SCOPE)
 	{
-		auto e = errors->err("Stray token; skipping", tkns.cur());
-		tkns.consume();
+		auto e = errors->err("Invalid token here", tkns.cur());
+		return nullptr;
 	}
 
 	tkns.consume();
@@ -895,7 +935,10 @@ uptr<Statement> Parser::parseStruct()
 				auto e = errors->err("Invalid start to type member", end);
 			}
 
-			parseSemicolon();
+			if (!parseSemicolon())
+			{
+				auto e = errors->err("Expected semicolon after member", tkns.last());
+			}
 
 		}
 	}, "}"))
@@ -1018,9 +1061,12 @@ uptr<ParsedFn> Parser::parseFn()
 
 	}
 	
-	parseAnyBetween("(", LAMBDA(){
+	if (!parseAnyBetween("(", LAMBDA(){
 		fn->args = parseFnArgs();
-	}, ")");
+	}, ")"))
+	{
+		return nullptr;
+	}
 
 	auto const hintStart = tkns.cur();
 
@@ -1070,12 +1116,10 @@ uptr<ParsedFn> Parser::parseFn()
 
 uptr<Statement> Parser::parseLogic()
 {
-	std::vector<ParseMethod<uptr<Statement>>> methods = {
+	return parseAny(std::vector<ParseMethod<uptr<Statement>>> {
 		&Parser::parseControl,
 		&Parser::parseValueStmt
-	};
-
-	return parseAny(methods);
+	});
 }
 
 uptr<Statement> Parser::parseControl()
@@ -1380,7 +1424,11 @@ sptr<Value> Parser::parseExpr()
 
 		if (term == nullptr)
 		{
-			auto e = errors->err("Expected a value after here", opTkn);
+			if (tkns.cur().type != TokenType::SETTER)
+			{
+				auto e = errors->err("Expected a value after here", opTkn);
+			}
+
 			break;
 		}
 
@@ -1688,8 +1736,6 @@ sptr<Value> Parser::parseMemberAccess(sptr<Value> target)
 		//consume the period
 		tkns.consume();
 
-		//the order is: identifier, (, )
-		//OR: identifier, <, >
 		if (tkns.hasRem(3))
 		{
 			auto& fnStart = tkns.peek(1);

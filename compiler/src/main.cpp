@@ -45,6 +45,8 @@ int testShaderCompile(bool printTime)
 
 	std::chrono::high_resolution_clock clock{};
 
+	std::cout << "Starting compilation...\n";
+
 	auto startTime = clock.now();
 	auto result = cc.compileSrcShaders(src, "TestShader");
 	auto time = clock.now() - startTime;
@@ -197,12 +199,12 @@ int main()
 	std::cout << sizeof(sptr<caliburn::Token>);
 	std::cout << "\033[0m\n";
 	*/
-	//return testShaderCompile(true);
+	return testShaderCompile(true);
 	//return testExprParsing("expr.txt");
 	//printLines("test.txt");
-	benchmarkShaderCompile();
+	//benchmarkShaderCompile();
 	//printTokens("expr.txt");
 	//printTokens("shader.cbrn");
 
-	return 0;
+	//return 0;
 }
