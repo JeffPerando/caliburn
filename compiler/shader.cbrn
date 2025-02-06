@@ -14,6 +14,6 @@ shader TestShader
 	def frag(): vec4
 	{
 		return frag_color;
-	}
+	};
 	
 };
