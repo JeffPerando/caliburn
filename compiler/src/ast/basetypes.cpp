@@ -146,7 +146,7 @@ void TypeTexture::initLowImpl(sptr<cllr::LowType> impl, sptr<GenericArguments> g
 		new_sptr<ParsedType>(canonName, gArgs),
 		table,
 		"sample",
-		SCAST<uptr<GenericSignature>>(nullptr),
+		new_uptr<GenericSignature>(),
 		std::vector<FnArg>({
 			FnArg{new_sptr<ParsedType>(TEX_SAMPLE_VECS.at(kind).data()), "uv"}
 		}),
@@ -161,15 +161,15 @@ void TypeTexture::initLowImpl(sptr<cllr::LowType> impl, sptr<GenericArguments> g
 
 sptr<cllr::LowType> TypeVector::resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
 {
-	if (!genSig.canApply(*gArgs))
-	{
-		//TODO complain
-		return nullptr;
-	}
-
 	if (gArgs->empty())
 	{
 		gArgs = genSig.makeDefaultArgs();
+	}
+
+	if (!genSig.canApply(*gArgs))
+	{
+		codeAsm.errors->err("Generic arguments not applicable", *gArgs);
+		return nullptr;
 	}
 
 	if (auto found = variants.find(gArgs); found != variants.end())
@@ -182,12 +182,12 @@ sptr<cllr::LowType> TypeVector::resolve(sptr<GenericArguments> gArgs, sptr<const
 	gArgs->apply(genSig, genTable, codeAsm);
 
 	auto unit = gArgs->getType(0);
-	auto inner = unit->resolve(table, codeAsm);
+	auto inner = unit->resolve(genTable, codeAsm);
 	auto impl = codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_VECTOR, { elements }, { inner->id }));
 
 	variants.insert(std::pair(gArgs, impl));
 
-	initLowImpl(impl, gArgs, table, codeAsm);
+	initLowImpl(impl, gArgs, genTable, codeAsm);
 
 	return impl;
 }
