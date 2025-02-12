@@ -7,7 +7,7 @@ using namespace caliburn;
 
 bool cllr::isType(Opcode op)
 {
-	const std::initializer_list<Opcode> ops = {
+	const auto ops = {
 		Opcode::TYPE_VOID,
 		Opcode::TYPE_FLOAT,
 		Opcode::TYPE_INT_SIGN,
@@ -28,7 +28,7 @@ bool cllr::isType(Opcode op)
 
 bool cllr::isValue(Opcode op)
 {
-	const std::initializer_list<Opcode> ops = {
+	const auto ops = {
 		Opcode::CALL,
 		Opcode::COMPARE,
 		Opcode::VALUE_CAST,
@@ -61,7 +61,7 @@ bool cllr::isValue(Opcode op)
 
 bool cllr::isLValue(Opcode op)
 {
-	const std::initializer_list<Opcode> ops = {
+	const auto ops = {
 		Opcode::VALUE_DEREF,
 		Opcode::VALUE_MEMBER,
 		Opcode::VALUE_READ_VAR,
@@ -73,7 +73,7 @@ bool cllr::isLValue(Opcode op)
 
 bool cllr::isVar(Opcode op)
 {
-	const std::initializer_list<Opcode> ops = {
+	const auto ops = {
 		Opcode::VAR_LOCAL,
 		Opcode::VAR_GLOBAL,
 		Opcode::VAR_FUNC_ARG,

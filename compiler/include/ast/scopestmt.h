@@ -8,16 +8,16 @@ namespace caliburn
 	/*
 	Defines a scope, which contains its own symbol table. Said table can shadow other symbols.
 	*/
-	struct ScopeStmt : Statement
+	struct ScopeStmt : Expr
 	{
 		Token first;
 		Token last;
 
-		std::vector<uptr<Statement>> stmts;
+		std::vector<sptr<Expr>> stmts;
 
-		sptr<SymbolTable> scopeTable = nullptr;
+		sptr<SymbolTable> scopeTable = new_sptr<SymbolTable>();
 
-		ScopeStmt(StmtType stmtType = StmtType::SCOPE) : Statement(stmtType) {}
+		ScopeStmt(ExprType exType = ExprType::SCOPE) : Expr(exType) {}
 
 		virtual ~ScopeStmt() = default;
 
@@ -33,17 +33,15 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override;
-
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		virtual ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct BreakStmt : Statement
+	struct BreakStmt : Expr
 	{
 		const Token tkn;
 
-		BreakStmt(in<Token> t) : Statement(StmtType::UNKNOWN), tkn(t) {}
+		BreakStmt(in<Token> t) : Expr(ExprType::UNKNOWN), tkn(t) {}
 
 		virtual ~BreakStmt() = default;
 
@@ -62,17 +60,15 @@ namespace caliburn
 			ss << "break";
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
-
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		virtual ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct ContinueStmt : Statement
+	struct ContinueStmt : Expr
 	{
 		const Token tkn;
 
-		ContinueStmt(in<Token> t) : Statement(StmtType::UNKNOWN), tkn(t) {}
+		ContinueStmt(in<Token> t) : Expr(ExprType::UNKNOWN), tkn(t) {}
 
 		virtual ~ContinueStmt() = default;
 
@@ -91,17 +87,15 @@ namespace caliburn
 			ss << "continue";
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
-
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		virtual ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct DiscardStmt : Statement
+	struct DiscardStmt : Expr
 	{
 		const Token tkn;
 
-		DiscardStmt(in<Token> t) : Statement(StmtType::UNKNOWN), tkn(t) {}
+		DiscardStmt(in<Token> t) : Expr(ExprType::UNKNOWN), tkn(t) {}
 
 		virtual ~DiscardStmt() = default;
 
@@ -120,19 +114,17 @@ namespace caliburn
 			ss << "discard";
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
-
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		virtual ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct ReturnStmt : Statement
+	struct ReturnStmt : Expr
 	{
 		const Token first;
 
-		sptr<Value> retValue = nullptr;
+		sptr<Expr> retValue = nullptr;
 
-		ReturnStmt(in<Token> t) : Statement(StmtType::UNKNOWN), first(t) {}
+		ReturnStmt(in<Token> t) : Expr(ExprType::UNKNOWN), first(t) {}
 
 		virtual ~ReturnStmt() = default;
 
@@ -163,17 +155,15 @@ namespace caliburn
 
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
-
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		virtual ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct PassStmt : Statement
+	struct PassStmt : Expr
 	{
 		const Token tkn;
 
-		PassStmt(in<Token> t) : Statement(StmtType::UNKNOWN), tkn(t) {}
+		PassStmt(in<Token> t) : Expr(ExprType::UNKNOWN), tkn(t) {}
 
 		virtual ~PassStmt() = default;
 
@@ -192,17 +182,15 @@ namespace caliburn
 			ss << "pass";
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
-
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		virtual ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct UnreachableStmt : Statement
+	struct UnreachableStmt : Expr
 	{
 		const Token tkn;
 
-		UnreachableStmt(in<Token> t) : Statement(StmtType::UNKNOWN), tkn(t) {}
+		UnreachableStmt(in<Token> t) : Expr(ExprType::UNKNOWN), tkn(t) {}
 
 		virtual ~UnreachableStmt() = default;
 
@@ -221,9 +209,7 @@ namespace caliburn
 			ss << "unreachable";
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
-
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		virtual ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 

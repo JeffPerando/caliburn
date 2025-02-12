@@ -24,7 +24,7 @@ namespace caliburn
 		{
 			for (auto const& a : base->args)
 			{
-				vtxInputs.push_back(new_sptr<ShaderIOVariable>(ShaderIOVarType::INPUT, a));
+				vtxInputs.push_back(new_sptr<ShaderIOVariable>(a));
 
 			}
 
@@ -49,11 +49,11 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override {}
 
-		uptr<Shader> compile(sptr<SymbolTable> table, sptr<const CompilerSettings> settings, out<std::vector<sptr<Error>>> allErrs);
+		uptr<Shader> compile(sptr<const CompilerSettings> settings, out<std::vector<std::string>> errs, in<TextDoc> doc, sptr<SymbolTable> table, std::vector<IOVar> inputs, out<std::vector<IOVar>> outputs);
 
 	};
 
-	struct ShaderStmt : Statement
+	struct ShaderStmt : Expr
 	{
 		Token first;
 		Token name;
@@ -63,7 +63,7 @@ namespace caliburn
 		std::vector<std::pair<sptr<ParsedType>, Token>> descriptors;
 		std::vector<sptr<ShaderIOVariable>> ioVars;
 
-		ShaderStmt() : Statement(StmtType::SHADER) {}
+		ShaderStmt() : Expr(ExprType::SHADER) {}
 
 		virtual ~ShaderStmt() = default;
 
@@ -81,16 +81,12 @@ namespace caliburn
 
 		void declareHeader(sptr<SymbolTable> table, out<ErrorHandler> err) override {} //We don't add shaders to the symbol table
 
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
-
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override {}
-
-		void sortStages()
+		ValueResult emitCodeCLLR(sptr<SymbolTable>, out<cllr::Assembler> codeAsm) const override
 		{
-			std::sort(stages.begin(), stages.end());
+			return ValueResult();
 		}
 
-		void compile(sptr<SymbolTable> table, sptr<CompilerSettings> settings, out<std::vector<uptr<Shader>>> shaders, out<std::vector<sptr<Error>>> compileErrs);
+		void compile(sptr<SymbolTable> table, sptr<CompilerSettings> settings, out<ShaderResult> result, in<TextDoc> doc);
 
 	};
 

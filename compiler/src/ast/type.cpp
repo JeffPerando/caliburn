@@ -44,16 +44,11 @@ sptr<BaseType> ParsedType::resolveBase(sptr<const SymbolTable> table) const
 	return nullptr;
 }
 
-sptr<cllr::LowType> ParsedType::resolve(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm)
+sptr<cllr::LowType> ParsedType::resolve(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	if (this == nullptr)
 	{
-		return codeAsm.pushType(cllr::Opcode::TYPE_VOID);
-	}
-
-	if (resultType != nullptr)
-	{
-		return resultType;
+		throw new std::exception("you forgot to initialize your parsed type");
 	}
 
 	auto typeSym = table->find(name);
@@ -68,26 +63,23 @@ sptr<cllr::LowType> ParsedType::resolve(sptr<const SymbolTable> table, out<cllr:
 	{
 		if (!genericArgs->empty())
 		{
-			//TODO complain
+			codeAsm.errors->err({ "Type not compatible with generic args:", name }, *this);
+			return nullptr;
 		}
 
-		resultType = *lType;
+		return *lType;
 	}
 	else MATCH(typeSym, sptr<BaseType>, bType)
 	{
-		resultType = (**bType).resolve(genericArgs, table, codeAsm);
+		return (**bType).resolve(genericArgs, table, codeAsm);
 	}
 	else
 	{
 		codeAsm.errors->err({ "Not a type:", name }, *this);
 	}
-	
-	if (resultType == nullptr)
-	{
-		codeAsm.errors->err({ "Type resolution failed:", name }, *this);
-	}
 
-	return resultType;
+	codeAsm.errors->err({ "Type resolution failed:", name }, * this);
+	return nullptr;
 }
 
 sptr<ParsedType> ParsedType::parse(in<std::string> str)

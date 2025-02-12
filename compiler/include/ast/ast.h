@@ -19,13 +19,11 @@
 
 namespace caliburn
 {
-	/*
-	All statements have a corresponding type. This is currently unused.
-	*/
-	enum class StmtType
+	enum class ExprType
 	{
 		UNKNOWN,
 
+		//TODO reconsider
 		VARIABLE,
 
 		//Flow control
@@ -55,14 +53,6 @@ namespace caliburn
 		ENUM_WRAPPED,
 
 		SCOPE,
-		SETTER,
-		FUNC_CALL,
-
-	};
-
-	enum class ValueType
-	{
-		UNKNOWN,
 
 		INT_LITERAL,
 		FLOAT_LITERAL,
@@ -88,13 +78,14 @@ namespace caliburn
 	This was previously used for AST validation, but that code is currently non-existant.
 	*/
 	constexpr auto TOP_STMT_TYPES = {
-		StmtType::VARIABLE,
+		ExprType::VARIABLE,
 		//StmtType::IF, //conditional compilation
-		StmtType::MODULE, StmtType::IMPORT,
-		StmtType::FUNCTION,
-		StmtType::SHADER,
-		StmtType::STRUCT, StmtType::RECORD, StmtType::CLASS,
-		//StmtType::ENUM,
+		ExprType::MODULE, ExprType::IMPORT,
+		ExprType::FUNCTION,
+		ExprType::SHADER,
+		ExprType::STRUCT, ExprType::RECORD, ExprType::CLASS,
+		//TODO enums aren't implemented yet
+		//ExprType::ENUM
 	};
 
 	/*
@@ -161,41 +152,6 @@ namespace caliburn
 
 	};
 
-	/*
-	A statement is a conceptual block of code in Caliburn.
-
-	Caliburn separates statements from expressions in part to prevent goofy code.
-	*/
-	struct Statement : ParsedObject
-	{
-		const StmtType type;
-
-		StmtModifiers mods = {};
-		std::map<std::string, uptr<Annotation>> annotations;
-
-		Statement(StmtType stmtType) : type(stmtType) {}
-		virtual ~Statement() = default;
-		
-		virtual bool validate(sptr<ErrorHandler> errors) const
-		{
-			return false;
-		}
-
-		Token firstTkn() const noexcept override = 0;
-
-		Token lastTkn() const noexcept override = 0;
-
-		void prettyPrint(out<std::stringstream> ss) const override {}
-
-		//Only used by top-level statements which declare symbols. The rest, like variables, should use declareSymbols() instead
-		virtual void declareHeader(sptr<SymbolTable> table, out<ErrorHandler> err) {}
-
-		virtual void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) = 0;
-
-		virtual void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
-
-	};
-
 	using ValueResult = std::variant<
 		std::monostate,
 		cllr::TypedSSA,
@@ -205,18 +161,36 @@ namespace caliburn
 		sptr<FunctionGroup>
 	>;
 
-	struct Value : ParsedObject
+	struct Expr : ParsedObject
 	{
-		const ValueType vType;
+		const ExprType type;
 
-		Value(ValueType vt) : vType(vt) {}
-		virtual ~Value() = default;
+		ExprModifiers mods = {};
+		std::map<std::string, uptr<Annotation>> annotations;
 
-		virtual bool isLValue() const = 0;
+		Expr(ExprType t) : type(t) {}
+		virtual ~Expr() = default;
 
-		virtual bool isCompileTimeConst() const = 0;
+		Token firstTkn() const noexcept override = 0;
 
-		virtual ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const = 0;
+		Token lastTkn() const noexcept override = 0;
+
+		void prettyPrint(out<std::stringstream> ss) const override {}
+
+		virtual bool isLValue() const
+		{
+			return false;
+		}
+
+		virtual bool isCompileTimeConst() const
+		{
+			return false;
+		}
+
+		//Only used by top-level statements which declare symbols. The rest, like variables, should use declareSymbols() instead
+		virtual void declareHeader(sptr<SymbolTable> table, out<ErrorHandler> err) {}
+
+		virtual ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const = 0;
 
 	};
 

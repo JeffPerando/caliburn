@@ -446,7 +446,7 @@ CLLR_SPIRV_IMPL(cllr::spirv_impl::OpVarLocal)
 
 	auto sc = spirv::StorageClass::Function;
 
-	auto mods = StmtModifiers{ i.operands[0] };
+	auto mods = ExprModifiers{ i.operands[0] };
 
 	if (mods.SHARED)
 	{

@@ -6,13 +6,13 @@
 
 namespace caliburn
 {
-	struct FnStmt : Statement
+	struct FnStmt : Expr
 	{
 		const Token first;
 		const Token name;
 		const sptr<SrcFn> fn;
 
-		FnStmt(out<ParsedFn> pfn) : Statement(StmtType::FUNCTION),
+		FnStmt(out<ParsedFn> pfn) : Expr(ExprType::FUNCTION),
 			first(pfn.first), name(pfn.name), fn(new_sptr<SrcFn>(pfn))
 		{}
 
@@ -50,8 +50,6 @@ namespace caliburn
 			
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
-
 		/*
 		ValidationData validate(ref<const std::set<StmtType>> types, ref<const std::set<ReturnMode>> retModes) const override
 		{
@@ -64,7 +62,11 @@ namespace caliburn
 			return body->validate(bodyTypes, bodyModes);
 		}
 		*/
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override {}
+
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override
+		{
+			return ValueResult();
+		}
 
 	};
 

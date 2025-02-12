@@ -5,17 +5,17 @@
 
 namespace caliburn
 {
-	struct ImportStmt : Statement
+	struct ImportStmt : Expr
 	{
 		const Token first;
 		const Token name;
 		Token alias;
 
 		ImportStmt(in<Token> f, in<Token> n) :
-			Statement(StmtType::IMPORT), first(f), name(n) {}
+			Expr(ExprType::IMPORT), first(f), name(n) {}
 
 		ImportStmt(in<Token> f, in<Token> n, in<Token> a) :
-			Statement(StmtType::IMPORT), first(f), name(n), alias(a) {}
+			Expr(ExprType::IMPORT), first(f), name(n), alias(a) {}
 
 		virtual ~ImportStmt() = default;
 
@@ -34,17 +34,18 @@ namespace caliburn
 			return name;
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
-
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override {}
+		ValueResult emitCodeCLLR(sptr<SymbolTable>, out<cllr::Assembler> codeAsm) const override
+		{
+			return ValueResult();
+		}
 
 	};
 
-	struct ModuleStmt : Statement
+	struct ModuleStmt : Expr
 	{
 		const Token first, name;
 
-		ModuleStmt(in<Token> s, in<Token> n) : Statement(StmtType::MODULE), first(s), name(n) {}
+		ModuleStmt(in<Token> s, in<Token> n) : Expr(ExprType::MODULE), first(s), name(n) {}
 		
 		virtual ~ModuleStmt() = default;
 
@@ -58,9 +59,10 @@ namespace caliburn
 			return name;
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
-
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override {}
+		ValueResult emitCodeCLLR(sptr<SymbolTable>, out<cllr::Assembler> codeAsm) const override
+		{
+			return ValueResult();
+		}
 
 	};
 

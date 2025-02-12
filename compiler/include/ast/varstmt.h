@@ -6,13 +6,13 @@
 
 namespace caliburn
 {
-	struct VarStmt : Statement
+	struct VarStmt : Expr
 	{
 		Token first;
 		std::vector<sptr<Variable>> vars;
 
 	public:
-		VarStmt() : Statement(StmtType::VARIABLE) {}
+		VarStmt() : Expr(ExprType::VARIABLE) {}
 		virtual ~VarStmt() = default;
 
 		Token firstTkn() const noexcept override
@@ -24,7 +24,7 @@ namespace caliburn
 		{
 			return vars.back()->lastTkn();
 		}
-
+		/*
 		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override
 		{
 			for (auto const& v : vars)
@@ -34,8 +34,11 @@ namespace caliburn
 			}
 
 		}
-
-		void emitCodeCLLR(sptr<SymbolTable>, out<cllr::Assembler> codeAsm) override {}
+		*/
+		ValueResult emitCodeCLLR(sptr<SymbolTable>, out<cllr::Assembler> codeAsm) const override
+		{
+			return ValueResult();
+		}
 
 	};
 

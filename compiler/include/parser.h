@@ -64,7 +64,7 @@ namespace caliburn
 		/*
 		Initial AST-generating method.
 		*/
-		std::vector<uptr<Statement>> parse();
+		std::vector<sptr<Expr>> parse();
 
 		/*
 		Iterates through the list of functions until it finds a non-null result, then returns it.
@@ -105,7 +105,7 @@ namespace caliburn
 
 		Commas are optional in array literals, and that's about it.
 		*/
-		std::vector<sptr<Value>> parseValueList(bool commaOptional);
+		std::vector<sptr<Expr>> parseValueList(bool commaOptional);
 
 		/*
 		Looks for an ending semicolon. If it's not found, an error is produced.
@@ -124,19 +124,19 @@ namespace caliburn
 
 		Failure to find a modifier does nothing.
 		*/
-		StmtModifiers parseStmtMods();
+		ExprModifiers parseStmtMods();
 
 		/*
 		Parses a scope with the given parse methods.
 
 		Hypothetically there are contexts where errors are unneeded, hence the error flag.
 		*/
-		uptr<ScopeStmt> parseScope(in<std::vector<ParseMethod<uptr<Statement>>>> pms, bool err = true);
+		uptr<ScopeStmt> parseScope(in<std::vector<ParseMethod<sptr<Expr>>>> pms, bool err = true);
 
 		/*
 		Parses a top-level declaration
 		*/
-		uptr<Statement> parseDecl();
+		sptr<Expr> parseDecl();
 		
 		/*
 		Parses an import statement
@@ -146,7 +146,7 @@ namespace caliburn
 		import math;
 		import calburn as cbrn;
 		*/
-		uptr<Statement> parseImport();
+		sptr<Expr> parseImport();
 
 		/*
 		Parses a module-defining statement. This names the current module being compiled.
@@ -156,7 +156,7 @@ namespace caliburn
 		module caliburn;
 		module MyShaders;
 		*/
-		uptr<Statement> parseModuleDef();
+		sptr<Expr> parseModuleDef();
 
 		/*
 		Parses a type-aliasing statement.
@@ -166,27 +166,27 @@ namespace caliburn
 		type x = y;
 		type FP = dynamic<float32>;
 		*/
-		uptr<Statement> parseTypedef();
+		sptr<Expr> parseTypedef();
 
 		/*
 		Parses a shader object statement
 		*/
-		uptr<Statement> parseShader();
+		sptr<Expr> parseShader();
 
 		/*
 		Parses a struct, class, or record statement
 		*/
-		uptr<Statement> parseStruct();
+		sptr<Expr> parseStruct();
 
 		/*
 		Parses a standalone function statement
 		*/
-		uptr<Statement> parseFnStmt();
+		sptr<Expr> parseFnStmt();
 
 		/*
 		Parses a compile-time conditional if statement
 		*/
-		uptr<Statement> parseTopLevelIf();
+		sptr<Expr> parseTopLevelIf();
 
 		/*
 		Parses a function-like statement; These include:
@@ -202,112 +202,110 @@ namespace caliburn
 		/*
 		Parses logical statements; These are generally control statements, setters, and function calls.
 		*/
-		uptr<Statement> parseLogic();
+		sptr<Expr> parseLogic();
+
+		/*
+		Parses setters, e.g. x = y;
+		*/
+		sptr<Expr> parseSetter();
 
 		/*
 		Parses logical statements. Things like if, for, and while.
 		*/
-		uptr<Statement> parseControl();
+		sptr<Expr> parseControl();
 
 		/*
 		Parses a statement which traditionally ends a scope, like return, break, continue, etc.
 		*/
-		uptr<Statement> parseScopeEnd();
+		sptr<Expr> parseScopeEnd();
 
 		/*
 		Parses a logical if statement.
 		*/
-		uptr<Statement> parseLogicalIf();
+		sptr<Expr> parseLogicalIf();
 
 		/*
 		Parses a for statement.
 
 		Currently not implemented; Currently awaiting standard finalization, or at least clarification.
 		*/
-		uptr<Statement> parseFor();
+		sptr<Expr> parseFor();
 		
 		/*
 		Parses a while statement.
 
 		Unlike the for statement, this one is available now.
 		*/
-		uptr<Statement> parseWhile();
+		sptr<Expr> parseWhile();
 		
 		/*
 		Parses a do/while statement.
 
 		Probably not a good idea, but eh
 		*/
-		uptr<Statement> parseDoWhile();
-
-		/*
-		A value statement is either a setter or function call.
-
-		Why a "value statement"? Because both are covered by value-parsing code and I didn't want to repeat it.
-		*/
-		uptr<Statement> parseValueStmt();
+		sptr<Expr> parseDoWhile();
 
 		/*
 		Parses a global variable statement.
 
 		These are constant-only variables, and thus the parsing code is a little simpler than the code for local variables.
 		*/
-		uptr<Statement> parseGlobalVarStmt();
+		sptr<Expr> parseGlobalVarStmt();
 
 		/*
 		Parses a local variable statement.
 		*/
-		uptr<Statement> parseLocalVarStmt();
+		sptr<Expr> parseLocalVarStmt();
 
 		/*
 		Parses math expressions. This is the primary method for reading values.
 		*/
-		sptr<Value> parseExpr();
+		sptr<Expr> parseExpr();
 
 		/*
 		Parses high-precedent values which can be terms in a math expression.
 		*/
-		sptr<Value> parseTerm();
+		sptr<Expr> parseTerm();
 
 		/*
 		Parses all forms of literals, including int, float, bool, string, array, and keyword values.
 		*/
-		sptr<Value> parseLiteral();
+		sptr<Expr> parseLiteral();
 
 		/*
 		Parses any values preceded by a unary operator.
 		*/
-		sptr<Value> parseUnaryValue();
+		sptr<Expr> parseUnaryValue();
 
 		/*
 		Parses values starting with parentheses.
 		*/
-		sptr<Value> parseParenValue();
+		sptr<Expr> parseParenValue();
 
 		/*
 		Parses variable reads, as well as member access.
 		*/
-		sptr<Value> parseAccess();
+		sptr<Expr> parseAccess();
 
 		/*
 		Parses a member read based on the target value
 		*/
-		sptr<Value> parseMemberAccess(sptr<Value> target);
+		sptr<Expr> parseMemberAccess(sptr<Expr> target);
 
 		/*
 		Parses an identifier followed optional generics, then parentheses
 		*/
-		sptr<Value> parseAnyFnCall();
+		sptr<Expr> parseAnyFnCall();
 
 		/*
 		Parses a function call using the provided name
 		*/
-		sptr<Value> parseFnCall(sptr<Value> name);
+		sptr<Expr> parseFnCall(sptr<Expr> name);
 
 		/*
 		Parses a method call based on the provided target
 		*/
-		sptr<Value> parseMethodCall(sptr<Value> target);
+		sptr<Expr> parseMethodCall(sptr<Expr> target);
 
 		/*
 		Parses local variables; Used by parseLocalVarStmt mainly

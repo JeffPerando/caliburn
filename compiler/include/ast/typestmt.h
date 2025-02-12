@@ -5,7 +5,7 @@
 
 namespace caliburn
 {
-	struct TypedefStmt : Statement
+	struct TypedefStmt : Expr
 	{
 		const sptr<const CompilerSettings> settings;
 
@@ -16,7 +16,7 @@ namespace caliburn
 		sptr<ParsedType> alias;
 		
 		TypedefStmt(sptr<const CompilerSettings> cs, in<Token> f, in<Token> n, sptr<ParsedType> t) :
-			Statement(StmtType::TYPEDEF), settings(cs), first(f), name(n), alias(t), isStrong(first.str == "strong")
+			Expr(ExprType::TYPEDEF), settings(cs), first(f), name(n), alias(t), isStrong(first.str == "strong")
 		{
 			
 		}
@@ -33,9 +33,8 @@ namespace caliburn
 			return alias->lastTkn();
 		}
 
-		void declareHeader(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
-
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override
+		//FIXME not used currently
+		void declareHeader(sptr<SymbolTable> table, out<ErrorHandler> err) override
 		{
 			//TODO implement strong typing (needs wrapper)
 			//TODO implement error handling for header declaration and QUIT USING STD::COUT
@@ -96,7 +95,10 @@ namespace caliburn
 
 		}
 
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override {}
+		ValueResult emitCodeCLLR(sptr<SymbolTable>, out<cllr::Assembler> codeAsm) const override
+		{
+			return ValueResult();
+		}
 
 	};
 

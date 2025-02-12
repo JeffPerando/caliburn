@@ -19,7 +19,7 @@ namespace caliburn
 	}
 
 	struct ParsedType;
-	struct Value;
+	struct Expr;
 
 	struct GenericArguments;
 	struct GenericSignature;
@@ -40,7 +40,7 @@ namespace caliburn
 		{ GenericSymType::CONST, "const" }
 	};
 
-	using GenericResult = std::variant<std::monostate, sptr<ParsedType>, sptr<Value>>;
+	using GenericResult = std::variant<std::monostate, sptr<ParsedType>, sptr<Expr>>;
 
 	std::string parseGeneric(in<GenericResult> result);
 
@@ -82,9 +82,9 @@ namespace caliburn
 			return nullptr;
 		}
 
-		sptr<Value> getConst(size_t index)
+		sptr<Expr> getConst(size_t index)
 		{
-			MATCH(args.at(index), sptr<Value>, v)
+			MATCH(args.at(index), sptr<Expr>, v)
 			{
 				return *v;
 			}
@@ -108,12 +108,12 @@ namespace caliburn
 
 		const GenericResult defaultResult;
 
-		GenericName(in<Token> t, in<Token> n, in<GenericResult> res = GenericResult()) :
-			type(GENERIC_SYMBOL_TYPES.find(t.str)->second), name(n.str), defaultResult(res)
+		GenericName(in<Token> t, in<Token> n, in<GenericResult> def = GenericResult()) :
+			type(GENERIC_SYMBOL_TYPES.find(t.str)->second), name(n.str), defaultResult(def)
 		{}
 
-		GenericName(GenericSymType t, std::string n, in<GenericResult> res = GenericResult()) :
-			type(t), name(n), defaultResult(res)
+		GenericName(GenericSymType t, std::string n, in<GenericResult> def = GenericResult()) :
+			type(t), name(n), defaultResult(def)
 		{}
 
 		virtual ~GenericName() = default;
@@ -182,14 +182,10 @@ namespace caliburn
 		{
 			std::vector<GenericResult> defArgs;
 
-			defArgs.reserve(names.size());
-
 			for (auto const& name : names)
 			{
 				if (std::holds_alternative<std::monostate>(name.defaultResult))
 				{
-					//WHAT???
-					defArgs.shrink_to_fit();
 					break;
 				}
 
@@ -199,8 +195,6 @@ namespace caliburn
 
 			return new_sptr<GenericArguments>(defArgs);
 		}
-
-		//void set(uint32_t index, )
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 

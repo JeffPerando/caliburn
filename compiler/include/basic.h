@@ -50,7 +50,7 @@ Back when I was writing this header, I wanted to alias the std::make_... functio
 
 Turns out, templates are really goofy. So I sacked it. But the length of the existing functions still bugged me.
 
-It's 13 June 2023 and I'm tired. This is the closest I can get to truly aliasing them.
+It's 2023-06-13 and I'm tired. This is the closest I can get to truly aliasing them.
 */
 
 #define new_sptr std::make_shared

@@ -9,7 +9,7 @@
 
 namespace caliburn
 {
-	struct StructStmt : Statement
+	struct StructStmt : Expr
 	{
 		const bool isConst;
 		const Token first;
@@ -22,8 +22,8 @@ namespace caliburn
 		std::map<std::string_view, sptr<ParsedVar>> members;
 		std::vector<uptr<ParsedFn>> memberFns;
 
-		StructStmt(StmtType type, in<Token> f, in<Token> n) :
-			Statement(type), isConst(type == StmtType::RECORD), first(f), name(n) {}
+		StructStmt(ExprType type, in<Token> f, in<Token> n) :
+			Expr(type), isConst(type == ExprType::RECORD), first(f), name(n) {}
 
 		virtual ~StructStmt() = default;
 
@@ -37,6 +37,16 @@ namespace caliburn
 			return last;
 		}
 
+		bool isLValue() const override
+		{
+			return false;
+		}
+
+		bool isCompileTimeConst() const override
+		{
+			return false;
+		}
+
 		void declareHeader(sptr<SymbolTable> table, out<ErrorHandler> err) override
 		{
 			if (!table->add(name.str, new_sptr<TypeStruct>(name.str, genSig, members, memberFns)))
@@ -47,9 +57,10 @@ namespace caliburn
 		}
 
 		//Do not implement. We let the innermost type declare itself
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override {}
-
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
+		ValueResult emitCodeCLLR(sptr<SymbolTable>, out<cllr::Assembler> codeAsm) const override
+		{
+			return ValueResult();
+		}
 
 	};
 

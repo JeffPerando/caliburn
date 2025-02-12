@@ -10,18 +10,8 @@
 
 using namespace caliburn;
 
-uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSettings> settings, out<std::vector<sptr<Error>>> allErrs)
+uptr<Shader> ShaderStage::compile(sptr<const CompilerSettings> settings, out<std::vector<std::string>> errs, in<TextDoc> doc, sptr<SymbolTable> table, std::vector<IOVar> inputs, out<std::vector<IOVar>> outputs)
 {
-	/* here for debugging multi-line errors
-	auto e = new_sptr<Error>();
-
-	e->stage = CompileStage::CLLR_EMIT;
-	e->message = "Multi-line error";
-	e->startTkn = base->code->firstTkn();
-	e->endTkn = base->code->lastTkn();
-
-	allErrs.push_back(e);
-	*/
 	sptr<SymbolTable> stageTable = table;
 
 	if (!vtxInputs.empty())
@@ -36,7 +26,7 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 
 	}
 
-	auto codeAsm = cllr::Assembler(type, settings);
+	auto codeAsm = cllr::Assembler(type, settings, inputs);
 
 	auto const fullName = (std::stringstream() << parentName.str << "_" << SHADER_TYPE_NAMES.at(type)).str();
 	auto const nameID = SCAST<uint32_t>(codeAsm.addString(fullName));
@@ -47,44 +37,26 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 	{
 		codeAsm.errors->err("Could not resolve type", *base->returnType);
 
-		codeAsm.errors->dump(allErrs);
-
 		return nullptr;
 	}
 
-	auto stageID = codeAsm.beginSect(cllr::Instruction(cllr::Opcode::SHADER_STAGE, { (uint32_t)type, nameID }, { typeOut->id }).debug(first));
+	auto const stageID = codeAsm.beginSect(cllr::Instruction(cllr::Opcode::SHADER_STAGE, { (uint32_t)type, nameID }, { typeOut->id }).debug(first));
 
-	auto symErr = ErrorHandler(CompileStage::SYMBOL_GENERATION);
-
-	base->code->declareSymbols(stageTable, symErr);
 	base->code->emitCodeCLLR(stageTable, codeAsm);
 
 	codeAsm.endSect(cllr::Instruction(cllr::Opcode::SHADER_STAGE_END, {}, { stageID }));
 
-	if (!symErr.empty())
-	{
-		symErr.dump(allErrs);
-		return nullptr;
-	}
-
 	if (!codeAsm.errors->empty())
 	{
-		codeAsm.errors->dump(allErrs);
+		codeAsm.errors->printout(errs, doc);
+
 		return nullptr;
 	}
 
 	auto validator = cllr::Validator(settings);
-	//std::chrono::high_resolution_clock clock{};
-
-	//auto startTime = clock.now();
-	bool valid = validator.validate(codeAsm);
-	//auto time = clock.now() - startTime;
-
-	//std::cout << "Validation took " << (time.count() * 0.000001f) << " ms\n";
-
-	if (!valid)
+	
+	if (!validator.validate(codeAsm))
 	{
-		validator.errors->dump(allErrs);
 		return nullptr;
 	}
 
@@ -100,30 +72,38 @@ uptr<Shader> ShaderStage::compile(sptr<SymbolTable> table, sptr<const CompilerSe
 		
 		outShader = new_uptr<Shader>(type, spirvCode);
 
-		spirvAsm.errors->dump(allErrs);
+		spirvAsm.errors->printout(errs, doc);
 
 	}
 	else
 	{
 		//TODO complain
+		return nullptr;
 	}
 	
 	if (type == ShaderType::VERTEX)
 	{
-		for (auto const& [name, index] : codeAsm.getInputs())
+		for (auto const& var : codeAsm.getIOByType(ShaderIOVarType::INPUT))
 		{
 			//TODO assign input format
-			outShader->inputs.push_back(VertexInputAttribute{ std::string(name), index, 0 });
+			outShader->inputs.push_back(VertexInputAttribute{ std::string(var.name), var.index, 0});
 
 		}
 
 	}
 
+	outputs = codeAsm.getIOByType(ShaderIOVarType::OUTPUT);
+
 	return outShader;
 }
 
-void ShaderStmt::compile(sptr<SymbolTable> table, sptr<CompilerSettings> settings, out<std::vector<uptr<Shader>>> shaders, out<std::vector<sptr<Error>>> compileErrs)
+void ShaderStmt::compile(sptr<SymbolTable> table, sptr<CompilerSettings> settings, out<ShaderResult> result, in<TextDoc> doc)
 {
+	if (stages.empty())
+	{
+		return;
+	}
+
 	auto shaderSyms = new_sptr<SymbolTable>(table);
 
 	for (auto const& io : ioVars)
@@ -131,24 +111,36 @@ void ShaderStmt::compile(sptr<SymbolTable> table, sptr<CompilerSettings> setting
 		shaderSyms->add(io->name, io);
 	}
 
+	std::sort(stages.begin(), stages.end());
+
+	std::vector<IOVar> inputs{};
+
 	for (auto const& stage : stages)
 	{
-		auto shader = stage->compile(shaderSyms, settings, compileErrs);
+		std::vector<IOVar> outputs;
+
+		auto shader = stage->compile(settings, result.errors, doc, shaderSyms, inputs, outputs);
 
 		if (shader == nullptr)
 		{
 			continue;
 		}
 
-		uint32_t d = 0;
+		uint32_t descIdx = 0;
 
-		for (auto const& desc : descriptors)
+		for (auto const& [_, name] : descriptors)
 		{
-			shader->sets.push_back(DescriptorSet{ std::string(desc.second.str), d++ });
-
+			shader->sets.push_back(DescriptorSet{ std::string(name.str), descIdx });
+			++descIdx;
 		}
 
-		shaders.push_back(std::move(shader));
+		result.shaders.push_back(std::move(shader));
+
+		for (auto const& out : outputs)
+		{
+			inputs.push_back(IOVar{ out.name, ShaderIOVarType::INPUT, out.index });
+
+		}
 
 	}
 

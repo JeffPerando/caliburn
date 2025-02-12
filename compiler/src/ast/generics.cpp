@@ -14,7 +14,7 @@ void GenericArguments::apply(in<GenericSignature> sig, sptr<SymbolTable> table, 
 		auto const& name = sig.names[i].name;
 		auto const& arg = args[i];
 
-		if (auto vArg = std::get_if<sptr<Value>>(&arg))
+		if (auto vArg = std::get_if<sptr<Expr>>(&arg))
 		{
 			table->add(name, *vArg);
 		}
@@ -116,7 +116,7 @@ bool GenericSignature::canApply(in<GenericArguments> genArgs) const
 		auto const& arg = args[i];
 		auto const& name = names[i];
 
-		if (auto vArg = std::get_if<sptr<Value>>(&arg))
+		if (auto vArg = std::get_if<sptr<Expr>>(&arg))
 		{
 			if (name.type != GenericSymType::CONST)
 			{
@@ -151,7 +151,7 @@ bool GenericSignature::canApply(in<GenericArguments> genArgs) const
 
 std::string caliburn::parseGeneric(in<GenericResult> result)
 {
-	if (auto vArg = std::get_if<sptr<Value>>(&result))
+	if (auto vArg = std::get_if<sptr<Expr>>(&result))
 	{
 		return (**vArg).prettyStr();
 	}

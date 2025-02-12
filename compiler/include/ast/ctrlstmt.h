@@ -7,15 +7,15 @@
 
 namespace caliburn
 {
-	struct IfStatement : Statement
+	struct IfStatement : Expr
 	{
 		Token first;
 
-		sptr<Value> condition = nullptr;
-		uptr<ScopeStmt> innerIf = nullptr;
-		uptr<ScopeStmt> innerElse = nullptr;
+		sptr<Expr> condition = nullptr;
+		sptr<Expr> innerIf = nullptr;
+		sptr<Expr> innerElse = nullptr;
 		
-		IfStatement() : Statement(StmtType::IF) {}
+		IfStatement() : Expr(ExprType::IF) {}
 
 		Token firstTkn() const noexcept override
 		{
@@ -32,21 +32,10 @@ namespace caliburn
 			return innerIf->lastTkn();
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override
-		{
-			innerIf->declareSymbols(table, err);
-
-			if (innerElse != nullptr)
-			{
-				innerElse->declareSymbols(table, err);
-			}
-
-		}
-
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 		/*
-		ValidationData validate(ref<const std::set<StmtType>> types, ref<const std::set<ReturnMode>> retModes) const override
+		ValidationData validate(ref<const std::set<ExprType>> types, ref<const std::set<ReturnMode>> retModes) const override
 		{
 			auto innerIfV = innerIf->validate(types, retModes);
 
@@ -63,7 +52,7 @@ namespace caliburn
 			return ValidationData::valid();
 		}
 
-		void eval(std::vector<Statement*>& ast, Module* parent)
+		void eval(std::vector<Expr*>& ast, Module* parent)
 		{
 			
 		}
@@ -71,25 +60,23 @@ namespace caliburn
 
 	};
 
-	struct ForRangeStatement : Statement
+	struct ForRangeStatement : Expr
 	{
 		Token first;
 		Token index;
 		uptr<LocalVariable> indexVar = nullptr;
-		sptr<Value> from = nullptr;
-		sptr<Value> to = nullptr;
+		sptr<Expr> from = nullptr;
+		sptr<Expr> to = nullptr;
 		uptr<ScopeStmt> loop = nullptr;
 
-		ForRangeStatement() : Statement(StmtType::FOR) {}
+		ForRangeStatement() : Expr(ExprType::FOR) {}
 
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
-
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 		/*
-		ValidationData validate(ref<const std::set<StmtType>> types, ref<const std::set<ReturnMode>> retModes) const override
+		ValidationData validate(ref<const std::set<ExprType>> types, ref<const std::set<ReturnMode>> retModes) const override
 		{
-			std::set<StmtType> bodyTypes = LOGIC_STMT_TYPES;
+			std::set<ExprType> bodyTypes = LOGIC_STMT_TYPES;
 			std::set<ReturnMode> bodyModes = { ReturnMode::CONTINUE, ReturnMode::BREAK };
 
 			bodyTypes.insert(types.begin(), types.end());
@@ -101,15 +88,15 @@ namespace caliburn
 
 	};
 
-	struct WhileStatement : Statement
+	struct WhileStatement : Expr
 	{
 		Token first;
 
-		sptr<Value> condition = nullptr;
+		sptr<Expr> condition = nullptr;
 		uptr<ScopeStmt> loop = nullptr;
 		bool doWhile = false;
 
-		WhileStatement() : Statement(StmtType::WHILE) {}
+		WhileStatement() : Expr(ExprType::WHILE) {}
 
 		Token firstTkn() const noexcept override
 		{
@@ -121,9 +108,7 @@ namespace caliburn
 			return loop->lastTkn();
 		}
 
-		void declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err) override {}
-
-		void emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 

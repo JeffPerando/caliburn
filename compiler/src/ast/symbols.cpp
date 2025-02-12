@@ -5,10 +5,14 @@
 
 using namespace caliburn;
 
-//TODO does not seem to work
 void SymbolTable::reparent(sptr<const SymbolTable> p)
 {
-	parent = p;
+    if (this == nullptr)
+	{
+        throw std::invalid_argument("You forgot to initialize your symbol table, goofus");
+    }
+
+    parent = p;
 }
 
 bool SymbolTable::add(std::string_view symName, in<Symbol> sym)

@@ -164,7 +164,7 @@ namespace caliburn
 	public:
 		const uint32_t elements;
 		const GenericSignature genSig = GenericSignature({
-			GenericName(GenericSymType::TYPE, "T", GenericResult(new_sptr<ParsedType>("fp32")))
+			GenericName(GenericSymType::TYPE, "FP", GenericResult(new_sptr<ParsedType>("fp32")))
 			});
 
 		TypeVector(uint32_t vecElements) :

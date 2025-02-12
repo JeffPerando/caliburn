@@ -26,6 +26,19 @@ namespace caliburn
 	auto static constexpr MIN_VECTOR_LEN = 2;
 	auto static constexpr MAX_VECTOR_LEN = 4;
 
+	enum class ShaderIOVarType
+	{
+		INPUT,
+		OUTPUT
+	};
+
+	struct IOVar
+	{
+		std::string_view name;
+		ShaderIOVarType type;
+		uint32_t index;
+	};
+
 	//TODO audit these texture variants
 	enum class TextureKind
 	{
@@ -78,7 +91,7 @@ namespace caliburn
 		//{ShaderType::MESH,		"mesh"}
 	};
 
-	struct StmtModifiers
+	struct ExprModifiers
 	{
 		uint32_t
 			PUBLIC : 1,

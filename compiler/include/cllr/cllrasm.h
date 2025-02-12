@@ -23,11 +23,6 @@ namespace caliburn
 		*/
 		struct LowType;
 
-		/*
-		Used to maintain a list of current inputs and outputs. Mainly used to make VertexInputAttribute structs for the front-end API
-		*/
-		using IOList = std::vector<std::pair<std::string_view, uint32_t>>;
-
 		struct Section;
 
 		/*
@@ -40,18 +35,19 @@ namespace caliburn
 		struct Assembler
 		{
 			const ShaderType type;
-			const uptr<ErrorHandler> errors;
+			const uptr<ErrorHandler> errors = new_uptr<ErrorHandler>(CompileStage::CLLR_EMIT);
 
 			sptr<const CompilerSettings> settings;
 
 		private:
+			uint32_t nextSSA = 1;
+			uint32_t nextInput = 0;
+			uint32_t nextOutput = 0;
+
 			std::vector<Instruction> allCode;
 			std::stack<uptr<Section>> codeSects;
 
-			uint32_t nextSSA = 1;
-
-			std::vector<Instruction> ssaToIns;
-			std::vector<Opcode> ssaToOp;
+			HashMap<SSA, Instruction> ssaToIns{ {0, Instruction()} };
 			std::vector<uint32_t> ssaRefs{ 0 };
 
 			HashMap<Instruction, sptr<LowType>, InstructionHash> types;
@@ -59,14 +55,19 @@ namespace caliburn
 
 			std::vector<std::string> strs;
 
-			std::map<std::string_view, std::pair<uint32_t, SSA>> inputs, outputs;
-
-			//Makes outputting a shader's 'API' easy.
-			IOList inputNames, outputNames;
+			std::map<std::string_view, IOVar> ioVars;
+			std::map<std::string_view, TypedSSA> ioVarIDs;
 
 		public:
-			Assembler(ShaderType t, sptr<const CompilerSettings> cs) :
-				type(t), settings(cs), errors(new_uptr<ErrorHandler>(CompileStage::CLLR_EMIT, cs)) {}
+			Assembler(ShaderType t, sptr<const CompilerSettings> cs, std::vector<IOVar> vars) :
+				type(t), settings(cs)
+			{
+				for (auto const& var : vars)
+				{
+					ioVars.emplace(var.name, var);
+				}
+
+			}
 
 			virtual ~Assembler() = default;
 
@@ -85,13 +86,14 @@ namespace caliburn
 			Instruction getIns(SSA id) const;
 			Opcode getOp(SSA id) const;
 			sptr<LowType> getType(SSA id) const;
-
+			
 			void push(in<Instruction> ins);
 			void pushAll(in<std::vector<Instruction>> code);
 			SSA pushNew(out<Instruction> ins);
 			TypedSSA pushValue(out<Instruction> ins, sptr<LowType> type);
 			sptr<LowType> pushType(Opcode op);
 			sptr<LowType> pushType(out<Instruction> ins);
+			TypedSSA pushIOVar(std::string_view name, ShaderIOVarType type, sptr<LowType> dataType);
 
 			void beginLoop(SSA start, SSA end);
 			SSA getLoopStart() const;
@@ -101,17 +103,19 @@ namespace caliburn
 			size_t addString(in<std::string> str);
 			std::string getString(size_t index) const;
 
-			std::pair<uint32_t, SSA> pushInput(std::string_view, SSA type);
-			std::pair<uint32_t, SSA> pushOutput(std::string_view name, SSA type);
-
-			const IOList& getInputs() const
+			std::vector<IOVar> getIOByType(ShaderIOVarType type) const
 			{
-				return inputNames;
-			}
+				std::vector<IOVar> inputs;
 
-			const IOList& getOutputs() const
-			{
-				return outputNames;
+				for (auto const& [name, io] : ioVars)
+				{
+					if (io.type == type)
+					{
+						inputs.push_back(io);
+					}
+				}
+
+				return inputs;
 			}
 
 			/*

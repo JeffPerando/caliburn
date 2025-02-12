@@ -44,10 +44,13 @@ sptr<cllr::LowType> TypeArray::resolve(sptr<GenericArguments> gArgs, sptr<const 
 		//TODO complain
 	}
 
+	//Fix for needing mutable table to emit expression code
+	auto tableCopy = new_sptr<SymbolTable>(table);
+
 	auto t = gArgs->getType(0);
 	auto elemType = t->resolve(table, codeAsm);
 	auto len = gArgs->getConst(1);
-	auto lenRes = len->emitValueCLLR(table, codeAsm);
+	auto lenRes = len->emitCodeCLLR(tableCopy, codeAsm);
 	cllr::TypedSSA length;
 
 	MATCH(lenRes, cllr::TypedSSA, lenPtr)

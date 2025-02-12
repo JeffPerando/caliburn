@@ -20,11 +20,12 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 
-		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override
+		{
+			return cllr::TypedSSA();
+		}
 
-		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
-
-		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA value) override;
+		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA value) override {}
 
 	};
 
@@ -38,11 +39,12 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 
-		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
+		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override
+		{
+			return cllr::TypedSSA();
+		}
 
-		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
-
-		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA value) override;
+		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA value) override {}
 
 	};
 
@@ -59,29 +61,17 @@ namespace caliburn
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 
-		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
-
 		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA value) override;
 
 	};
 
-	enum class ShaderIOVarType
-	{
-		UNKNOWN,
-		INPUT,
-		OUTPUT
-	};
-
 	struct ShaderIOVariable : Variable
 	{
-		ShaderIOVarType ioType = ShaderIOVarType::UNKNOWN;
-		uint32_t ioIndex = 0;
-
 		ShaderIOVariable(std::string_view n) : Variable(n) {}
 		ShaderIOVariable(in<ParsedVar> v) : Variable(v) {}
-		ShaderIOVariable(ShaderIOVarType t, in<FnArg> v) : Variable(v.name), ioType(t)
+		ShaderIOVariable(in<FnArg> v) : Variable(v.name)
 		{
 			typeHint = v.typeHint;
 
@@ -89,19 +79,7 @@ namespace caliburn
 		
 		virtual ~ShaderIOVariable() {}
 
-		ShaderIOVarType getIOType()
-		{
-			return ioType;
-		}
-
-		uint32_t getIndex()
-		{
-			return ioIndex;
-		}
-
 		void prettyPrint(out<std::stringstream> ss) const override;
-
-		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
@@ -119,8 +97,6 @@ namespace caliburn
 		virtual ~DescriptorVariable() {}
 
 		void prettyPrint(out<std::stringstream> ss) const override;
-
-		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 

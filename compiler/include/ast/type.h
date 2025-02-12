@@ -24,8 +24,6 @@ namespace caliburn
 	{
 	private:
 		std::string fullName = "";
-	protected:
-		sptr<cllr::LowType> resultType = nullptr;
 	public:
 		const std::string_view name;
 		const Token nameTkn;
@@ -33,7 +31,7 @@ namespace caliburn
 
 		Token lastToken;
 
-		std::vector<sptr<Value>> arrayDims;//TODO implement properly
+		std::vector<sptr<Expr>> arrayDims;//TODO implement properly
 
 		ParsedType(std::string_view n) : name(n), genericArgs(new_sptr<GenericArguments>()) {}
 		ParsedType(in<Token> n) : name(n.str), nameTkn(n), genericArgs(new_sptr<GenericArguments>()) {}
@@ -66,7 +64,7 @@ namespace caliburn
 
 		sptr<BaseType> resolveBase(sptr<const SymbolTable> table) const;
 
-		sptr<cllr::LowType> resolve(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm);
+		sptr<cllr::LowType> resolve(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const;
 
 		static sptr<ParsedType> parse(in<std::string> str);
 
@@ -74,29 +72,26 @@ namespace caliburn
 
 	struct ParsedVar
 	{
-		StmtModifiers mods{};
+		ExprModifiers mods{};
 		Token first;
 		bool isConst = false;
 		sptr<ParsedType> typeHint;
 		Token name;
-		sptr<Value> initValue;
+		sptr<Expr> initValue;
 
 	};
 
 	struct Variable : ParsedObject
 	{
-	protected:
-		cllr::TypedSSA id;
-
 	public:
 		const std::string_view name;
 
-		StmtModifiers mods = {};
+		ExprModifiers mods = {};
 		Token first;
 		Token nameTkn;
 		sptr<ParsedType> typeHint = nullptr;
 
-		sptr<Value> initValue = nullptr;
+		sptr<Expr> initValue = nullptr;
 		bool isConst = false;
 
 		Variable(std::string_view n) : name(n) {}
@@ -123,9 +118,7 @@ namespace caliburn
 		{
 			return nameTkn;
 		}
-
-		virtual cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
-
+		
 		virtual cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) = 0;
 
 		virtual void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA rhs) = 0;

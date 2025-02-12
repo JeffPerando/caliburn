@@ -3,9 +3,9 @@
 
 using namespace caliburn;
 
-void IfStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+ValueResult IfStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
-	auto condRes = condition->emitValueCLLR(table, codeAsm);
+	auto condRes = condition->emitCodeCLLR(table, codeAsm);
 	cllr::TypedSSA cond;
 
 	MATCH(condRes, cllr::TypedSSA, condPtr)
@@ -15,7 +15,7 @@ void IfStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> cod
 	else
 	{
 		codeAsm.errors->err("Invalid conditional", *condition);
-		return;
+		return ValueResult();
 	}
 
 	//TODO type check
@@ -27,13 +27,13 @@ void IfStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> cod
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP_COND, {}, { cID, ifLabel, innerElse ? elseLabel : postLabel }));
 
-	innerIf->emitCodeCLLR(table, codeAsm);
+	auto innerIfRes = innerIf->emitCodeCLLR(table, codeAsm);
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP, {}, { postLabel }));
 
 	if (innerElse != nullptr)
 	{
-		innerElse->emitCodeCLLR(table, codeAsm);
+		auto innerElseRes = innerElse->emitCodeCLLR(table, codeAsm);
 
 	}
 
@@ -41,7 +41,7 @@ void IfStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> cod
 
 }
 
-void ForRangeStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+ValueResult ForRangeStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 /*
 uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
@@ -105,9 +105,11 @@ uint32_t SPIRVEmit(SpirVAssembler* codeAsm, SymbolTable* syms)
 
 }
 */
+
+	return ValueResult();
 }
 
-void WhileStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+ValueResult WhileStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	/*
 	Until CLLR is more fleshed out, we're just going to do the SPIR-V route of putting jumps before labels
@@ -124,7 +126,7 @@ void WhileStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> 
 		cllr::Instruction(cllr::Opcode::LOOP, {}, { exit, cont, loopLabel }),
 	});
 
-	auto condRes = condition->emitValueCLLR(table, codeAsm);
+	auto condRes = condition->emitCodeCLLR(table, codeAsm);
 	cllr::TypedSSA cond;
 	
 	MATCH(condRes, cllr::TypedSSA, condPtr)
@@ -134,7 +136,7 @@ void WhileStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> 
 	else
 	{
 		codeAsm.errors->err("Invalid conditional", *condition);
-		return;
+		return ValueResult();
 	}
 
 	//TODO type check
@@ -154,4 +156,5 @@ void WhileStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> 
 		cllr::Instruction(exit, cllr::Opcode::LABEL)
 	});
 
+	return ValueResult();
 }

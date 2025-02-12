@@ -15,7 +15,7 @@ namespace caliburn
 
 	struct Module;
 	struct FunctionGroup;
-	struct Value;
+	struct Expr;
 	struct Variable;
 	struct BaseType;
 	
@@ -32,7 +32,7 @@ namespace caliburn
 		sptr<Module>,
 		sptr<FunctionGroup>,
 		//this enables for generic constants
-		sptr<Value>,
+		sptr<Expr>,
 		sptr<Variable>,
 		sptr<BaseType>,
 		//This is only used when working with generics
@@ -49,7 +49,7 @@ namespace caliburn
 	{
 	private:
 		HashMap<std::string_view, Symbol> symbols;
-		sptr<const SymbolTable> parent;
+		sptr<const SymbolTable> parent = nullptr;
 
 	public:
 		SymbolTable() : parent(nullptr) {}

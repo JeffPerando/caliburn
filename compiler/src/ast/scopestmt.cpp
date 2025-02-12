@@ -19,24 +19,7 @@ void ScopeStmt::prettyPrint(out<std::stringstream> ss) const
 
 }
 
-void ScopeStmt::declareSymbols(sptr<SymbolTable> table, out<ErrorHandler> err)
-{
-	if (scopeTable != nullptr)
-	{
-		return;
-	}
-
-	scopeTable = new_sptr<SymbolTable>(table);
-
-	for (auto const& stmt : stmts)
-	{
-		stmt->declareSymbols(scopeTable, err);
-
-	}
-
-}
-
-void ScopeStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+ValueResult ScopeStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	scopeTable->reparent(table);
 
@@ -45,9 +28,10 @@ void ScopeStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeA
 		inner->emitCodeCLLR(scopeTable, codeAsm);
 	}
 
+	return ValueResult();
 }
 
-void BreakStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+ValueResult BreakStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	cllr::SSA label = codeAsm.getLoopEnd();
 
@@ -57,9 +41,10 @@ void BreakStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeA
 	}
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP, {}, { label }));
+	return ValueResult();
 }
 
-void ContinueStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+ValueResult ContinueStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	cllr::SSA label = codeAsm.getLoopStart();
 
@@ -69,9 +54,10 @@ void ContinueStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> co
 	}
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::JUMP, {}, { label }));
+	return ValueResult();
 }
 
-void DiscardStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+ValueResult DiscardStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	auto h = codeAsm.getSectHeader();
 
@@ -86,9 +72,10 @@ void DiscardStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> cod
 	}
 
 	codeAsm.push(cllr::Instruction(cllr::Opcode::DISCARD));
+	return ValueResult();
 }
 
-void ReturnStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+ValueResult ReturnStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	//here for debugging error message formatting
 	//codeAsm.errors->err("Single-line error", *this);
@@ -113,10 +100,10 @@ void ReturnStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> code
 
 			//emit *something*
 			codeAsm.push(cllr::Instruction(cllr::Opcode::RETURN));
-			return;
+			return ValueResult();
 		}
 
-		MATCH(retValue->emitValueCLLR(table, codeAsm), cllr::TypedSSA, ret)
+		MATCH(retValue->emitCodeCLLR(table, codeAsm), cllr::TypedSSA, ret)
 		{
 			cllr::TypeChecker tc(codeAsm.settings);
 			cllr::TypedSSA result;
@@ -145,15 +132,18 @@ void ReturnStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> code
 		codeAsm.push(cllr::Instruction(cllr::Opcode::RETURN));
 
 	}
-	
+
+	return ValueResult();
 }
 
-void PassStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+ValueResult PassStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	//TODO implement
+	return ValueResult();
 }
 
-void UnreachableStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm)
+ValueResult UnreachableStmt::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
 	//TODO implement
+	return ValueResult();
 }

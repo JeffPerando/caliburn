@@ -10,11 +10,11 @@
 
 namespace caliburn
 {
-	struct IntLiteralValue : Value
+	struct IntLiteralValue : Expr
 	{
 		const Token lit;
 
-		IntLiteralValue(in<Token> l) : Value(ValueType::INT_LITERAL), lit(l) {}
+		IntLiteralValue(in<Token> l) : Expr(ExprType::INT_LITERAL), lit(l) {}
 		virtual ~IntLiteralValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -39,15 +39,15 @@ namespace caliburn
 			return true;
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct FloatLiteralValue : Value
+	struct FloatLiteralValue : Expr
 	{
 		const Token lit;
 
-		FloatLiteralValue(in<Token> l) : Value(ValueType::FLOAT_LITERAL), lit(l) {}
+		FloatLiteralValue(in<Token> l) : Expr(ExprType::FLOAT_LITERAL), lit(l) {}
 		virtual ~FloatLiteralValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -72,15 +72,15 @@ namespace caliburn
 			return true;
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct StringLitValue : Value
+	struct StringLitValue : Expr
 	{
 		const Token lit;
 
-		StringLitValue(in<Token> str) : Value(ValueType::STR_LITERAL), lit(str) {}
+		StringLitValue(in<Token> str) : Expr(ExprType::STR_LITERAL), lit(str) {}
 		virtual ~StringLitValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -105,15 +105,15 @@ namespace caliburn
 			return true;
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct BoolLitValue : Value
+	struct BoolLitValue : Expr
 	{
 		const Token lit;
 		
-		BoolLitValue(in<Token> v) : Value(ValueType::BOOL_LITERAL), lit(v)  {}
+		BoolLitValue(in<Token> v) : Expr(ExprType::BOOL_LITERAL), lit(v)  {}
 		virtual ~BoolLitValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -138,17 +138,17 @@ namespace caliburn
 			return true;
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct ArrayLitValue : Value
+	struct ArrayLitValue : Expr
 	{
 		Token start;
-		std::vector<sptr<Value>> values;
+		std::vector<sptr<Expr>> values;
 		Token end;
 
-		ArrayLitValue() : Value(ValueType::ARRAY_LITERAL) {}
+		ArrayLitValue() : Expr(ExprType::ARRAY_LITERAL) {}
 		virtual ~ArrayLitValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -183,17 +183,19 @@ namespace caliburn
 			return true;
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct ExpressionValue : Value
+	struct ExpressionValue : Expr
 	{
-		sptr<Value> lValue = nullptr;
-		sptr<Value> rValue = nullptr;
+		sptr<Expr> lValue = nullptr;
+		sptr<Expr> rValue = nullptr;
 		Operator op = Operator::NONE;
 
-		ExpressionValue() : Value(ValueType::EXPRESSION) {}
+		ExpressionValue() : Expr(ExprType::EXPRESSION) {}
+		ExpressionValue(sptr<Expr> lhs, Operator o, sptr<Expr> rhs) :
+			Expr(ExprType::EXPRESSION), lValue(lhs), op(o), rValue(rhs) {}
 		virtual ~ExpressionValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -218,18 +220,18 @@ namespace caliburn
 			return lValue->isCompileTimeConst() && rValue->isCompileTimeConst();
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct SubArrayValue : Value
+	struct SubArrayValue : Expr
 	{
-		const sptr<Value> array;
-		const sptr<Value> index;
+		const sptr<Expr> array;
+		const sptr<Expr> index;
 		const Token last;
 
-		SubArrayValue(sptr<Value> a, sptr<Value> i, in<Token> l) :
-			Value(ValueType::SUB_ARRAY), array(a), index(i), last(l) {}
+		SubArrayValue(sptr<Expr> a, sptr<Expr> i, in<Token> l) :
+			Expr(ExprType::SUB_ARRAY), array(a), index(i), last(l) {}
 
 		virtual ~SubArrayValue() = default;
 
@@ -255,16 +257,16 @@ namespace caliburn
 			return array->isCompileTimeConst() && index->isCompileTimeConst();
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct CastValue : Value
+	struct CastValue : Expr
 	{
-		sptr<Value> lhs = nullptr;
+		sptr<Expr> lhs = nullptr;
 		sptr<ParsedType> castTarget = nullptr;
 
-		CastValue() : Value(ValueType::CAST) {}
+		CastValue() : Expr(ExprType::CAST) {}
 		virtual ~CastValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -289,17 +291,17 @@ namespace caliburn
 			return lhs->isCompileTimeConst();
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct VarReadValue : Value
+	struct VarReadValue : Expr
 	{
 		const Token varTkn;
 		const std::string varStr;
 
-		VarReadValue(in<Token> v) : Value(ValueType::VAR_READ), varTkn(v), varStr(v.str) {}
-		VarReadValue(in<std::string> v) : Value(ValueType::VAR_READ), varStr(v) {}
+		VarReadValue(in<Token> v) : Expr(ExprType::VAR_READ), varTkn(v), varStr(v.str) {}
+		VarReadValue(in<std::string> v) : Expr(ExprType::VAR_READ), varStr(v) {}
 		virtual ~VarReadValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -324,17 +326,17 @@ namespace caliburn
 			return false;
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct MemberReadDirectValue : Value
+	struct MemberReadDirectValue : Expr
 	{
-		const sptr<Value> target;
+		const sptr<Expr> target;
 		//take a string instead of a token so we can use members directly within methods
 		const std::string mem;
 
-		MemberReadDirectValue(sptr<Value> t, in<std::string> m) : Value(ValueType::MEMBER_READ), target(t), mem(m) {}
+		MemberReadDirectValue(sptr<Expr> t, in<std::string> m) : Expr(ExprType::MEMBER_READ), target(t), mem(m) {}
 		virtual ~MemberReadDirectValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -360,17 +362,17 @@ namespace caliburn
 			return false;
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 	
-	struct MemberReadChainValue : Value
+	struct MemberReadChainValue : Expr
 	{
-		const sptr<Value> target;
+		const sptr<Expr> target;
 		
 		std::vector<Token> mems;
 
-		MemberReadChainValue(sptr<Value> t) : Value(ValueType::MEMBER_READ), target(t) {}
+		MemberReadChainValue(sptr<Expr> t) : Expr(ExprType::MEMBER_READ), target(t) {}
 		virtual ~MemberReadChainValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -395,19 +397,19 @@ namespace caliburn
 			return false;
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct UnaryValue : Value
+	struct UnaryValue : Expr
 	{
 		Operator op = Operator::NONE;
 		Token start;
-		sptr<Value> val = nullptr;
+		sptr<Expr> val = nullptr;
 		Token end;
 
-		UnaryValue() : Value(ValueType::UNKNOWN) {}
-		UnaryValue(in<Token> s, Operator o, sptr<Value> v) : start(s), op(o), val(v), Value(ValueType::UNKNOWN) {}
+		UnaryValue() : Expr(ExprType::UNKNOWN) {}
+		UnaryValue(in<Token> s, Operator o, sptr<Expr> v) : start(s), op(o), val(v), Expr(ExprType::UNKNOWN) {}
 		virtual ~UnaryValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -434,19 +436,19 @@ namespace caliburn
 			return val->isCompileTimeConst();
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct FnCallValue : Value
+	struct FnCallValue : Expr
 	{
-		const sptr<Value> name;
+		const sptr<Expr> name;
 
 		sptr<GenericArguments> genArgs;
-		std::vector<sptr<Value>> args;
+		std::vector<sptr<Expr>> args;
 		Token end;
 
-		FnCallValue(sptr<Value> n) : Value(ValueType::FUNCTION_CALL), name(n) {}
+		FnCallValue(sptr<Expr> n) : Expr(ExprType::FUNCTION_CALL), name(n) {}
 		virtual ~FnCallValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -471,20 +473,20 @@ namespace caliburn
 			return false;
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct MethodCallValue : Value
+	struct MethodCallValue : Expr
 	{
-		const sptr<Value> target;
+		const sptr<Expr> target;
 		const Token name;
 
 		sptr<GenericArguments> genArgs;
-		std::vector<sptr<Value>> args;
+		std::vector<sptr<Expr>> args;
 		Token end;
 
-		MethodCallValue(sptr<Value> t, in<Token> n) : Value(ValueType::FUNCTION_CALL), target(t), name(n) {}
+		MethodCallValue(sptr<Expr> t, in<Token> n) : Expr(ExprType::FUNCTION_CALL), target(t), name(n) {}
 		virtual ~MethodCallValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -509,50 +511,15 @@ namespace caliburn
 			return false;
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct SetterValue : Value
-	{
-		sptr<Value> lhs = nullptr;
-		sptr<Value> rhs = nullptr;
-		Operator op = Operator::NONE;
-
-		SetterValue() : Value(ValueType::UNKNOWN) {}
-		virtual ~SetterValue() = default;
-
-		Token firstTkn() const noexcept override
-		{
-			return lhs->firstTkn();
-		}
-
-		Token lastTkn() const noexcept override
-		{
-			return rhs->firstTkn();
-		}
-
-		void prettyPrint(out<std::stringstream> ss) const override;
-
-		bool isLValue() const override
-		{
-			return false;
-		}
-
-		bool isCompileTimeConst() const override
-		{
-			return true;
-		}
-
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
-
-	};
-
-	struct NullValue : Value
+	struct NullValue : Expr
 	{
 		const Token lit;//I don't even know what to do with this
 
-		NullValue(in<Token> v) : Value(ValueType::UNKNOWN), lit(v) {}
+		NullValue(in<Token> v) : Expr(ExprType::UNKNOWN), lit(v) {}
 		virtual ~NullValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -577,13 +544,13 @@ namespace caliburn
 			return true;
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct ZeroValue : Value
+	struct ZeroValue : Expr
 	{
-		ZeroValue() : Value(ValueType::UNKNOWN) {}
+		ZeroValue() : Expr(ExprType::UNKNOWN) {}
 		virtual ~ZeroValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -608,16 +575,16 @@ namespace caliburn
 			return true;
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct SignValue : Value
+	struct SignValue : Expr
 	{
 		const Token first;
-		const sptr<Value> target;
+		const sptr<Expr> target;
 
-		SignValue(in<Token> f, sptr<Value> v) : Value(ValueType::UNKNOWN), first(f), target(v) {}
+		SignValue(in<Token> f, sptr<Expr> v) : Expr(ExprType::UNKNOWN), first(f), target(v) {}
 		virtual ~SignValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -642,16 +609,16 @@ namespace caliburn
 			return target->isCompileTimeConst();
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 
-	struct UnsignValue : Value
+	struct UnsignValue : Expr
 	{
 		const Token first;
-		const sptr<Value> target;
+		const sptr<Expr> target;
 
-		UnsignValue(in<Token> f, sptr<Value> v) : Value(ValueType::UNKNOWN), first(f), target(v) {}
+		UnsignValue(in<Token> f, sptr<Expr> v) : Expr(ExprType::UNKNOWN), first(f), target(v) {}
 		virtual ~UnsignValue() = default;
 
 		Token firstTkn() const noexcept override
@@ -676,7 +643,7 @@ namespace caliburn
 			return target->isCompileTimeConst();
 		}
 
-		ValueResult emitValueCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
+		ValueResult emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const override;
 
 	};
 

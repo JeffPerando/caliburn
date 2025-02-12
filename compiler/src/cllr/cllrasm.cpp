@@ -45,11 +45,14 @@ void Assembler::endSect(in<Instruction> i)
 
 SSA Assembler::createSSA(in<Instruction> ins)
 {
-	ssaToIns.push_back(ins);
+	auto const nxt = nextSSA;
+
+	ssaToIns[nxt] = ins;
 	ssaRefs.push_back(0);
-	ssaToOp.push_back(ins.op);
-	
-	return nextSSA++;
+
+	++nextSSA;
+
+	return nxt;
 }
 
 Instruction Assembler::getIns(SSA id) const
@@ -59,12 +62,12 @@ Instruction Assembler::getIns(SSA id) const
 		return Instruction();
 	}
 
-	return ssaToIns.at(id - 1);
+	return ssaToIns.at(id);
 }
 
 Opcode Assembler::getOp(SSA id) const
 {
-	return ssaToOp.at(id - 1);
+	return ssaToIns.at(id).op;
 }
 
 sptr<LowType> Assembler::getType(SSA id) const
@@ -134,9 +137,7 @@ sptr<LowType> Assembler::pushType(out<Instruction> ins)
 	//All other types have unique operands for a given type
 	if (ins.op != Opcode::TYPE_STRUCT)
 	{
-		auto found = types.find(ins);
-
-		if (found != types.end())
+		if (auto found = types.find(ins); found != types.end())
 		{
 			return found->second;
 		}
@@ -173,6 +174,44 @@ sptr<LowType> Assembler::pushType(out<Instruction> ins)
 	ssaToType.emplace(id, t);
 
 	return t;
+}
+
+TypedSSA Assembler::pushIOVar(std::string_view name, ShaderIOVarType type, sptr<LowType> dataType)
+{
+	if (auto it = ioVarIDs.find(name); it != ioVarIDs.end())
+	{
+		return it->second;
+	}
+
+	uint32_t index = 0;
+
+	if (auto it = ioVars.find(name); it != ioVars.end())
+	{
+		auto const& var = it->second;
+
+		if (var.type != type)
+		{
+			//TODO complain
+			return TypedSSA();
+		}
+
+		index = var.index;
+
+	}
+	else
+	{
+		uint32_t& nextIdx = (type == ShaderIOVarType::INPUT) ? nextInput : nextOutput;
+
+		index = nextIdx;
+		ioVars.emplace(name, IOVar{ name, type, index });
+
+		++nextIdx;
+	}
+
+	auto res = TypedSSA(dataType, pushNew(Instruction((type == ShaderIOVarType::INPUT) ? Opcode::VAR_SHADER_IN : Opcode::VAR_SHADER_OUT, { index }, { dataType->id })));
+	ioVarIDs.emplace(name, res);
+
+	return res;
 }
 
 void Assembler::beginLoop(SSA start, SSA end)
@@ -235,58 +274,6 @@ std::string Assembler::getString(size_t index) const
 	return strs.at(index);
 }
 
-std::pair<uint32_t, SSA> Assembler::pushInput(std::string_view name, SSA type)
-{
-	if (outputs.find(name) != outputs.end())
-	{
-		//TODO complain
-		return std::pair(0, 0);
-	}
-
-	auto found = inputs.find(name);
-
-	if (found != inputs.end())
-	{
-		return found->second;
-	}
-
-	uint32_t index = (uint32_t)inputs.size();
-	SSA in = pushNew(Instruction(Opcode::VAR_SHADER_IN, { index }, { type }));
-	
-	auto inData = std::pair(index, in);
-
-	inputs.emplace(name, inData);
-	inputNames.push_back(std::pair(name, index));
-
-	return inData;
-}
-
-std::pair<uint32_t, SSA> Assembler::pushOutput(std::string_view name, SSA type)
-{
-	if (inputs.find(name) != inputs.end())
-	{
-		//TODO complain
-		return std::pair(0, 0);
-	}
-
-	auto found = outputs.find(name);
-
-	if (found != outputs.end())
-	{
-		return found->second;
-	}
-
-	uint32_t index = (uint32_t)outputs.size();
-	SSA out = pushNew(Instruction(Opcode::VAR_SHADER_OUT, { index }, { type }));
-	
-	auto outData = std::pair(index, out);
-
-	outputs.emplace(name, outData);
-	outputNames.push_back(std::pair(name, index));
-
-	return outData;
-}
-
 uint32_t Assembler::replace(SSA in, SSA out)
 {
 	if (in == 0)
@@ -336,14 +323,12 @@ uint32_t Assembler::replace(SSA in, SSA out)
 
 	if (out != 0)
 	{
-		ssaToOp[out] = ssaToOp[in];
 		ssaRefs[out] += count;
 		ssaToIns[out] = ssaToIns[in];
 		
 	}
 
 	ssaRefs[in] = 0;
-	ssaToOp[in] = Opcode::UNKNOWN;
 	ssaToIns[in] = Instruction();
 
 	return count;
@@ -378,26 +363,23 @@ uint32_t Assembler::flatten()
 
 	nextSSA = lastSSA + 1;
 
-	ssaToOp.resize(lastSSA);
-	ssaToIns.resize(lastSSA);
-
 	return replaced;
 }
 
 void Assembler::doBookkeeping(in<Instruction> ins)
 {
-	for (auto i = 0; i < MAX_REFS; ++i)
+	for (auto const& refID : ins.refs)
 	{
-		auto const& refID = ins.refs[i];
-
-		if (refID != 0)
+		if (refID == 0)
 		{
-			ssaRefs[refID] += 1;
+			continue;
 		}
+
+		ssaRefs[refID] += 1;
 
 	}
 
-	if (ins.outType != 0)
+	if (ins.outType > 0)
 	{
 		ssaRefs[ins.outType] += 1;
 	}
