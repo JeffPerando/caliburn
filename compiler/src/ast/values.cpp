@@ -112,7 +112,82 @@ ValueResult IntLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Ass
 
 ValueResult FloatLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
-	return ValueResult();
+	auto fpLit = lit.str;
+	size_t len = fpLit.length();
+
+	auto bits = 32;
+
+	switch (chrToUpper(fpLit[len - 1]))
+	{
+		//TODO maybe add a half-float type?
+	case 'D': bits = 64; PASS;
+	case 'F': --len; break;
+	}
+
+	fpLit = fpLit.substr(0, len);
+
+	std::stringstream type;
+	type << "fp" << bits;
+
+	auto pType = ParsedType(type.str());
+	auto t = pType.resolve(table, codeAsm);
+
+	if (!t)
+	{
+		//TODO complain
+		return ValueResult();
+	}
+	
+	cllr::SSA vID = 0;
+
+	if (bits == 32)
+	{
+		float data = std::strtof(fpLit.data(), nullptr);
+		uint32_t bitData = *(uint32_t*)&data;
+
+		vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_FP, { bitData }, {}, t->id));
+
+	}
+	else if (bits == 64)
+	{
+		double data = std::strtod(fpLit.data(), nullptr);
+		uint64_t bitData = *(uint64_t*)&data;
+
+		vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_FP, { (uint32_t)(bitData & 0xFFFFFFFF), (uint32_t)((bitData >> 32) & 0xFFFFFFFF) }, {}, t->id));
+
+	}
+	else
+	{
+		return ValueResult();
+	}
+
+	return cllr::TypedSSA(t, vID);
+	/*
+	auto [wholeLit, nonWholeLit] = splitStr(fpLit, '.');
+	auto [fracLit, expLit] = splitStr(nonWholeLit, { 'e', 'E' });
+
+	uint64_t whole = parseInt(wholeLit);
+	uint64_t frac = parseInt(fracLit);
+	int64_t exp = 0;
+
+	if (expLit.length() > 0)
+	{
+		exp = 1;
+
+		if (expLit[0] == '+')
+		{
+			expLit = expLit.substr(1);
+		}
+		else if (expLit[0] == '-')
+		{
+			expLit = expLit.substr(1);
+			exp = -1;
+		}
+
+		exp *= parseInt(expLit);
+
+	}
+	*/
 }
 
 ValueResult StringLitValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
