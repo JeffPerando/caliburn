@@ -182,31 +182,28 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type)
 
 	if (buf.hasCur())
 	{
-		auto suffix = std::tolower(buf.cur());
+		auto suffix = chrToUpper(buf.cur());
 		
-		if (suffix == 'f')
+		if (suffix == 'F' || suffix == 'D')
 		{
 			buf.consume();
+			isFloat = true;
 		}
-		else if (suffix == 'd')
+		
+		if (!isFloat)
 		{
-			buf.consume();
-		}
-		else if (suffix == 'u')
-		{
-			if (buf.hasRem(2) && std::tolower(buf.peek(1)) == 'l')
+			if (chrToUpper(buf.cur()) == 'U')
 			{
 				buf.consume();
 			}
 
-			buf.consume();
+			if (chrToUpper(buf.cur()) == 'L')
+			{
+				buf.consume();
+			}
 
 		}
-		else if (suffix == 'l')
-		{
-			buf.consume();
-		}
-		
+
 	}
 
 	type = isFloat ? TokenType::LITERAL_FLOAT : TokenType::LITERAL_INT;

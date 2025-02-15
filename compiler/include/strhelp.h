@@ -10,7 +10,45 @@
 
 namespace caliburn
 {
-	inline std::array<std::string, 2> splitStr(in<std::string> str, in<std::string> delim) noexcept
+	inline char chrToLower(char c) noexcept
+	{
+		return c + 32;
+	}
+
+	inline char chrToUpper(char c) noexcept
+	{
+		return c - 32;
+	}
+
+	inline uint64_t parseInt(std::string_view str)
+	{
+		return parseInt(str, str.length());
+	}
+
+	inline uint64_t parseInt(std::string_view str, size_t len)
+	{
+		len = (str.length() < len) ? str.length() : len;
+
+		uint64_t parsed = 0;
+
+		for (size_t idx = 0; idx < len; ++idx)
+		{
+			char digit = str[idx];
+
+			if (digit == '_')
+			{
+				continue;
+			}
+
+			parsed *= 10;
+			parsed += digit - '0';
+
+		}
+
+		return parsed;
+	}
+
+	inline std::array<std::string_view, 2> splitStr(std::string_view str, std::string_view delim) noexcept
 	{
 		auto found = str.find_first_of(delim);
 
@@ -20,6 +58,41 @@ namespace caliburn
 		}
 
 		return { str.substr(0, found), str.substr(found + delim.length()) };
+	}
+
+	inline std::array<std::string_view, 2> splitStr(std::string_view str, char delim) noexcept
+	{
+		auto found = str.find(delim);
+
+		if (found == std::string::npos)
+		{
+			return { str, "" };
+		}
+
+		return { str.substr(0, found), str.substr(found + 1) };
+	}
+
+	inline std::array<std::string_view, 2> splitStr(std::string_view str, std::vector<char> delims) noexcept
+	{
+		size_t found = std::string::npos;
+
+		for (auto& ch : delims)
+		{
+			auto idx = str.find(ch);
+
+			if (idx < found)
+			{
+				found = idx;
+			}
+
+		}
+
+		if (found == std::string::npos)
+		{
+			return { str, "" };
+		}
+
+		return { str.substr(0, found), str.substr(found + 1) };
 	}
 
 	/*
@@ -83,7 +156,7 @@ namespace caliburn
 	*/
 	struct TextDoc
 	{
-		const std::string_view text;
+		const std::string text;
 
 		std::vector<std::string_view> lines;
 		

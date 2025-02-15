@@ -12,46 +12,106 @@ using namespace caliburn;
 
 ValueResult IntLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
-	/*
-	auto& [intLit, intType] = splitStr(lit->str, "_");
+	auto const& intLit = lit.str;
 
-	auto pType = ParsedType(intType);
+	std::stringstream type;
+	size_t len = intLit.length();
 
-	if (auto t = pType.resolve(table, codeAsm))
+	auto name = "int";
+	auto bits = "32";
+
+	if (chrToUpper(intLit[len - 1]) == 'L')
 	{
-		//Integer literals parse immediately since there's no loss in precision;
-		//Float literals defer parsing since they can lose precision during parsing
-		//Why does it matter? I dunno
-
-		//TODO write an integer-parsing algorithm
-		uint64_t parsedLit = std::stol(intLit);
-
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_INT, { (uint32_t)(parsedLit & 0xFFFFFFFF), (uint32_t)((parsedLit >> 32) & 0xFFFFFFFF) }, {}, t->id));
-
-		return cllr::TypedSSA(t, vID);
+		bits = "64";
+		--len;
 	}
-	*/
-	//TODO complain
-	return ValueResult();
-	
+
+	if (chrToUpper(intLit[len - 1]) == 'U')
+	{
+		name = "uint";
+		--len;
+	}
+
+	type << name;
+	type << bits;
+
+	auto pType = ParsedType(type.str());
+	auto t = pType.resolve(table, codeAsm);
+
+	if (!t)
+	{
+		//TODO complain
+		return ValueResult();
+	}
+
+	uint64_t parsedLit = 0;
+	size_t idx = 0;
+
+	if (intLit[0] == '0')
+	{
+		if (chrToUpper(intLit[1]) == 'X')
+		{
+			for (idx = 2; idx < len; ++idx)
+			{
+				char digit = intLit[idx];
+				if (digit == '_')
+				{
+					continue;
+				}
+
+				parsedLit << 4;
+				parsedLit |= chrToUpper(digit) - 'A';
+
+			}
+
+		}
+		else if (chrToUpper(intLit[1]) == 'B')
+		{
+			for (idx = 2; idx < len; ++idx)
+			{
+				char digit = intLit[idx];
+				if (digit == '_')
+				{
+					continue;
+				}
+
+				parsedLit << 1;
+				parsedLit |= (digit - '0');
+
+			}
+
+		}
+		else if (chrToUpper(intLit[1]) == 'C')
+		{
+			for (idx = 2; idx < len; ++idx)
+			{
+				char digit = intLit[idx];
+				if (digit == '_')
+				{
+					continue;
+				}
+
+				parsedLit << 3;
+				parsedLit |= (digit - '0');
+
+			}
+
+		}
+
+	}
+
+	if (idx == 0)
+	{
+		parsedLit = parseInt(intLit, len);
+	}
+
+	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_INT, { (uint32_t)(parsedLit & 0xFFFFFFFF), (uint32_t)((parsedLit >> 32) & 0xFFFFFFFF) }, {}, t->id));
+
+	return cllr::TypedSSA(t, vID);
 }
 
 ValueResult FloatLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const
 {
-	/*
-	//We defer parsing further! Great success!
-	auto sID = codeAsm.addString(lit->str.substr(0, lit->str.find_first_of('_')));
-	auto pType = ParsedType(lit->str.substr(lit->str.find_first_of('_') + 1));
-
-	if (auto t = pType.resolve(table, codeAsm))
-	{
-		auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_FP, { sID }, {}, t->id));
-
-		return cllr::TypedSSA(t, vID);
-	}
-	*/
-
-	//TODO complain
 	return ValueResult();
 }
 

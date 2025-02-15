@@ -15,12 +15,7 @@ TextDoc::TextDoc(in<std::string> str) : text(str)
 		}
 
 		size_t len = (off - pos);
-		/*
-		std::cout << "Pos: " << pos << '\n';
-		std::cout << "Off: " << off << '\n';
-		std::cout << "Len: " << len << '\n';
-		std::cout << "----\n";
-		*/
+
 		lines.push_back(text.substr(pos, len));
 
 		pos = off + 1;
