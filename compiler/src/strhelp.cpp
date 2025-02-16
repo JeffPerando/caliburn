@@ -3,7 +3,7 @@
 
 using namespace caliburn;
 
-TextDoc::TextDoc(in<std::string> str) : text(str) 
+TextDoc::TextDoc(in<std::string_view> str) : text(str) 
 {
 	size_t pos = 0;
 

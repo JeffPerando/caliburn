@@ -20,11 +20,6 @@ namespace caliburn
 		return c - 32;
 	}
 
-	inline uint64_t parseInt(std::string_view str)
-	{
-		return parseInt(str, str.length());
-	}
-
 	inline uint64_t parseInt(std::string_view str, size_t len)
 	{
 		len = (str.length() < len) ? str.length() : len;
@@ -46,6 +41,11 @@ namespace caliburn
 		}
 
 		return parsed;
+	}
+
+	inline uint64_t parseInt(std::string_view str)
+	{
+		return parseInt(str, str.length());
 	}
 
 	inline std::array<std::string_view, 2> splitStr(std::string_view str, std::string_view delim) noexcept
@@ -156,11 +156,11 @@ namespace caliburn
 	*/
 	struct TextDoc
 	{
-		const std::string text;
+		const std::string_view text;
 
 		std::vector<std::string_view> lines;
 		
-		TextDoc(in<std::string> str);
+		TextDoc(in<std::string_view> str);
 
 		/*
 		Retrieves a line using the line found in the passed text position.

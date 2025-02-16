@@ -349,12 +349,7 @@ bool Parser::parseSemicolon()
 
 	if (tkns.cur().type != TokenType::END)
 	{
-		return false;
-	}
-
-	if (tkns.cur().str != ";")
-	{
-		auto e = errors->err("bruh wtf", tkns.cur());
+		auto e = errors->err("Expected semicolon after here", tkns.peekBack(1));
 		return false;
 	}
 
