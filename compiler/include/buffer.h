@@ -32,7 +32,7 @@ namespace caliburn
 		*/
 		bool hasRem(size_t count) const
 		{
-			return remaining() >= count;
+			return remaining() > count;
 		}
 
 		/*
@@ -104,9 +104,6 @@ namespace caliburn
 			index += count;
 		}
 
-		/*
-		Returns current index/offset
-		*/
 		size_t offset() const
 		{
 			return index;

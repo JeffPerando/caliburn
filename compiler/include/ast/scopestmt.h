@@ -17,7 +17,8 @@ namespace caliburn
 
 		sptr<SymbolTable> scopeTable = new_sptr<SymbolTable>();
 
-		ScopeStmt(ExprType exType = ExprType::SCOPE) : Expr(exType) {}
+		ScopeStmt() : Expr(ExprType::SCOPE) {}
+		//ScopeStmt(in<Token> s, in<Token> e, ParseMap data)
 
 		virtual ~ScopeStmt() = default;
 

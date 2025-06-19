@@ -59,7 +59,7 @@ ValueResult IntLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Ass
 					continue;
 				}
 
-				parsedLit << 4;
+				parsedLit <<= 4;
 				parsedLit |= chrToUpper(digit) - 'A';
 
 			}
@@ -75,7 +75,7 @@ ValueResult IntLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Ass
 					continue;
 				}
 
-				parsedLit << 1;
+				parsedLit <<= 1;
 				parsedLit |= (digit - '0');
 
 			}
@@ -91,7 +91,7 @@ ValueResult IntLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Ass
 					continue;
 				}
 
-				parsedLit << 3;
+				parsedLit <<= 3;
 				parsedLit |= (digit - '0');
 
 			}
@@ -137,32 +137,7 @@ ValueResult FloatLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::A
 		//TODO complain
 		return ValueResult();
 	}
-	
-	cllr::SSA vID = 0;
 
-	if (bits == 32)
-	{
-		float data = std::strtof(fpLit.data(), nullptr);
-		uint32_t bitData = *(uint32_t*)&data;
-
-		vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_FP, { bitData }, {}, t->id));
-
-	}
-	else if (bits == 64)
-	{
-		double data = std::strtod(fpLit.data(), nullptr);
-		uint64_t bitData = *(uint64_t*)&data;
-
-		vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_FP, { (uint32_t)(bitData & 0xFFFFFFFF), (uint32_t)((bitData >> 32) & 0xFFFFFFFF) }, {}, t->id));
-
-	}
-	else
-	{
-		return ValueResult();
-	}
-
-	return cllr::TypedSSA(t, vID);
-	/*
 	auto [wholeLit, nonWholeLit] = splitStr(fpLit, '.');
 	auto [fracLit, expLit] = splitStr(nonWholeLit, { 'e', 'E' });
 
@@ -187,7 +162,31 @@ ValueResult FloatLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::A
 		exp *= parseInt(expLit);
 
 	}
-	*/
+
+	cllr::SSA vID = 0;
+
+	if (bits == 32)
+	{
+		float data = std::strtof(fpLit.data(), nullptr);
+		uint32_t bitData = *(uint32_t*)&data;
+
+		vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_FP, { bitData }, {}, t->id));
+
+	}
+	else if (bits == 64)
+	{
+		double data = std::strtod(fpLit.data(), nullptr);
+		uint64_t bitData = *(uint64_t*)&data;
+
+		vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_FP, { (uint32_t)(bitData & 0xFFFFFFFF), (uint32_t)((bitData >> 32) & 0xFFFFFFFF) }, {}, t->id));
+
+	}
+	else
+	{
+		return ValueResult();
+	}
+
+	return cllr::TypedSSA(t, vID);
 }
 
 ValueResult StringLitValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const

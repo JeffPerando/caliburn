@@ -39,6 +39,7 @@ ValueResult IfStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembl
 
 	codeAsm.push(cllr::Instruction(postLabel, cllr::Opcode::LABEL));
 
+	return ValueResult();
 }
 
 ValueResult ForRangeStatement::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Assembler> codeAsm) const

@@ -6,6 +6,7 @@
 
 #include "basic.h"
 #include "buffer.h"
+#include "strhelp.h"
 #include "syntax.h"
 
 namespace caliburn

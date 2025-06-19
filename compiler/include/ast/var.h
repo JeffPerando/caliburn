@@ -14,18 +14,19 @@ namespace caliburn
 
 	struct LocalVariable : Variable
 	{
+		cllr::TypedSSA varData;
+
 		LocalVariable(std::string_view name) : Variable(name) {}
 		LocalVariable(in<ParsedVar> v) : Variable(v) {}
 		virtual ~LocalVariable() {}
 
 		void prettyPrint(out<std::stringstream> ss) const override;
 
-		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override
-		{
-			return cllr::TypedSSA();
-		}
+		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
-		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA value) override {}
+		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA value) override;
+
+		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, bool isBeingWritten, out<cllr::Assembler> codeAsm) override;
 
 	};
 
@@ -37,7 +38,7 @@ namespace caliburn
 		}
 		virtual ~GlobalVariable() {}
 
-		void prettyPrint(out<std::stringstream> ss) const override;
+		void prettyPrint(out<std::stringstream> ss) const override {}
 
 		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override
 		{
@@ -46,10 +47,19 @@ namespace caliburn
 
 		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA value) override {}
 
+		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, bool isBeingWritten, out<cllr::Assembler> codeAsm) override
+		{
+			return cllr::TypedSSA();
+		}
+
 	};
 
 	struct FnArgVariable : Variable
 	{
+	private:
+		cllr::SSA id = 0;
+
+	public:
 		const uint32_t argIndex;
 
 		FnArgVariable(in<FnArg> data, uint32_t i) : Variable(data.name), argIndex(i)
@@ -65,6 +75,8 @@ namespace caliburn
 
 		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA value) override;
 
+		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, bool isBeingWritten, out<cllr::Assembler> codeAsm) override;
+
 	};
 
 	struct ShaderIOVariable : Variable
@@ -76,7 +88,7 @@ namespace caliburn
 			typeHint = v.typeHint;
 
 		}
-		
+
 		virtual ~ShaderIOVariable() {}
 
 		void prettyPrint(out<std::stringstream> ss) const override;
@@ -84,6 +96,8 @@ namespace caliburn
 		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA value) override;
+
+		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, bool isBeingWritten, out<cllr::Assembler> codeAsm) override;
 
 	};
 
@@ -101,6 +115,8 @@ namespace caliburn
 		cllr::TypedSSA emitLoadCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override;
 
 		void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA value) override;
+
+		cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, bool isBeingWritten, out<cllr::Assembler> codeAsm) override;
 
 	};
 

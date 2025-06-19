@@ -156,17 +156,12 @@ namespace caliburn
 	*/
 	struct TextDoc
 	{
-		const std::string_view text;
+		const std::string text;
 
 		std::vector<std::string_view> lines;
 		
-		TextDoc(in<std::string_view> str);
+		TextDoc(in<std::string> str);
 
-		/*
-		Retrieves a line using the line found in the passed text position.
-
-		The resulting line substring *shouldn't* contain a newline character.
-		*/
 		std::string_view getLine(TextPos pos) const;
 
 	};

@@ -241,13 +241,13 @@ std::vector<Token> Tokenizer::tokenize()
 
 	while (buf.hasCur())
 	{
+		const char current = buf.cur();
+		const CharType type = getType(current);
+
 		const size_t start = buf.offset();
 		const TextPos startPos = pos;
 		auto tknType = TokenType::UNKNOWN;
-		size_t tknLen = 0;
-
-		const char current = buf.cur();
-		const CharType type = getType(current);
+		size_t tknLen = 1;
 
 		if (type == CharType::WHITESPACE)
 		{
@@ -333,26 +333,23 @@ std::vector<Token> Tokenizer::tokenize()
 		}
 		else if (type == CharType::STRING_DELIM)
 		{
-			if (!buf.hasRem(2))
+			if (buf.remaining() < 2)
 			{
 				throw std::exception("Not enough chars for a string literal");
 			}
 
-			//only used for error messaging
-			Token delimTkn = makeCharTkn(TokenType::UNKNOWN);
+			auto startPos = pos;
 
 			char delim = current;
 			bool foundDelim = false;
 
-			buf.consume();
-
-			while (buf.hasCur())
+			size_t off = 1;
+			for (; off < buf.remaining(); ++off)
 			{
-				char strChar = buf.cur();
+				char strChar = buf.peek(off);
 
 				if (strChar == delim)
 				{
-					buf.consume();
 					pos.move();
 					foundDelim = true;
 					break;
@@ -363,31 +360,29 @@ std::vector<Token> Tokenizer::tokenize()
 					//Escaped character; skip the backslash and whatever comes after
 					//Note: This will be sound when UTF-8 support is added, since UTF literals won't be needed
 
-					buf.consume(2);
+					++off;
 					pos.move(2);
 					continue;
 				}
 
 				if (strChar == '\n')
 				{
-					buf.consume();
 					pos.newline();
 					continue;
 				}
 				
-				buf.consume();
 				pos.move();
 
 			}
 
 			if (!foundDelim)
 			{
-				throw std::runtime_error((std::stringstream() << "Unescaped string starts at " << delimTkn.pos.toStr()).str());
+				throw std::runtime_error((std::stringstream() << "Unescaped string starts at " << startPos.toStr()).str());
 			}
 
 			tknType = TokenType::LITERAL_STR;
-			tknLen = buf.offset() - start;
-
+			tknLen = off + 1;
+			
 		}
 		else if (type == CharType::SPECIAL)
 		{
@@ -419,10 +414,10 @@ std::vector<Token> Tokenizer::tokenize()
 			
 			while (opLen > 1)
 			{
-				if (LONG_OPS.count(doc->text.substr(buf.offset(), opLen)))
+				auto const op = doc->text.substr(buf.offset(), opLen);
+
+				if (LONG_OPS.find(op) != LONG_OPS.end())
 				{
-					tknType = TokenType::OPERATOR;
-					tknLen = opLen;
 					break;
 				}
 
@@ -431,12 +426,9 @@ std::vector<Token> Tokenizer::tokenize()
 			}
 
 			//Couldn't find anything longer, just pass it along as a char token
-			if (opLen == 1)
-			{
-				tknType = TokenType::OPERATOR;
-				tknLen = 1;
-			}
 
+			tknType = TokenType::OPERATOR;
+			tknLen = opLen;
 		}
 		else
 		{

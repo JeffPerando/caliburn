@@ -123,6 +123,10 @@ namespace caliburn
 
 		virtual void emitStoreCLLR(sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm, cllr::TypedSSA rhs) = 0;
 
+	protected:
+		virtual cllr::TypedSSA emitVarCLLR(sptr<const SymbolTable> table, bool isBeingWritten, out<cllr::Assembler> codeAsm) = 0;
+
+
 	};
 
 }
