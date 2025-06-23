@@ -156,11 +156,11 @@ namespace caliburn
 	*/
 	struct TextDoc
 	{
-		const std::string text;
+		const std::string_view text;
 
 		std::vector<std::string_view> lines;
 		
-		TextDoc(in<std::string> str);
+		TextDoc(in<std::string_view> str);
 
 		std::string_view getLine(TextPos pos) const;
 

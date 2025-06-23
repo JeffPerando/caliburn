@@ -101,11 +101,9 @@ namespace caliburn
 		sptr<GenericArguments> parseGenericArgs();
 
 		/*
-		Parses out values, with optional comma-separation.
-
-		Commas are optional in array literals, and that's about it.
+		Parses out a list of comma-separated values.
 		*/
-		std::vector<sptr<Expr>> parseValueList(bool commaOptional);
+		std::vector<sptr<Expr>> parseValueList();
 
 		/*
 		Looks for an ending semicolon. If it's not found, an error is produced.

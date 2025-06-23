@@ -310,7 +310,7 @@ sptr<GenericArguments> Parser::parseGenericArgs()
 	return args;
 }
 
-std::vector<sptr<Expr>> Parser::parseValueList(bool commaOptional)
+std::vector<sptr<Expr>> Parser::parseValueList()
 {
 	std::vector<sptr<Expr>> values;
 
@@ -323,17 +323,12 @@ std::vector<sptr<Expr>> Parser::parseValueList(bool commaOptional)
 			break;
 		}
 
-		values.push_back(v);
-
 		if (tkns.cur().type == TokenType::COMMA)
 		{
 			tkns.consume();
 			continue;
 		}
-		else if (!commaOptional)
-		{
-			break;
-		}
+		else break;
 
 	}
 
@@ -1189,10 +1184,8 @@ sptr<Expr> Parser::parseControl()
 	
 	std::vector<ParseMethod<sptr<Expr>>> methods = {
 		&Parser::parseLogicalIf,
-		//&Parser::parseFor,
 		&Parser::parseWhile,
 		&Parser::parseDoWhile,
-		//&Parser::parseSwitch
 		&Parser::parseScopeEnd,
 	};
 
@@ -1613,20 +1606,52 @@ sptr<Expr> Parser::parseLiteral()
 		auto arrLit = new_sptr<ArrayLitValue>();
 
 		arrLit->start = first;
-		
-		parseAnyBetween("[", LAMBDA() {
-			auto xs = parseValueList(true);
 
-			if (xs.empty())
+		tkns.consume();
+
+		bool delimited = false;
+
+		std::vector<sptr<Expr>> xs;
+
+		while (tkns.hasCur())
+		{
+			if (tkns.cur().type == TokenType::END_BRACKET)
 			{
-				auto e = errors->err("Empty array literal", first, tkns.peek(1));
-
+				delimited = true;
+				break;
 			}
 
-			arrLit->values = xs;
+			if (auto v = parseExpr())
+			{
+				xs.push_back(v);
+				continue;
+			}
+			else if (tkns.cur().type == TokenType::COMMA)
+			{
+				tkns.consume();
+				continue;
+			}
+			else break;
+			
+		}
 
-		}, "]");
-		
+		if (!delimited)
+		{
+			if (tkns.hasCur())
+			{
+				auto e = errors->err("Array literal not ended with a ']'", arrLit->start, tkns.cur());
+			}
+			else
+			{
+				auto e = errors->err("Unexpected EOF; Array literal not ended with a ']'", arrLit->start, tkns.last());
+			}
+
+			return nullptr;
+		}
+
+		arrLit->values = xs;
+		arrLit->end = tkns.take();
+
 		return arrLit;
 	}
 
@@ -1835,7 +1860,7 @@ sptr<Expr> Parser::parseFnCall(sptr<Expr> name)
 	}
 
 	if (!parseAnyBetween("(", LAMBDA() {
-		fnCall->args = parseValueList(false);
+		fnCall->args = parseValueList();
 	}, ")"))
 	{
 		tkns.revertTo(tknStart);
@@ -1884,7 +1909,7 @@ sptr<Expr> Parser::parseMethodCall(sptr<Expr> target)
 	}
 
 	if (!parseAnyBetween("(", LAMBDA() {
-		mCall->args = parseValueList(false);
+		mCall->args = parseValueList();
 	}, ")"))
 	{
 		tkns.revertTo(tknStart);

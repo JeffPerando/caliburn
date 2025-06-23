@@ -350,6 +350,7 @@ std::vector<Token> Tokenizer::tokenize()
 
 				if (strChar == delim)
 				{
+					++off;
 					pos.move();
 					foundDelim = true;
 					break;
@@ -381,7 +382,7 @@ std::vector<Token> Tokenizer::tokenize()
 			}
 
 			tknType = TokenType::LITERAL_STR;
-			tknLen = off + 1;
+			tknLen = off;
 			
 		}
 		else if (type == CharType::SPECIAL)

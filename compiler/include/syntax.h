@@ -98,14 +98,14 @@ namespace caliburn
 	*/
 	struct Token
 	{
-		std::string str;
+		std::string_view str;
 		TokenType type = TokenType::UNKNOWN;
 		TextPos pos;
 
 		Token() = default;
 		Token(in<Token> tkn) :
 			str(tkn.str), type(tkn.type), pos(tkn.pos) {}
-		Token(std::string s, TokenType t, TextPos p) :
+		Token(std::string_view s, TokenType t, TextPos p) :
 			str(s), type(t), pos(p) {}
 
 		Token operator=(in<Token> rhs)

@@ -5,75 +5,74 @@
 
 using namespace caliburn;
 
-class TokenTests : public testing::Test
-{
-protected:
-    std::vector<Token> tokenize(in<std::string> input)
-    {
-        auto doc = new_sptr<TextDoc>(input);
-        Tokenizer tokenizer(doc);
-        return tokenizer.tokenize();
-    }
+#define CBRN_TEST_TOKENIZE(str) auto doc = new_sptr<TextDoc>(str); Tokenizer tokenizer(doc); auto tokens = tokenizer.tokenize();
 
-    static inline void assertToken(in<Token> token, in<std::string_view> expectedStr, in<TokenType> expectedType)
-    {
-        EXPECT_EQ(token.str, expectedStr);
-        EXPECT_EQ(token.type, expectedType);
-    }
-};
-
-TEST_F(TokenTests, EmptyString)
+static inline void assertToken(in<Token> token, in<std::string_view> expectedStr, in<TokenType> expectedType)
 {
-    auto tokens = tokenize("");
+    EXPECT_EQ(token.str, expectedStr);
+    EXPECT_EQ(token.type, expectedType);
+}
+
+TEST(TokenTests, EmptyString)
+{
+    CBRN_TEST_TOKENIZE("");
     EXPECT_TRUE(tokens.empty());
 }
 
-TEST_F(TokenTests, SimpleIdentifier)
+TEST(TokenTests, SimpleIdentifier)
 {
-    auto tokens = tokenize("hello");
+    CBRN_TEST_TOKENIZE("hello");
     ASSERT_EQ(tokens.size(), 1);
     assertToken(tokens[0], "hello", TokenType::IDENTIFIER);
 }
 
-TEST_F(TokenTests, Keywords)
+TEST(TokenTests, NumFirstIdentifier)
 {
-    auto tokens = tokenize("def var if");
+    CBRN_TEST_TOKENIZE("2DTexture");
+    ASSERT_EQ(tokens.size(), 1);
+    assertToken(tokens[0], "2DTexture", TokenType::IDENTIFIER);
+}
+
+TEST(TokenTests, Keywords)
+{
+    CBRN_TEST_TOKENIZE("def var if");
     ASSERT_EQ(tokens.size(), 3);
     assertToken(tokens[0], "def", TokenType::KEYWORD);
     assertToken(tokens[1], "var", TokenType::KEYWORD);
     assertToken(tokens[2], "if", TokenType::KEYWORD);
 }
 
-TEST_F(TokenTests, IntegerLiterals)
+TEST(TokenTests, IntegerLiterals)
 {
-    auto tokens = tokenize("42 0xFF 0b1010");
+    CBRN_TEST_TOKENIZE("42 0xFF 0b1010");
     ASSERT_EQ(tokens.size(), 3);
     assertToken(tokens[0], "42", TokenType::LITERAL_INT);
     assertToken(tokens[1], "0xFF", TokenType::LITERAL_INT);
     assertToken(tokens[2], "0b1010", TokenType::LITERAL_INT);
 }
 
-TEST_F(TokenTests, FloatLiterals)
+TEST(TokenTests, FloatLiterals)
 {
-    auto tokens = tokenize("3.14 1.0e-10 42.0f");
-    ASSERT_EQ(tokens.size(), 3);
-    assertToken(tokens[0], "3.14", TokenType::LITERAL_FLOAT);
-    assertToken(tokens[1], "1.0e-10", TokenType::LITERAL_FLOAT);
-    assertToken(tokens[2], "42.0f", TokenType::LITERAL_FLOAT);
+    CBRN_TEST_TOKENIZE("1f 3.14 1.0e-10 42.0f");
+    ASSERT_EQ(tokens.size(), 4);
+    assertToken(tokens[0], "1f", TokenType::LITERAL_FLOAT);
+    assertToken(tokens[1], "3.14", TokenType::LITERAL_FLOAT);
+    assertToken(tokens[2], "1.0e-10", TokenType::LITERAL_FLOAT);
+    assertToken(tokens[3], "42.0f", TokenType::LITERAL_FLOAT);
 }
 
-TEST_F(TokenTests, StringLiterals)
+TEST(TokenTests, StringLiterals)
 {
-    auto tokens = tokenize("\"hello there\" 'world'");
+    CBRN_TEST_TOKENIZE("\"hello there\" 'world'");
     ASSERT_EQ(tokens.size(), 2);
 
     assertToken(tokens[0], "\"hello there\"", TokenType::LITERAL_STR);
     assertToken(tokens[1], "'world'", TokenType::LITERAL_STR);
 }
 
-TEST_F(TokenTests, Operators)
+TEST(TokenTests, Operators)
 {
-    auto tokens = tokenize("+ || >= << &&");
+    CBRN_TEST_TOKENIZE("+ || >= << &&");
     ASSERT_EQ(tokens.size(), 5);
     
     assertToken(tokens[0], "+", TokenType::OPERATOR);
@@ -84,9 +83,9 @@ TEST_F(TokenTests, Operators)
     
 }
 
-TEST_F(TokenTests, SpecialCharacters)
+TEST(TokenTests, SpecialCharacters)
 {
-    auto tokens = tokenize("( ) [ ] { } ,");
+    CBRN_TEST_TOKENIZE("( ) [ ] { } ,");
     ASSERT_EQ(tokens.size(), 7);
     assertToken(tokens[0], "(", TokenType::START_PAREN);
     assertToken(tokens[1], ")", TokenType::END_PAREN);
@@ -97,28 +96,29 @@ TEST_F(TokenTests, SpecialCharacters)
     assertToken(tokens[6], ",", TokenType::COMMA);
 }
 
-TEST_F(TokenTests, Comments)
+TEST(TokenTests, Comments)
 {
-    auto tokens = tokenize("# This is a comment\nidentifier");
+    CBRN_TEST_TOKENIZE("# This is a comment\nidentifier");
     ASSERT_EQ(tokens.size(), 1);
     assertToken(tokens[0], "identifier", TokenType::IDENTIFIER);
 }
 
-TEST_F(TokenTests, ConstStmt)
+TEST(TokenTests, ConstStmt)
 {
-    auto tokens = tokenize("const x = 42 + y");
-    ASSERT_EQ(tokens.size(), 6);
+    CBRN_TEST_TOKENIZE("const x = 42 + y;");
+    ASSERT_EQ(tokens.size(), 7);
     assertToken(tokens[0], "const", TokenType::KEYWORD);
     assertToken(tokens[1], "x", TokenType::IDENTIFIER);
     assertToken(tokens[2], "=", TokenType::SETTER);
     assertToken(tokens[3], "42", TokenType::LITERAL_INT);
     assertToken(tokens[4], "+", TokenType::OPERATOR);
     assertToken(tokens[5], "y", TokenType::IDENTIFIER);
+    assertToken(tokens[6], ";", TokenType::END);
 }
 
-TEST_F(TokenTests, EscapedStrings)
+TEST(TokenTests, EscapedStrings)
 {
-    auto tokens = tokenize("\"hello\\\"world\"");
+    CBRN_TEST_TOKENIZE("\"hello\\\"world\"");
     ASSERT_EQ(tokens.size(), 1);
     assertToken(tokens[0], "\"hello\\\"world\"", TokenType::LITERAL_STR);
 }
