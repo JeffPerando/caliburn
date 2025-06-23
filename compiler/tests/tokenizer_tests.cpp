@@ -122,3 +122,11 @@ TEST(TokenTests, EscapedStrings)
     ASSERT_EQ(tokens.size(), 1);
     assertToken(tokens[0], "\"hello\\\"world\"", TokenType::LITERAL_STR);
 }
+
+TEST(TokenTests, SmallShader)
+{
+    CBRN_TEST_TOKENIZE("type FP = dynamic<fp32>; shader TestShader{ vec4 frag_color; def vertex(vec4<FP> v, vec4 c) : vec4<FP> {frag_color = c;return v;}; def frag() : vec4 {return frag_color;};};");
+    ASSERT_EQ(tokens.size(), 55);
+    //no, we're not testing every token in the file, just pick one and call it a day.
+    assertToken(tokens[49], "frag_color", TokenType::IDENTIFIER);
+}
