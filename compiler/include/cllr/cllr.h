@@ -55,7 +55,7 @@ namespace caliburn
 
 		enum class Opcode : uint32_t
 		{
-			UNKNOWN,
+			NO_OP,
 
 			SHADER_STAGE,
 			SHADER_STAGE_END,
@@ -142,7 +142,7 @@ namespace caliburn
 		};
 
 		static const std::map<Opcode, std::string_view> OP_NAMES = {
-			{Opcode::UNKNOWN, "Unknown"},
+			{Opcode::NO_OP, "No-op"},
 
 			{Opcode::SHADER_STAGE, "Shader_Stage"},
 			{Opcode::SHADER_STAGE_END, "Shader_Stage_End"},
@@ -231,7 +231,7 @@ namespace caliburn
 		struct Instruction
 		{
 			SSA index = 0;
-			Opcode op = Opcode::UNKNOWN;
+			Opcode op = Opcode::NO_OP;
 			OpArray operands = {};
 			RefArray refs = {};
 
