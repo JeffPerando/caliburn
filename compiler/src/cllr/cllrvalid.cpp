@@ -10,7 +10,7 @@ using namespace caliburn::cllr;
 
 Validator::Validator(sptr<const CompilerSettings> cs) : settings(cs), errors(new_uptr<ErrorHandler>(CompileStage::CLLR_VALIDATION, cs))
 {
-	validators.emplace(Opcode::UNKNOWN, &Validator::OpUnknown);
+	validators.emplace(Opcode::NO_OP, &Validator::OpNoop);
 
 	validators.emplace(Opcode::SHADER_STAGE, &Validator::OpShaderStage);
 	validators.emplace(Opcode::SHADER_STAGE_END, &Validator::OpShaderStageEnd);
@@ -206,7 +206,7 @@ bool Validator::validate(in<Assembler> codeAsm)
 	return errors->empty();
 }
 
-CLLR_VALID_IMPL(OpUnknown)
+CLLR_VALID_IMPL(OpNoop)
 {
 	CLLR_VALID_NO_ID;
 	CLLR_VALID_NO_OUT;

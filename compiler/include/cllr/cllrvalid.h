@@ -82,9 +82,8 @@ namespace caliburn
 			Validator(sptr<const CompilerSettings> cs);
 
 			bool validate(in<Assembler> codeAsm);
-
-			//here we go again
-			CLLR_VALID_FN(OpUnknown);
+			
+			CLLR_VALID_FN(OpNoop);
 
 			CLLR_VALID_FN(OpShaderStage);
 			CLLR_VALID_FN(OpShaderStageEnd);
