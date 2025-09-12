@@ -10,25 +10,20 @@
 
 namespace caliburn
 {
-	inline char chrToLower(char c) noexcept
+	static constexpr bool isDecInt(char ch)
 	{
-		return c + 32;
+		return ch >= '0' && ch <= '9';
 	}
 
-	inline char chrToUpper(char c) noexcept
+	static inline uint64_t parseInt(std::string_view str, size_t len)
 	{
-		return c - 32;
-	}
-
-	inline uint64_t parseInt(std::string_view str, size_t len)
-	{
-		len = (str.length() < len) ? str.length() : len;
+		len = std::min(str.length(), len);
 
 		uint64_t parsed = 0;
 
 		for (size_t idx = 0; idx < len; ++idx)
 		{
-			char digit = str[idx];
+			auto const digit = static_cast<uint64_t>(str[idx]);
 
 			if (digit == '_')
 			{
@@ -43,12 +38,12 @@ namespace caliburn
 		return parsed;
 	}
 
-	inline uint64_t parseInt(std::string_view str)
+	static inline uint64_t parseInt(std::string_view str)
 	{
 		return parseInt(str, str.length());
 	}
 
-	inline std::array<std::string_view, 2> splitStr(std::string_view str, std::string_view delim) noexcept
+	static inline std::array<std::string_view, 2> splitStr(std::string_view str, std::string_view delim) noexcept
 	{
 		auto found = str.find_first_of(delim);
 
@@ -60,7 +55,7 @@ namespace caliburn
 		return { str.substr(0, found), str.substr(found + delim.length()) };
 	}
 
-	inline std::array<std::string_view, 2> splitStr(std::string_view str, char delim) noexcept
+	static inline std::array<std::string_view, 2> splitStr(std::string_view str, char delim) noexcept
 	{
 		auto found = str.find(delim);
 
@@ -72,7 +67,7 @@ namespace caliburn
 		return { str.substr(0, found), str.substr(found + 1) };
 	}
 
-	inline std::array<std::string_view, 2> splitStr(std::string_view str, std::vector<char> delims) noexcept
+	static inline std::array<std::string_view, 2> splitStr(std::string_view str, std::vector<char> delims) noexcept
 	{
 		size_t found = std::string::npos;
 

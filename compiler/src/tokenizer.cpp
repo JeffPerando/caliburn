@@ -78,17 +78,12 @@ bool Tokenizer::findFloatFrac()
 {
 	size_t start = buf.offset();
 
-	auto const isInt = LAMBDA_FN(char chr)
-	{
-		return std::binary_search(DEC_INTS.begin(), DEC_INTS.end(), chr);
-	};
-
 	//Find a decimal component
-	if (buf.hasRem(2) && buf.cur() == '.' && isInt(buf.peek(1)))
+	if (buf.hasRem(2) && buf.cur() == '.' && isDecInt(buf.peek(1)))
 	{
 		buf.consume(2);
 
-		while (buf.hasCur() && isInt(buf.cur()))
+		while (buf.hasCur() && isDecInt(buf.cur()))
 		{
 			buf.consume();
 		}
@@ -105,12 +100,12 @@ bool Tokenizer::findFloatFrac()
 			buf.consume();
 		}
 
-		if (!buf.hasCur() || !isInt(buf.cur()))
+		if (!buf.hasCur() || !isDecInt(buf.cur()))
 		{
 			return false;
 		}
 
-		while (buf.hasCur() && isInt(buf.cur()))
+		while (buf.hasCur() && isDecInt(buf.cur()))
 		{
 			buf.consume();
 		}
@@ -182,7 +177,7 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type)
 
 	if (buf.hasCur())
 	{
-		auto suffix = chrToUpper(buf.cur());
+		char suffix = std::toupper(buf.cur());
 		
 		if (suffix == 'F' || suffix == 'D')
 		{
@@ -192,12 +187,12 @@ size_t Tokenizer::findIntLiteral(out<TokenType> type)
 		
 		if (!isFloat)
 		{
-			if (chrToUpper(buf.cur()) == 'U')
+			if (std::toupper(buf.cur()) == 'U')
 			{
 				buf.consume();
 			}
 
-			if (chrToUpper(buf.cur()) == 'L')
+			if (std::toupper(buf.cur()) == 'L')
 			{
 				buf.consume();
 			}

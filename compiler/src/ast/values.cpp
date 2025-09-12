@@ -20,13 +20,13 @@ ValueResult IntLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Ass
 	auto name = "int";
 	auto bits = "32";
 
-	if (chrToUpper(intLit[len - 1]) == 'L')
+	if (std::toupper(intLit[len - 1]) == 'L')
 	{
 		bits = "64";
 		--len;
 	}
 
-	if (chrToUpper(intLit[len - 1]) == 'U')
+	if (std::toupper(intLit[len - 1]) == 'U')
 	{
 		name = "uint";
 		--len;
@@ -49,7 +49,7 @@ ValueResult IntLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Ass
 
 	if (intLit[0] == '0')
 	{
-		if (chrToUpper(intLit[1]) == 'X')
+		if (std::toupper(intLit[1]) == 'X')
 		{
 			for (idx = 2; idx < len; ++idx)
 			{
@@ -60,12 +60,12 @@ ValueResult IntLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Ass
 				}
 
 				parsedLit <<= 4;
-				parsedLit |= chrToUpper(digit) - 'A';
+				parsedLit |= std::toupper(digit) - 'A';
 
 			}
 
 		}
-		else if (chrToUpper(intLit[1]) == 'B')
+		else if (std::toupper(intLit[1]) == 'B')
 		{
 			for (idx = 2; idx < len; ++idx)
 			{
@@ -81,7 +81,7 @@ ValueResult IntLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Ass
 			}
 
 		}
-		else if (chrToUpper(intLit[1]) == 'C')
+		else if (std::toupper(intLit[1]) == 'C')
 		{
 			for (idx = 2; idx < len; ++idx)
 			{
@@ -117,7 +117,7 @@ ValueResult FloatLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::A
 
 	auto bits = 32;
 
-	switch (chrToUpper(fpLit[len - 1]))
+	switch (std::toupper(fpLit[len - 1]))
 	{
 		//TODO maybe add a half-float type?
 	case 'D': bits = 64; PASS;
@@ -138,45 +138,20 @@ ValueResult FloatLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::A
 		return ValueResult();
 	}
 
-	auto [wholeLit, nonWholeLit] = splitStr(fpLit, '.');
-	auto [fracLit, expLit] = splitStr(nonWholeLit, { 'e', 'E' });
-
-	uint64_t whole = parseInt(wholeLit);
-	uint64_t frac = parseInt(fracLit);
-	int64_t exp = 0;
-
-	if (expLit.length() > 0)
-	{
-		exp = 1;
-
-		if (expLit[0] == '+')
-		{
-			expLit = expLit.substr(1);
-		}
-		else if (expLit[0] == '-')
-		{
-			expLit = expLit.substr(1);
-			exp = -1;
-		}
-
-		exp *= parseInt(expLit);
-
-	}
-
 	cllr::SSA vID = 0;
 
 	if (bits == 32)
 	{
-		float data = std::strtof(fpLit.data(), nullptr);
-		uint32_t bitData = *(uint32_t*)&data;
+		auto data = std::stof(std::string(fpLit));
+		uint32_t bitData = *reinterpret_cast<uint32_t*>(&data);
 
 		vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_FP, { bitData }, {}, t->id));
 
 	}
 	else if (bits == 64)
 	{
-		double data = std::strtod(fpLit.data(), nullptr);
-		uint64_t bitData = *(uint64_t*)&data;
+		auto data = std::stod(std::string(fpLit));
+		uint64_t bitData = *reinterpret_cast<uint64_t*>(&data);
 
 		vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_FP, { (uint32_t)(bitData & 0xFFFFFFFF), (uint32_t)((bitData >> 32) & 0xFFFFFFFF) }, {}, t->id));
 
