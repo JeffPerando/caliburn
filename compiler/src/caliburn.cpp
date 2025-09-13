@@ -1,5 +1,5 @@
 
-#define CBRN_NO_IMPORT
+#define CBRN_BUILD_DLL
 #include "caliburn.h"
 
 #include "error.h"

@@ -21,7 +21,7 @@
 
 #if defined(_WIN32)
 
-#if defined(CBRN_NO_IMPORT)
+#ifdef CBRN_NO_IMPORT
 #define CBRN_API
 #elif defined(CBRN_BUILD_DLL)
 #define CBRN_API __declspec(dllexport)
@@ -40,7 +40,7 @@ namespace caliburn
 
 	NOTE: Currently unused; Caliburn currently only supports GPU compilation
 	*/
-	enum class CBRN_API HostTarget : uint32_t
+	enum class HostTarget : uint32_t
 	{
 		CPU, GPU
 	};
@@ -50,7 +50,7 @@ namespace caliburn
 
 	NOTE: Currently unused; Caliburn currently only supports SPIR-V
 	*/
-	enum class CBRN_API GPUTarget : uint32_t
+	enum class GPUTarget : uint32_t
 	{
 		SPIRV, DXIL, METAL
 	};
@@ -58,7 +58,7 @@ namespace caliburn
 	/*
 	Enum denoting how much to optimize code.
 	*/
-	enum class CBRN_API OptimizeLevel : uint32_t
+	enum class OptimizeLevel : uint32_t
 	{
 		DEBUG, //O0
 		BASIC, //O1
@@ -71,7 +71,7 @@ namespace caliburn
 
 	Full should only be used for development purposes
 	*/
-	enum class CBRN_API ValidationLevel : uint32_t
+	enum class ValidationLevel : uint32_t
 	{
 		//Disables validation entirely
 		NONE,
@@ -83,7 +83,7 @@ namespace caliburn
 		DEV
 	};
 
-	struct CBRN_API CompilerSettings
+	struct CompilerSettings
 	{
 		GPUTarget gpuTarget = GPUTarget::SPIRV;
 		OptimizeLevel o = OptimizeLevel::DEBUG;
@@ -113,7 +113,7 @@ namespace caliburn
 
 	};
 
-	struct CBRN_API DescriptorSet
+	struct DescriptorSet
 	{
 		std::string name;
 		uint32_t binding;
@@ -121,7 +121,7 @@ namespace caliburn
 
 	};
 
-	struct CBRN_API VertexInputAttribute
+	struct VertexInputAttribute
 	{
 		std::string name;
 		uint32_t location;
@@ -129,7 +129,7 @@ namespace caliburn
 
 	};
 
-	enum class CBRN_API ShaderType
+	enum class ShaderType
 	{
 		COMPUTE,
 		VERTEX,
@@ -146,7 +146,7 @@ namespace caliburn
 		MESH
 	};
 
-	struct CBRN_API Shader
+	struct Shader
 	{
 		const ShaderType type;
 		const std::vector<uint32_t> code;
@@ -158,7 +158,7 @@ namespace caliburn
 
 	};
 
-	struct CBRN_API ShaderResult
+	struct ShaderResult
 	{
 		std::vector<std::unique_ptr<Shader>> shaders;
 		std::vector<std::string> errors;
@@ -170,15 +170,15 @@ namespace caliburn
 
 	};
 
-	struct CBRN_API Compiler
+	struct Compiler
 	{
 	private:
 		std::shared_ptr<CompilerSettings> settings;
 		
 	public:
-		Compiler() : settings(std::make_shared<CompilerSettings>()) {}
-		Compiler(const CompilerSettings& cs) : settings(std::make_shared<CompilerSettings>(cs)) {}
-		virtual ~Compiler() = default;
+		CBRN_API Compiler() : settings(std::make_shared<CompilerSettings>()) {}
+		CBRN_API Compiler(const CompilerSettings& cs) : settings(std::make_shared<CompilerSettings>(cs)) {}
+		CBRN_API virtual ~Compiler() = default;
 
 		/*
 		Compiles raw source code into a set of shaders.
@@ -188,7 +188,7 @@ namespace caliburn
 		
 		Returns a ShaderResult, which contains a vector of shaders and error messages.
 		*/
-		ShaderResult compileSrcShaders(const std::string& src, const std::string& shaderName);
+		CBRN_API ShaderResult compileSrcShaders(const std::string& src, const std::string& shaderName);
 
 	};
 
