@@ -42,15 +42,22 @@ cllr::TypedSSA SrcFn::call(in<std::vector<cllr::TypedSSA>> callIDs, sptr<Generic
 
 cllr::TypedSSA SrcFnImpl::emitFnDeclCLLR(out<cllr::Assembler> codeAsm)
 {
-	auto rt = (retType == nullptr ?
-		codeAsm.pushType(cllr::Opcode::TYPE_VOID)
-		: retType->resolve(syms, codeAsm));
+	sptr<cllr::LowType> rt = nullptr;
 
-	if (rt == nullptr)
+	if (retType)
 	{
-		auto e = codeAsm.errors->err({ "Could not resolve return type", retType->name }, *retType);
+		rt = retType->resolve(syms, codeAsm);
 
-		return cllr::TypedSSA();
+		if (!rt)
+		{
+			auto e = codeAsm.errors->err({ "Could not resolve return type", retType->name }, *retType);
+
+			return cllr::TypedSSA();
+		}
+	}
+	else
+	{
+		rt = codeAsm.pushType(cllr::Opcode::TYPE_VOID);
 	}
 
 	if (id != 0)
@@ -93,7 +100,7 @@ cllr::TypedSSA SrcFnImpl::call(in<std::vector<cllr::TypedSSA>> callArgs, out<cll
 
 cllr::TypedSSA FunctionGroup::call(in<std::vector<cllr::TypedSSA>> args, sptr<GenericArguments> gArgs, out<cllr::Assembler> codeAsm)
 {
-	//TODO score-based system; fewer conversions = higher score, highest-scording function gets returned
+	//TODO score-based system; fewer conversions = higher score, highest-scoring function gets used
 
 	cllr::TypeChecker checker(codeAsm.settings);
 
