@@ -10,37 +10,106 @@
 
 namespace caliburn
 {
+	static const HashMap<char, uint8_t> HEX_DIGITS = {
+		{'0', 0}, {'1', 1}, {'2', 2}, {'3', 3}, {'4', 4},
+		{'5', 5}, {'6', 6}, {'7', 7}, {'8', 8}, {'9', 9},
+		{'a', 10}, {'b', 11}, {'c', 12}, {'d', 13}, {'e', 14}, {'f', 15},
+		{'A', 10}, {'B', 11}, {'C', 12}, {'D', 13}, {'E', 14}, {'F', 15}
+	};
+
 	static constexpr bool isDecInt(char ch)
 	{
 		return ch >= '0' && ch <= '9';
 	}
 
-	static inline uint64_t parseInt(std::string_view str, size_t len)
+	static inline uint64_t parseB10Int(std::string_view str)
 	{
-		len = std::min(str.length(), len);
-
 		uint64_t parsed = 0;
 
-		for (size_t idx = 0; idx < len; ++idx)
+		for (size_t idx = 0; idx < str.length(); ++idx)
 		{
-			auto const digit = static_cast<uint64_t>(str[idx]);
+			auto const digit = str[idx];
 
 			if (digit == '_')
 			{
 				continue;
 			}
 
-			parsed *= 10;
-			parsed += digit - '0';
+			if (!isDecInt(digit))
+			{
+				break;
+			}
+
+			parsed = (parsed * 10) + static_cast<uint64_t>(digit - '0');
 
 		}
 
 		return parsed;
 	}
 
-	static inline uint64_t parseInt(std::string_view str)
+	static inline uint64_t parseInt(std::string_view lit)
 	{
-		return parseInt(str, str.length());
+		uint64_t parsedLit = 0;
+
+		if (lit[0] == '0' && lit.length() > 2)
+		{
+			switch (std::toupper(lit[1]))
+			{
+			case 'X': {
+				for (size_t idx = 2; idx < lit.length(); ++idx)
+				{
+					char digit = lit[idx];
+					if (digit == '_')
+					{
+						continue;
+					}
+
+					if (auto num = HEX_DIGITS.find(digit); num != HEX_DIGITS.end())
+					{
+						parsedLit <<= 4;
+						parsedLit |= static_cast<uint64_t>(num->second);
+					}
+					else
+					{
+						//TODO complain
+					}
+
+				}
+			}; break;
+			case 'B': {
+				for (size_t idx = 2; idx < lit.length(); ++idx)
+				{
+					char digit = lit[idx];
+					if (digit == '_')
+					{
+						continue;
+					}
+
+					parsedLit <<= 1;
+					parsedLit |= static_cast<uint64_t>(digit - '0');
+
+				}
+			}; break;
+			case 'C': {
+				for (size_t idx = 2; idx < lit.length(); ++idx)
+				{
+					char digit = lit[idx];
+					if (digit == '_')
+					{
+						continue;
+					}
+
+					parsedLit <<= 3;
+					parsedLit |= static_cast<uint64_t>(digit - '0');
+
+				}
+			}; break;
+			}
+
+			return parsedLit;
+		}
+
+		return parseB10Int(lit);
 	}
 
 	static inline std::array<std::string_view, 2> splitStr(std::string_view str, std::string_view delim) noexcept

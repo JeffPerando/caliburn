@@ -14,11 +14,10 @@ ValueResult IntLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Ass
 {
 	auto const& intLit = lit.str;
 
-	std::stringstream type;
 	size_t len = intLit.length();
 
-	auto name = "int";
-	auto bits = "32";
+	std::string name = "int";
+	std::string_view bits = "32";
 
 	if (std::toupper(intLit[len - 1]) == 'L')
 	{
@@ -31,78 +30,16 @@ ValueResult IntLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Ass
 		name = "uint";
 		--len;
 	}
+	
+	uint64_t parsedLit = parseInt(intLit.substr(0, len));
 
-	type << name;
-	type << bits;
-
-	auto pType = ParsedType(type.str());
+	auto pType = ParsedType(name.append(bits));
 	auto t = pType.resolve(table, codeAsm);
 
 	if (!t)
 	{
 		//TODO complain
 		return ValueResult();
-	}
-
-	uint64_t parsedLit = 0;
-	size_t idx = 0;
-
-	if (intLit[0] == '0')
-	{
-		if (std::toupper(intLit[1]) == 'X')
-		{
-			for (idx = 2; idx < len; ++idx)
-			{
-				char digit = intLit[idx];
-				if (digit == '_')
-				{
-					continue;
-				}
-
-				parsedLit <<= 4;
-				parsedLit |= std::toupper(digit) - 'A';
-
-			}
-
-		}
-		else if (std::toupper(intLit[1]) == 'B')
-		{
-			for (idx = 2; idx < len; ++idx)
-			{
-				char digit = intLit[idx];
-				if (digit == '_')
-				{
-					continue;
-				}
-
-				parsedLit <<= 1;
-				parsedLit |= (digit - '0');
-
-			}
-
-		}
-		else if (std::toupper(intLit[1]) == 'C')
-		{
-			for (idx = 2; idx < len; ++idx)
-			{
-				char digit = intLit[idx];
-				if (digit == '_')
-				{
-					continue;
-				}
-
-				parsedLit <<= 3;
-				parsedLit |= (digit - '0');
-
-			}
-
-		}
-
-	}
-
-	if (idx == 0)
-	{
-		parsedLit = parseInt(intLit, len);
 	}
 
 	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_INT, { (uint32_t)(parsedLit & 0xFFFFFFFF), (uint32_t)((parsedLit >> 32) & 0xFFFFFFFF) }, {}, t->id));
