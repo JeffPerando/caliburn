@@ -4,12 +4,8 @@
 #ifndef __cplusplus
 #error Caliburn requires C++
 
-#elif __cplusplus < 201703L
+#elif __cplusplus < 201703L || (defined(_MSVC_LANG) && _MSVC_LANG < 201402)
 #error Caliburn requires C++17
-
-#ifdef _MSC_VER
-#error Try adding /Zc:__cplusplus to your compiler options
-#endif
 
 #else
 
