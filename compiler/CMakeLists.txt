@@ -5,7 +5,6 @@ project("caliburn")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_GENERATOR "Ninja")
 
 include(FetchContent)
 
@@ -40,8 +39,10 @@ add_executable(CaliburnTests
 	tests/tokenizer_tests.cpp
 )
 
-target_compile_options(CaliburnTests PUBLIC "/std:c++17")
-target_compile_options(CaliburnTests PUBLIC "/Zc:__cplusplus")
+if (MSVC)
+	target_compile_options(CaliburnTests PUBLIC "/std:c++17")
+	target_compile_options(CaliburnTests PUBLIC "/Zc:__cplusplus")
+endif()
 
 target_link_libraries(
 	CaliburnTests
