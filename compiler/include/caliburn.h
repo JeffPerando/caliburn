@@ -4,7 +4,7 @@
 #ifndef __cplusplus
 #error Caliburn requires C++
 
-#elif __cplusplus < 201703L || (defined(_MSVC_LANG) && _MSVC_LANG < 201402)
+#elif __cplusplus < 201703L || (defined(_MSVC_LANG) && _MSVC_LANG < 201703L)
 #error Caliburn requires C++17
 
 #else
@@ -98,8 +98,8 @@ namespace caliburn
 		type is determined externally. This is where they're defined. This allows
 		devs to write one shader that can use both, say, FP16 and FP32.
 
-		- inner must correlate to a dynamic type within a shader being compiled.
-		- concrete must correlate to an existing type within a compiled shader,
+		- first element must correlate to a dynamic type within a shader being compiled.
+		- second element must correlate to an existing type within a compiled shader,
 		  and ideally be a built-in type.
 		*/
 		std::map<std::string, std::string> dynTypes;
@@ -114,7 +114,6 @@ namespace caliburn
 		std::string name;
 		uint32_t binding;
 		uint32_t type;
-
 	};
 
 	struct VertexInputAttribute
@@ -122,7 +121,6 @@ namespace caliburn
 		std::string name;
 		uint32_t location;
 		uint32_t format;
-
 	};
 
 	enum class ShaderType

@@ -58,7 +58,7 @@ namespace caliburn
 
 	struct TypeArray : BaseType
 	{
-		const GenericSignature sig = GenericSignature(std::vector{
+		const GenericSignature sig = GenericSignature({
 				GenericName(GenericSymType::TYPE, "T"),
 				GenericName(GenericSymType::CONST, "N")
 			});
@@ -77,7 +77,7 @@ namespace caliburn
 
 		sptr<cllr::LowType> resolve(sptr<GenericArguments> gArgs, sptr<const SymbolTable> table, out<cllr::Assembler> codeAsm) override
 		{
-			return codeAsm.pushType(cllr::Instruction(cllr::Opcode::TYPE_BOOL));
+			return codeAsm.pushType(cllr::Opcode::TYPE_BOOL);
 		}
 
 	};

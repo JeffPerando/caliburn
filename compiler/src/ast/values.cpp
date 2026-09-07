@@ -31,7 +31,7 @@ ValueResult IntLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Ass
 		--len;
 	}
 	
-	uint64_t parsedLit = parseInt(intLit.substr(0, len));
+	uint64_t parsed = parseInt(intLit.substr(0, len));
 
 	auto pType = ParsedType(name.append(bits));
 	auto t = pType.resolve(table, codeAsm);
@@ -42,7 +42,7 @@ ValueResult IntLiteralValue::emitCodeCLLR(sptr<SymbolTable> table, out<cllr::Ass
 		return ValueResult();
 	}
 
-	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_INT, { (uint32_t)(parsedLit & 0xFFFFFFFF), (uint32_t)((parsedLit >> 32) & 0xFFFFFFFF) }, {}, t->id));
+	auto vID = codeAsm.pushNew(cllr::Instruction(cllr::Opcode::VALUE_LIT_INT, { static_cast<uint32_t>(parsed & 0xFFFFFFFF), static_cast<uint32_t>((parsed >> 32) & 0xFFFFFFFF) }, {}, t->id));
 
 	return cllr::TypedSSA(t, vID);
 }

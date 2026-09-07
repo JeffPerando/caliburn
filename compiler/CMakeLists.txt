@@ -17,15 +17,17 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+message(STATUS "Compiling Caliburn DLL")
+
 file(GLOB_RECURSE CALIBURN_SOURCES CONFIGURE_DEPENDS src/*.cpp include/*.h)
 
-message(STATUS "Compiling Caliburn DLL")
 add_library(${PROJECT_NAME} SHARED ${CALIBURN_SOURCES})
+
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 
-if(MSVC)
+if (MSVC)
 	message(STATUS "MSVC detected")
 	target_compile_options(${PROJECT_NAME} PUBLIC "/std:c++17")
 	target_compile_options(${PROJECT_NAME} PUBLIC "/Zc:__cplusplus")
@@ -39,6 +41,8 @@ add_executable(CaliburnTests
 	tests/tokenizer_tests.cpp
 )
 
+target_compile_features(CaliburnTests PUBLIC cxx_std_17)
+
 if (MSVC)
 	target_compile_options(CaliburnTests PUBLIC "/std:c++17")
 	target_compile_options(CaliburnTests PUBLIC "/Zc:__cplusplus")
@@ -46,9 +50,7 @@ endif()
 
 target_link_libraries(
 	CaliburnTests
-	PRIVATE
-	caliburn
-	GTest::gtest_main
+	PRIVATE caliburn GTest::gtest_main
 )
 
 include(GoogleTest)

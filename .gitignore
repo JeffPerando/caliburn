@@ -11,8 +11,11 @@ README_OLD.md
 REFERENCE.md
 
 ## CMake
+compiler/_deps
 compiler/build
+compiler/CMakeFiles
 compiler/out
+CMakeCache.txt
 
 ## VS Code
 compiler/.vscode

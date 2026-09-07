@@ -12,10 +12,10 @@ void ScopeStmt::prettyPrint(out<std::stringstream> ss) const
 	for (auto const& stmt : stmts)
 	{
 		stmt->prettyPrint(ss);
-		ss << ';\n';
+		ss << ";\n";
 	}
 
-	ss << "}";
+	ss << '}';
 
 }
 

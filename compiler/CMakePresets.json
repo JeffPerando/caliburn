@@ -5,7 +5,7 @@
       "name": "linux-debug",
       "displayName": "Linux Debug",
       "description": "Target the Windows Subsystem for Linux (WSL) or a remote Linux system.",
-      "generator": "Ninja",
+      "generator": "Unix Makefiles",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" },
@@ -20,7 +20,7 @@
       "name": "macos-debug",
       "displayName": "macOS Debug",
       "description": "Target a remote macOS system.",
-      "generator": "Ninja",
+      "generator": "Unix Makefiles",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" },
@@ -35,13 +35,13 @@
       "name": "windows-base",
       "description": "Target Windows with the Visual Studio development environment.",
       "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc.exe",
+        "CMAKE_CXX_COMPILER": "g++.exe"
+      },
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "cl.exe",
-        "CMAKE_CXX_COMPILER": "cl.exe"
-      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -49,7 +49,7 @@
       }
     },
     {
-      "name": "x64-debug",
+      "name": "x64-debug-win",
       "displayName": "x64 Debug",
       "description": "Target Windows (64-bit) with the Visual Studio development environment. (Debug)",
       "inherits": "windows-base",
@@ -62,10 +62,10 @@
       }
     },
     {
-      "name": "x64-release",
+      "name": "x64-release-win",
       "displayName": "x64 Release",
-      "description": "Target Windows (64-bit) with the Visual Studio development environment. (RelWithDebInfo)",
-      "inherits": "x64-debug",
+      "description": "Target Windows (64-bit) with the Visual Studio development environment.",
+      "inherits": "x64-debug-win",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
