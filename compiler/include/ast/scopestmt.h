@@ -2,6 +2,7 @@
 #pragma once
 
 #include "ast.h"
+#include "parse/parser2.h"
 
 namespace caliburn
 {
@@ -13,12 +14,27 @@ namespace caliburn
 		Token first;
 		Token last;
 
+		std::vector<parse::ParseResult> pResults;
 		std::vector<sptr<Expr>> stmts;
 
 		sptr<SymbolTable> scopeTable = new_sptr<SymbolTable>();
 
 		ScopeStmt() : Expr(ExprType::SCOPE) {}
-		//ScopeStmt(in<Token> s, in<Token> e, ParseMap data)
+		ScopeStmt(in<Token> f, in<Token> l, in<parse::ParseMap> pmap) : Expr(ExprType::SCOPE), first(f), last(l)
+		{
+			auto content = pmap.find("logic");
+
+			if (content == pmap.end())
+			{
+				return;
+			}
+			
+			MATCH(content->second, std::vector<parse::ParseResult>, vec)
+			{
+				pResults = *vec;
+			}
+
+		}
 
 		virtual ~ScopeStmt() = default;
 
