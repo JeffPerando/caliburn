@@ -36,8 +36,8 @@
       "description": "Target Windows with the Visual Studio development environment.",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "gcc.exe",
-        "CMAKE_CXX_COMPILER": "g++.exe"
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
       },
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
