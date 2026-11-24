@@ -563,7 +563,7 @@ SSA SpvIO::getOutputFor(ExecutionModel type, out<SSA> outType, uint32_t loc)
 
 	SSA outID = 0;
 
-	if (type == ExecutionModel::Vertex)
+	if (type == ExecutionModel::Vertex || type == ExecutionModel::Geometry || type == ExecutionModel::TessellationEvaluation)
 	{
 		outType = t.typeVec(4);
 		outID = getBuiltinVar(type, BuiltIn::Position);
@@ -575,6 +575,17 @@ SSA SpvIO::getOutputFor(ExecutionModel type, out<SSA> outType, uint32_t loc)
 		outID = makeOutVar(t.typeOutPtr(outType));
 
 		d->decorate(outID, Decoration::Location, { loc });
+
+	}
+	else if (type == ExecutionModel::TessellationControl)
+	{
+		outType = t.typeStruct({
+			t.typeArray(4, t.typeVec(4)),
+			t.typeArray(2, t.typeVec(4))},
+			{BuiltIn::TessLevelOuter,
+			BuiltIn::TessLevelInner});
+
+		outID = makeOutVar(t.typeOutPtr(outType));
 
 	}
 

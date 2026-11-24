@@ -120,7 +120,7 @@ SSA TypeSection::typeRunArray(SSA inner)
 	return findOrMake(OpTypeRuntimeArray(), { inner });
 }
 
-SSA TypeSection::typeStruct(in<std::vector<uint32_t>> members, in<std::vector<BuiltIn>> decs)
+SSA TypeSection::typeStruct(in<std::vector<uint32_t>> members, in<std::vector<BuiltIn>> decs = {})
 {
 	auto id = findOrMake(OpTypeStruct((uint32_t)members.size()), members);
 
